@@ -96,10 +96,7 @@ function AuthPage() {
 
             <form
               className="mt-6 space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                navigate({ to: "/dashboard" });
-              }}
+              onSubmit={handleMockSubmit}
             >
               {mode === "signup" && (
                 <Field label="Full name" type="text" placeholder="Ada Lovelace" />
@@ -114,6 +111,18 @@ function AuthPage() {
                 {mode === "signin" ? "Sign in" : "Create account"}
               </button>
             </form>
+
+            {message && (
+              <div
+                className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                  message.type === "success"
+                    ? "border-mint/30 bg-mint/10 text-mint"
+                    : "border-red-500/30 bg-red-500/10 text-red-400"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
 
             <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-border" />
