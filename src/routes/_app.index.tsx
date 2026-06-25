@@ -9,6 +9,7 @@ import {
   Activity,
 } from "lucide-react";
 import { PageHeader, Section, StatCard } from "@/components/page-header";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 export const Route = createFileRoute("/_app/")({
   head: () => ({
@@ -27,17 +28,14 @@ export const Route = createFileRoute("/_app/")({
 function Dashboard() {
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="A live snapshot of your wealth, money, and goals."
-        actions={
-          <button className="inline-flex items-center gap-2 rounded-xl bg-mint px-4 py-2.5 text-sm font-semibold text-mint-foreground transition hover:opacity-90">
-            <Camera className="h-4 w-4" />
-            <span className="hidden sm:inline">Snap net worth</span>
-            <span className="sm:hidden">Snap</span>
-          </button>
-        }
-      />
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <DashboardHeader />
+        <button className="inline-flex items-center gap-2 rounded-xl bg-mint px-4 py-2.5 text-sm font-semibold text-mint-foreground transition hover:opacity-90">
+          <Camera className="h-4 w-4" />
+          <span className="hidden sm:inline">Snap net worth</span>
+          <span className="sm:hidden">Snap</span>
+        </button>
+      </div>
 
       {/* Net worth hero */}
       <div className="mb-8 overflow-hidden rounded-3xl border border-mint/20 bg-gradient-to-br from-surface via-surface to-mint/5 p-6 md:p-8">
