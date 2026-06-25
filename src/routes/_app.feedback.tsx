@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 export const Route = createFileRoute("/_app/feedback")({
   head: () => ({
     meta: [
-      { title: "Feedback · FinTrack" },
+      { title: "Feedback · FinVista" },
       { name: "description", content: "Share feedback and suggestions." },
     ],
   }),

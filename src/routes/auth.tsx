@@ -8,8 +8,8 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in · FinTrack" },
-      { name: "description", content: "Sign in or create your FinTrack account." },
+      { title: "Sign in · FinVista" },
+      { name: "description", content: "Sign in or create your FinVista account." },
     ],
   }),
   component: AuthPage,
@@ -25,8 +25,8 @@ function AuthPage() {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(20,216,207,0.18),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(15,183,176,0.12),transparent_60%)]" />
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-6 py-12">
         <Link to="/" className="mb-8 flex items-center gap-3">
-          <img src={logo} alt="FinTrack" className="h-10 w-10 rounded-lg" />
-          <span className="font-display text-xl font-bold">FinTrack</span>
+          <img src={logo} alt="FinVista" className="h-10 w-10 rounded-lg" />
+          <span className="font-display text-xl font-bold">FinVista</span>
         </Link>
 
         <div className="w-full rounded-3xl border border-mint/15 bg-card/60 p-8 backdrop-blur-xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)]">

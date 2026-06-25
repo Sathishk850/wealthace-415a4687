@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({
     meta: [
-      { title: "Settings · FinTrack" },
+      { title: "Settings · FinVista" },
       { name: "description", content: "Manage your account and preferences." },
     ],
   }),

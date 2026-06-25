@@ -156,10 +156,10 @@ function SubLink({
 function Brand() {
   return (
     <Link to="/" className="flex items-center gap-2.5">
-      <img src={logo} alt="FinTrack" width={36} height={36} className="h-9 w-9 rounded-lg" />
+      <img src={logo} alt="FinVista" width={36} height={36} className="h-9 w-9 rounded-lg" />
       <div className="flex flex-col leading-tight">
         <span className="font-display text-base font-bold tracking-tight text-foreground">
-          FinTrack
+          FinVista
         </span>
         <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-mint/80">
           Know your worth

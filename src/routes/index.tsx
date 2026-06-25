@@ -15,11 +15,11 @@ const SPLASH_KEY = "finvista_splash_seen";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FinTrack — Know your worth" },
+      { title: "FinVista — Know your worth" },
       {
         name: "description",
         content:
-          "FinTrack is your all-in-one personal finance dashboard — net worth, cashflow, investments and goals in one place.",
+          "FinVista is your all-in-one personal finance dashboard — net worth, cashflow, investments and goals in one place.",
       },
     ],
   }),
@@ -65,13 +65,13 @@ function Splash({ leaving }: { leaving: boolean }) {
           <div className="absolute inset-0 -m-4 animate-ping rounded-3xl bg-mint/20" />
           <img
             src={logo}
-            alt="FinTrack"
+            alt="FinVista"
             className="relative h-20 w-20 rounded-2xl shadow-[0_0_40px_-4px_rgba(20,216,207,0.6)]"
           />
         </div>
         <div className="text-center">
           <div className="font-display text-3xl font-bold tracking-tight text-foreground">
-            FinTrack
+            FinVista
           </div>
           <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-mint">
             Know your worth
@@ -96,8 +96,8 @@ function Landing() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={logo} alt="FinTrack" className="h-9 w-9 rounded-lg" />
-            <span className="font-display text-base font-bold">FinTrack</span>
+            <img src={logo} alt="FinVista" className="h-9 w-9 rounded-lg" />
+            <span className="font-display text-base font-bold">FinVista</span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             <a href="#features" className="hover:text-foreground">Features</a>
@@ -205,7 +205,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} FinTrack · Know your worth
+        © {new Date().getFullYear()} FinVista · Know your worth
       </footer>
     </div>
   );
