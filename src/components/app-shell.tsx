@@ -1,4 +1,5 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Wallet,
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/finvista-logo.png";
+import { cn } from "@/lib/utils";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
@@ -98,83 +100,55 @@ const MOBILE_TABS: NavItem[] = [
 
 function NavLink({
   item,
-  variant = "sub",
   onNavigate,
+  active,
 }: {
   item: NavItem;
-  variant?: "top" | "sub";
   onNavigate?: () => void;
+  active: boolean;
 }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const active = item.to === "/" ? pathname === "/" : pathname === item.to;
   const Icon = item.icon;
   return (
     <Link
       to={item.to}
       onClick={onNavigate}
-      className={[
-        "group flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all",
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
         active
-          ? variant === "top"
-            ? "nav-active text-foreground"
-            : "submenu-active text-foreground"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground rounded-xl",
-      ].join(" ")}
+          ? "bg-gradient-to-r from-mint/25 to-mint/5 text-mint shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_30%,transparent)]"
+          : "text-sidebar-foreground/85 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+      )}
     >
-      <Icon className={["h-4 w-4 shrink-0", active ? "text-mint" : "text-muted-foreground"].join(" ")} />
-      <span className="truncate">{item.label}</span>
+      <Icon className="size-[18px] shrink-0" />
+      <span>{item.label}</span>
     </Link>
   );
 }
 
-
-
-function NavGroupItem({
-  group,
-  expanded,
-  onToggle,
+function SubLink({
+  item,
+  active,
   onNavigate,
 }: {
-  group: NavGroup;
-  expanded: boolean;
-  onToggle: () => void;
+  item: NavItem;
+  active: boolean;
   onNavigate?: () => void;
 }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const within = pathname.startsWith(group.to);
-  const Icon = group.icon;
-  const isExpanded = expanded || within;
+  const Icon = item.icon;
   return (
-    <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={[
-          "flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold transition-all",
-          within
-            ? "nav-active"
-            : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground rounded-xl",
-        ].join(" ")}
-        aria-expanded={isExpanded}
-      >
-        <Icon className={["h-5 w-5 shrink-0", within ? "text-mint" : ""].join(" ")} />
-        <span className="flex-1 truncate text-left">{group.label}</span>
-        <ChevronDown
-          className={[
-            "h-4 w-4 shrink-0 transition-transform",
-            isExpanded ? "rotate-180" : "",
-            within ? "text-mint" : "text-muted-foreground",
-          ].join(" ")}
-        />
-      </button>
-      {isExpanded && (
-        <div className="relative mt-1 ml-5 flex flex-col gap-0.5 border-l border-sidebar-border pl-3">
-          {group.children.map((c) => (
-            <NavLink key={c.to} item={c} onNavigate={onNavigate} />
-          ))}
-        </div>
+    <Link
+      to={item.to}
+      onClick={onNavigate}
+      className={cn(
+        "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-all",
+        active
+          ? "bg-gradient-to-r from-mint/30 to-mint/10 text-foreground"
+          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
       )}
-    </div>
+    >
+      <Icon className="size-3.5 shrink-0 opacity-80" />
+      <span>{item.label}</span>
+    </Link>
   );
 }
 
@@ -197,43 +171,85 @@ function Brand() {
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const activeGroup = NAV_GROUPS.find((g) => pathname.startsWith(g.to))?.to ?? null;
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(activeGroup);
+  const isActive = (u: string) =>
+    u === "/" ? pathname === "/" : pathname === u || pathname.startsWith(u + "/");
+  const activeGroup =
+    NAV_GROUPS.find((g) => g.children.some((c) => isActive(c.to)))?.to ?? null;
+  const [openKey, setOpenKey] = useState<string | null>(activeGroup);
 
-  // Auto-expand the group matching the current route when navigation changes.
   useEffect(() => {
-    setExpandedGroup((current) => {
-      if (activeGroup) return activeGroup;
-      return current;
-    });
+    if (activeGroup) setOpenKey(activeGroup);
   }, [activeGroup]);
 
   return (
-    <aside className="flex h-full w-64 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-4 py-5">
-      <Brand />
-      <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
-        <NavLink item={DASHBOARD} variant="top" onNavigate={onNavigate} />
-        {NAV_GROUPS.map((g) => (
-          <NavGroupItem
-            key={g.to}
-            group={g}
-            expanded={expandedGroup === g.to}
-            onToggle={() =>
-              setExpandedGroup((current) => (current === g.to ? null : g.to))
-            }
-            onNavigate={onNavigate}
-          />
-        ))}
+    <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
+      <div className="border-b border-sidebar-border px-4 py-4">
+        <Brand />
+      </div>
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3">
+        <div className="mb-3 border-b border-sidebar-border pb-3">
+          <NavLink item={DASHBOARD} active={pathname === "/"} onNavigate={onNavigate} />
+        </div>
+        {NAV_GROUPS.map((g) => {
+          const open = openKey === g.to;
+          const within = g.children.some((c) => isActive(c.to));
+          const Icon = g.icon;
+          return (
+            <div key={g.to} className="select-none">
+              <button
+                type="button"
+                onClick={() => setOpenKey(open ? null : g.to)}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                  "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                  (open || within) && "bg-sidebar-accent text-sidebar-foreground",
+                )}
+                aria-expanded={open}
+              >
+                <Icon className={cn("size-[18px] shrink-0", within && "text-mint")} />
+                <span className="flex-1 text-left">{g.label}</span>
+                <motion.span
+                  animate={{ rotate: open ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="size-4 opacity-70" />
+                </motion.span>
+              </button>
+              <AnimatePresence initial={false}>
+                {open && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-1 ml-3 space-y-0.5 border-l border-sidebar-border py-1 pl-3">
+                      {g.children.map((c) => (
+                        <SubLink
+                          key={c.to}
+                          item={c}
+                          active={isActive(c.to)}
+                          onNavigate={onNavigate}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </nav>
-      <div className="mt-auto flex flex-col gap-1 border-t border-sidebar-border pt-3">
+      <div className="flex flex-col gap-1 border-t border-sidebar-border px-2 py-2">
         <NavLink
           item={{ to: "/feedback", label: "Feedback", icon: MessageSquare }}
-          variant="top"
+          active={isActive("/feedback")}
           onNavigate={onNavigate}
         />
         <NavLink
           item={{ to: "/settings", label: "Settings", icon: SettingsIcon }}
-          variant="top"
+          active={isActive("/settings")}
           onNavigate={onNavigate}
         />
       </div>
