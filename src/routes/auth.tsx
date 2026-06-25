@@ -1,6 +1,8 @@
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import logo from "@/assets/finvista-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -19,14 +21,66 @@ function AuthPage() {
   const { mode: initialMode } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-  const handleMockSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage({ type: "success", text: "Mock validation passed. Real authentication is not yet connected." });
+    if (submitting) return;
+    setMessage(null);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+    const fullName = String(formData.get("fullName") ?? "").trim();
+
+    setSubmitting(true);
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: fullName ? { full_name: fullName } : undefined,
+          },
+        });
+        if (error) {
+          setMessage({ type: "error", text: error.message });
+          return;
+        }
+        if (data.session) {
+          navigate({ to: "/dashboard" });
+        } else {
+          setMessage({
+            type: "success",
+            text: "Check your email to confirm your account, then sign in.",
+          });
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          setMessage({ type: "error", text: error.message });
+          return;
+        }
+        navigate({ to: "/dashboard" });
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleMockGoogle = () => {
-    setMessage({ type: "success", text: "Mock Google validation passed. Real OAuth is not yet connected." });
+  const handleGoogle = async () => {
+    setMessage(null);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      setMessage({ type: "error", text: result.error.message ?? "Google sign-in failed." });
+      return;
+    }
+    if (result.redirected) return;
+    navigate({ to: "/dashboard" });
   };
 
   return (
@@ -96,19 +150,20 @@ function AuthPage() {
 
             <form
               className="mt-6 space-y-4"
-              onSubmit={handleMockSubmit}
+              onSubmit={handleSubmit}
             >
               {mode === "signup" && (
-                <Field label="Full name" type="text" placeholder="Ada Lovelace" />
+                <Field label="Full name" name="fullName" type="text" placeholder="Ada Lovelace" />
               )}
-              <Field label="Email" type="email" placeholder="you@example.com" />
-              <Field label="Password" type="password" placeholder="••••••••" />
+              <Field label="Email" name="email" type="email" placeholder="you@example.com" />
+              <Field label="Password" name="password" type="password" placeholder="••••••••" />
 
               <button
                 type="submit"
-                className="mt-2 w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90"
+                disabled={submitting}
+                className="mt-2 w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90 disabled:opacity-60"
               >
-                {mode === "signin" ? "Sign in" : "Create account"}
+                {submitting ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
               </button>
             </form>
 
@@ -132,7 +187,7 @@ function AuthPage() {
 
             <button
               type="button"
-              onClick={handleMockGoogle}
+              onClick={handleGoogle}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/40 py-3 text-sm font-medium text-foreground transition hover:bg-background/70"
             >
               <GoogleIcon /> Continue with Google
@@ -161,10 +216,12 @@ function GoogleIcon() {
 
 function Field({
   label,
+  name,
   type,
   placeholder,
 }: {
   label: string;
+  name: string;
   type: string;
   placeholder: string;
 }) {
@@ -172,6 +229,7 @@ function Field({
     <label className="block">
       <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}</span>
       <input
+        name={name}
         type={type}
         placeholder={placeholder}
         required
