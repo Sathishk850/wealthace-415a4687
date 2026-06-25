@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import logo from "@/assets/finvista-logo.png";
 
