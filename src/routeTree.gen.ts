@@ -9,27 +9,246 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppWealthRouteImport } from './routes/_app.wealth'
+import { Route as AppToolsRouteImport } from './routes/_app.tools'
+import { Route as AppPlannerRouteImport } from './routes/_app.planner'
+import { Route as AppMoneyRouteImport } from './routes/_app.money'
+import { Route as AppPlannerFireRouteImport } from './routes/_app.planner.fire'
+import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
+import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
 
-export interface FileRoutesByFullPath {}
-export interface FileRoutesByTo {}
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWealthRoute = AppWealthRouteImport.update({
+  id: '/wealth',
+  path: '/wealth',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppToolsRoute = AppToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlannerRoute = AppPlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMoneyRoute = AppMoneyRouteImport.update({
+  id: '/money',
+  path: '/money',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlannerFireRoute = AppPlannerFireRouteImport.update({
+  id: '/fire',
+  path: '/fire',
+  getParentRoute: () => AppPlannerRoute,
+} as any)
+const AppMoneyTransactionsRoute = AppMoneyTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AppMoneyRoute,
+} as any)
+const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
+  id: '/dashboard/networth',
+  path: '/dashboard/networth',
+  getParentRoute: () => AppRoute,
+} as any)
+
+export interface FileRoutesByFullPath {
+  '/': typeof AppIndexRoute
+  '/money': typeof AppMoneyRouteWithChildren
+  '/planner': typeof AppPlannerRouteWithChildren
+  '/tools': typeof AppToolsRoute
+  '/wealth': typeof AppWealthRoute
+  '/dashboard/networth': typeof AppDashboardNetworthRoute
+  '/money/transactions': typeof AppMoneyTransactionsRoute
+  '/planner/fire': typeof AppPlannerFireRoute
+}
+export interface FileRoutesByTo {
+  '/money': typeof AppMoneyRouteWithChildren
+  '/planner': typeof AppPlannerRouteWithChildren
+  '/tools': typeof AppToolsRoute
+  '/wealth': typeof AppWealthRoute
+  '/': typeof AppIndexRoute
+  '/dashboard/networth': typeof AppDashboardNetworthRoute
+  '/money/transactions': typeof AppMoneyTransactionsRoute
+  '/planner/fire': typeof AppPlannerFireRoute
+}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_app': typeof AppRouteWithChildren
+  '/_app/money': typeof AppMoneyRouteWithChildren
+  '/_app/planner': typeof AppPlannerRouteWithChildren
+  '/_app/tools': typeof AppToolsRoute
+  '/_app/wealth': typeof AppWealthRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/dashboard/networth': typeof AppDashboardNetworthRoute
+  '/_app/money/transactions': typeof AppMoneyTransactionsRoute
+  '/_app/planner/fire': typeof AppPlannerFireRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: never
+  fullPaths:
+    | '/'
+    | '/money'
+    | '/planner'
+    | '/tools'
+    | '/wealth'
+    | '/dashboard/networth'
+    | '/money/transactions'
+    | '/planner/fire'
   fileRoutesByTo: FileRoutesByTo
-  to: never
-  id: '__root__'
+  to:
+    | '/money'
+    | '/planner'
+    | '/tools'
+    | '/wealth'
+    | '/'
+    | '/dashboard/networth'
+    | '/money/transactions'
+    | '/planner/fire'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/_app/money'
+    | '/_app/planner'
+    | '/_app/tools'
+    | '/_app/wealth'
+    | '/_app/'
+    | '/_app/dashboard/networth'
+    | '/_app/money/transactions'
+    | '/_app/planner/fire'
   fileRoutesById: FileRoutesById
 }
-export interface RootRouteChildren {}
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {}
+export interface RootRouteChildren {
+  AppRoute: typeof AppRouteWithChildren
 }
 
-const rootRouteChildren: RootRouteChildren = {}
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/wealth': {
+      id: '/_app/wealth'
+      path: '/wealth'
+      fullPath: '/wealth'
+      preLoaderRoute: typeof AppWealthRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tools': {
+      id: '/_app/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof AppToolsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/planner': {
+      id: '/_app/planner'
+      path: '/planner'
+      fullPath: '/planner'
+      preLoaderRoute: typeof AppPlannerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/money': {
+      id: '/_app/money'
+      path: '/money'
+      fullPath: '/money'
+      preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/planner/fire': {
+      id: '/_app/planner/fire'
+      path: '/fire'
+      fullPath: '/planner/fire'
+      preLoaderRoute: typeof AppPlannerFireRouteImport
+      parentRoute: typeof AppPlannerRoute
+    }
+    '/_app/money/transactions': {
+      id: '/_app/money/transactions'
+      path: '/transactions'
+      fullPath: '/money/transactions'
+      preLoaderRoute: typeof AppMoneyTransactionsRouteImport
+      parentRoute: typeof AppMoneyRoute
+    }
+    '/_app/dashboard/networth': {
+      id: '/_app/dashboard/networth'
+      path: '/dashboard/networth'
+      fullPath: '/dashboard/networth'
+      preLoaderRoute: typeof AppDashboardNetworthRouteImport
+      parentRoute: typeof AppRoute
+    }
+  }
+}
+
+interface AppMoneyRouteChildren {
+  AppMoneyTransactionsRoute: typeof AppMoneyTransactionsRoute
+}
+
+const AppMoneyRouteChildren: AppMoneyRouteChildren = {
+  AppMoneyTransactionsRoute: AppMoneyTransactionsRoute,
+}
+
+const AppMoneyRouteWithChildren = AppMoneyRoute._addFileChildren(
+  AppMoneyRouteChildren,
+)
+
+interface AppPlannerRouteChildren {
+  AppPlannerFireRoute: typeof AppPlannerFireRoute
+}
+
+const AppPlannerRouteChildren: AppPlannerRouteChildren = {
+  AppPlannerFireRoute: AppPlannerFireRoute,
+}
+
+const AppPlannerRouteWithChildren = AppPlannerRoute._addFileChildren(
+  AppPlannerRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppMoneyRoute: typeof AppMoneyRouteWithChildren
+  AppPlannerRoute: typeof AppPlannerRouteWithChildren
+  AppToolsRoute: typeof AppToolsRoute
+  AppWealthRoute: typeof AppWealthRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppDashboardNetworthRoute: typeof AppDashboardNetworthRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppMoneyRoute: AppMoneyRouteWithChildren,
+  AppPlannerRoute: AppPlannerRouteWithChildren,
+  AppToolsRoute: AppToolsRoute,
+  AppWealthRoute: AppWealthRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppDashboardNetworthRoute: AppDashboardNetworthRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  AppRoute: AppRouteWithChildren,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
