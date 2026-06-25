@@ -1,9 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Wallet, LineChart, PiggyBank, Sparkles, Shield, ArrowRight } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
-
-const SPLASH_KEY = "finvista_splash_seen";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,23 +21,30 @@ export const Route = createFileRoute("/")({
 function HomeRoute() {
   const [showSplash, setShowSplash] = useState(true);
   const [splashLeaving, setSplashLeaving] = useState(false);
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem(SPLASH_KEY)) {
-      setShowSplash(false);
-      return;
-    }
-    sessionStorage.setItem(SPLASH_KEY, "1");
-    const leave = setTimeout(() => setSplashLeaving(true), 1600);
-    const done = setTimeout(() => setShowSplash(false), 2000);
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session);
+    });
+    const leave = setTimeout(() => setSplashLeaving(true), 2000);
+    const done = setTimeout(() => setShowSplash(false), 2500);
     return () => {
       clearTimeout(leave);
       clearTimeout(done);
     };
   }, []);
 
+  useEffect(() => {
+    if (!showSplash && authed) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [showSplash, authed, navigate]);
+
   if (showSplash) return <Splash leaving={splashLeaving} />;
+  if (authed) return <Splash leaving={false} />;
   return <Landing />;
 }
 
