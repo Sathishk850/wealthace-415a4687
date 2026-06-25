@@ -94,7 +94,15 @@ const MOBILE_TABS: NavItem[] = [
   { to: "/tools", label: "Tools", icon: Wrench },
 ];
 
-function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
+function NavLink({
+  item,
+  variant = "sub",
+  onNavigate,
+}: {
+  item: NavItem;
+  variant?: "top" | "sub";
+  onNavigate?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const active = item.to === "/" ? pathname === "/" : pathname === item.to;
   const Icon = item.icon;
@@ -105,7 +113,9 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
       className={[
         "group flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all",
         active
-          ? "submenu-active text-foreground"
+          ? variant === "top"
+            ? "nav-active text-foreground"
+            : "submenu-active text-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground rounded-xl",
       ].join(" ")}
     >
@@ -114,6 +124,7 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
     </Link>
   );
 }
+
 
 
 function NavGroupItem({
