@@ -37,7 +37,7 @@ function HomeRoute() {
       return;
     }
     sessionStorage.setItem(SPLASH_KEY, "1");
-    const leave = setTimeout(() => setSplashLeaving(true), 2400);
+    const leave = setTimeout(() => setSplashLeaving(true), 2500);
     const done = setTimeout(() => setShowSplash(false), 3000);
     return () => {
       clearTimeout(leave);
