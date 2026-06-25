@@ -94,7 +94,15 @@ const MOBILE_TABS: NavItem[] = [
   { to: "/tools", label: "Tools", icon: Wrench },
 ];
 
-function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
+function NavLink({
+  item,
+  variant = "sub",
+  onNavigate,
+}: {
+  item: NavItem;
+  variant?: "top" | "sub";
+  onNavigate?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const active = item.to === "/" ? pathname === "/" : pathname === item.to;
   const Icon = item.icon;
@@ -103,10 +111,12 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
       to={item.to}
       onClick={onNavigate}
       className={[
-        "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
+        "group flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all",
         active
-          ? "bg-sidebar-accent text-foreground shadow-[inset_0_0_0_1px_rgba(20,216,207,0.35)]"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+          ? variant === "top"
+            ? "nav-active text-foreground"
+            : "submenu-active text-foreground"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground rounded-xl",
       ].join(" ")}
     >
       <Icon className={["h-4 w-4 shrink-0", active ? "text-mint" : "text-muted-foreground"].join(" ")} />
@@ -114,6 +124,8 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
     </Link>
   );
 }
+
+
 
 function NavGroupItem({
   group,
@@ -136,10 +148,10 @@ function NavGroupItem({
         type="button"
         onClick={onToggle}
         className={[
-          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+          "flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold transition-all",
           within
-            ? "bg-sidebar-accent text-mint shadow-[inset_0_0_0_1px_rgba(20,216,207,0.45)]"
-            : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+            ? "nav-active"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground rounded-xl",
         ].join(" ")}
         aria-expanded={isExpanded}
       >
@@ -198,7 +210,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <aside className="flex h-full w-64 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-4 py-5">
       <Brand />
       <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
-        <NavLink item={DASHBOARD} onNavigate={onNavigate} />
+        <NavLink item={DASHBOARD} variant="top" onNavigate={onNavigate} />
         {NAV_GROUPS.map((g) => (
           <NavGroupItem
             key={g.to}
