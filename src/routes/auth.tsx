@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import logo from "@/assets/finvista-logo.png";
 
@@ -18,7 +18,16 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { mode: initialMode } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
-  const navigate = useNavigate();
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleMockSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setMessage({ type: "success", text: "Mock validation passed. Real authentication is not yet connected." });
+  };
+
+  const handleMockGoogle = () => {
+    setMessage({ type: "success", text: "Mock Google validation passed. Real OAuth is not yet connected." });
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
@@ -87,10 +96,7 @@ function AuthPage() {
 
             <form
               className="mt-6 space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                navigate({ to: "/dashboard" });
-              }}
+              onSubmit={handleMockSubmit}
             >
               {mode === "signup" && (
                 <Field label="Full name" type="text" placeholder="Ada Lovelace" />
@@ -106,6 +112,18 @@ function AuthPage() {
               </button>
             </form>
 
+            {message && (
+              <div
+                className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                  message.type === "success"
+                    ? "border-mint/30 bg-mint/10 text-mint"
+                    : "border-red-500/30 bg-red-500/10 text-red-400"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
             <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-border" />
               or
@@ -114,7 +132,7 @@ function AuthPage() {
 
             <button
               type="button"
-              onClick={() => navigate({ to: "/dashboard" })}
+              onClick={handleMockGoogle}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/40 py-3 text-sm font-medium text-foreground transition hover:bg-background/70"
             >
               <GoogleIcon /> Continue with Google
