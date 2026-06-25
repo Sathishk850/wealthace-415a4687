@@ -1,4 +1,4 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -12,6 +12,7 @@ import {
   PanelLeft,
   Sparkles,
   ChevronDown,
+  LogOut,
   Building2,
   Banknote,
   TrendingUp,
@@ -34,6 +35,7 @@ import {
 import { useState, useEffect } from "react";
 import logo from "@/assets/finvista-logo.png";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
@@ -260,11 +262,18 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 function TopBar() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const navigate = useNavigate();
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
   }, [theme]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/", replace: true });
+  };
+
   return (
     <header className="glass-card sticky top-0 z-30 flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
       <div className="md:hidden">
@@ -297,20 +306,13 @@ function TopBar() {
         >
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
-        <Link
-          to="/auth"
-          search={{ mode: "signin" }}
-          className="ml-1 rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/90 transition hover:text-foreground"
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="ml-1 inline-flex items-center gap-2 rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_rgba(20,216,207,0.45)] transition hover:bg-primary-hover"
         >
-          Sign in
-        </Link>
-        <Link
-          to="/auth"
-          search={{ mode: "signup" }}
-          className="rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_rgba(20,216,207,0.45)] transition hover:bg-primary-hover"
-        >
-          Sign up
-        </Link>
+          <LogOut className="h-4 w-4" /> Sign out
+        </button>
       </div>
     </header>
   );
