@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
     "@fontsource/manrope": "^5.2.8",
     "@fontsource/sora": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
