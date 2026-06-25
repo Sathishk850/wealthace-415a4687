@@ -27,6 +27,8 @@ import {
   CalendarClock,
   FileText,
   Calculator,
+  MessageSquare,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/finvista-logo.png";
@@ -223,14 +225,17 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           />
         ))}
       </nav>
-      <div className="glass-card mt-auto rounded-2xl p-4">
-        <div className="flex items-center gap-2 text-mint">
-          <Sparkles className="h-4 w-4" />
-          <span className="text-xs font-semibold uppercase tracking-wider">AI Insights</span>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Your financial health score improved 4% this month. Tap for details.
-        </p>
+      <div className="mt-auto flex flex-col gap-1 border-t border-sidebar-border pt-3">
+        <NavLink
+          item={{ to: "/feedback", label: "Feedback", icon: MessageSquare }}
+          variant="top"
+          onNavigate={onNavigate}
+        />
+        <NavLink
+          item={{ to: "/settings", label: "Settings", icon: SettingsIcon }}
+          variant="top"
+          onNavigate={onNavigate}
+        />
       </div>
     </aside>
   );
