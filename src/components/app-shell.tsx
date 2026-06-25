@@ -5,9 +5,10 @@ import {
   Coins,
   Wrench,
   Bell,
-  Search,
-  Settings,
-  LogOut,
+  Eye,
+  Sun,
+  Moon,
+  PanelLeft,
   Sparkles,
   ChevronDown,
   Building2,
@@ -27,7 +28,7 @@ import {
   FileText,
   Calculator,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect } from "react";
 import logo from "@/assets/finvista-logo.png";
 
 type IconType = React.ComponentType<{ className?: string }>;
@@ -157,10 +158,10 @@ function NavGroupItem({ group, onNavigate }: { group: NavGroup; onNavigate?: () 
 function Brand() {
   return (
     <Link to="/" className="flex items-center gap-2.5">
-      <img src={logo} alt="FinVista" width={36} height={36} className="h-9 w-9 rounded-lg" />
+      <img src={logo} alt="FinTrack" width={36} height={36} className="h-9 w-9 rounded-lg" />
       <div className="flex flex-col leading-tight">
         <span className="font-display text-base font-bold tracking-tight text-foreground">
-          FinVista
+          FinTrack
         </span>
         <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-mint/80">
           Know your worth
@@ -194,38 +195,52 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function TopBar() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+  }, [theme]);
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-xl md:px-6">
       <div className="md:hidden">
         <Brand />
       </div>
-      <div className="ml-auto flex items-center gap-2">
-        <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            placeholder="Search assets, transactions, goals..."
-            className="h-10 w-72 rounded-xl border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-muted-foreground/70 focus:border-mint/50 focus:outline-none focus:ring-2 focus:ring-mint/30"
-          />
-        </div>
-        <IconButton label="Reminders"><Bell className="h-4 w-4" /></IconButton>
-        <IconButton label="Settings"><Settings className="h-4 w-4" /></IconButton>
-        <div className="ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-mint to-accent text-xs font-bold text-mint-foreground">
-          RS
-        </div>
-        <IconButton label="Sign out"><LogOut className="h-4 w-4" /></IconButton>
+      <button
+        aria-label="Toggle sidebar"
+        className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground md:grid"
+      >
+        <PanelLeft className="h-4 w-4" />
+      </button>
+      <div className="ml-auto flex items-center gap-1.5">
+        <button
+          aria-label="Notifications"
+          className="relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
+        >
+          <Bell className="h-4 w-4" />
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-mint" />
+        </button>
+        <button
+          aria-label="Preview"
+          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
+        >
+          <Eye className="h-4 w-4" />
+        </button>
+        <button
+          aria-label="Toggle theme"
+          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+        <button className="ml-1 rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/90 transition hover:text-foreground">
+          Sign in
+        </button>
+        <button className="rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_color-mix(in_oklab,var(--mint)_50%,transparent)] transition hover:brightness-110">
+          Sign up
+        </button>
       </div>
     </header>
-  );
-}
-
-function IconButton({ children, label }: { children: ReactNode; label: string }) {
-  return (
-    <button
-      aria-label={label}
-      className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-surface text-muted-foreground transition hover:border-mint/40 hover:text-foreground"
-    >
-      {children}
-    </button>
   );
 }
 
