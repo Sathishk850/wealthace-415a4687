@@ -47,7 +47,26 @@ function AuthPage() {
           },
         });
         if (error) {
-          setMessage({ type: "error", text: error.message });
+          const msg = error.message.toLowerCase();
+          if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
+            setMessage({
+              type: "error",
+              text: "An account with this email already exists. Sign in below, or use Continue with Google if you signed up with Google.",
+            });
+            setMode("signin");
+          } else {
+            setMessage({ type: "error", text: error.message });
+          }
+          return;
+        }
+        // Supabase returns a user with empty identities[] when the email already exists
+        // (and confirmations are on). Treat that as "account exists, likely via OAuth".
+        if (data.user && (data.user.identities?.length ?? 0) === 0) {
+          setMessage({
+            type: "error",
+            text: "This email is already registered. If you originally signed up with Google, use Continue with Google below.",
+          });
+          setMode("signin");
           return;
         }
         if (data.session) {
@@ -61,7 +80,15 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-          setMessage({ type: "error", text: error.message });
+          const code = (error as { code?: string }).code ?? "";
+          if (code === "invalid_credentials" || /invalid login/i.test(error.message)) {
+            setMessage({
+              type: "error",
+              text: "Invalid email or password. If you originally signed up with Google, use Continue with Google below.",
+            });
+          } else {
+            setMessage({ type: "error", text: error.message });
+          }
           return;
         }
         navigate({ to: "/dashboard" });
