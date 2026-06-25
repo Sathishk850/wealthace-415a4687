@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Wallet,
   Coins,
-  Target,
   Wrench,
   Bell,
   Search,
