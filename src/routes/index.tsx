@@ -37,7 +37,7 @@ function HomeRoute() {
       return;
     }
     sessionStorage.setItem(SPLASH_KEY, "1");
-    const leave = setTimeout(() => setSplashLeaving(true), 2400);
+    const leave = setTimeout(() => setSplashLeaving(true), 2500);
     const done = setTimeout(() => setShowSplash(false), 3000);
     return () => {
       clearTimeout(leave);
@@ -121,14 +121,14 @@ function Splash({ leaving }: { leaving: boolean }) {
         }
         .splash-bar {
           width: 100%;
-          animation: splashFill 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          animation: splashFill 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         @keyframes splashWord {
           0%, 100% { opacity: 0.45; color: rgba(138, 160, 179, 1); }
           50% { opacity: 1; color: rgba(20, 216, 207, 1); }
         }
         .splash-word {
-          animation: splashWord 2.4s ease-in-out infinite;
+          animation: splashWord 2.5s ease-in-out infinite;
         }
       `}</style>
     </div>
