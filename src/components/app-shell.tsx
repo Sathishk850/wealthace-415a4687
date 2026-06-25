@@ -103,10 +103,10 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
       to={item.to}
       onClick={onNavigate}
       className={[
-        "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
+        "group flex items-center gap-3 px-3 py-2 text-sm font-medium transition-all",
         active
-          ? "bg-sidebar-accent text-foreground shadow-[inset_0_0_0_1px_rgba(20,216,207,0.35)]"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+          ? "submenu-active text-foreground"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground rounded-xl",
       ].join(" ")}
     >
       <Icon className={["h-4 w-4 shrink-0", active ? "text-mint" : "text-muted-foreground"].join(" ")} />
@@ -114,6 +114,7 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
     </Link>
   );
 }
+
 
 function NavGroupItem({
   group,
