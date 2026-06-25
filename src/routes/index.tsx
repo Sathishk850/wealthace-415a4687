@@ -27,28 +27,26 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeRoute() {
-  const [showSplash, setShowSplash] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const [splashLeaving, setSplashLeaving] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem(SPLASH_KEY)) return;
-    setShowSplash(true);
+    if (sessionStorage.getItem(SPLASH_KEY)) {
+      setShowSplash(false);
+      return;
+    }
     sessionStorage.setItem(SPLASH_KEY, "1");
-    const leave = setTimeout(() => setSplashLeaving(true), 2200);
-    const done = setTimeout(() => setShowSplash(false), 2800);
+    const leave = setTimeout(() => setSplashLeaving(true), 2400);
+    const done = setTimeout(() => setShowSplash(false), 3000);
     return () => {
       clearTimeout(leave);
       clearTimeout(done);
     };
   }, []);
 
-  return (
-    <>
-      {showSplash && <Splash leaving={splashLeaving} />}
-      <Landing />
-    </>
-  );
+  if (showSplash) return <Splash leaving={splashLeaving} />;
+  return <Landing />;
 }
 
 function Splash({ leaving }: { leaving: boolean }) {
@@ -161,7 +159,7 @@ function Landing() {
       </section>
 
       {/* Features */}
-      <section id="features" className="mx-auto max-w-6xl px-6 py-16">
+      <section id="features" className="mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { icon: Wallet, title: "Unified net worth", desc: "All assets and liabilities, one number you trust." },
@@ -180,6 +178,34 @@ function Landing() {
               </div>
               <h3 className="mt-4 font-display text-base font-semibold">{f.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how" className="mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
+        <div className="mb-10 text-center">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">
+            How it works
+          </span>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
+            Three steps to financial clarity
+          </h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { n: "01", title: "Add your accounts", desc: "Connect or manually add assets, liabilities and investments in minutes." },
+            { n: "02", title: "See your net worth", desc: "Get a unified, beautiful view of where you stand right now." },
+            { n: "03", title: "Plan & grow", desc: "Set goals, track cashflow, and let AI nudge you toward them." },
+          ].map((s) => (
+            <div
+              key={s.n}
+              className="relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur"
+            >
+              <div className="font-display text-4xl font-extrabold text-mint/40">{s.n}</div>
+              <h3 className="mt-2 font-display text-base font-semibold">{s.title}</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">{s.desc}</p>
             </div>
           ))}
         </div>
