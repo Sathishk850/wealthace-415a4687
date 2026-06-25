@@ -77,14 +77,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FinTrack — Personal Finance Dashboard" },
-      { name: "description", content: "Track your net worth, cashflow, investments, and financial goals with FinTrack." },
-      { name: "author", content: "FinTrack" },
-      { property: "og:title", content: "FinTrack — Personal Finance Dashboard" },
-      { property: "og:description", content: "Track your net worth, cashflow, investments, and financial goals with FinTrack." },
+      { title: "FinVista — Personal Finance Dashboard" },
+      { name: "description", content: "Track your net worth, cashflow, investments, and financial goals with FinVista." },
+      { name: "author", content: "FinVista" },
+      { property: "og:title", content: "FinVista — Personal Finance Dashboard" },
+      { property: "og:description", content: "Track your net worth, cashflow, investments, and financial goals with FinVista." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@FinTrack" },
+      { name: "twitter:site", content: "@FinVista" },
     ],
     links: [
       {
