@@ -15,6 +15,7 @@ import { Route as AppWealthRouteImport } from './routes/_app.wealth'
 import { Route as AppToolsRouteImport } from './routes/_app.tools'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
+import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppPlannerFireRouteImport } from './routes/_app.planner.fire'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
@@ -48,6 +49,11 @@ const AppMoneyRoute = AppMoneyRouteImport.update({
   path: '/money',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFeedbackRoute = AppFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPlannerFireRoute = AppPlannerFireRouteImport.update({
   id: '/fire',
   path: '/fire',
@@ -66,6 +72,7 @@ const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/feedback': typeof AppFeedbackRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/planner': typeof AppPlannerRouteWithChildren
   '/tools': typeof AppToolsRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/planner/fire': typeof AppPlannerFireRoute
 }
 export interface FileRoutesByTo {
+  '/feedback': typeof AppFeedbackRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/planner': typeof AppPlannerRouteWithChildren
   '/tools': typeof AppToolsRoute
@@ -87,6 +95,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/_app/feedback': typeof AppFeedbackRoute
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/planner': typeof AppPlannerRouteWithChildren
   '/_app/tools': typeof AppToolsRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/feedback'
     | '/money'
     | '/planner'
     | '/tools'
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/planner/fire'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/feedback'
     | '/money'
     | '/planner'
     | '/tools'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/_app/feedback'
     | '/_app/money'
     | '/_app/planner'
     | '/_app/tools'
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMoneyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/feedback': {
+      id: '/_app/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AppFeedbackRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/planner/fire': {
       id: '/_app/planner/fire'
       path: '/fire'
@@ -227,6 +246,7 @@ const AppPlannerRouteWithChildren = AppPlannerRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppFeedbackRoute: typeof AppFeedbackRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppPlannerRoute: typeof AppPlannerRouteWithChildren
   AppToolsRoute: typeof AppToolsRoute
@@ -236,6 +256,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppFeedbackRoute: AppFeedbackRoute,
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppPlannerRoute: AppPlannerRouteWithChildren,
   AppToolsRoute: AppToolsRoute,
