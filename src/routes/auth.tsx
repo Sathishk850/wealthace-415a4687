@@ -18,7 +18,16 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { mode: initialMode } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
-  const navigate = useNavigate();
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleMockSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setMessage({ type: "success", text: "Mock validation passed. Real authentication is not yet connected." });
+  };
+
+  const handleMockGoogle = () => {
+    setMessage({ type: "success", text: "Mock Google validation passed. Real OAuth is not yet connected." });
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
