@@ -10,50 +10,148 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  ChevronDown,
+  Building2,
+  Banknote,
+  TrendingUp,
+  Shield,
+  Landmark,
+  Users,
+  LineChart,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  ArrowLeftRight,
+  Target as TargetIcon,
+  PiggyBank,
+  Flame,
+  CalendarClock,
+  FileText,
+  Calculator,
 } from "lucide-react";
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import logo from "@/assets/finvista-logo.png";
 
-type NavItem = {
-  to: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
+type IconType = React.ComponentType<{ className?: string }>;
+type NavItem = { to: string; label: string; icon: IconType };
+type NavGroup = { to: string; label: string; icon: IconType; children: NavItem[] };
 
-const PRIMARY_NAV: NavItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/wealth", label: "Wealth", icon: Wallet },
-  { to: "/money", label: "Money", icon: Coins },
-  { to: "/planner", label: "Planner", icon: Target },
-  { to: "/tools", label: "Tools", icon: Wrench },
+const DASHBOARD: NavItem = { to: "/", label: "Dashboard", icon: LayoutDashboard };
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    to: "/wealth",
+    label: "Wealth",
+    icon: Wallet,
+    children: [
+      { to: "/wealth/assets", label: "Assets", icon: Building2 },
+      { to: "/wealth/liabilities", label: "Liabilities", icon: Banknote },
+      { to: "/wealth/investments", label: "Investments", icon: TrendingUp },
+      { to: "/wealth/insurance", label: "Insurance", icon: Shield },
+      { to: "/wealth/accounts", label: "Accounts", icon: Landmark },
+      { to: "/wealth/family", label: "Family", icon: Users },
+    ],
+  },
+  {
+    to: "/money",
+    label: "Money",
+    icon: Coins,
+    children: [
+      { to: "/money/cashflow", label: "Cashflow", icon: LineChart },
+      { to: "/money/income", label: "Income", icon: ArrowUpCircle },
+      { to: "/money/expenses", label: "Expenses", icon: ArrowDownCircle },
+      { to: "/money/transactions", label: "Transactions", icon: ArrowLeftRight },
+    ],
+  },
+  {
+    to: "/planner",
+    label: "Planner",
+    icon: CalendarClock,
+    children: [
+      { to: "/planner/goals", label: "Goals", icon: TargetIcon },
+      { to: "/planner/retirement", label: "Retirement", icon: PiggyBank },
+      { to: "/planner/fire", label: "FIRE", icon: Flame },
+      { to: "/planner/budget", label: "Budget", icon: Wallet },
+    ],
+  },
+  {
+    to: "/tools",
+    label: "Tools",
+    icon: Wrench,
+    children: [
+      { to: "/tools/reports", label: "Reports", icon: FileText },
+      { to: "/tools/sip", label: "SIP Calculator", icon: TrendingUp },
+      { to: "/tools/emi", label: "EMI Calculator", icon: Calculator },
+      { to: "/tools/ai-insights", label: "AI Insights", icon: Sparkles },
+    ],
+  },
 ];
 
 const MOBILE_TABS: NavItem[] = [
   { to: "/wealth", label: "Wealth", icon: Wallet },
   { to: "/money", label: "Money", icon: Coins },
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/planner", label: "Planner", icon: Target },
+  { to: "/planner", label: "Planner", icon: CalendarClock },
   { to: "/tools", label: "Tools", icon: Wrench },
 ];
 
 function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+  const active = item.to === "/" ? pathname === "/" : pathname === item.to;
   const Icon = item.icon;
   return (
     <Link
       to={item.to}
       onClick={onNavigate}
       className={[
-        "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+        "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
         active
-          ? "bg-sidebar-accent text-mint shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_30%,transparent)]"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+          ? "bg-sidebar-accent text-foreground shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_25%,transparent)]"
+          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
       ].join(" ")}
     >
-      <Icon className={["h-5 w-5 shrink-0", active ? "text-mint" : ""].join(" ")} />
+      <Icon className={["h-4 w-4 shrink-0", active ? "text-mint" : "text-sidebar-foreground/60"].join(" ")} />
       <span className="truncate">{item.label}</span>
     </Link>
+  );
+}
+
+function NavGroupItem({ group, onNavigate }: { group: NavGroup; onNavigate?: () => void }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const within = pathname.startsWith(group.to);
+  const [open, setOpen] = useState(within);
+  const Icon = group.icon;
+  const expanded = open || within;
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={[
+          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+          within
+            ? "bg-sidebar-accent text-mint shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_30%,transparent)]"
+            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+        ].join(" ")}
+        aria-expanded={expanded}
+      >
+        <Icon className={["h-5 w-5 shrink-0", within ? "text-mint" : ""].join(" ")} />
+        <span className="flex-1 truncate text-left">{group.label}</span>
+        <ChevronDown
+          className={[
+            "h-4 w-4 shrink-0 transition-transform",
+            expanded ? "rotate-180" : "",
+            within ? "text-mint" : "text-sidebar-foreground/50",
+          ].join(" ")}
+        />
+      </button>
+      {expanded && (
+        <div className="relative mt-1 ml-5 flex flex-col gap-0.5 border-l border-sidebar-border/60 pl-3">
+          {group.children.map((c) => (
+            <NavLink key={c.to} item={c} onNavigate={onNavigate} />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -75,11 +173,12 @@ function Brand() {
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <aside className="flex h-full w-64 flex-col gap-6 border-r border-sidebar-border bg-sidebar px-4 py-5">
+    <aside className="flex h-full w-64 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-4 py-5">
       <Brand />
-      <nav className="flex flex-col gap-1">
-        {PRIMARY_NAV.map((item) => (
-          <NavLink key={item.to} item={item} onNavigate={onNavigate} />
+      <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
+        <NavLink item={DASHBOARD} onNavigate={onNavigate} />
+        {NAV_GROUPS.map((g) => (
+          <NavGroupItem key={g.to} group={g} onNavigate={onNavigate} />
         ))}
       </nav>
       <div className="mt-auto rounded-2xl border border-mint/20 bg-gradient-to-br from-mint/10 to-accent/10 p-4">
