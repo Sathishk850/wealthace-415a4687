@@ -297,12 +297,20 @@ function TopBar() {
         >
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
-        <button className="ml-1 rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/90 transition hover:text-foreground">
+        <Link
+          to="/auth"
+          search={{ mode: "signin" }}
+          className="ml-1 rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/90 transition hover:text-foreground"
+        >
           Sign in
-        </button>
-        <button className="rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_rgba(20,216,207,0.45)] transition hover:bg-primary-hover">
+        </Link>
+        <Link
+          to="/auth"
+          search={{ mode: "signup" }}
+          className="rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_rgba(20,216,207,0.45)] transition hover:bg-primary-hover"
+        >
           Sign up
-        </button>
+        </Link>
       </div>
     </header>
   );
