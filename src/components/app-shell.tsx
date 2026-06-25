@@ -115,36 +115,45 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
   );
 }
 
-function NavGroupItem({ group, onNavigate }: { group: NavGroup; onNavigate?: () => void }) {
+function NavGroupItem({
+  group,
+  expanded,
+  onToggle,
+  onNavigate,
+}: {
+  group: NavGroup;
+  expanded: boolean;
+  onToggle: () => void;
+  onNavigate?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const within = pathname.startsWith(group.to);
-  const [open, setOpen] = useState(within);
   const Icon = group.icon;
-  const expanded = open || within;
+  const isExpanded = expanded || within;
   return (
     <div>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         className={[
           "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
           within
             ? "bg-sidebar-accent text-mint shadow-[inset_0_0_0_1px_rgba(20,216,207,0.45)]"
             : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
         ].join(" ")}
-        aria-expanded={expanded}
+        aria-expanded={isExpanded}
       >
         <Icon className={["h-5 w-5 shrink-0", within ? "text-mint" : ""].join(" ")} />
         <span className="flex-1 truncate text-left">{group.label}</span>
         <ChevronDown
           className={[
             "h-4 w-4 shrink-0 transition-transform",
-            expanded ? "rotate-180" : "",
+            isExpanded ? "rotate-180" : "",
             within ? "text-mint" : "text-muted-foreground",
           ].join(" ")}
         />
       </button>
-      {expanded && (
+      {isExpanded && (
         <div className="relative mt-1 ml-5 flex flex-col gap-0.5 border-l border-sidebar-border pl-3">
           {group.children.map((c) => (
             <NavLink key={c.to} item={c} onNavigate={onNavigate} />
@@ -154,6 +163,7 @@ function NavGroupItem({ group, onNavigate }: { group: NavGroup; onNavigate?: () 
     </div>
   );
 }
+
 
 function Brand() {
   return (
