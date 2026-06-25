@@ -132,7 +132,7 @@ function AuthPage() {
 
             <button
               type="button"
-              onClick={() => navigate({ to: "/dashboard" })}
+              onClick={handleMockGoogle}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/40 py-3 text-sm font-medium text-foreground transition hover:bg-background/70"
             >
               <GoogleIcon /> Continue with Google
