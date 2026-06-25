@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -156,7 +157,7 @@ function AuthPage() {
                 <Field label="Full name" name="fullName" type="text" placeholder="Ada Lovelace" />
               )}
               <Field label="Email" name="email" type="email" placeholder="you@example.com" />
-              <Field label="Password" name="password" type="password" placeholder="••••••••" />
+              <PasswordField label="Password" name="password" placeholder="••••••••" />
 
               <button
                 type="submit"
