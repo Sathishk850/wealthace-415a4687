@@ -182,13 +182,33 @@ function Brand() {
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const activeGroup = NAV_GROUPS.find((g) => pathname.startsWith(g.to))?.to ?? null;
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(activeGroup);
+
+  // Auto-expand the group matching the current route when navigation changes.
+  useEffect(() => {
+    setExpandedGroup((current) => {
+      if (activeGroup) return activeGroup;
+      return current;
+    });
+  }, [activeGroup]);
+
   return (
     <aside className="flex h-full w-64 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-4 py-5">
       <Brand />
       <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
         <NavLink item={DASHBOARD} onNavigate={onNavigate} />
         {NAV_GROUPS.map((g) => (
-          <NavGroupItem key={g.to} group={g} onNavigate={onNavigate} />
+          <NavGroupItem
+            key={g.to}
+            group={g}
+            expanded={expandedGroup === g.to}
+            onToggle={() =>
+              setExpandedGroup((current) => (current === g.to ? null : g.to))
+            }
+            onNavigate={onNavigate}
+          />
         ))}
       </nav>
       <div className="glass-card mt-auto rounded-2xl p-4">
@@ -203,6 +223,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     </aside>
   );
 }
+
 
 function TopBar() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
