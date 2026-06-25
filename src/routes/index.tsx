@@ -156,7 +156,7 @@ function Landing() {
               search={{ mode: "signup" }}
               className="rounded-lg bg-mint px-3.5 py-2 text-sm font-semibold text-mint-foreground transition hover:opacity-90"
             >
-              Get Started
+              Sign up
             </Link>
           </div>
         </div>
