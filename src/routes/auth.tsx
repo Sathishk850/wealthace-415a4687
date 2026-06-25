@@ -23,12 +23,14 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [suggestGoogle, setSuggestGoogle] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (submitting) return;
     setMessage(null);
+    setSuggestGoogle(false);
     const form = e.currentTarget;
     const formData = new FormData(form);
     const email = String(formData.get("email") ?? "").trim();
@@ -54,6 +56,7 @@ function AuthPage() {
               text: "An account with this email already exists. Sign in below, or use Continue with Google if you signed up with Google.",
             });
             setMode("signin");
+            setSuggestGoogle(true);
           } else {
             setMessage({ type: "error", text: error.message });
           }
@@ -64,9 +67,10 @@ function AuthPage() {
         if (data.user && (data.user.identities?.length ?? 0) === 0) {
           setMessage({
             type: "error",
-            text: "This email is already registered. If you originally signed up with Google, use Continue with Google below.",
+            text: "This email is already registered with Google sign-in. Please use Continue with Google below.",
           });
           setMode("signin");
+          setSuggestGoogle(true);
           return;
         }
         if (data.session) {
@@ -84,8 +88,9 @@ function AuthPage() {
           if (code === "invalid_credentials" || /invalid login/i.test(error.message)) {
             setMessage({
               type: "error",
-              text: "Invalid email or password. If you originally signed up with Google, use Continue with Google below.",
+              text: "No password account found for this email. If you signed up with Google, use Continue with Google below.",
             });
+            setSuggestGoogle(true);
           } else {
             setMessage({ type: "error", text: error.message });
           }
@@ -100,6 +105,7 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setMessage(null);
+    setSuggestGoogle(false);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
