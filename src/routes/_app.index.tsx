@@ -8,7 +8,7 @@ import {
   CreditCard,
   Activity,
 } from "lucide-react";
-import { PageHeader, Section, StatCard } from "@/components/page-header";
+import { Section, StatCard } from "@/components/page-header";
 import { DashboardHeader } from "@/components/dashboard-header";
 
 export const Route = createFileRoute("/_app/")({
