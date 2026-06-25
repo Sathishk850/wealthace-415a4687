@@ -210,7 +210,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <aside className="flex h-full w-64 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-4 py-5">
       <Brand />
       <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
-        <NavLink item={DASHBOARD} onNavigate={onNavigate} />
+        <NavLink item={DASHBOARD} variant="top" onNavigate={onNavigate} />
         {NAV_GROUPS.map((g) => (
           <NavGroupItem
             key={g.to}
