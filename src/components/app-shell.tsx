@@ -105,11 +105,11 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
       className={[
         "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
         active
-          ? "bg-sidebar-accent text-foreground shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_25%,transparent)]"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+          ? "bg-sidebar-accent text-foreground shadow-[inset_0_0_0_1px_rgba(20,216,207,0.35)]"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
       ].join(" ")}
     >
-      <Icon className={["h-4 w-4 shrink-0", active ? "text-mint" : "text-sidebar-foreground/60"].join(" ")} />
+      <Icon className={["h-4 w-4 shrink-0", active ? "text-mint" : "text-muted-foreground"].join(" ")} />
       <span className="truncate">{item.label}</span>
     </Link>
   );
@@ -129,8 +129,8 @@ function NavGroupItem({ group, onNavigate }: { group: NavGroup; onNavigate?: () 
         className={[
           "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
           within
-            ? "bg-sidebar-accent text-mint shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_30%,transparent)]"
-            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+            ? "bg-sidebar-accent text-mint shadow-[inset_0_0_0_1px_rgba(20,216,207,0.45)]"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
         ].join(" ")}
         aria-expanded={expanded}
       >
@@ -140,12 +140,12 @@ function NavGroupItem({ group, onNavigate }: { group: NavGroup; onNavigate?: () 
           className={[
             "h-4 w-4 shrink-0 transition-transform",
             expanded ? "rotate-180" : "",
-            within ? "text-mint" : "text-sidebar-foreground/50",
+            within ? "text-mint" : "text-muted-foreground",
           ].join(" ")}
         />
       </button>
       {expanded && (
-        <div className="relative mt-1 ml-5 flex flex-col gap-0.5 border-l border-sidebar-border/60 pl-3">
+        <div className="relative mt-1 ml-5 flex flex-col gap-0.5 border-l border-sidebar-border pl-3">
           {group.children.map((c) => (
             <NavLink key={c.to} item={c} onNavigate={onNavigate} />
           ))}
@@ -181,7 +181,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <NavGroupItem key={g.to} group={g} onNavigate={onNavigate} />
         ))}
       </nav>
-      <div className="mt-auto rounded-2xl border border-mint/20 bg-gradient-to-br from-mint/10 to-accent/10 p-4">
+      <div className="glass-card mt-auto rounded-2xl p-4">
         <div className="flex items-center gap-2 text-mint">
           <Sparkles className="h-4 w-4" />
           <span className="text-xs font-semibold uppercase tracking-wider">AI Insights</span>
@@ -202,7 +202,7 @@ function TopBar() {
     else root.classList.remove("dark");
   }, [theme]);
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-xl md:px-6">
+    <header className="glass-card sticky top-0 z-30 flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
       <div className="md:hidden">
         <Brand />
       </div>
@@ -236,7 +236,7 @@ function TopBar() {
         <button className="ml-1 rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/90 transition hover:text-foreground">
           Sign in
         </button>
-        <button className="rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_color-mix(in_oklab,var(--mint)_50%,transparent)] transition hover:brightness-110">
+        <button className="rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_rgba(20,216,207,0.45)] transition hover:bg-primary-hover">
           Sign up
         </button>
       </div>
