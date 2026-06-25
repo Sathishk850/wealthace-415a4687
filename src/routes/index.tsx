@@ -52,36 +52,84 @@ function HomeRoute() {
 function Splash({ leaving }: { leaving: boolean }) {
   return (
     <div
-      className={`fixed inset-0 z-[100] grid place-items-center bg-background transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[100] grid place-items-center bg-background transition-opacity duration-700 ${
         leaving ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
       aria-hidden={leaving}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(20,216,207,0.18),transparent_60%)]" />
-      <div className="relative flex flex-col items-center gap-6">
+      {/* Ambient glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(20,216,207,0.12),transparent_55%)]" />
+
+      {/* Subtle banking grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.025)_1px,transparent_1px)] bg-[size:64px_64px]" />
+
+      <div className="relative flex flex-col items-center gap-8">
+        {/* Logo with elegant orbital rings */}
         <div className="relative">
-          <div className="absolute inset-0 -m-4 animate-ping rounded-3xl bg-mint/20" />
+          <div className="absolute inset-0 -m-7 animate-[spin_10s_linear_infinite] rounded-full border border-dashed border-mint/20" />
+          <div className="absolute inset-0 -m-4 rounded-full border border-mint/10" />
+          <div className="absolute inset-0 -m-2 animate-pulse rounded-full bg-mint/10 blur-2xl" />
           <img
             src={logo}
             alt="FinVista"
-            className="relative h-20 w-20 rounded-2xl shadow-[0_0_40px_-4px_rgba(20,216,207,0.6)]"
+            className="relative h-24 w-24 rounded-2xl shadow-[0_0_60px_-8px_rgba(20,216,207,0.5)]"
           />
         </div>
+
+        {/* Brand lockup */}
         <div className="text-center">
-          <div className="font-display text-3xl font-bold tracking-tight text-foreground">
+          <div className="font-display text-4xl font-bold tracking-tight text-foreground">
             FinVista
           </div>
-          <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-mint">
+          <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint">
             Know your worth
           </div>
         </div>
-        <div className="mt-4 h-1 w-56 overflow-hidden rounded-full bg-surface-2">
-          <div className="splash-bar h-full rounded-full bg-gradient-to-r from-mint to-accent" />
+
+        {/* Wealth view loading state */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="text-sm font-medium tracking-wide text-muted-foreground">
+            Building your wealth view...
+          </div>
+
+          {/* Elegant module cycle */}
+          <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="splash-word">Assets</span>
+            <span className="text-mint/60">•</span>
+            <span className="splash-word" style={{ animationDelay: "0.45s" }}>
+              Cashflow
+            </span>
+            <span className="text-mint/60">•</span>
+            <span className="splash-word" style={{ animationDelay: "0.9s" }}>
+              Goals
+            </span>
+          </div>
+        </div>
+
+        {/* Premium shimmer progress */}
+        <div className="mt-2 h-px w-64 overflow-hidden bg-surface-2">
+          <div className="splash-bar h-full bg-gradient-to-r from-transparent via-mint to-transparent" />
         </div>
       </div>
+
       <style>{`
-        @keyframes splashFill { from { width: 0% } to { width: 100% } }
-        .splash-bar { width: 0%; animation: splashFill 2.2s ease-out forwards; }
+        @keyframes splashFill {
+          0% { transform: translateX(-100%); opacity: 0; }
+          15% { opacity: 1; }
+          85% { opacity: 1; }
+          100% { transform: translateX(100%); opacity: 0; }
+        }
+        .splash-bar {
+          width: 100%;
+          animation: splashFill 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        @keyframes splashWord {
+          0%, 100% { opacity: 0.45; color: rgba(138, 160, 179, 1); }
+          50% { opacity: 1; color: rgba(20, 216, 207, 1); }
+        }
+        .splash-word {
+          animation: splashWord 2.4s ease-in-out infinite;
+        }
       `}</style>
     </div>
   );
