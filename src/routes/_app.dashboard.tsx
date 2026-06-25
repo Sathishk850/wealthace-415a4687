@@ -11,7 +11,7 @@ import {
 import { Section, StatCard } from "@/components/page-header";
 import { DashboardHeader } from "@/components/dashboard-header";
 
-export const Route = createFileRoute("/_app/")({
+export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard · FinVista" },

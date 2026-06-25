@@ -39,7 +39,7 @@ type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
 type NavGroup = { to: string; label: string; icon: IconType; children: NavItem[] };
 
-const DASHBOARD: NavItem = { to: "/", label: "Dashboard", icon: LayoutDashboard };
+const DASHBOARD: NavItem = { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard };
 
 const NAV_GROUPS: NavGroup[] = [
   {
@@ -93,7 +93,7 @@ const NAV_GROUPS: NavGroup[] = [
 const MOBILE_TABS: NavItem[] = [
   { to: "/wealth", label: "Wealth", icon: Wallet },
   { to: "/money", label: "Money", icon: Coins },
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/planner", label: "Planner", icon: CalendarClock },
   { to: "/tools", label: "Tools", icon: Wrench },
 ];

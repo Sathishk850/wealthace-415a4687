@@ -9,26 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
-import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWealthRouteImport } from './routes/_app.wealth'
 import { Route as AppToolsRouteImport } from './routes/_app.tools'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppPlannerFireRouteImport } from './routes/_app.planner.fire'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppWealthRoute = AppWealthRouteImport.update({
   id: '/wealth',
@@ -60,6 +67,11 @@ const AppFeedbackRoute = AppFeedbackRouteImport.update({
   path: '/feedback',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPlannerFireRoute = AppPlannerFireRouteImport.update({
   id: '/fire',
   path: '/fire',
@@ -71,13 +83,15 @@ const AppMoneyTransactionsRoute = AppMoneyTransactionsRouteImport.update({
   getParentRoute: () => AppMoneyRoute,
 } as any)
 const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
-  id: '/dashboard/networth',
-  path: '/dashboard/networth',
-  getParentRoute: () => AppRoute,
+  id: '/networth',
+  path: '/networth',
+  getParentRoute: () => AppDashboardRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
+  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/planner': typeof AppPlannerRouteWithChildren
@@ -89,27 +103,31 @@ export interface FileRoutesByFullPath {
   '/planner/fire': typeof AppPlannerFireRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/planner': typeof AppPlannerRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/tools': typeof AppToolsRoute
   '/wealth': typeof AppWealthRoute
-  '/': typeof AppIndexRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/planner/fire': typeof AppPlannerFireRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_app/dashboard': typeof AppDashboardRouteWithChildren
   '/_app/feedback': typeof AppFeedbackRoute
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/planner': typeof AppPlannerRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tools': typeof AppToolsRoute
   '/_app/wealth': typeof AppWealthRoute
-  '/_app/': typeof AppIndexRoute
   '/_app/dashboard/networth': typeof AppDashboardNetworthRoute
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
   '/_app/planner/fire': typeof AppPlannerFireRoute
@@ -118,6 +136,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/dashboard'
     | '/feedback'
     | '/money'
     | '/planner'
@@ -129,37 +149,50 @@ export interface FileRouteTypes {
     | '/planner/fire'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
     | '/feedback'
     | '/money'
     | '/planner'
     | '/settings'
     | '/tools'
     | '/wealth'
-    | '/'
     | '/dashboard/networth'
     | '/money/transactions'
     | '/planner/fire'
   id:
     | '__root__'
+    | '/'
     | '/_app'
+    | '/auth'
+    | '/_app/dashboard'
     | '/_app/feedback'
     | '/_app/money'
     | '/_app/planner'
     | '/_app/settings'
     | '/_app/tools'
     | '/_app/wealth'
-    | '/_app/'
     | '/_app/dashboard/networth'
     | '/_app/money/transactions'
     | '/_app/planner/fire'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -167,12 +200,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/': {
-      id: '/_app/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/wealth': {
       id: '/_app/wealth'
@@ -216,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFeedbackRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/planner/fire': {
       id: '/_app/planner/fire'
       path: '/fire'
@@ -232,13 +272,25 @@ declare module '@tanstack/react-router' {
     }
     '/_app/dashboard/networth': {
       id: '/_app/dashboard/networth'
-      path: '/dashboard/networth'
+      path: '/networth'
       fullPath: '/dashboard/networth'
       preLoaderRoute: typeof AppDashboardNetworthRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppDashboardRoute
     }
   }
 }
+
+interface AppDashboardRouteChildren {
+  AppDashboardNetworthRoute: typeof AppDashboardNetworthRoute
+}
+
+const AppDashboardRouteChildren: AppDashboardRouteChildren = {
+  AppDashboardNetworthRoute: AppDashboardNetworthRoute,
+}
+
+const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
+  AppDashboardRouteChildren,
+)
 
 interface AppMoneyRouteChildren {
   AppMoneyTransactionsRoute: typeof AppMoneyTransactionsRoute
@@ -265,31 +317,31 @@ const AppPlannerRouteWithChildren = AppPlannerRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppFeedbackRoute: typeof AppFeedbackRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppPlannerRoute: typeof AppPlannerRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppToolsRoute: typeof AppToolsRoute
   AppWealthRoute: typeof AppWealthRoute
-  AppIndexRoute: typeof AppIndexRoute
-  AppDashboardNetworthRoute: typeof AppDashboardNetworthRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppDashboardRoute: AppDashboardRouteWithChildren,
   AppFeedbackRoute: AppFeedbackRoute,
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppPlannerRoute: AppPlannerRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppToolsRoute: AppToolsRoute,
   AppWealthRoute: AppWealthRoute,
-  AppIndexRoute: AppIndexRoute,
-  AppDashboardNetworthRoute: AppDashboardNetworthRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
