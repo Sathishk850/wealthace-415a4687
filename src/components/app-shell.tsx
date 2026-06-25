@@ -137,10 +137,10 @@ function NavGroupItem({
         type="button"
         onClick={onToggle}
         className={[
-          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+          "flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold transition-all",
           within
-            ? "bg-sidebar-accent text-mint shadow-[inset_0_0_0_1px_rgba(20,216,207,0.45)]"
-            : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+            ? "nav-active"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground rounded-xl",
         ].join(" ")}
         aria-expanded={isExpanded}
       >
