@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -156,7 +157,7 @@ function AuthPage() {
                 <Field label="Full name" name="fullName" type="text" placeholder="Ada Lovelace" />
               )}
               <Field label="Email" name="email" type="email" placeholder="you@example.com" />
-              <Field label="Password" name="password" type="password" placeholder="••••••••" />
+              <PasswordField label="Password" name="password" placeholder="••••••••" />
 
               <button
                 type="submit"
@@ -235,6 +236,40 @@ function Field({
         required
         className="w-full rounded-xl border border-border bg-background/60 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
       />
+    </label>
+  );
+}
+
+function PasswordField({
+  label,
+  name,
+  placeholder,
+}: {
+  label: string;
+  name: string;
+  placeholder: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}</span>
+      <div className="relative">
+        <input
+          name={name}
+          type={show ? "text" : "password"}
+          placeholder={placeholder}
+          required
+          className="w-full rounded-xl border border-border bg-background/60 px-3.5 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
+        />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition hover:text-foreground"
+          aria-label={show ? "Hide password" : "Show password"}
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
     </label>
   );
 }
