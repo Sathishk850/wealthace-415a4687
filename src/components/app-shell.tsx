@@ -10,13 +10,8 @@ import {
   Settings,
   LogOut,
   Sparkles,
-  TrendingUp,
-  ArrowLeftRight,
-  Flame,
-  Menu,
-  X,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import logo from "@/assets/finvista-logo.png";
 
 type NavItem = {
@@ -34,11 +29,11 @@ const PRIMARY_NAV: NavItem[] = [
 ];
 
 const MOBILE_TABS: NavItem[] = [
-  { to: "/", label: "Home", icon: LayoutDashboard },
-  { to: "/money/transactions", label: "Tx", icon: ArrowLeftRight },
   { to: "/wealth", label: "Wealth", icon: Wallet },
-  { to: "/dashboard/networth", label: "NW", icon: TrendingUp },
-  { to: "/planner/fire", label: "FIRE", icon: Flame },
+  { to: "/money", label: "Money", icon: Coins },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/planner", label: "Planner", icon: Target },
+  { to: "/tools", label: "Tools", icon: Wrench },
 ];
 
 function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
@@ -100,16 +95,9 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
+function TopBar() {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-xl md:px-6">
-      <button
-        onClick={onOpenMenu}
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-surface md:hidden"
-        aria-label="Open menu"
-      >
-        <Menu className="h-4 w-4" />
-      </button>
       <div className="md:hidden">
         <Brand />
       </div>
@@ -169,7 +157,6 @@ function MobileBottomTabs() {
 }
 
 export function AppShell() {
-  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="dark min-h-screen bg-background text-foreground">
       <div className="flex">
@@ -177,27 +164,8 @@ export function AppShell() {
           <Sidebar />
         </div>
 
-        {menuOpen && (
-          <div className="fixed inset-0 z-40 md:hidden">
-            <div
-              className="absolute inset-0 bg-background/70 backdrop-blur-sm"
-              onClick={() => setMenuOpen(false)}
-            />
-            <div className="absolute inset-y-0 left-0 w-72">
-              <Sidebar onNavigate={() => setMenuOpen(false)} />
-              <button
-                onClick={() => setMenuOpen(false)}
-                className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-lg bg-surface text-foreground"
-                aria-label="Close menu"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
         <main className="flex-1 pb-24 md:pb-0">
-          <TopBar onOpenMenu={() => setMenuOpen(true)} />
+          <TopBar />
           <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
             <Outlet />
           </div>
