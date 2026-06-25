@@ -1,13 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  Wallet,
-  LineChart,
-  PiggyBank,
-  Sparkles,
-  Shield,
-  ArrowRight,
-} from "lucide-react";
+import { Wallet, LineChart, PiggyBank, Sparkles, Shield, ArrowRight } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 
 const SPLASH_KEY = "finvista_splash_seen";
@@ -37,8 +30,8 @@ function HomeRoute() {
       return;
     }
     sessionStorage.setItem(SPLASH_KEY, "1");
-    const leave = setTimeout(() => setSplashLeaving(true), 2500);
-    const done = setTimeout(() => setShowSplash(false), 3000);
+    const leave = setTimeout(() => setSplashLeaving(true), 1600);
+    const done = setTimeout(() => setShowSplash(false), 2000);
     return () => {
       clearTimeout(leave);
       clearTimeout(done);
@@ -78,19 +71,13 @@ function Splash({ leaving }: { leaving: boolean }) {
 
         {/* Brand lockup */}
         <div className="text-center">
-          <div className="font-display text-4xl font-bold tracking-tight text-foreground">
-            FinVista
-          </div>
-          <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint">
-            Know your worth
-          </div>
+          <div className="font-display text-4xl font-bold tracking-tight text-foreground">FinVista</div>
+          <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint">Know your worth</div>
         </div>
 
         {/* Wealth view loading state */}
         <div className="flex flex-col items-center gap-4">
-          <div className="text-sm font-medium tracking-wide text-muted-foreground">
-            Building your wealth view...
-          </div>
+          <div className="text-sm font-medium tracking-wide text-muted-foreground">Building your wealth view...</div>
 
           {/* Elegant module cycle */}
           <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
@@ -121,14 +108,14 @@ function Splash({ leaving }: { leaving: boolean }) {
         }
         .splash-bar {
           width: 100%;
-          animation: splashFill 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          animation: splashFill 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         @keyframes splashWord {
           0%, 100% { opacity: 0.45; color: rgba(138, 160, 179, 1); }
           50% { opacity: 1; color: rgba(20, 216, 207, 1); }
         }
         .splash-word {
-          animation: splashWord 2.5s ease-in-out infinite;
+          animation: splashWord 2.4s ease-in-out infinite;
         }
       `}</style>
     </div>
@@ -146,9 +133,15 @@ function Landing() {
             <span className="font-display text-base font-bold">FinVista</span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#how" className="hover:text-foreground">How it works</a>
-            <a href="#pricing" className="hover:text-foreground">Pricing</a>
+            <a href="#features" className="hover:text-foreground">
+              Features
+            </a>
+            <a href="#how" className="hover:text-foreground">
+              How it works
+            </a>
+            <a href="#pricing" className="hover:text-foreground">
+              Pricing
+            </a>
           </nav>
           <div className="flex items-center gap-2">
             <Link
@@ -184,8 +177,8 @@ function Landing() {
             </span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-            Track every asset, liability, investment and goal in one beautiful
-            dashboard. Built for people who care about where their money goes.
+            Track every asset, liability, investment and goal in one beautiful dashboard. Built for people who care
+            about where their money goes.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -211,7 +204,11 @@ function Landing() {
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { icon: Wallet, title: "Unified net worth", desc: "All assets and liabilities, one number you trust." },
-            { icon: LineChart, title: "Investment insights", desc: "Track allocation, returns and SIPs across accounts." },
+            {
+              icon: LineChart,
+              title: "Investment insights",
+              desc: "Track allocation, returns and SIPs across accounts.",
+            },
             { icon: PiggyBank, title: "Goal planner", desc: "Plan retirement, FIRE, vacations, anything." },
             { icon: Shield, title: "Private by design", desc: "Your data stays yours. Always encrypted." },
             { icon: Sparkles, title: "AI insights", desc: "Smart nudges on cashflow, savings and risk." },
@@ -234,23 +231,26 @@ function Landing() {
       {/* How it works */}
       <section id="how" className="mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
         <div className="mb-10 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">
-            How it works
-          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">How it works</span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
             Three steps to financial clarity
           </h2>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { n: "01", title: "Add your accounts", desc: "Connect or manually add assets, liabilities and investments in minutes." },
-            { n: "02", title: "See your net worth", desc: "Get a unified, beautiful view of where you stand right now." },
+            {
+              n: "01",
+              title: "Add your accounts",
+              desc: "Connect or manually add assets, liabilities and investments in minutes.",
+            },
+            {
+              n: "02",
+              title: "See your net worth",
+              desc: "Get a unified, beautiful view of where you stand right now.",
+            },
             { n: "03", title: "Plan & grow", desc: "Set goals, track cashflow, and let AI nudge you toward them." },
           ].map((s) => (
-            <div
-              key={s.n}
-              className="relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur"
-            >
+            <div key={s.n} className="relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur">
               <div className="font-display text-4xl font-extrabold text-mint/40">{s.n}</div>
               <h3 className="mt-2 font-display text-base font-semibold">{s.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{s.desc}</p>
@@ -262,12 +262,8 @@ function Landing() {
       {/* CTA */}
       <section id="pricing" className="mx-auto max-w-4xl px-6 py-20 text-center">
         <div className="rounded-3xl border border-mint/25 bg-gradient-to-br from-card to-mint/5 p-10">
-          <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Ready to know your worth?
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-            Free to start. No credit card required.
-          </p>
+          <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Ready to know your worth?</h2>
+          <p className="mx-auto mt-3 max-w-md text-muted-foreground">Free to start. No credit card required.</p>
           <Link
             to="/auth"
             search={{ mode: "signup" }}
