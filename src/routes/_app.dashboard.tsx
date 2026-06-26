@@ -88,11 +88,11 @@ function Dashboard() {
     <TooltipProvider delayDuration={150}>
       <div className="grid grid-cols-12 gap-4">
         {/* Hero — Net Worth */}
-        <Card className="col-span-12 p-6">
+        <Card className="col-span-12 p-6 fv-rise" style={{ animationDelay: "40ms" }}>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
             <div>
               <CardHeader title="Net Worth" tip="Total of assets minus liabilities across all your accounts." />
-              <div className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+              <div className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
                 ₹ 73,14,850
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm">
@@ -106,32 +106,33 @@ function Dashboard() {
                 </span>
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                <button className="inline-flex items-center gap-2 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground transition hover:bg-[var(--primary-hover)]">
+                <button className="fv-press inline-flex items-center gap-2 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground shadow-[0_8px_24px_-10px_rgba(20,216,207,0.65)] transition hover:bg-[var(--primary-hover)]">
                   <Camera className="h-4 w-4" /> Snapshot
                 </button>
                 <button
                   onClick={() => setHistoryOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface"
+                  className="fv-press inline-flex items-center gap-2 rounded-lg border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface"
                 >
                   <History className="h-4 w-4" /> History
                 </button>
               </div>
             </div>
-            <div className="min-h-[260px]">
-              <RangeChart data={NET_SERIES} height={260} />
+            <div className="min-h-[300px]">
+              <RangeChart data={NET_SERIES} height={300} />
             </div>
           </div>
         </Card>
 
         {/* Financial Snapshot — full width 5 cards */}
-        <div className="col-span-12">
-          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Financial Snapshot</h2>
+        <div className="col-span-12 fv-rise" style={{ animationDelay: "120ms" }}>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Financial Snapshot</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-            <SnapCard label="Assets" value="₹ 1,15,38,850" delta="7.60% vs last month" up icon={Wallet} accent="#14d8cf" series={MICRO_UP} />
-            <SnapCard label="Liabilities" value="₹ 42,24,000" delta="2.10% vs last month" up={false} icon={Banknote} accent="#ff4d4d" series={MICRO_DOWN} />
-            <SnapCard label="Investments" value="₹ 58,78,450" delta="6.35% vs last month" up icon={TrendingUp} accent="#00c896" series={MICRO_UP} />
-            <SnapCard label="Savings" value="₹ 6,89,600" delta="1.25% vs last month" up icon={PiggyBank} accent="#3b82f6" series={MICRO_UP} />
+            <SnapCard i={0} label="Assets" value="₹ 1,15,38,850" delta="7.60% vs last month" up icon={Wallet} accent="#14d8cf" series={MICRO_UP} />
+            <SnapCard i={1} label="Liabilities" value="₹ 42,24,000" delta="2.10% vs last month" up={false} icon={Banknote} accent="#ff4d4d" series={MICRO_DOWN} />
+            <SnapCard i={2} label="Investments" value="₹ 58,78,450" delta="6.35% vs last month" up icon={TrendingUp} accent="#00c896" series={MICRO_UP} />
+            <SnapCard i={3} label="Savings" value="₹ 6,89,600" delta="1.25% vs last month" up icon={PiggyBank} accent="#3b82f6" series={MICRO_UP} />
             <SnapCard
+              i={4}
               label="Net Cash Flow"
               value="₹ 1,22,800"
               delta="12.6% vs last month"
@@ -144,8 +145,12 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Asset Allocation + Portfolio Performance */}
-        <Card className="col-span-12 p-5 lg:col-span-6">
+        {/* Investments section */}
+        <div className="col-span-12 fv-rise" style={{ animationDelay: "200ms" }}>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Investments</h2>
+        </div>
+
+        <Card className="col-span-12 p-5 lg:col-span-6 fv-rise" style={{ animationDelay: "240ms" }}>
           <CardHeader title="Asset Allocation" tip="Breakdown of your investments by asset class." />
           <div className="mt-2 grid grid-cols-1 items-center gap-2 sm:grid-cols-[120px_1fr]">
             <div className="relative mx-auto h-[120px] w-[120px]">
@@ -193,7 +198,7 @@ function Dashboard() {
           </div>
         </Card>
 
-        <Card className="col-span-12 p-5 lg:col-span-6">
+        <Card className="col-span-12 p-5 lg:col-span-6 fv-rise" style={{ animationDelay: "300ms" }}>
           <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
           <div className="mt-2 flex items-end justify-between gap-4">
             <div>
@@ -216,12 +221,16 @@ function Dashboard() {
           </div>
         </Card>
 
-        {/* Financial Score + Goal Progress */}
-        <Card className="col-span-12 p-6 lg:col-span-6">
+        {/* Financial Health section */}
+        <div className="col-span-12 fv-rise" style={{ animationDelay: "360ms" }}>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Financial Health</h2>
+        </div>
+
+        <Card className="col-span-12 p-6 lg:col-span-6 fv-rise" style={{ animationDelay: "400ms" }}>
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-4 grid grid-cols-[180px_1fr] items-center gap-6">
+          <div className="mt-4 grid grid-cols-1 items-center gap-6 sm:grid-cols-[180px_minmax(0,1fr)]">
             <ScoreRing score={82} />
-            <div className="space-y-2.5 text-sm">
+            <div className="min-w-0 space-y-2.5 text-sm">
               {[
                 { k: "Asset Allocation", v: 92 },
                 { k: "Debt Management", v: 74 },
@@ -230,14 +239,14 @@ function Dashboard() {
                 { k: "Diversification", v: 88 },
               ].map((row) => (
                 <div key={row.k} className="flex items-center gap-3">
-                  <span className="w-32 shrink-0 text-muted-foreground">{row.k}</span>
-                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                  <span className="w-28 shrink-0 truncate text-muted-foreground sm:w-32">{row.k}</span>
+                  <div className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2">
                     <div
                       className="absolute inset-y-0 left-0 rounded-full bg-mint"
                       style={{ width: `${row.v}%` }}
                     />
                   </div>
-                  <span className="w-8 text-right font-semibold text-foreground">{row.v}</span>
+                  <span className="w-8 shrink-0 text-right font-semibold text-foreground">{row.v}</span>
                 </div>
               ))}
               <div className="pt-1 text-right">
@@ -249,10 +258,10 @@ function Dashboard() {
           </div>
         </Card>
 
-        <Card className="col-span-12 p-6 lg:col-span-6">
-          <div className="flex items-center justify-between">
+        <Card className="col-span-12 p-6 lg:col-span-6 fv-rise" style={{ animationDelay: "460ms" }}>
+          <div className="flex items-center justify-between gap-3">
             <CardHeader title="Goal Progress" tip="Progress toward your active financial goals." />
-            <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
+            <a className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-mint" href="#">
               View All Goals <ArrowRight className="h-3 w-3" />
             </a>
           </div>
@@ -264,10 +273,10 @@ function Dashboard() {
         </Card>
 
         {/* Financial Insights — compact full width */}
-        <Card className="col-span-12 p-4">
+        <Card className="col-span-12 p-4 fv-rise" style={{ animationDelay: "520ms" }}>
           <div className="flex items-center justify-between">
             <CardHeader title="Financial Insights" tip="Smart, personalized observations about your finances." />
-            <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
+            <a className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-mint" href="#">
               View All Insights <ArrowRight className="h-3 w-3" />
             </a>
           </div>
