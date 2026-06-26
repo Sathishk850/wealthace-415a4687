@@ -94,7 +94,7 @@
 
   --card: #0D2232;
   --card-foreground: #E4E5E7;
-  --card-glass: rgba(13, 34, 50, 0.72);
+  --card-glass: rgba(13, 34, 50, 0.85);
 
   --popover: #102634;
   --popover-foreground: #E4E5E7;
@@ -112,6 +112,7 @@
 
   --muted: #102634;
   --muted-foreground: #9A9DA4;
+  --muted-2: #727189;
 
   --accent: #00CEB1;
   --accent-foreground: #010E1B;
@@ -204,6 +205,32 @@
     font-family: var(--font-display);
     letter-spacing: -0.018em;
     font-weight: 600;
+  }
+
+  /* Custom scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #1B3249 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: #010E1B;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #1B3249;
+    border-radius: 8px;
+    border: 2px solid #010E1B;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #00CEB1;
+  }
+
+  ::selection {
+    background: rgba(0, 206, 177, 0.35);
+    color: #E4E5E7;
   }
 }
 
