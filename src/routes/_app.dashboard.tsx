@@ -194,12 +194,12 @@ function Dashboard() {
         </Card>
 
 
-        <Card className="col-span-12 p-6 lg:col-span-6">
+        <Card className="col-span-12 p-5 lg:col-span-6">
           <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
-          <div className="mt-3 flex items-end justify-between gap-4">
+          <div className="mt-2 flex items-end justify-between gap-4">
             <div>
               <div className="text-xs text-muted-foreground">Current Value</div>
-              <div className="mt-1 font-display text-2xl font-bold text-foreground">
+              <div className="mt-1 font-display text-xl font-bold text-foreground">
                 ₹ 58,78,450
               </div>
               <div className="mt-1 text-xs font-semibold text-success">
@@ -207,15 +207,16 @@ function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="mt-2 h-[140px]">
-            <RangeChart data={PORT_SERIES} height={140} compact />
+          <div className="mt-2 h-[110px]">
+            <RangeChart data={PORT_SERIES} height={110} compact />
           </div>
-          <div className="mt-1 text-right">
+          <div className="text-right">
             <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
               View Portfolio <ArrowRight className="h-3 w-3" />
             </a>
           </div>
         </Card>
+
 
         {/* Financial Score + Goal Progress */}
         <Card className="col-span-12 p-6 lg:col-span-6">
