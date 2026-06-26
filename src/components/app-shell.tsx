@@ -9,7 +9,6 @@ import {
   Sun,
   Moon,
   PanelLeft,
-  Sparkles,
   Search,
   User,
   Building2,
