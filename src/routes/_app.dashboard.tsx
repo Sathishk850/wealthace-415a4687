@@ -546,7 +546,9 @@ function GoalCard({
               strokeDashoffset={c - (c * pct) / 100}
             />
           </svg>
-          <Icon className="absolute h-5 w-5" style={{ color }} />
+          <span className="absolute" style={{ color }}>
+            <Icon className="h-5 w-5" />
+          </span>
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-foreground">{name}</div>
