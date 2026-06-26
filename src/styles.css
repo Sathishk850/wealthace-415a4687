@@ -206,7 +206,7 @@
     background-image:
       radial-gradient(ellipse 90% 60% at 12% -10%, rgba(0, 206, 177, 0.10), transparent 60%),
       radial-gradient(ellipse 70% 50% at 110% 10%, rgba(32, 231, 229, 0.07), transparent 60%),
-      linear-gradient(180deg, #0A1A2A 0%, #081625 100%);
+      linear-gradient(180deg, #0B1E2F 0%, #061B28 100%);
     background-attachment: fixed;
   }
 
@@ -219,7 +219,7 @@
   /* Custom scrollbars */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #1B3249 transparent;
+    scrollbar-color: #17354A transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
@@ -248,7 +248,7 @@
     linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0) 40%),
     var(--card-glass);
   backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(28, 58, 82, 0.9);
+  border: 1px solid rgba(23, 53, 74, 0.9);
   border-radius: 16px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset,
