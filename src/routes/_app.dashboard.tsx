@@ -147,15 +147,15 @@ function Dashboard() {
         {/* Asset Allocation + Portfolio Performance */}
         <Card className="col-span-12 p-6 lg:col-span-6">
           <CardHeader title="Asset Allocation" tip="Breakdown of your investments by asset class." />
-          <div className="mt-4 grid grid-cols-1 items-center gap-4 sm:grid-cols-[180px_1fr]">
-            <div className="relative mx-auto h-[180px] w-[180px]">
+          <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[150px_1fr]">
+            <div className="relative mx-auto h-[150px] w-[150px]">
               <ResponsiveContainer>
                 <PieChart>
                   <Pie
                     data={ALLOCATION}
                     dataKey="value"
-                    innerRadius={58}
-                    outerRadius={86}
+                    innerRadius={48}
+                    outerRadius={72}
                     paddingAngle={2}
                     stroke="none"
                   >
@@ -168,13 +168,13 @@ function Dashboard() {
               <div className="pointer-events-none absolute inset-0 grid place-items-center">
                 <div className="text-center">
                   <div className="text-[11px] text-muted-foreground">Total</div>
-                  <div className="font-display text-base font-bold text-foreground">
+                  <div className="font-display text-sm font-bold text-foreground">
                     ₹73,14,850
                   </div>
                 </div>
               </div>
             </div>
-            <div className="space-y-2.5 text-sm">
+            <div className="space-y-2 text-sm">
               {ALLOCATION.map((a) => (
                 <div key={a.name} className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-2 text-muted-foreground">
@@ -184,7 +184,7 @@ function Dashboard() {
                   <span className="font-semibold text-foreground">{a.value}%</span>
                 </div>
               ))}
-              <div className="pt-2 text-right">
+              <div className="pt-1 text-right">
                 <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
                   View Details <ArrowRight className="h-3 w-3" />
                 </a>
@@ -194,10 +194,8 @@ function Dashboard() {
         </Card>
 
         <Card className="col-span-12 p-6 lg:col-span-6">
-          <div className="flex items-start justify-between gap-3">
-            <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
-          </div>
-          <div className="mt-2 flex items-end justify-between gap-4">
+          <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
+          <div className="mt-3 flex items-end justify-between gap-4">
             <div>
               <div className="text-xs text-muted-foreground">Current Value</div>
               <div className="mt-1 font-display text-2xl font-bold text-foreground">
@@ -208,10 +206,10 @@ function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="mt-3 h-[180px]">
-            <RangeChart data={PORT_SERIES} height={180} compact />
+          <div className="mt-2 h-[140px]">
+            <RangeChart data={PORT_SERIES} height={140} compact />
           </div>
-          <div className="mt-2 text-right">
+          <div className="mt-1 text-right">
             <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
               View Portfolio <ArrowRight className="h-3 w-3" />
             </a>
