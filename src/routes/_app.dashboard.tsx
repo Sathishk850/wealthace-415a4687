@@ -117,8 +117,8 @@ function Dashboard() {
                 </button>
               </div>
             </div>
-            <div className="min-h-[220px]">
-              <RangeChart data={NET_SERIES} height={220} />
+            <div className="min-h-[260px]">
+              <RangeChart data={NET_SERIES} height={260} />
             </div>
           </div>
         </Card>
@@ -193,7 +193,6 @@ function Dashboard() {
           </div>
         </Card>
 
-
         <Card className="col-span-12 p-5 lg:col-span-6">
           <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
           <div className="mt-2 flex items-end justify-between gap-4">
@@ -217,11 +216,10 @@ function Dashboard() {
           </div>
         </Card>
 
-
         {/* Financial Score + Goal Progress */}
         <Card className="col-span-12 p-6 lg:col-span-6">
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-4 grid grid-cols-[160px_1fr] items-center gap-6">
+          <div className="mt-4 grid grid-cols-[180px_1fr] items-center gap-6">
             <ScoreRing score={82} />
             <div className="space-y-2.5 text-sm">
               {[
@@ -265,15 +263,15 @@ function Dashboard() {
           </div>
         </Card>
 
-        {/* Financial Insights — full width */}
-        <Card className="col-span-12 p-6">
+        {/* Financial Insights — compact full width */}
+        <Card className="col-span-12 p-4">
           <div className="flex items-center justify-between">
             <CardHeader title="Financial Insights" tip="Smart, personalized observations about your finances." />
             <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
               View All Insights <ArrowRight className="h-3 w-3" />
             </a>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             <Insight icon={TrendingUp} tint="#14d8cf" title="Savings rate increased 8%" body="Great job! You're saving more than 75% of users." />
             <Insight icon={BadgeIndianRupee} tint="#d9b800" title="Expenses down by 3%" body="Nice! You spent ₹1,900 less than last month." />
             <Insight icon={Calendar} tint="#3b82f6" title="SIP of ₹25,000 is due tomorrow" body="Pn Parag Parikh Flexi Cap Fund · Due on 13 Jun 2026." />
@@ -431,7 +429,7 @@ function SnapCard({
 }) {
   const id = `s-${label.replace(/\s/g, "")}`;
   return (
-    <div className="rounded-2xl border border-border/70 bg-[#04141e]/90 p-4">
+    <div className="rounded-2xl border border-border/70 bg-[#04141e]/90 p-5">
       <div className="flex items-start justify-between">
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
           <span
@@ -455,14 +453,14 @@ function SnapCard({
           </Tooltip>
         )}
       </div>
-      <div className="mt-3 font-display text-xl font-bold tracking-tight text-foreground">
+      <div className="mt-3 font-display text-2xl font-bold tracking-tight text-foreground">
         {value}
       </div>
       <div className={cn("mt-1 inline-flex items-center gap-1 text-[11px] font-semibold", up ? "text-success" : "text-danger")}>
         {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
         {delta}
       </div>
-      <div className="mt-2 h-10">
+      <div className="mt-3 h-12">
         <ResponsiveContainer>
           <AreaChart data={series} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
             <defs>
@@ -480,16 +478,16 @@ function SnapCard({
 }
 
 function ScoreRing({ score }: { score: number }) {
-  const r = 58;
+  const r = 66;
   const c = 2 * Math.PI * r;
   const off = c - (c * score) / 100;
   return (
-    <div className="relative grid h-[150px] w-[150px] place-items-center">
-      <svg width={150} height={150} className="-rotate-90">
-        <circle cx={75} cy={75} r={r} stroke="#0a2535" strokeWidth={10} fill="none" />
+    <div className="relative grid h-[170px] w-[170px] place-items-center">
+      <svg width={170} height={170} className="-rotate-90">
+        <circle cx={85} cy={85} r={r} stroke="#0a2535" strokeWidth={10} fill="none" />
         <circle
-          cx={75}
-          cy={75}
+          cx={85}
+          cy={85}
           r={r}
           stroke="#14d8cf"
           strokeWidth={10}
@@ -500,7 +498,7 @@ function ScoreRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute text-center">
-        <div className="font-display text-3xl font-bold text-foreground">{score}</div>
+        <div className="font-display text-4xl font-bold text-foreground">{score}</div>
         <div className="text-[10px] text-muted-foreground">/100</div>
         <div className="mt-1 text-xs font-semibold text-mint">Excellent</div>
         <div className="text-[10px] text-muted-foreground">You're doing great!</div>
@@ -526,20 +524,20 @@ function GoalCard({
   target: string;
   eta: string;
 }) {
-  const r = 28;
+  const r = 36;
   const c = 2 * Math.PI * r;
   return (
     <div className="rounded-xl border border-border/70 bg-surface/30 p-4">
       <div className="flex items-center gap-3">
-        <div className="relative grid h-[72px] w-[72px] place-items-center">
-          <svg width={72} height={72} className="-rotate-90">
-            <circle cx={36} cy={36} r={r} stroke="#0a2535" strokeWidth={6} fill="none" />
+        <div className="relative grid h-[90px] w-[90px] place-items-center">
+          <svg width={90} height={90} className="-rotate-90">
+            <circle cx={45} cy={45} r={r} stroke="#0a2535" strokeWidth={7} fill="none" />
             <circle
-              cx={36}
-              cy={36}
+              cx={45}
+              cy={45}
               r={r}
               stroke={color}
-              strokeWidth={6}
+              strokeWidth={7}
               fill="none"
               strokeLinecap="round"
               strokeDasharray={c}
@@ -552,7 +550,7 @@ function GoalCard({
         </div>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-foreground">{name}</div>
-          <div className="text-xl font-bold text-foreground">{pct}%</div>
+          <div className="text-2xl font-bold text-foreground">{pct}%</div>
         </div>
       </div>
       <div className="mt-3 text-xs text-muted-foreground">
@@ -575,7 +573,7 @@ function Insight({
   body: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-surface/30 p-3.5">
+    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-surface/30 p-3">
       <span
         className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
         style={{ background: `${tint}1f`, color: tint }}
