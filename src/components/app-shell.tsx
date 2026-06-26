@@ -12,7 +12,6 @@ import {
   PanelLeft,
   Sparkles,
   ChevronDown,
-  LogOut,
   Search,
   User,
   Building2,
