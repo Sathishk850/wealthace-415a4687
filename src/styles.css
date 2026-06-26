@@ -95,11 +95,11 @@
   --surface-2: #071B2B;       /* top bar - darker navy */
   --surface-3: #0F2538;      /* hover row / table header */
 
-  --card: #11293C;
+  --card: #0D2232;             /* cards */
   --card-foreground: #EAF2F5;
-  --card-glass: rgba(17, 41, 60, 0.85);
+  --card-glass: rgba(13, 34, 50, 0.85);
 
-  --popover: #163448;
+  --popover: #0F2538;
   --popover-foreground: #EAF2F5;
 
   /* Accents */
