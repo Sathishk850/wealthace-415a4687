@@ -542,14 +542,14 @@ function GoalCard({
   const r = 36;
   const c = 2 * Math.PI * r;
   return (
-    <div className="rounded-xl border border-border/70 bg-surface/30 p-4">
+    <div className="card-hover overflow-hidden rounded-xl border border-border/70 bg-surface/30 p-4">
       <div className="flex items-center gap-3">
-        <div className="relative grid h-[90px] w-[90px] place-items-center">
-          <svg width={90} height={90} className="-rotate-90">
-            <circle cx={45} cy={45} r={r} stroke="#0a2535" strokeWidth={7} fill="none" />
+        <div className="relative grid h-[84px] w-[84px] shrink-0 place-items-center">
+          <svg width={84} height={84} className="-rotate-90">
+            <circle cx={42} cy={42} r={r} stroke="#0a2535" strokeWidth={7} fill="none" />
             <circle
-              cx={45}
-              cy={45}
+              cx={42}
+              cy={42}
               r={r}
               stroke={color}
               strokeWidth={7}
@@ -563,15 +563,15 @@ function GoalCard({
             <Icon className="h-5 w-5" />
           </span>
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-foreground">{name}</div>
-          <div className="text-2xl font-bold text-foreground">{pct}%</div>
+          <div className="truncate text-xl font-bold text-foreground">{pct}%</div>
         </div>
       </div>
-      <div className="mt-3 text-xs text-muted-foreground">
+      <div className="mt-3 truncate text-xs text-muted-foreground">
         {saved} / {target}
       </div>
-      <div className="text-xs text-muted-foreground">Target: {eta}</div>
+      <div className="truncate text-xs text-muted-foreground">Target: {eta}</div>
     </div>
   );
 }
