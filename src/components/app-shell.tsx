@@ -1,4 +1,5 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Wallet,
@@ -9,21 +10,28 @@ import {
   Sun,
   Moon,
   PanelLeft,
+  Sparkles,
+  ChevronDown,
   Search,
   User,
   Building2,
   Banknote,
   TrendingUp,
+  Shield,
+  Landmark,
+  Users,
   LineChart,
+  ArrowUpCircle,
+  ArrowDownCircle,
   ArrowLeftRight,
   Target as TargetIcon,
   PiggyBank,
+  Flame,
   CalendarClock,
   FileText,
   Calculator,
-  PlusCircle,
-  BarChart3,
-  Activity,
+  MessageSquare,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/finvista-logo.png";
@@ -32,45 +40,55 @@ import { supabase } from "@/integrations/supabase/client";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
-type NavSection = { label: string; items: NavItem[] };
+type NavGroup = { to: string; label: string; icon: IconType; children: NavItem[] };
 
 const DASHBOARD: NavItem = { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard };
 
-const NAV_SECTIONS: NavSection[] = [
+const NAV_GROUPS: NavGroup[] = [
   {
+    to: "/wealth",
     label: "Wealth",
-    items: [
+    icon: Wallet,
+    children: [
       { to: "/wealth/assets", label: "Assets", icon: Building2 },
-      { to: "/wealth/investments", label: "Investments", icon: TrendingUp },
       { to: "/wealth/liabilities", label: "Liabilities", icon: Banknote },
-      { to: "/wealth", label: "Net Worth", icon: BarChart3 },
+      { to: "/wealth/investments", label: "Investments", icon: TrendingUp },
+      { to: "/wealth/insurance", label: "Insurance", icon: Shield },
+      { to: "/wealth/accounts", label: "Accounts", icon: Landmark },
+      { to: "/wealth/family", label: "Family", icon: Users },
     ],
   },
   {
+    to: "/money",
     label: "Money",
-    items: [
-      { to: "/money/income", label: "Income", icon: PlusCircle },
-      { to: "/money/expenses", label: "Expenses", icon: PlusCircle },
+    icon: Coins,
+    children: [
+      { to: "/money/cashflow", label: "Cashflow", icon: LineChart },
+      { to: "/money/income", label: "Income", icon: ArrowUpCircle },
+      { to: "/money/expenses", label: "Expenses", icon: ArrowDownCircle },
       { to: "/money/transactions", label: "Transactions", icon: ArrowLeftRight },
-      { to: "/money/cashflow", label: "Cash Flow", icon: Activity },
+    ],
+  },
+  {
+    to: "/planner",
+    label: "Planner",
+    icon: CalendarClock,
+    children: [
+      { to: "/planner/goals", label: "Goals", icon: TargetIcon },
+      { to: "/planner/retirement", label: "Retirement", icon: PiggyBank },
+      { to: "/planner/fire", label: "FIRE", icon: Flame },
       { to: "/planner/budget", label: "Budget", icon: Wallet },
     ],
   },
   {
-    label: "Planner",
-    items: [
-      { to: "/planner/goals", label: "Goals", icon: TargetIcon },
-      { to: "/tools/sip", label: "SIP Planner", icon: LineChart },
-      { to: "/tools/emi", label: "EMI Calculator", icon: Calculator },
-      { to: "/planner/retirement", label: "Retirement", icon: PiggyBank },
-    ],
-  },
-  {
+    to: "/tools",
     label: "Tools",
-    items: [
+    icon: Wrench,
+    children: [
       { to: "/tools/reports", label: "Reports", icon: FileText },
-      { to: "/tools/alerts", label: "Alerts", icon: Bell },
-      { to: "/tools/documents", label: "Documents", icon: FileText },
+      { to: "/tools/sip", label: "SIP Calculator", icon: TrendingUp },
+      { to: "/tools/emi", label: "EMI Calculator", icon: Calculator },
+      { to: "/tools/ai-insights", label: "AI Insights", icon: Sparkles },
     ],
   },
 ];
@@ -98,17 +116,45 @@ function NavLink({
       to={item.to}
       onClick={onNavigate}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-all",
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
         active
-          ? "bg-mint/15 text-mint shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_35%,transparent)]"
-          : "text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent",
+          ? "bg-gradient-to-r from-mint/25 to-mint/5 text-mint shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--mint)_30%,transparent)]"
+          : "text-sidebar-foreground/85 hover:text-sidebar-foreground hover:bg-sidebar-accent",
       )}
     >
-      <Icon className={cn("size-[17px] shrink-0", active ? "text-mint" : "text-mint/85")} />
+      <Icon className="size-[18px] shrink-0" />
       <span>{item.label}</span>
     </Link>
   );
 }
+
+function SubLink({
+  item,
+  active,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  onNavigate?: () => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      to={item.to}
+      onClick={onNavigate}
+      className={cn(
+        "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-all",
+        active
+          ? "bg-gradient-to-r from-mint/30 to-mint/10 text-foreground"
+          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+      )}
+    >
+      <Icon className="size-3.5 shrink-0 opacity-80" />
+      <span>{item.label}</span>
+    </Link>
+  );
+}
+
 
 function Brand() {
   return (
@@ -130,60 +176,85 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (u: string) =>
     u === "/" ? pathname === "/" : pathname === u || pathname.startsWith(u + "/");
-  const [privacy, setPrivacy] = useState(true);
+  const activeGroup =
+    NAV_GROUPS.find((g) => g.children.some((c) => isActive(c.to)))?.to ?? null;
+  const [openKey, setOpenKey] = useState<string | null>(activeGroup);
+
+  useEffect(() => {
+    if (activeGroup) setOpenKey(activeGroup);
+  }, [activeGroup]);
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="border-b border-sidebar-border px-4 py-4">
         <Brand />
       </div>
-      <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-4">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3">
+        <div className="mb-3 border-b border-sidebar-border pb-3">
+          <NavLink item={DASHBOARD} active={pathname === "/"} onNavigate={onNavigate} />
+        </div>
+        {NAV_GROUPS.map((g) => {
+          const open = openKey === g.to;
+          const within = g.children.some((c) => isActive(c.to));
+          const Icon = g.icon;
+          return (
+            <div key={g.to} className="select-none">
+              <button
+                type="button"
+                onClick={() => setOpenKey(open ? null : g.to)}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                  "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                  (open || within) && "bg-sidebar-accent text-sidebar-foreground",
+                )}
+                aria-expanded={open}
+              >
+                <Icon className={cn("size-[18px] shrink-0", within && "text-mint")} />
+                <span className="flex-1 text-left">{g.label}</span>
+                <motion.span
+                  animate={{ rotate: open ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="size-4 opacity-70" />
+                </motion.span>
+              </button>
+              <AnimatePresence initial={false}>
+                {open && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-1 ml-3 space-y-0.5 border-l border-sidebar-border py-1 pl-3">
+                      {g.children.map((c) => (
+                        <SubLink
+                          key={c.to}
+                          item={c}
+                          active={isActive(c.to)}
+                          onNavigate={onNavigate}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </nav>
+      <div className="flex flex-col gap-1 border-t border-sidebar-border px-2 py-2">
         <NavLink
-          item={DASHBOARD}
-          active={isActive("/dashboard")}
+          item={{ to: "/feedback", label: "Feedback", icon: MessageSquare }}
+          active={isActive("/feedback")}
           onNavigate={onNavigate}
         />
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label} className="flex flex-col gap-1">
-            <div className="px-3 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-              {section.label}
-            </div>
-            {section.items.map((item) => (
-              <NavLink
-                key={item.to + item.label}
-                item={item}
-                active={isActive(item.to)}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </div>
-        ))}
-      </nav>
-      <div className="border-t border-sidebar-border px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setPrivacy((p) => !p)}
-          className="flex w-full items-center justify-between gap-3 text-[13px] font-medium text-sidebar-foreground transition hover:text-foreground"
-          aria-pressed={privacy}
-        >
-          <span className="flex items-center gap-2">
-            <Eye className="size-4 text-mint/85" />
-            Privacy Mode
-          </span>
-          <span
-            className={cn(
-              "relative inline-flex h-5 w-9 items-center rounded-full transition",
-              privacy ? "bg-mint" : "bg-muted",
-            )}
-          >
-            <span
-              className={cn(
-                "inline-block h-4 w-4 transform rounded-full bg-background shadow transition",
-                privacy ? "translate-x-[18px]" : "translate-x-0.5",
-              )}
-            />
-          </span>
-        </button>
+        <NavLink
+          item={{ to: "/settings", label: "Settings", icon: SettingsIcon }}
+          active={isActive("/settings")}
+          onNavigate={onNavigate}
+        />
       </div>
     </aside>
   );
