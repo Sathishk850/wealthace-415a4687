@@ -12,8 +12,7 @@ import {
   PanelLeft,
   Sparkles,
   ChevronDown,
-  Search,
-  User,
+  LogOut,
   Building2,
   Banknote,
   TrendingUp,
@@ -288,12 +287,6 @@ function TopBar() {
       </button>
       <div className="ml-auto flex items-center gap-1.5">
         <button
-          aria-label="Search"
-          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
-        >
-          <Search className="h-4 w-4" />
-        </button>
-        <button
           aria-label="Notifications"
           className="relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
         >
@@ -301,8 +294,7 @@ function TopBar() {
           <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-mint" />
         </button>
         <button
-          aria-label="Privacy mode"
-          title="Privacy mode"
+          aria-label="Preview"
           className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
         >
           <Eye className="h-4 w-4" />
@@ -317,11 +309,9 @@ function TopBar() {
         <button
           type="button"
           onClick={handleSignOut}
-          aria-label="Profile"
-          title="Profile · Sign out"
-          className="ml-1 grid h-9 w-9 place-items-center rounded-full border border-mint/40 bg-mint/10 text-mint transition hover:bg-mint/20"
+          className="ml-1 inline-flex items-center gap-2 rounded-lg bg-mint px-3.5 py-1.5 text-sm font-semibold text-mint-foreground shadow-[0_0_0_1px_rgba(20,216,207,0.45)] transition hover:bg-primary-hover"
         >
-          <User className="h-4 w-4" />
+          <LogOut className="h-4 w-4" /> Sign out
         </button>
       </div>
     </header>
