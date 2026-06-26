@@ -88,12 +88,12 @@
   /* Layered surface system (darkest → lightest)
    *  background → sidebar → top bar → card → popover
    */
-  --background: #0A1A2A;
+  --background: #0B1E2F;       /* main body - lighter */
   --foreground: #EAF2F5;
 
-  --surface: #0B1E2F;        /* sidebar */
-  --surface-2: #102A3C;      /* top bar */
-  --surface-3: #163448;      /* hover row / table header */
+  --surface: #061824;         /* sidebar - darker navy */
+  --surface-2: #071B2B;       /* top bar - darker navy */
+  --surface-3: #0F2538;      /* hover row / table header */
 
   --card: #11293C;
   --card-foreground: #EAF2F5;
