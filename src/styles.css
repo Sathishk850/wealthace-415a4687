@@ -88,19 +88,19 @@
   /* Layered surface system (darkest → lightest)
    *  background → sidebar → top bar → card → popover
    */
-  --background: #04101C;
-  --foreground: #E6E8EC;
+  --background: #010E1B;
+  --foreground: #E4E5E7;
 
-  --surface: #0A1B2A;        /* sidebar */
-  --surface-2: #11293C;      /* top bar */
+  --surface: #071622;        /* sidebar */
+  --surface-2: #102634;      /* top bar */
   --surface-3: #143247;      /* hover row / table header */
 
-  --card: #0F2538;
-  --card-foreground: #E6E8EC;
-  --card-glass: rgba(20, 50, 71, 0.72);
+  --card: #0D2232;
+  --card-foreground: #E4E5E7;
+  --card-glass: rgba(13, 34, 50, 0.78);
 
-  --popover: #163A52;
-  --popover-foreground: #E6E8EC;
+  --popover: #102634;
+  --popover-foreground: #E4E5E7;
 
   /* Accents */
   --primary: #00CEB1;
@@ -110,12 +110,12 @@
   --mint: #00CEB1;
   --mint-foreground: #010E1B;
 
-  --secondary: #11293C;
-  --secondary-foreground: #E6E8EC;
+  --secondary: #102634;
+  --secondary-foreground: #E4E5E7;
 
-  --muted: #11293C;
-  --muted-foreground: #9AA4B2;
-  --muted-2: #6F7C8C;
+  --muted: #102634;
+  --muted-foreground: #9A9DA4;
+  --muted-2: #727189;
 
   --accent: #00CEB1;
   --accent-foreground: #010E1B;
@@ -130,8 +130,8 @@
   --purple: #9B5DE5;
 
   /* Borders & focus */
-  --border: #1C3A52;
-  --input: #1C3A52;
+  --border: #1B3249;
+  --input: #1B3249;
   --ring: #00CEB1;
 
   /* Charts */
@@ -142,13 +142,13 @@
   --chart-5: #FF5B5B;
 
   /* Sidebar */
-  --sidebar: #0A1B2A;
-  --sidebar-foreground: #9AA4B2;
+  --sidebar: #071622;
+  --sidebar-foreground: #9A9DA4;
   --sidebar-primary: #00CEB1;
-  --sidebar-primary-foreground: #04101C;
-  --sidebar-accent: #11293C;
-  --sidebar-accent-foreground: #E6E8EC;
-  --sidebar-border: #14304A;
+  --sidebar-primary-foreground: #010E1B;
+  --sidebar-accent: #102634;
+  --sidebar-accent-foreground: #E4E5E7;
+  --sidebar-border: #1B3249;
   --sidebar-ring: #00CEB1;
 
   /* Elevation shadows */
@@ -159,37 +159,37 @@
 }
 
 .dark {
-  --background: #04101C;
-  --foreground: #E6E8EC;
-  --card: #0F2538;
-  --card-foreground: #E6E8EC;
-  --popover: #163A52;
-  --popover-foreground: #E6E8EC;
+  --background: #010E1B;
+  --foreground: #E4E5E7;
+  --card: #0D2232;
+  --card-foreground: #E4E5E7;
+  --popover: #102634;
+  --popover-foreground: #E4E5E7;
   --primary: #00CEB1;
-  --primary-foreground: #04101C;
-  --secondary: #11293C;
-  --secondary-foreground: #E6E8EC;
-  --muted: #11293C;
-  --muted-foreground: #9AA4B2;
+  --primary-foreground: #010E1B;
+  --secondary: #102634;
+  --secondary-foreground: #E4E5E7;
+  --muted: #102634;
+  --muted-foreground: #9A9DA4;
   --accent: #00CEB1;
-  --accent-foreground: #04101C;
+  --accent-foreground: #010E1B;
   --destructive: #FF5B5B;
-  --destructive-foreground: #E6E8EC;
-  --border: #1C3A52;
-  --input: #1C3A52;
+  --destructive-foreground: #E4E5E7;
+  --border: #1B3249;
+  --input: #1B3249;
   --ring: #00CEB1;
   --chart-1: #20E7E5;
   --chart-2: #00CEB1;
   --chart-3: #03C988;
   --chart-4: #F4C430;
   --chart-5: #FF5B5B;
-  --sidebar: #0A1B2A;
-  --sidebar-foreground: #9AA4B2;
+  --sidebar: #071622;
+  --sidebar-foreground: #9A9DA4;
   --sidebar-primary: #00CEB1;
-  --sidebar-primary-foreground: #04101C;
-  --sidebar-accent: #11293C;
-  --sidebar-accent-foreground: #E6E8EC;
-  --sidebar-border: #14304A;
+  --sidebar-primary-foreground: #010E1B;
+  --sidebar-accent: #102634;
+  --sidebar-accent-foreground: #E4E5E7;
+  --sidebar-border: #1B3249;
   --sidebar-ring: #00CEB1;
 }
 
@@ -204,10 +204,9 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 90% 60% at 12% -10%, rgba(0, 206, 177, 0.10), transparent 60%),
-      radial-gradient(ellipse 70% 50% at 110% 10%, rgba(32, 231, 229, 0.08), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 50% 110%, rgba(0, 206, 177, 0.05), transparent 60%),
-      linear-gradient(180deg, #04101C 0%, #03101A 100%);
+      radial-gradient(ellipse 90% 60% at 12% -10%, rgba(0, 206, 177, 0.08), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 110% 10%, rgba(32, 231, 229, 0.06), transparent 60%),
+      linear-gradient(180deg, #010E1B 0%, #020B14 100%);
     background-attachment: fixed;
   }
 
