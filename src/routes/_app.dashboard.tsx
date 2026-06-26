@@ -296,11 +296,12 @@ function Dashboard() {
 
 /* ---------- Building blocks ---------- */
 
-function Card({ className, children }: { className?: string; children: ReactNode }) {
+function Card({ className, children, style }: { className?: string; children: ReactNode; style?: React.CSSProperties }) {
   return (
     <div
+      style={style}
       className={cn(
-        "rounded-2xl border border-border/70 bg-[#04141e]/90 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]",
+        "card-hover rounded-2xl border border-border/70 bg-[#04141e]/90 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_8px_24px_-16px_rgba(0,0,0,0.55)]",
         className,
       )}
     >
@@ -418,6 +419,7 @@ function RangeChart({
 }
 
 function SnapCard({
+  i,
   label,
   value,
   delta,
@@ -427,6 +429,7 @@ function SnapCard({
   series,
   tip,
 }: {
+  i?: number;
   label: string;
   value: string;
   delta: string;
@@ -438,7 +441,10 @@ function SnapCard({
 }) {
   const id = `s-${label.replace(/\s/g, "")}`;
   return (
-    <div className="rounded-2xl border border-border/70 bg-[#04141e]/90 p-5">
+    <div
+      className="card-hover fv-rise rounded-2xl border border-border/70 bg-[#04141e]/90 p-5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.55)]"
+      style={{ animationDelay: `${140 + (i ?? 0) * 60}ms` }}
+    >
       <div className="flex items-start justify-between">
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
           <span
