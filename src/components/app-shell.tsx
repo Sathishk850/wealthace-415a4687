@@ -276,7 +276,10 @@ function TopBar() {
   };
 
   return (
-    <header className="glass-card sticky top-0 z-30 flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
+    <header
+      className="sticky top-0 z-30 flex items-center gap-3 border-b border-border px-4 py-3 backdrop-blur-xl md:px-6"
+      style={{ background: "rgba(16, 38, 52, 0.85)" }}
+    >
       <div className="md:hidden">
         <Brand />
       </div>
