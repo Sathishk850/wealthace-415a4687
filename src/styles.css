@@ -142,13 +142,13 @@
   --chart-5: #FF5B5B;
 
   /* Sidebar */
-  --sidebar: #0B1E2F;
+  --sidebar: #061824;
   --sidebar-foreground: #93A4B2;
   --sidebar-primary: #00CEB1;
-  --sidebar-primary-foreground: #0A1A2A;
-  --sidebar-accent: #143247;
+  --sidebar-primary-foreground: #0B1E2F;
+  --sidebar-accent: #0C2A3E;
   --sidebar-accent-foreground: #EAF2F5;
-  --sidebar-border: #143247;
+  --sidebar-border: #0C2A3E;
   --sidebar-ring: #00CEB1;
 
   /* Elevation shadows */
