@@ -71,7 +71,7 @@ const MICRO_DOWN = genSeries(100, 24, 4).map((d, i) => ({ ...d, v: 110 - i * 0.4
 
 const ALLOCATION = [
   { name: "Equity", value: 48.6, color: "#3b82f6" },
-  { name: "Mutual Funds", value: 28.7, color: "#14d8cf" },
+  { name: "Mutual Funds", value: 28.7, color: "#20E7E5" },
   { name: "Debt", value: 12.3, color: "#d9b800" },
   { name: "Gold", value: 6.1, color: "#ff8a3c" },
   { name: "Cash & Others", value: 4.3, color: "#a855f7" },
@@ -127,7 +127,7 @@ function Dashboard() {
         <div className="col-span-12 fv-rise" style={{ animationDelay: "120ms" }}>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Financial Snapshot</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-            <SnapCard i={0} label="Assets" value="₹ 1,15,38,850" delta="7.60% vs last month" up icon={Wallet} accent="#14d8cf" series={MICRO_UP} />
+            <SnapCard i={0} label="Assets" value="₹ 1,15,38,850" delta="7.60% vs last month" up icon={Wallet} accent="#20E7E5" series={MICRO_UP} />
             <SnapCard i={1} label="Liabilities" value="₹ 42,24,000" delta="2.10% vs last month" up={false} icon={Banknote} accent="#ff4d4d" series={MICRO_DOWN} />
             <SnapCard i={2} label="Investments" value="₹ 58,78,450" delta="6.35% vs last month" up icon={TrendingUp} accent="#00c896" series={MICRO_UP} />
             <SnapCard i={3} label="Savings" value="₹ 6,89,600" delta="1.25% vs last month" up icon={PiggyBank} accent="#3b82f6" series={MICRO_UP} />
@@ -266,7 +266,7 @@ function Dashboard() {
             </a>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <GoalCard icon={Home} color="#14d8cf" name="House Purchase" pct={68} saved="₹34,00,000" target="₹50,00,000" eta="Dec 2028" />
+            <GoalCard icon={Home} color="#20E7E5" name="House Purchase" pct={68} saved="₹34,00,000" target="₹50,00,000" eta="Dec 2028" />
             <GoalCard icon={Car} color="#d9b800" name="Car Purchase" pct={35} saved="₹3,50,000" target="₹10,00,000" eta="Jun 2027" />
             <GoalCard icon={Plane} color="#a855f7" name="Europe Trip" pct={81} saved="₹2,43,000" target="₹3,00,000" eta="Oct 2026" />
           </div>
@@ -281,7 +281,7 @@ function Dashboard() {
             </a>
           </div>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Insight icon={TrendingUp} tint="#14d8cf" title="Savings rate increased 8%" body="Great job! You're saving more than 75% of users." />
+            <Insight icon={TrendingUp} tint="#20E7E5" title="Savings rate increased 8%" body="Great job! You're saving more than 75% of users." />
             <Insight icon={BadgeIndianRupee} tint="#d9b800" title="Expenses down by 3%" body="Nice! You spent ₹1,900 less than last month." />
             <Insight icon={Calendar} tint="#3b82f6" title="SIP of ₹25,000 is due tomorrow" body="Pn Parag Parikh Flexi Cap Fund · Due on 13 Jun 2026." />
             <Insight icon={Sparkles} tint="#a855f7" title="Emergency fund is at 72%" body="You're on track. Target 6 months of expenses." />
@@ -301,7 +301,7 @@ function Card({ className, children, style }: { className?: string; children: Re
     <div
       style={style}
       className={cn(
-        "card-hover rounded-2xl border border-border/70 bg-[#04141e]/90 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_8px_24px_-16px_rgba(0,0,0,0.55)]",
+        "card-hover rounded-2xl border border-border/70 bg-[#010E1B]/90 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_8px_24px_-16px_rgba(0,0,0,0.55)]",
         className,
       )}
     >
@@ -366,8 +366,8 @@ function RangeChart({
           <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#14d8cf" stopOpacity={0.45} />
-                <stop offset="100%" stopColor="#14d8cf" stopOpacity={0} />
+                <stop offset="0%" stopColor="#20E7E5" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#20E7E5" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -392,9 +392,9 @@ function RangeChart({
               domain={["dataMin - 50000", "dataMax + 50000"]}
             />
             <RTooltip
-              cursor={{ stroke: "#14d8cf", strokeOpacity: 0.3 }}
+              cursor={{ stroke: "#20E7E5", strokeOpacity: 0.3 }}
               contentStyle={{
-                background: "#04141e",
+                background: "#010E1B",
                 border: "1px solid #0c5d65",
                 borderRadius: 8,
                 fontSize: 12,
@@ -406,10 +406,10 @@ function RangeChart({
             <Area
               type="monotone"
               dataKey="v"
-              stroke="#14d8cf"
+              stroke="#20E7E5"
               strokeWidth={2}
               fill={`url(#${id})`}
-              activeDot={{ r: 4, fill: "#14d8cf", stroke: "#04141e", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: "#20E7E5", stroke: "#010E1B", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -442,7 +442,7 @@ function SnapCard({
   const id = `s-${label.replace(/\s/g, "")}`;
   return (
     <div
-      className="card-hover fv-rise rounded-2xl border border-border/70 bg-[#04141e]/90 p-5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.55)]"
+      className="card-hover fv-rise rounded-2xl border border-border/70 bg-[#010E1B]/90 p-5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.55)]"
       style={{ animationDelay: `${140 + (i ?? 0) * 60}ms` }}
     >
       <div className="flex items-start justify-between">
@@ -504,7 +504,7 @@ function ScoreRing({ score }: { score: number }) {
           cx={85}
           cy={85}
           r={r}
-          stroke="#14d8cf"
+          stroke="#20E7E5"
           strokeWidth={10}
           fill="none"
           strokeLinecap="round"
