@@ -85,19 +85,22 @@
 :root {
   --radius: 0.625rem;
 
-  /* Backgrounds */
-  --background: #010E1B;
-  --foreground: #E4E5E7;
+  /* Layered surface system (darkest → lightest)
+   *  background → sidebar → top bar → card → popover
+   */
+  --background: #04101C;
+  --foreground: #E6E8EC;
 
-  --surface: #071622;
-  --surface-2: #102634;
+  --surface: #0A1B2A;        /* sidebar */
+  --surface-2: #11293C;      /* top bar */
+  --surface-3: #143247;      /* hover row / table header */
 
-  --card: #0D2232;
-  --card-foreground: #E4E5E7;
-  --card-glass: rgba(13, 34, 50, 0.85);
+  --card: #0F2538;
+  --card-foreground: #E6E8EC;
+  --card-glass: rgba(20, 50, 71, 0.72);
 
-  --popover: #102634;
-  --popover-foreground: #E4E5E7;
+  --popover: #163A52;
+  --popover-foreground: #E6E8EC;
 
   /* Accents */
   --primary: #00CEB1;
@@ -107,12 +110,12 @@
   --mint: #00CEB1;
   --mint-foreground: #010E1B;
 
-  --secondary: #102634;
-  --secondary-foreground: #E4E5E7;
+  --secondary: #11293C;
+  --secondary-foreground: #E6E8EC;
 
-  --muted: #102634;
-  --muted-foreground: #9A9DA4;
-  --muted-2: #727189;
+  --muted: #11293C;
+  --muted-foreground: #9AA4B2;
+  --muted-2: #6F7C8C;
 
   --accent: #00CEB1;
   --accent-foreground: #010E1B;
@@ -127,8 +130,8 @@
   --purple: #9B5DE5;
 
   /* Borders & focus */
-  --border: #1B3249;
-  --input: #1B3249;
+  --border: #1C3A52;
+  --input: #1C3A52;
   --ring: #00CEB1;
 
   /* Charts */
@@ -139,48 +142,54 @@
   --chart-5: #FF5B5B;
 
   /* Sidebar */
-  --sidebar: #071622;
-  --sidebar-foreground: #9A9DA4;
+  --sidebar: #0A1B2A;
+  --sidebar-foreground: #9AA4B2;
   --sidebar-primary: #00CEB1;
-  --sidebar-primary-foreground: #010E1B;
-  --sidebar-accent: #0D2232;
-  --sidebar-accent-foreground: #E4E5E7;
-  --sidebar-border: #1B3249;
+  --sidebar-primary-foreground: #04101C;
+  --sidebar-accent: #11293C;
+  --sidebar-accent-foreground: #E6E8EC;
+  --sidebar-border: #14304A;
   --sidebar-ring: #00CEB1;
+
+  /* Elevation shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md: 0 6px 18px -8px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.25);
+  --shadow-lg: 0 18px 40px -16px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-glow: 0 0 0 1px rgba(0,206,177,0.18), 0 8px 28px -10px rgba(32,231,229,0.28);
 }
 
 .dark {
-  --background: #010E1B;
-  --foreground: #E4E5E7;
-  --card: #0D2232;
-  --card-foreground: #E4E5E7;
-  --popover: #102634;
-  --popover-foreground: #E4E5E7;
+  --background: #04101C;
+  --foreground: #E6E8EC;
+  --card: #0F2538;
+  --card-foreground: #E6E8EC;
+  --popover: #163A52;
+  --popover-foreground: #E6E8EC;
   --primary: #00CEB1;
-  --primary-foreground: #010E1B;
-  --secondary: #102634;
-  --secondary-foreground: #E4E5E7;
-  --muted: #102634;
-  --muted-foreground: #9A9DA4;
+  --primary-foreground: #04101C;
+  --secondary: #11293C;
+  --secondary-foreground: #E6E8EC;
+  --muted: #11293C;
+  --muted-foreground: #9AA4B2;
   --accent: #00CEB1;
-  --accent-foreground: #010E1B;
+  --accent-foreground: #04101C;
   --destructive: #FF5B5B;
-  --destructive-foreground: #E4E5E7;
-  --border: #1B3249;
-  --input: #1B3249;
+  --destructive-foreground: #E6E8EC;
+  --border: #1C3A52;
+  --input: #1C3A52;
   --ring: #00CEB1;
   --chart-1: #20E7E5;
   --chart-2: #00CEB1;
   --chart-3: #03C988;
   --chart-4: #F4C430;
   --chart-5: #FF5B5B;
-  --sidebar: #071622;
-  --sidebar-foreground: #9A9DA4;
+  --sidebar: #0A1B2A;
+  --sidebar-foreground: #9AA4B2;
   --sidebar-primary: #00CEB1;
-  --sidebar-primary-foreground: #010E1B;
-  --sidebar-accent: #0D2232;
-  --sidebar-accent-foreground: #E4E5E7;
-  --sidebar-border: #1B3249;
+  --sidebar-primary-foreground: #04101C;
+  --sidebar-accent: #11293C;
+  --sidebar-accent-foreground: #E6E8EC;
+  --sidebar-border: #14304A;
   --sidebar-ring: #00CEB1;
 }
 
@@ -195,9 +204,10 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 80% 60% at 15% -10%, rgba(0, 206, 177, 0.08), transparent 60%),
-      radial-gradient(ellipse 70% 50% at 110% 20%, rgba(32, 231, 229, 0.08), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 50% 110%, rgba(0, 206, 177, 0.05), transparent 60%);
+      radial-gradient(ellipse 90% 60% at 12% -10%, rgba(0, 206, 177, 0.10), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 110% 10%, rgba(32, 231, 229, 0.08), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 50% 110%, rgba(0, 206, 177, 0.05), transparent 60%),
+      linear-gradient(180deg, #04101C 0%, #03101A 100%);
     background-attachment: fixed;
   }
 
@@ -217,31 +227,34 @@
     height: 10px;
   }
   *::-webkit-scrollbar-track {
-    background: #010E1B;
+    background: var(--background);
   }
   *::-webkit-scrollbar-thumb {
-    background: #1B3249;
+    background: var(--border);
     border-radius: 8px;
-    border: 2px solid #010E1B;
+    border: 2px solid var(--background);
   }
   *::-webkit-scrollbar-thumb:hover {
-    background: #00CEB1;
+    background: var(--primary);
   }
 
   ::selection {
     background: rgba(0, 206, 177, 0.35);
-    color: #E4E5E7;
+    color: var(--foreground);
   }
 }
 
 @utility glass-card {
-  background: var(--card-glass);
-  backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(27, 50, 73, 0.9);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0) 40%),
+    var(--card-glass);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(28, 58, 82, 0.9);
+  border-radius: 16px;
   box-shadow:
-    0 1px 0 rgba(228, 229, 231, 0.03) inset,
-    0 8px 32px -12px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(0, 206, 177, 0.04);
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 32px -16px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(0, 206, 177, 0.03);
 }
 
 @utility glow-border {
@@ -262,10 +275,10 @@
 
 .card-hover:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 206, 177, 0.35);
+  border-color: rgba(0, 206, 177, 0.32);
   box-shadow:
-    0 12px 32px -16px rgba(0, 0, 0, 0.7),
-    0 0 24px -6px rgba(32, 231, 229, 0.24);
+    0 18px 40px -20px rgba(0, 0, 0, 0.75),
+    0 0 28px -8px rgba(32, 231, 229, 0.28);
 }
 
 @keyframes fv-fade-up {
