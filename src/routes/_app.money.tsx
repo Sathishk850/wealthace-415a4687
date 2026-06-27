@@ -109,6 +109,60 @@ function ChartCard({
   );
 }
 
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  delta,
+  tone = "default",
+  tooltip,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  delta?: string;
+  tone?: "default" | "positive" | "negative" | "mint";
+  tooltip?: string;
+}) {
+  const toneClass =
+    tone === "positive"
+      ? "text-success"
+      : tone === "negative"
+      ? "text-destructive"
+      : tone === "mint"
+      ? "text-mint"
+      : "text-muted-foreground";
+  const iconBg =
+    tone === "positive"
+      ? "bg-success/10 text-success"
+      : tone === "negative"
+      ? "bg-destructive/10 text-destructive"
+      : "bg-mint/10 text-mint";
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
+        <span className={`grid h-8 w-8 place-items-center rounded-lg ${iconBg}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <div className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">
+        {value}
+      </div>
+      <div className="mt-1 flex items-center gap-1.5 text-xs">
+        {delta && <span className={`font-medium ${toneClass}`}>{delta}</span>}
+        {tooltip && (
+          <span title={tooltip} className="cursor-help text-muted-foreground">
+            <Info className="h-3 w-3" />
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Money() {
   const [active, setActive] = useState("cashflow");
 
