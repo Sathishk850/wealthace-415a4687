@@ -1071,3 +1071,298 @@ function InsuranceView() {
     </>
   );
 }
+
+const ACC_STATS = [
+  { label: "Total Balance", value: "₹8,64,250", sub: "In 7 Accounts", icon: Landmark, tint: "bg-sky-400/10 text-sky-300", info: true },
+  { label: "Total in Banks", value: "₹7,45,250", sub: "In 4 Accounts", icon: Building2, tint: "bg-emerald-400/10 text-emerald-300" },
+  { label: "Total in Cards", value: "-₹1,20,000", sub: "In 2 Cards", icon: CreditCard, tint: "bg-violet-400/10 text-violet-300" },
+  { label: "Total in Wallets", value: "₹39,000", sub: "In 2 Wallets", icon: Wallet2, tint: "bg-orange-400/10 text-orange-300" },
+  { label: "Total Loans", value: "-₹3,25,000", sub: "In 2 Loans", icon: HeartPulse, tint: "bg-rose-400/10 text-rose-300" },
+];
+
+const ACC_ALLOC = [
+  { name: "Bank Accounts", amt: "₹7,45,250", pct: 86.2, color: "#14D8CF" },
+  { name: "Credit Cards", amt: "-₹1,20,000", pct: -13.9, color: "#8B5CF6" },
+  { name: "Wallets", amt: "₹39,000", pct: 4.5, color: "#F59E0B" },
+  { name: "Loans", amt: "-₹3,25,000", pct: -37.6, color: "#F43F5E" },
+];
+
+const QUICK_ACTIONS = [
+  { label: "Add Bank Account", sub: "Connect your bank account", icon: Building2 },
+  { label: "Add Credit Card", sub: "Track your card expenses", icon: CreditCard },
+  { label: "Add Wallet", sub: "Add your digital wallet", icon: Wallet2 },
+  { label: "Add Loan", sub: "Track your loans", icon: HeartPulse },
+  { label: "Manage Categories", sub: "Manage account categories", icon: LayoutGrid },
+];
+
+const ACCOUNTS = [
+  { name: "HDFC Bank - Savings", sub: "Savings Account", type: "Bank Account", num: "XXXX XXXX XXXX 5678", bal: "₹2,45,500", nominees: "Priya Sharma", icon: Building2 },
+  { name: "ICICI Bank - Salary", sub: "Savings Account", type: "Bank Account", num: "XXXX XXXX XXXX 1234", bal: "₹1,85,750", nominees: "Priya Sharma", icon: Building2 },
+  { name: "State Bank of India", sub: "Savings Account", type: "Bank Account", num: "XXXX XXXX XXXX 9012", bal: "₹1,95,000", nominees: "Rohit Sharma", icon: Building2 },
+  { name: "Axis Bank - Savings", sub: "Savings Account", type: "Bank Account", num: "XXXX XXXX XXXX 3456", bal: "₹1,18,000", nominees: "Not Added", icon: Building2 },
+  { name: "HDFC Credit Card", sub: "Credit Card", type: "Credit Card", num: "XXXX XXXX XXXX 5678", bal: "-₹75,000", nominees: "Priya Sharma", icon: CreditCard },
+  { name: "ICICI Credit Card", sub: "Credit Card", type: "Credit Card", num: "XXXX XXXX XXXX 4321", bal: "-₹45,000", nominees: "Priya Sharma", icon: CreditCard },
+  { name: "Paytm Wallet", sub: "Wallet", type: "Wallet", num: "9123 4567 8901", bal: "₹25,000", nominees: "Self", icon: Wallet2 },
+  { name: "Amazon Pay Wallet", sub: "Wallet", type: "Wallet", num: "9876 5432 1098", bal: "₹14,000", nominees: "Self", icon: Wallet2 },
+  { name: "Home Loan - SBI", sub: "Loan Card", type: "Loan", num: "HLXXXXXX7890", bal: "-₹2,50,000", nominees: "Priya Sharma", icon: Home },
+  { name: "Personal Loan - HDFC", sub: "Loan Card", type: "Loan", num: "PLXXX1XXX4567", bal: "-₹75,000", nominees: "Not Added", icon: Banknote },
+];
+
+const TOP_SPEND = [
+  { name: "HDFC Credit Card", amt: "-₹45,250", color: "#8B5CF6", pct: 100 },
+  { name: "ICICI Credit Card", amt: "-₹28,300", color: "#8B5CF6", pct: 65 },
+  { name: "Paytm Wallet", amt: "-₹12,600", color: "#F59E0B", pct: 28 },
+  { name: "Amazon Pay Wallet", amt: "-₹8,450", color: "#F59E0B", pct: 19 },
+];
+
+const UPCOMING = [
+  { name: "HDFC Credit Card Bill", date: "Due on 15 Jun 2025", amt: "₹25,000", due: "In 5 days", tint: "bg-rose-500/15 text-rose-300" },
+  { name: "Home Loan EMI", date: "Due on 20 Jun 2025", amt: "₹25,000", due: "In 10 days", tint: "bg-orange-500/15 text-orange-300" },
+  { name: "ICICI Credit Card Bill", date: "Due on 25 Jun 2025", amt: "₹20,000", due: "In 15 days", tint: "bg-amber-500/15 text-amber-300" },
+];
+
+const ACC_SUBTABS = ["All", "Bank Accounts", "Credit Cards", "Wallets", "Loans"] as const;
+
+function AccountsView() {
+  const [sub, setSub] = useState<typeof ACC_SUBTABS[number]>("All");
+  return (
+    <>
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {ACC_STATS.map((s) => (
+          <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-start gap-3">
+              <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${s.tint}`}>
+                <s.icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {s.label} {s.info && <Info className="h-3 w-3 opacity-60" />}
+                </div>
+                <div className="mt-1 font-display text-xl font-bold text-foreground">{s.value}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Overview row */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* Balance Overview */}
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
+          <div className="mb-3 text-sm font-semibold text-foreground">Balance Overview</div>
+          <div className="flex items-center gap-5">
+            <div className="relative h-[180px] w-[180px] shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={ACC_ALLOC.map(a => ({ ...a, pct: Math.abs(a.pct) }))} dataKey="pct" innerRadius={58} outerRadius={84} paddingAngle={2} stroke="none">
+                    {ACC_ALLOC.map((a) => <Cell key={a.name} fill={a.color} />)}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 grid place-items-center text-center">
+                <div>
+                  <div className="font-display text-lg font-bold text-foreground">₹8,64,250</div>
+                  <div className="text-[10px] text-muted-foreground">Total Balance</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 space-y-2.5">
+              {ACC_ALLOC.map((a) => (
+                <div key={a.name} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 text-xs">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.color }} />
+                  <span className="text-muted-foreground">{a.name}</span>
+                  <span className="text-foreground tabular-nums">{a.amt}</span>
+                  <span className={`tabular-nums ${a.pct < 0 ? "text-rose-400" : "text-emerald-400"}`}>{a.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-mint hover:text-mint/80">
+            View detailed breakdown <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Cash Flow */}
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-sm font-semibold text-foreground">Cash Flow (This Month)</div>
+              <div className="text-xs text-muted-foreground">Monthly Change vs Last Month</div>
+            </div>
+            <div className="text-right">
+              <div className="font-display text-base font-bold text-foreground">₹23,450</div>
+              <div className="text-xs font-medium text-emerald-400">↑ 12.45%</div>
+            </div>
+          </div>
+          <div className="mt-5 space-y-4">
+            <div>
+              <div className="text-xs text-muted-foreground">Money In</div>
+              <div className="mt-1 text-sm font-semibold text-emerald-400">₹1,85,000</div>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
+                <div className="h-full rounded-full bg-emerald-400" style={{ width: "100%" }} />
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Money Out</div>
+              <div className="mt-1 text-sm font-semibold text-rose-400">-₹1,61,550</div>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
+                <div className="h-full rounded-full bg-rose-400" style={{ width: "87%" }} />
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-border bg-surface-2 px-3 py-2.5">
+              <span className="text-xs text-muted-foreground">Net Cash Flow</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">₹23,450</span>
+                <span className="text-xs font-medium text-emerald-400">↑ 12.45%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-3">
+          <div className="mb-3 text-sm font-semibold text-foreground">Quick Actions</div>
+          <div className="space-y-2">
+            {QUICK_ACTIONS.map((q) => (
+              <button key={q.label} className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-left hover:border-mint/40">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint">
+                  <q.icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-medium text-foreground">{q.label}</div>
+                  <div className="truncate text-[10px] text-muted-foreground">{q.sub}</div>
+                </div>
+                <ChevronDown className="h-4 w-4 -rotate-90 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Accounts table + side cards */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-foreground">All Accounts</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input placeholder="Search accounts..." className="h-8 w-48 rounded-md border border-border bg-surface-2 pl-7 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none" />
+              </div>
+              <button className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-foreground">All Accounts <ChevronDown className="h-3 w-3" /></button>
+              <button className="grid h-8 w-8 place-items-center rounded-md border border-border bg-surface-2 text-muted-foreground"><ArrowUpDown className="h-3.5 w-3.5" /></button>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-4 border-b border-border text-xs">
+            {ACC_SUBTABS.map((t) => (
+              <button key={t} onClick={() => setSub(t)} className={`relative pb-2 ${sub === t ? "text-mint" : "text-muted-foreground hover:text-foreground"}`}>
+                {t}
+                {sub === t && <span className="absolute -bottom-px left-0 h-0.5 w-full rounded-full bg-mint" />}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="text-muted-foreground">
+                <tr className="border-b border-border [&>th]:py-2 [&>th]:px-2 [&>th]:text-left [&>th]:font-medium">
+                  <th>Account Name</th>
+                  <th>Type</th>
+                  <th>Account Number</th>
+                  <th>Balance</th>
+                  <th>Nominees</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ACCOUNTS.map((a) => (
+                  <tr key={a.name} className="border-b border-border/60 last:border-0 [&>td]:py-2.5 [&>td]:px-2">
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint">
+                          <a.icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate text-foreground font-medium">{a.name}</div>
+                          <div className="truncate text-[10px] text-muted-foreground">{a.sub}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-muted-foreground">{a.type}</td>
+                    <td className="text-muted-foreground tabular-nums">{a.num}</td>
+                    <td className={`tabular-nums font-medium ${a.bal.startsWith("-") ? "text-rose-400" : "text-foreground"}`}>{a.bal}</td>
+                    <td className={a.nominees === "Not Added" ? "text-rose-300" : "text-foreground"}>{a.nominees}</td>
+                    <td className="text-right">
+                      <button className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:text-foreground"><MoreVertical className="h-4 w-4" /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>Showing 1 to {ACCOUNTS.length} of {ACCOUNTS.length} accounts</span>
+            <div className="flex items-center gap-2">
+              {["‹", "1", "›"].map((p, idx) => (
+                <button key={idx} className={`h-7 min-w-7 rounded-md border border-border px-2 ${p === "1" ? "bg-mint/15 text-mint" : "text-muted-foreground hover:text-foreground"}`}>{p}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Side: Top spending + Upcoming */}
+        <div className="space-y-4 lg:col-span-4">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold text-foreground">Top Spending Accounts (This Month)</div>
+              <MoreVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="space-y-3">
+              {TOP_SPEND.map((s) => (
+                <div key={s.name}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-foreground">{s.name}</span>
+                    <span className="font-medium text-rose-400 tabular-nums">{s.amt}</span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${s.pct}%`, background: s.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-3 text-sm font-semibold text-foreground">Upcoming Payments</div>
+            <div className="space-y-2.5">
+              {UPCOMING.map((u) => (
+                <div key={u.name} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-rose-500/10 text-rose-300">
+                      <Calendar className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-medium text-foreground">{u.name}</div>
+                      <div className="truncate text-[10px] text-muted-foreground">{u.date}</div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-semibold text-foreground tabular-nums">{u.amt}</div>
+                    <div className={`mt-0.5 inline-block rounded-md px-1.5 py-0.5 text-[10px] font-medium ${u.tint}`}>{u.due}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-mint hover:text-mint/80">
+              View all payments <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
