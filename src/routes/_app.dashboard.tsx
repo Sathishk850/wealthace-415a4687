@@ -23,6 +23,8 @@ import {
   Area,
   AreaChart,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -71,11 +73,23 @@ const MICRO_UP = genSeries(100, 24, 4).map((d) => ({ ...d }));
 const MICRO_DOWN = genSeries(100, 24, 4).map((d, i) => ({ ...d, v: 110 - i * 0.4 + Math.random() * 4 }));
 
 const ALLOCATION = [
-  { name: "Equity", value: 48.6, color: "#3b82f6" },
-  { name: "Mutual Funds", value: 28.7, color: "#20E7E5" },
-  { name: "Debt", value: 12.3, color: "#d9b800" },
-  { name: "Gold", value: 6.1, color: "#ff8a3c" },
-  { name: "Cash & Others", value: 4.3, color: "#a855f7" },
+  { name: "Stocks", value: 58.2, amount: 6715430, color: "#20E7E5" },
+  { name: "Mutual Funds", value: 22.5, amount: 2594230, color: "#3b82f6" },
+  { name: "Gold", value: 8.7, amount: 1002430, color: "#d9b800" },
+  { name: "Real Estate", value: 6.2, amount: 722930, color: "#a855f7" },
+  { name: "Cash & Bank", value: 4.5, amount: 487830, color: "#34d399" },
+];
+
+const PORT_COMPARE = Array.from({ length: 9 }, (_, i) => {
+  const invested = 5142 + i * 70 + Math.round(Math.sin(i) * 30);
+  const current = invested + 200 + i * 110 + Math.round(Math.cos(i) * 80);
+  return { label: ["May", "04 Jun", "", "11 Jun", "", "18 Jun", "", "25 Jun", ""][i], invested: invested * 100, current: current * 100 };
+});
+
+const REMINDERS = [
+  { name: "LIC Premium Payment", date: "30 Jun 2026", amount: "₹12,650" },
+  { name: "SIP - Parag Parikh Flexi Cap", date: "01 Jul 2026", amount: "₹10,000" },
+  { name: "Credit Card Payment", date: "05 Jul 2026", amount: "₹8,750" },
 ];
 
 function fmt(n: number) {
