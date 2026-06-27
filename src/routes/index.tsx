@@ -26,24 +26,39 @@ function HomeRoute() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    let leave: ReturnType<typeof setTimeout> | undefined;
+    let done: ReturnType<typeof setTimeout> | undefined;
     supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session);
+      const hasSession = !!data.session;
+      setAuthed(hasSession);
+      if (hasSession) {
+        // Valid session — skip splash, go straight to dashboard.
+        navigate({ to: "/dashboard", replace: true });
+        return;
+      }
+      leave = setTimeout(() => setSplashLeaving(true), 2000);
+      done = setTimeout(() => setShowSplash(false), 2500);
     });
-    const leave = setTimeout(() => setSplashLeaving(true), 2000);
-    const done = setTimeout(() => setShowSplash(false), 2500);
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setAuthed(false);
+        setShowSplash(false);
+      }
+    });
     return () => {
-      clearTimeout(leave);
-      clearTimeout(done);
+      if (leave) clearTimeout(leave);
+      if (done) clearTimeout(done);
+      sub.subscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
     if (!showSplash && authed) {
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/dashboard", replace: true });
     }
   }, [showSplash, authed, navigate]);
 
-  if (showSplash) return <Splash leaving={splashLeaving} />;
+  if (authed === null || showSplash) return <Splash leaving={splashLeaving} />;
   if (authed) return <Splash leaving={false} />;
   return <Landing />;
 }
