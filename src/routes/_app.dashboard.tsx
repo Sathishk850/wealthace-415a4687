@@ -23,6 +23,8 @@ import {
   Area,
   AreaChart,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -71,11 +73,23 @@ const MICRO_UP = genSeries(100, 24, 4).map((d) => ({ ...d }));
 const MICRO_DOWN = genSeries(100, 24, 4).map((d, i) => ({ ...d, v: 110 - i * 0.4 + Math.random() * 4 }));
 
 const ALLOCATION = [
-  { name: "Equity", value: 48.6, color: "#3b82f6" },
-  { name: "Mutual Funds", value: 28.7, color: "#20E7E5" },
-  { name: "Debt", value: 12.3, color: "#d9b800" },
-  { name: "Gold", value: 6.1, color: "#ff8a3c" },
-  { name: "Cash & Others", value: 4.3, color: "#a855f7" },
+  { name: "Stocks", value: 58.2, amount: 6715430, color: "#20E7E5" },
+  { name: "Mutual Funds", value: 22.5, amount: 2594230, color: "#3b82f6" },
+  { name: "Gold", value: 8.7, amount: 1002430, color: "#d9b800" },
+  { name: "Real Estate", value: 6.2, amount: 722930, color: "#a855f7" },
+  { name: "Cash & Bank", value: 4.5, amount: 487830, color: "#34d399" },
+];
+
+const PORT_COMPARE = Array.from({ length: 9 }, (_, i) => {
+  const invested = 5142 + i * 70 + Math.round(Math.sin(i) * 30);
+  const current = invested + 200 + i * 110 + Math.round(Math.cos(i) * 80);
+  return { label: ["May", "04 Jun", "", "11 Jun", "", "18 Jun", "", "25 Jun", ""][i], invested: invested * 100, current: current * 100 };
+});
+
+const REMINDERS = [
+  { name: "LIC Premium Payment", date: "30 Jun 2026", amount: "₹12,650" },
+  { name: "SIP - Parag Parikh Flexi Cap", date: "01 Jul 2026", amount: "₹10,000" },
+  { name: "Credit Card Payment", date: "05 Jul 2026", amount: "₹8,750" },
 ];
 
 function fmt(n: number) {
@@ -165,147 +179,156 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Investments section */}
-        <div className="col-span-12 fv-rise" style={{ animationDelay: "200ms" }}>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Investments</h2>
-        </div>
-
+        {/* Asset Allocation */}
         <Card className="col-span-12 p-5 lg:col-span-6 fv-rise" style={{ animationDelay: "240ms" }}>
-          <CardHeader title="Asset Allocation" tip="Breakdown of your investments by asset class." />
-          <div className="mt-2 grid grid-cols-1 items-center gap-2 sm:grid-cols-[120px_1fr]">
-            <div className="relative mx-auto h-[120px] w-[120px]">
+          <CardHeader title="ASSET ALLOCATION" tip="Breakdown of your investments by asset class." />
+          <div className="mt-3 grid grid-cols-[170px_1fr] items-center gap-5">
+            <div className="relative h-[170px] w-[170px]">
               <ResponsiveContainer>
                 <PieChart>
-                  <Pie
-                    data={ALLOCATION}
-                    dataKey="value"
-                    innerRadius={38}
-                    outerRadius={58}
-                    paddingAngle={2}
-                    stroke="none"
-                  >
-                    {ALLOCATION.map((a) => (
-                      <Cell key={a.name} fill={a.color} />
-                    ))}
+                  <Pie data={ALLOCATION} dataKey="value" innerRadius={55} outerRadius={82} paddingAngle={2} stroke="none">
+                    {ALLOCATION.map((a) => <Cell key={a.name} fill={a.color} />)}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                <div className="text-center">
-                  <div className="text-[10px] text-muted-foreground">Total</div>
-                  <div className="font-display text-xs font-bold text-foreground">
-                    ₹73,14,850
-                  </div>
+              <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+                <div>
+                  <div className="font-display text-base font-bold text-foreground">₹1,15,38,850</div>
+                  <div className="text-[10px] text-muted-foreground">Total Assets</div>
                 </div>
               </div>
             </div>
-            <div className="space-y-1 text-xs">
+            <div className="space-y-2 text-xs">
               {ALLOCATION.map((a) => (
-                <div key={a.name} className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2 text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
+                <div key={a.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
+                  <span className="inline-flex items-center gap-2 text-foreground">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.color }} />
                     {a.name}
                   </span>
-                  <span className="font-semibold text-foreground">{a.value}%</span>
+                  <span className="text-muted-foreground tabular-nums">{a.value}%</span>
+                  <span className="font-semibold text-foreground tabular-nums">₹{fmt(a.amount)}</span>
                 </div>
               ))}
-              <div className="text-right">
-                <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
-                  View Details <ArrowRight className="h-3 w-3" />
-                </a>
-              </div>
             </div>
           </div>
+          <a className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
+            View All Breakdown <ArrowRight className="h-3 w-3" />
+          </a>
         </Card>
 
+        {/* Portfolio Performance */}
         <Card className="col-span-12 p-5 lg:col-span-6 fv-rise" style={{ animationDelay: "300ms" }}>
-          <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
-          <div className="mt-2 flex items-end justify-between gap-4">
-            <div>
-              <div className="text-xs text-muted-foreground">Current Value</div>
-              <div className="mt-1 font-display text-xl font-bold text-foreground">
-                ₹ 58,78,450
-              </div>
-              <div className="mt-1 text-xs font-semibold text-success">
-                ▲ ₹1,48,850 (2.60%)
-              </div>
+          <div className="flex items-start justify-between">
+            <CardHeader title="PORTFOLIO PERFORMANCE" tip="Investment portfolio value over time." />
+            <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#3b82f6]" />Invested Amount</span>
+              <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#20E7E5]" />Current Value</span>
             </div>
           </div>
-          <div className="mt-2 h-[110px]">
-            <RangeChart data={PORT_SERIES} height={110} compact />
-          </div>
-          <div className="text-right">
-            <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
-              View Portfolio <ArrowRight className="h-3 w-3" />
-            </a>
+          <div className="mt-3 grid grid-cols-[180px_1fr] gap-4">
+            <div>
+              <div className="text-xs text-muted-foreground">Total Return</div>
+              <div className="mt-1 font-display text-3xl font-bold text-mint">+14.3%</div>
+              <div className="mt-3 text-xs text-muted-foreground">Absolute Return</div>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <div className="text-muted-foreground">Invested Amount</div>
+                  <div className="font-semibold text-foreground">₹51,42,000</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Current Value</div>
+                  <div className="font-semibold text-foreground">₹58,78,450</div>
+                </div>
+              </div>
+            </div>
+            <div className="h-[170px]">
+              <ResponsiveContainer>
+                <LineChart data={PORT_COMPARE} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#8aa0b3", fontSize: 10 }} />
+                  <YAxis orientation="right" axisLine={false} tickLine={false} tick={{ fill: "#8aa0b3", fontSize: 10 }} width={40} tickFormatter={(v) => `₹${Math.round(v / 100000)}L`} />
+                  <RTooltip contentStyle={{ background: "#010E1B", border: "1px solid #0c5d65", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => `₹${fmt(v)}`} />
+                  <Line type="monotone" dataKey="invested" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: "#3b82f6" }} />
+                  <Line type="monotone" dataKey="current" stroke="#20E7E5" strokeWidth={2} dot={{ r: 3, fill: "#20E7E5" }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </Card>
 
-        {/* Financial Health section */}
-        <div className="col-span-12 fv-rise" style={{ animationDelay: "360ms" }}>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Financial Health</h2>
-        </div>
+        {/* Goals Overview */}
+        <Card className="col-span-12 p-5 sm:col-span-6 lg:col-span-3 fv-rise" style={{ animationDelay: "360ms" }}>
+          <div className="flex items-center justify-between">
+            <CardHeader title="GOALS OVERVIEW" />
+            <a className="text-xs font-semibold text-mint" href="#">View all</a>
+          </div>
+          <div className="mt-4 space-y-4">
+            <GoalRow icon={Car} color="#20E7E5" name="Buy New Car" saved="₹4,50,000" target="₹8,00,000" pct={56} />
+            <GoalRow icon={PiggyBank} color="#a855f7" name="Retirement Corpus" saved="₹12,50,000" target="₹25,00,000" pct={50} />
+          </div>
+        </Card>
 
-        <Card className="col-span-12 p-6 lg:col-span-6 fv-rise" style={{ animationDelay: "400ms" }}>
-          <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-4 grid grid-cols-1 items-center gap-6 sm:grid-cols-[180px_minmax(0,1fr)]">
-            <ScoreRing score={82} />
-            <div className="min-w-0 space-y-2.5 text-sm">
+        {/* Financial Score */}
+        <Card className="col-span-12 p-5 sm:col-span-6 lg:col-span-3 fv-rise" style={{ animationDelay: "400ms" }}>
+          <CardHeader title="FINANCIAL SCORE" tip="Composite score of your overall financial health." />
+          <div className="mt-3 grid grid-cols-[110px_1fr] items-center gap-3">
+            <GaugeScore score={70} label="Good" />
+            <div className="space-y-2 text-[11px]">
               {[
-                { k: "Asset Allocation", v: 92 },
-                { k: "Debt Management", v: 74 },
-                { k: "Savings Rate", v: 81 },
-                { k: "Cash Flow", v: 79 },
-                { k: "Diversification", v: 88 },
-              ].map((row) => (
-                <div key={row.k} className="flex items-center gap-3">
-                  <span className="w-28 shrink-0 truncate text-muted-foreground sm:w-32">{row.k}</span>
-                  <div className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2">
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-mint"
-                      style={{ width: `${row.v}%` }}
-                    />
-                  </div>
-                  <span className="w-8 shrink-0 text-right font-semibold text-foreground">{row.v}</span>
+                { k: "Asset allocation", v: 40, c: "#20E7E5" },
+                { k: "Debt management", v: 25, c: "#3b82f6" },
+                { k: "Savings rate", v: 20, c: "#34d399" },
+                { k: "Diversification", v: 15, c: "#a855f7" },
+              ].map((r) => (
+                <div key={r.k} className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full" style={{ background: r.c }} />
+                    {r.k}
+                  </span>
+                  <span className="font-semibold text-foreground">{r.v}%</span>
                 </div>
               ))}
-              <div className="pt-1 text-right">
-                <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
-                  View Score Details <ArrowRight className="h-3 w-3" />
-                </a>
-              </div>
             </div>
           </div>
         </Card>
 
-        <Card className="col-span-12 p-6 lg:col-span-6 fv-rise" style={{ animationDelay: "460ms" }}>
-          <div className="flex items-center justify-between gap-3">
-            <CardHeader title="Goal Progress" tip="Progress toward your active financial goals." />
-            <a className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-mint" href="#">
-              View All Goals <ArrowRight className="h-3 w-3" />
-            </a>
+        {/* Upcoming Reminders */}
+        <Card className="col-span-12 p-5 sm:col-span-6 lg:col-span-3 fv-rise" style={{ animationDelay: "440ms" }}>
+          <div className="flex items-center justify-between">
+            <CardHeader title="UPCOMING REMINDERS" />
+            <a className="text-xs font-semibold text-mint" href="#">View all</a>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <GoalCard icon={Home} color="#20E7E5" name="House Purchase" pct={68} saved="₹34,00,000" target="₹50,00,000" eta="Dec 2028" />
-            <GoalCard icon={Car} color="#d9b800" name="Car Purchase" pct={35} saved="₹3,50,000" target="₹10,00,000" eta="Jun 2027" />
-            <GoalCard icon={Plane} color="#a855f7" name="Europe Trip" pct={81} saved="₹2,43,000" target="₹3,00,000" eta="Oct 2026" />
+          <div className="mt-3 space-y-3">
+            {REMINDERS.map((r) => (
+              <div key={r.name} className="flex items-center gap-3">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint">
+                  <Calendar className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-semibold text-foreground">{r.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{r.date}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-semibold text-foreground tabular-nums">{r.amount}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
 
-        {/* Financial Insights — compact full width */}
-        <Card className="col-span-12 p-4 fv-rise" style={{ animationDelay: "520ms" }}>
-          <div className="flex items-center justify-between">
-            <CardHeader title="Financial Insights" tip="Smart, personalized observations about your finances." />
-            <a className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-mint" href="#">
-              View All Insights <ArrowRight className="h-3 w-3" />
-            </a>
+        {/* AI Insight */}
+        <Card className="col-span-12 p-5 sm:col-span-6 lg:col-span-3 fv-rise" style={{ animationDelay: "480ms" }}>
+          <CardHeader title="AI INSIGHT" />
+          <div className="mt-3 flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-mint/10 text-mint">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <p className="text-xs text-muted-foreground">
+              Your investments grew by 2.18% this month. Keep it up! You're on the right track.
+            </p>
           </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Insight icon={TrendingUp} tint="#20E7E5" title="Savings rate increased 8%" body="Great job! You're saving more than 75% of users." />
-            <Insight icon={BadgeIndianRupee} tint="#d9b800" title="Expenses down by 3%" body="Nice! You spent ₹1,900 less than last month." />
-            <Insight icon={Calendar} tint="#3b82f6" title="SIP of ₹25,000 is due tomorrow" body="Pn Parag Parikh Flexi Cap Fund · Due on 13 Jun 2026." />
-            <Insight icon={Sparkles} tint="#a855f7" title="Emergency fund is at 72%" body="You're on track. Target 6 months of expenses." />
-          </div>
+          <a className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
+            View all insights <ArrowRight className="h-3 w-3" />
+          </a>
         </Card>
       </div>
 
@@ -537,6 +560,67 @@ function ScoreRing({ score }: { score: number }) {
         <div className="text-[10px] text-muted-foreground">/100</div>
         <div className="mt-1 text-xs font-semibold text-mint">Excellent</div>
         <div className="text-[10px] text-muted-foreground">You're doing great!</div>
+      </div>
+    </div>
+  );
+}
+
+function GaugeScore({ score, label }: { score: number; label: string }) {
+  const r = 44;
+  const c = Math.PI * r;
+  const off = c - (c * score) / 100;
+  return (
+    <div className="relative h-[110px] w-[110px]">
+      <svg width={110} height={70} viewBox="0 0 110 70" className="block">
+        <path d={`M 11 60 A ${r} ${r} 0 0 1 99 60`} stroke="#0a2535" strokeWidth={9} fill="none" strokeLinecap="round" />
+        <path
+          d={`M 11 60 A ${r} ${r} 0 0 1 99 60`}
+          stroke="#20E7E5"
+          strokeWidth={9}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={off}
+        />
+      </svg>
+      <div className="absolute inset-x-0 top-4 text-center">
+        <div className="font-display text-2xl font-bold text-foreground leading-none">{score}</div>
+        <div className="text-[9px] text-muted-foreground">/100</div>
+        <div className="mt-1 text-[11px] font-semibold text-mint">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function GoalRow({
+  icon: Icon,
+  color,
+  name,
+  saved,
+  target,
+  pct,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  name: string;
+  saved: string;
+  target: string;
+  pct: number;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: `${color}1f`, color }}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-semibold text-foreground">{name}</div>
+          <div className="truncate text-[10px] text-muted-foreground">{saved} / {target}</div>
+        </div>
+        <div className="text-xs font-semibold text-foreground tabular-nums">{pct}%</div>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
   );
