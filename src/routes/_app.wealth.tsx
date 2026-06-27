@@ -35,6 +35,11 @@ import {
   ArrowRight,
   Building2,
   Users,
+  User,
+  Cake,
+  GraduationCap,
+  Target,
+  Briefcase,
 } from "lucide-react";
 import {
   PieChart,
