@@ -24,6 +24,13 @@ import {
   ShoppingBag,
   TrendingDown,
   Percent,
+  Shield,
+  ShieldCheck,
+  Calendar,
+  FileText,
+  Heart,
+  Bike,
+  HeartPulse,
 } from "lucide-react";
 import {
   PieChart,
@@ -36,6 +43,8 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  BarChart,
+  Bar,
 } from "recharts";
 
 export const Route = createFileRoute("/_app/wealth")({
@@ -164,6 +173,8 @@ function Wealth() {
         <LiabilitiesView total={liabTotal} />
       ) : tab === "Investments" ? (
         <InvestmentsView />
+      ) : tab === "Insurance" ? (
+        <InsuranceView />
       ) : tab !== "Assets" ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {tab} module coming soon.
