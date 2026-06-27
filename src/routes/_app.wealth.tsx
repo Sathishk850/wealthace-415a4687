@@ -31,6 +31,10 @@ import {
   Heart,
   Bike,
   HeartPulse,
+  Wallet2,
+  ArrowRight,
+  Building2,
+  Users,
 } from "lucide-react";
 import {
   PieChart,
@@ -175,6 +179,8 @@ function Wealth() {
         <InvestmentsView />
       ) : tab === "Insurance" ? (
         <InsuranceView />
+      ) : tab === "Accounts" ? (
+        <AccountsView />
       ) : tab !== "Assets" ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {tab} module coming soon.
