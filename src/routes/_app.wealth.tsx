@@ -637,13 +637,13 @@ function InvestmentsView() {
 
       {/* Allocation + Trend + Top Holdings */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
           <h3 className="text-sm font-semibold text-foreground">Investment Allocation</h3>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="relative h-[160px] w-[160px] shrink-0">
+          <div className="mt-4 flex items-center gap-3">
+            <div className="relative h-[150px] w-[150px] shrink-0">
               <ResponsiveContainer>
                 <PieChart>
-                  <Pie data={INV_ALLOC} dataKey="pct" innerRadius={50} outerRadius={75} paddingAngle={2} stroke="none">
+                  <Pie data={INV_ALLOC} dataKey="pct" innerRadius={48} outerRadius={70} paddingAngle={2} stroke="none">
                     {INV_ALLOC.map((a) => (
                       <Cell key={a.name} fill={a.color} />
                     ))}
@@ -659,13 +659,13 @@ function InvestmentsView() {
             </div>
             <div className="min-w-0 flex-1 space-y-2">
               {INV_ALLOC.map((a) => (
-                <div key={a.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
+                <div key={a.name} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 text-xs">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
                     <span className="truncate text-foreground">{a.name}</span>
                   </div>
-                  <span className="font-medium text-muted-foreground">{a.pct}%</span>
-                  <span className="text-right font-medium text-foreground">{a.amt}</span>
+                  <span className="shrink-0 font-medium text-muted-foreground">{a.pct}%</span>
+                  <span className="shrink-0 text-right font-medium text-foreground">{a.amt}</span>
                 </div>
               ))}
             </div>
@@ -675,7 +675,7 @@ function InvestmentsView() {
           </button>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Investment Value Trend</h3>
             <button className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
