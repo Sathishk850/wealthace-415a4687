@@ -635,15 +635,15 @@ function InvestmentsView() {
         ))}
       </div>
 
-      {/* Allocation + Trend + Top Holdings */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
+      {/* Allocation + Trend — equal width */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5">
           <h3 className="text-sm font-semibold text-foreground">Investment Allocation</h3>
           <div className="mt-4 flex items-center gap-3">
-            <div className="relative h-[150px] w-[150px] shrink-0">
+            <div className="relative h-[160px] w-[160px] shrink-0">
               <ResponsiveContainer>
                 <PieChart>
-                  <Pie data={INV_ALLOC} dataKey="pct" innerRadius={48} outerRadius={70} paddingAngle={2} stroke="none">
+                  <Pie data={INV_ALLOC} dataKey="pct" innerRadius={52} outerRadius={76} paddingAngle={2} stroke="none">
                     {INV_ALLOC.map((a) => (
                       <Cell key={a.name} fill={a.color} />
                     ))}
@@ -675,7 +675,7 @@ function InvestmentsView() {
           </button>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
+        <div className="rounded-2xl border border-border bg-card p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Investment Value Trend</h3>
             <button className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
@@ -700,8 +700,92 @@ function InvestmentsView() {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-3">
+      {/* Investments table — full-width like reference */}
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground">Investments (18)</h3>
+          <div className="relative ml-2 flex-1 min-w-[180px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              placeholder="Search investments..."
+              className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
+            />
+          </div>
+          <FilterBtn label="All Types" />
+          <FilterBtn label="All Status" />
+          <FilterBtn label="Sort: Latest" icon={ArrowUpDown} />
+          <div className="flex items-center gap-1 rounded-xl border border-border bg-surface-2 p-1">
+            <button className="rounded-lg bg-mint/15 p-1.5 text-mint"><List className="h-4 w-4" /></button>
+            <button className="rounded-lg p-1.5 text-muted-foreground"><LayoutGrid className="h-4 w-4" /></button>
+          </div>
+        </div>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="py-3 pl-2 font-medium">Investment Name</th>
+                <th className="py-3 font-medium">Type</th>
+                <th className="py-3 font-medium">Category</th>
+                <th className="py-3 font-medium">Current Value</th>
+                <th className="py-3 font-medium">Invested Amount</th>
+                <th className="py-3 font-medium">Gain / Loss</th>
+                <th className="py-3 font-medium">Gain %</th>
+                <th className="py-3 font-medium">XIRR</th>
+                <th className="py-3 font-medium">Last Updated</th>
+                <th className="py-3 pr-2 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {INVESTMENTS.map((i) => (
+                <tr key={i.name} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                  <td className="py-3 pl-2">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: i.color }}>
+                        {i.name.slice(0, 1)}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foreground">{i.name}</div>
+                        {i.sub && <div className="text-[10px] text-muted-foreground">{i.sub}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 text-muted-foreground">{i.type}</td>
+                  <td className="py-3 text-muted-foreground">{i.category}</td>
+                  <td className="py-3 font-medium text-foreground">{i.current}</td>
+                  <td className="py-3 text-foreground">{i.invested}</td>
+                  <td className="py-3 font-medium text-emerald-400">{i.gain}</td>
+                  <td className="py-3 font-medium text-emerald-400">{i.gainPct}</td>
+                  <td className="py-3 font-medium text-emerald-400">{i.xirr}</td>
+                  <td className="py-3 text-muted-foreground">{i.date}</td>
+                  <td className="py-3 pr-2">
+                    <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>Showing 1 to 5 of 18 investments</span>
+          <div className="flex items-center gap-2">
+            {["‹", "1", "2", "3", "4", "›"].map((p, idx) => (
+              <button key={idx} className={`h-7 min-w-7 rounded-md border border-border px-2 ${p === "1" ? "bg-mint/15 text-mint" : "text-muted-foreground hover:text-foreground"}`}>{p}</button>
+            ))}
+            <span className="ml-2">Rows per page:</span>
+            <button className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1">5 <ChevronDown className="h-3 w-3" /></button>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Holdings + Asset Class Performance — below investments table */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Top Holdings</h3>
             <button className="text-xs font-medium text-mint hover:underline">View all</button>
@@ -728,91 +812,8 @@ function InvestmentsView() {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Table + Asset Class Performance */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-card p-4 lg:col-span-9">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">Investments (18)</h3>
-            <div className="relative ml-2 flex-1 min-w-[180px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                placeholder="Search investments..."
-                className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
-              />
-            </div>
-            <FilterBtn label="All Types" />
-            <FilterBtn label="All Status" />
-            <FilterBtn label="Sort: Latest" icon={ArrowUpDown} />
-            <div className="flex items-center gap-1 rounded-xl border border-border bg-surface-2 p-1">
-              <button className="rounded-lg bg-mint/15 p-1.5 text-mint"><List className="h-4 w-4" /></button>
-              <button className="rounded-lg p-1.5 text-muted-foreground"><LayoutGrid className="h-4 w-4" /></button>
-            </div>
-          </div>
-
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-3 pl-2 font-medium">Investment Name</th>
-                  <th className="py-3 font-medium">Type</th>
-                  <th className="py-3 font-medium">Category</th>
-                  <th className="py-3 font-medium">Current Value</th>
-                  <th className="py-3 font-medium">Invested Amount</th>
-                  <th className="py-3 font-medium">Gain / Loss</th>
-                  <th className="py-3 font-medium">Gain %</th>
-                  <th className="py-3 font-medium">XIRR</th>
-                  <th className="py-3 font-medium">Last Updated</th>
-                  <th className="py-3 pr-2 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {INVESTMENTS.map((i) => (
-                  <tr key={i.name} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
-                    <td className="py-3 pl-2">
-                      <div className="flex items-center gap-3">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: i.color }}>
-                          {i.name.slice(0, 1)}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="truncate font-medium text-foreground">{i.name}</div>
-                          {i.sub && <div className="text-[10px] text-muted-foreground">{i.sub}</div>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 text-muted-foreground">{i.type}</td>
-                    <td className="py-3 text-muted-foreground">{i.category}</td>
-                    <td className="py-3 font-medium text-foreground">{i.current}</td>
-                    <td className="py-3 text-foreground">{i.invested}</td>
-                    <td className="py-3 font-medium text-emerald-400">{i.gain}</td>
-                    <td className="py-3 font-medium text-emerald-400">{i.gainPct}</td>
-                    <td className="py-3 font-medium text-emerald-400">{i.xirr}</td>
-                    <td className="py-3 text-muted-foreground">{i.date}</td>
-                    <td className="py-3 pr-2">
-                      <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-            <span>Showing 1 to 5 of 18 investments</span>
-            <div className="flex items-center gap-2">
-              {["‹", "1", "2", "3", "4", "›"].map((p, idx) => (
-                <button key={idx} className={`h-7 min-w-7 rounded-md border border-border px-2 ${p === "1" ? "bg-mint/15 text-mint" : "text-muted-foreground hover:text-foreground"}`}>{p}</button>
-              ))}
-              <span className="ml-2">Rows per page:</span>
-              <button className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1">5 <ChevronDown className="h-3 w-3" /></button>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-3">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-8">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Asset Class Performance</h3>
             <button className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-0.5 text-[10px] text-muted-foreground">
