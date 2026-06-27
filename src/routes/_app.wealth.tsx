@@ -35,6 +35,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  LineChart,
+  Line,
+  CartesianGrid,
 } from "recharts";
 
 export const Route = createFileRoute("/_app/wealth")({
@@ -161,6 +164,8 @@ function Wealth() {
 
       {tab === "Liabilities" ? (
         <LiabilitiesView total={liabTotal} />
+      ) : tab === "Investments" ? (
+        <InvestmentsView />
       ) : tab !== "Assets" ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {tab} module coming soon.
