@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { SnapshotHistoryDialog } from "@/components/snapshot-history-dialog";
+import { DashboardHeader } from "@/components/dashboard-header";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -83,9 +84,28 @@ function fmt(n: number) {
 
 function Dashboard() {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const today = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <TooltipProvider delayDuration={150}>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <DashboardHeader />
+        <button
+          type="button"
+          className="fv-press inline-flex items-center justify-between gap-3 rounded-xl border border-border bg-surface/60 px-3.5 py-2.5 text-sm font-medium text-foreground transition hover:bg-surface"
+        >
+          <span className="inline-flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-mint" />
+            {today}
+          </span>
+          <svg width="12" height="12" viewBox="0 0 12 12" className="text-muted-foreground"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+      </div>
       <div className="grid grid-cols-12 gap-4">
         {/* Hero — Net Worth */}
         <Card className="col-span-12 p-6 fv-rise" style={{ animationDelay: "40ms" }}>
