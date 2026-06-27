@@ -545,6 +545,221 @@ function LiabilitiesView({ total }: { total: string }) {
   );
 }
 
+// ============ FAMILY ============
+const FAM_STATS = [
+  { label: "Total Members", value: "5", sub: "2 earning, 3 dependents", icon: Users, tint: "bg-mint/10 text-mint" },
+  { label: "Family Net Worth", value: "₹1,68,45,000", sub: "+9.20% vs last year", icon: Wallet, tint: "bg-emerald-500/10 text-emerald-400" },
+  { label: "Combined Income", value: "₹3,45,000", sub: "Monthly (post-tax)", icon: Briefcase, tint: "bg-blue-500/10 text-blue-400" },
+  { label: "Active Goals", value: "8", sub: "Across all members", icon: Target, tint: "bg-violet-500/10 text-violet-400" },
+];
+
+const FAM_DISTRIBUTION = [
+  { name: "Rahul (Self)", pct: 58.3, amt: "₹98,20,000", color: "#14D8CF" },
+  { name: "Priya (Spouse)", pct: 28.4, amt: "₹47,85,000", color: "#3B82F6" },
+  { name: "Aarav (Son)", pct: 7.1, amt: "₹11,95,000", color: "#8B5CF6" },
+  { name: "Anaya (Daughter)", pct: 4.2, amt: "₹7,05,000", color: "#F59E0B" },
+  { name: "Parents", pct: 2.0, amt: "₹3,40,000", color: "#10B981" },
+];
+
+const FAMILY: Array<{
+  name: string; relation: string; age: number; occupation: string;
+  income: string; netWorth: string; goals: number; nominee: boolean;
+  tint: string;
+}> = [
+  { name: "Rahul Sharma", relation: "Self", age: 38, occupation: "Software Engineer", income: "₹2,15,000", netWorth: "₹98,20,000", goals: 3, nominee: true, tint: "bg-mint/15 text-mint" },
+  { name: "Priya Sharma", relation: "Spouse", age: 36, occupation: "Product Manager", income: "₹1,30,000", netWorth: "₹47,85,000", goals: 2, nominee: true, tint: "bg-blue-500/15 text-blue-400" },
+  { name: "Aarav Sharma", relation: "Son", age: 10, occupation: "Student", income: "—", netWorth: "₹11,95,000", goals: 1, nominee: true, tint: "bg-violet-500/15 text-violet-400" },
+  { name: "Anaya Sharma", relation: "Daughter", age: 6, occupation: "Student", income: "—", netWorth: "₹7,05,000", goals: 1, nominee: true, tint: "bg-amber-500/15 text-amber-400" },
+  { name: "Ramesh Sharma", relation: "Father", age: 68, occupation: "Retired", income: "₹25,000", netWorth: "₹3,40,000", goals: 1, nominee: false, tint: "bg-emerald-500/15 text-emerald-400" },
+];
+
+const FAM_GOALS = [
+  { name: "Aarav's Higher Education", member: "Aarav", target: "₹40,00,000", saved: 32, due: "2033", icon: GraduationCap, color: "#8B5CF6" },
+  { name: "Anaya's Higher Education", member: "Anaya", target: "₹50,00,000", saved: 18, due: "2037", icon: GraduationCap, color: "#F59E0B" },
+  { name: "Family Vacation - Europe", member: "All", target: "₹6,50,000", saved: 64, due: "2027", icon: Heart, color: "#14D8CF" },
+  { name: "Parents Healthcare Fund", member: "Parents", target: "₹15,00,000", saved: 42, due: "Ongoing", icon: HeartPulse, color: "#10B981" },
+];
+
+const FAM_EVENTS = [
+  { name: "Aarav's Birthday", date: "12 Jul 2026", type: "Birthday", icon: Cake, tint: "bg-amber-500/10 text-amber-300" },
+  { name: "Anniversary", date: "08 Sep 2026", type: "Milestone", icon: Heart, tint: "bg-rose-500/10 text-rose-300" },
+  { name: "Father's Health Check-up", date: "20 Jul 2026", type: "Health", icon: HeartPulse, tint: "bg-emerald-500/10 text-emerald-300" },
+  { name: "Anaya's School Fees", date: "01 Aug 2026", type: "Education", icon: GraduationCap, tint: "bg-violet-500/10 text-violet-300" },
+];
+
+function FamilyView() {
+  return (
+    <>
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {FAM_STATS.map((s) => (
+          <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-start gap-3">
+              <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${s.tint}`}>
+                <s.icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {s.label} <Info className="h-3 w-3 opacity-60" />
+                </div>
+                <div className="mt-1 font-display text-xl font-bold text-foreground">{s.value}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Distribution + Members table */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
+          <div className="mb-3 text-sm font-semibold text-foreground">Wealth Distribution</div>
+          <div className="flex items-center gap-5">
+            <div className="relative h-[180px] w-[180px] shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={FAM_DISTRIBUTION} dataKey="pct" innerRadius={58} outerRadius={84} paddingAngle={2} stroke="none">
+                    {FAM_DISTRIBUTION.map((a) => <Cell key={a.name} fill={a.color} />)}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 grid place-items-center text-center">
+                <div>
+                  <div className="font-display text-lg font-bold text-foreground">₹1.68Cr</div>
+                  <div className="text-[10px] text-muted-foreground">Family Wealth</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 space-y-2.5">
+              {FAM_DISTRIBUTION.map((a) => (
+                <div key={a.name} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 text-xs">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.color }} />
+                  <span className="text-muted-foreground truncate">{a.name}</span>
+                  <span className="text-foreground tabular-nums">{a.amt}</span>
+                  <span className="text-emerald-400 tabular-nums">{a.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-7">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-foreground">Family Members</div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input placeholder="Search members..." className="h-8 w-44 rounded-md border border-border bg-surface-2 pl-7 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none" />
+              </div>
+              <button className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-foreground">All <ChevronDown className="h-3 w-3" /></button>
+            </div>
+          </div>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="text-muted-foreground">
+                <tr className="border-b border-border [&>th]:py-2 [&>th]:px-2 [&>th]:text-left [&>th]:font-medium">
+                  <th>Member</th>
+                  <th>Age</th>
+                  <th>Income</th>
+                  <th>Net Worth</th>
+                  <th>Goals</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {FAMILY.map((f) => (
+                  <tr key={f.name} className="border-b border-border/60 last:border-0 [&>td]:py-2.5 [&>td]:px-2">
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${f.tint} font-semibold`}>
+                          {f.name.split(" ").map(p => p[0]).slice(0,2).join("")}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate text-foreground font-medium">{f.name}</div>
+                          <div className="truncate text-[10px] text-muted-foreground">{f.relation} · {f.occupation}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-muted-foreground tabular-nums">{f.age}</td>
+                    <td className="text-foreground tabular-nums">{f.income}</td>
+                    <td className="text-foreground tabular-nums font-medium">{f.netWorth}</td>
+                    <td className="text-muted-foreground tabular-nums">{f.goals}</td>
+                    <td className="text-right">
+                      <button className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:text-foreground ml-auto"><MoreVertical className="h-4 w-4" /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Goals + Events */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-7">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="text-sm font-semibold text-foreground">Family Goals</div>
+            <button className="text-xs font-medium text-mint hover:text-mint/80">View all</button>
+          </div>
+          <div className="space-y-4">
+            {FAM_GOALS.map((g) => (
+              <div key={g.name}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: `${g.color}22`, color: g.color }}>
+                      <g.icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-foreground">{g.name}</div>
+                      <div className="truncate text-[10px] text-muted-foreground">{g.member} · Due {g.due}</div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-semibold text-foreground tabular-nums">{g.target}</div>
+                    <div className="text-[10px] text-muted-foreground">{g.saved}% saved</div>
+                  </div>
+                </div>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div className="h-full rounded-full" style={{ width: `${g.saved}%`, background: g.color }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm font-semibold text-foreground">Upcoming Family Events</div>
+            <MoreVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="space-y-2.5">
+            {FAM_EVENTS.map((e) => (
+              <div key={e.name} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${e.tint}`}>
+                    <e.icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-xs font-medium text-foreground">{e.name}</div>
+                    <div className="truncate text-[10px] text-muted-foreground">{e.type}</div>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs font-medium text-foreground">{e.date}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-mint hover:text-mint/80">
+            View calendar <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, string> = {
     Active: "bg-emerald-500/15 text-emerald-400",
