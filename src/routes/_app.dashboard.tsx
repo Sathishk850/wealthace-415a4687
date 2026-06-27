@@ -565,6 +565,67 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
+function GaugeScore({ score, label }: { score: number; label: string }) {
+  const r = 44;
+  const c = Math.PI * r;
+  const off = c - (c * score) / 100;
+  return (
+    <div className="relative h-[110px] w-[110px]">
+      <svg width={110} height={70} viewBox="0 0 110 70" className="block">
+        <path d={`M 11 60 A ${r} ${r} 0 0 1 99 60`} stroke="#0a2535" strokeWidth={9} fill="none" strokeLinecap="round" />
+        <path
+          d={`M 11 60 A ${r} ${r} 0 0 1 99 60`}
+          stroke="#20E7E5"
+          strokeWidth={9}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={off}
+        />
+      </svg>
+      <div className="absolute inset-x-0 top-4 text-center">
+        <div className="font-display text-2xl font-bold text-foreground leading-none">{score}</div>
+        <div className="text-[9px] text-muted-foreground">/100</div>
+        <div className="mt-1 text-[11px] font-semibold text-mint">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function GoalRow({
+  icon: Icon,
+  color,
+  name,
+  saved,
+  target,
+  pct,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  name: string;
+  saved: string;
+  target: string;
+  pct: number;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: `${color}1f`, color }}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-semibold text-foreground">{name}</div>
+          <div className="truncate text-[10px] text-muted-foreground">{saved} / {target}</div>
+        </div>
+        <div className="text-xs font-semibold text-foreground tabular-nums">{pct}%</div>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
 function GoalCard({
   icon: Icon,
   color,
