@@ -86,12 +86,14 @@ export function ModuleCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="group cursor-pointer rounded-2xl border border-border bg-card p-5 transition hover:border-mint/40 hover:bg-surface-2">
-      <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-mint/10 text-mint">
+    <div className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-border bg-card p-5 transition hover:border-mint/40 hover:bg-surface-2">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-mint/10 text-mint">
         <Icon className="h-5 w-5" />
       </div>
-      <div className="font-display text-sm font-semibold text-foreground">{title}</div>
-      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      <div className="min-w-0">
+        <div className="font-display text-sm font-semibold text-foreground">{title}</div>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      </div>
     </div>
   );
 }
