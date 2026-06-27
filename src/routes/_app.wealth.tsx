@@ -181,6 +181,8 @@ function Wealth() {
         <InsuranceView />
       ) : tab === "Accounts" ? (
         <AccountsView />
+      ) : tab === "Family" ? (
+        <FamilyView />
       ) : tab !== "Assets" ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {tab} module coming soon.
