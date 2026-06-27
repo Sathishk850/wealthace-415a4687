@@ -24,6 +24,13 @@ import {
   ShoppingBag,
   TrendingDown,
   Percent,
+  Shield,
+  ShieldCheck,
+  Calendar,
+  FileText,
+  Heart,
+  Bike,
+  HeartPulse,
 } from "lucide-react";
 import {
   PieChart,
@@ -36,6 +43,8 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  BarChart,
+  Bar,
 } from "recharts";
 
 export const Route = createFileRoute("/_app/wealth")({
@@ -164,6 +173,8 @@ function Wealth() {
         <LiabilitiesView total={liabTotal} />
       ) : tab === "Investments" ? (
         <InvestmentsView />
+      ) : tab === "Insurance" ? (
+        <InsuranceView />
       ) : tab !== "Assets" ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {tab} module coming soon.
@@ -840,6 +851,216 @@ function InvestmentsView() {
       <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs text-muted-foreground">
         <Info className="h-3.5 w-3.5 text-mint" />
         All values are as of 11 Jun 2025. Market values are updated at the end of each day.
+      </div>
+    </>
+  );
+}
+
+const INS_STATS = [
+  { label: "Total Coverage", value: "₹1,25,00,000", sub: "Across 6 Policies", icon: Shield, tint: "bg-blue-500/10 text-blue-400" },
+  { label: "Active Policies", value: "6", sub: "100% of total policies", icon: ShieldCheck, tint: "bg-emerald-500/10 text-emerald-400", subClass: "text-mint" },
+  { label: "Upcoming Premium", value: "₹18,750", sub: "Due in next 30 days", icon: Calendar, tint: "bg-amber-500/10 text-amber-400" },
+  { label: "Total Annual Premium", value: "₹1,26,500", sub: "Across all policies", icon: FileText, tint: "bg-violet-500/10 text-violet-400" },
+];
+
+const INS_ALLOC = [
+  { name: "Term Life Insurance", pct: 60.0, amt: "₹75,00,000", color: "#3B82F6" },
+  { name: "Health Insurance", pct: 20.0, amt: "₹25,00,000", color: "#14D8CF" },
+  { name: "Vehicle Insurance", pct: 12.0, amt: "₹15,00,000", color: "#F59E0B" },
+  { name: "Other Insurance", pct: 8.0, amt: "₹10,00,000", color: "#8B5CF6" },
+];
+
+const INS_TIMELINE = [
+  { m: "Jun '25", v: 18750, due: true },
+  { m: "Jul '25", v: 6250, due: false },
+  { m: "Aug '25", v: 12500, due: false },
+  { m: "Sep '25", v: 3750, due: false },
+  { m: "Oct '25", v: 8000, due: false },
+  { m: "Nov '25", v: 2250, due: false },
+];
+
+const POLICIES = [
+  { name: "Term Life Insurance Plan", type: "Term Life", provider: "HDFC Life", number: "1234 5678 9012", coverage: "₹75,00,000", premium: "₹12,000", due: "19 Jul 2025", inDays: "In 23 days", status: "Active", icon: ShieldCheck, tint: "bg-blue-500/10 text-blue-400" },
+  { name: "Health Insurance Plan", type: "Health", provider: "Star Health", number: "9876 5432 1098", coverage: "₹25,00,000", premium: "₹18,500", due: "02 Aug 2025", inDays: "In 41 days", status: "Active", icon: HeartPulse, tint: "bg-emerald-500/10 text-emerald-400" },
+  { name: "Car Insurance", type: "Vehicle", provider: "ICICI Lombard", number: "4567 8901 2345", coverage: "₹10,00,000", premium: "₹6,250", due: "10 Jul 2025", inDays: "In 18 days", status: "Active", icon: Car, tint: "bg-amber-500/10 text-amber-400" },
+  { name: "Two Wheeler Insurance", type: "Vehicle", provider: "Bajaj Allianz", number: "6789 1234 5678", coverage: "₹5,00,000", premium: "₹2,750", due: "05 Sep 2025", inDays: "In 75 days", status: "Active", icon: Bike, tint: "bg-blue-500/10 text-blue-400" },
+  { name: "Personal Accident Cover", type: "Personal Accident", provider: "HDFC Ergo", number: "1357 2468 3690", coverage: "₹10,00,000", premium: "₹1,200", due: "20 Oct 2025", inDays: "In 120 days", status: "Active", icon: Heart, tint: "bg-violet-500/10 text-violet-400" },
+  { name: "Home Insurance", type: "Property", provider: "SBI General", number: "2468 1357 9753", coverage: "₹10,00,000", premium: "₹2,800", due: "15 Nov 2025", inDays: "In 146 days", status: "Active", icon: Home, tint: "bg-blue-500/10 text-blue-400" },
+];
+
+function InsuranceView() {
+  return (
+    <>
+      <div>
+        <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">Insurance</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Track your insurance policies and stay protected.</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {INS_STATS.map((s) => (
+          <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-start gap-3">
+              <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${s.tint}`}>
+                <s.icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {s.label} <Info className="h-3 w-3 opacity-60" />
+                </div>
+                <div className="mt-1 font-display text-xl font-bold text-foreground">{s.value}</div>
+                <div className={`mt-1 text-xs font-medium ${s.subClass ?? "text-muted-foreground"}`}>{s.sub}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Coverage + Timeline */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="text-sm font-semibold text-foreground">Insurance Coverage Overview</h3>
+          <div className="mt-4 flex items-center gap-4">
+            <div className="relative h-[170px] w-[170px] shrink-0">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={INS_ALLOC} dataKey="pct" innerRadius={56} outerRadius={80} paddingAngle={2} stroke="none">
+                    {INS_ALLOC.map((a) => (
+                      <Cell key={a.name} fill={a.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+                <div>
+                  <div className="font-display text-sm font-bold text-foreground">₹1,25,00,000</div>
+                  <div className="text-[10px] text-muted-foreground">Total Coverage</div>
+                </div>
+              </div>
+            </div>
+            <div className="min-w-0 flex-1 space-y-2.5">
+              {INS_ALLOC.map((a) => (
+                <div key={a.name} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 text-xs">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
+                    <span className="truncate text-foreground">{a.name}</span>
+                  </div>
+                  <span className="shrink-0 text-right font-medium text-foreground">{a.amt}</span>
+                  <span className="shrink-0 font-medium text-muted-foreground">{a.pct.toFixed(1)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-mint hover:underline">
+            View detailed breakdown →
+          </button>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Premium Due Timeline</h3>
+            <button className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
+              Next 6 Months <ChevronDown className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="h-[220px]">
+            <ResponsiveContainer>
+              <BarChart data={INS_TIMELINE} margin={{ top: 16, right: 8, left: -10, bottom: 0 }}>
+                <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v / 1000}K`} />
+                <Tooltip cursor={{ fill: "#14D8CF10" }} contentStyle={{ background: "#0D2232", border: "1px solid #1B3249", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Premium"]} />
+                <Bar dataKey="v" radius={[6, 6, 0, 0]} maxBarSize={42}>
+                  {INS_TIMELINE.map((d) => (
+                    <Cell key={d.m} fill={d.due ? "#EF4444" : "#10B981"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Policies table */}
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground">Your Policies ({POLICIES.length})</h3>
+          <div className="relative ml-2 flex-1 min-w-[180px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              placeholder="Search policies..."
+              className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
+            />
+          </div>
+          <FilterBtn label="All Types" />
+          <FilterBtn label="All Status" />
+          <FilterBtn label="Sort: Next Due" icon={ArrowUpDown} />
+        </div>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="py-3 pl-2 font-medium">Policy Name</th>
+                <th className="py-3 font-medium">Type</th>
+                <th className="py-3 font-medium">Provider</th>
+                <th className="py-3 font-medium">Policy Number</th>
+                <th className="py-3 font-medium">Coverage Amount</th>
+                <th className="py-3 font-medium">Annual Premium</th>
+                <th className="py-3 font-medium">Next Due Date</th>
+                <th className="py-3 font-medium">Status</th>
+                <th className="py-3 pr-2 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {POLICIES.map((p) => (
+                <tr key={p.name} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                  <td className="py-3 pl-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`grid h-8 w-8 place-items-center rounded-lg ${p.tint}`}>
+                        <p.icon className="h-4 w-4" />
+                      </div>
+                      <span className="font-medium text-foreground">{p.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 text-muted-foreground">{p.type}</td>
+                  <td className="py-3 text-muted-foreground">{p.provider}</td>
+                  <td className="py-3 text-muted-foreground">{p.number}</td>
+                  <td className="py-3 font-medium text-foreground">{p.coverage}</td>
+                  <td className="py-3 text-foreground">{p.premium}</td>
+                  <td className="py-3">
+                    <div className="text-foreground">{p.due}</div>
+                    <div className="text-[10px] text-rose-400">{p.inDays}</div>
+                  </td>
+                  <td className="py-3">
+                    <StatusPill status={p.status} />
+                  </td>
+                  <td className="py-3 pr-2">
+                    <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>Showing 1 to {POLICIES.length} of {POLICIES.length} policies</span>
+          <div className="flex items-center gap-2">
+            {["‹", "1", "›"].map((p, idx) => (
+              <button key={idx} className={`h-7 min-w-7 rounded-md border border-border px-2 ${p === "1" ? "bg-mint/15 text-mint" : "text-muted-foreground hover:text-foreground"}`}>{p}</button>
+            ))}
+            <span className="ml-2">Rows per page:</span>
+            <button className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1">10 <ChevronDown className="h-3 w-3" /></button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs text-muted-foreground">
+        <Info className="h-3.5 w-3.5 text-mint" />
+        Keep your policies and nominees updated to ensure claim smoothness.
       </div>
     </>
   );
