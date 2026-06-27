@@ -35,8 +35,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  LineChart,
-  Line,
   CartesianGrid,
 } from "recharts";
 
