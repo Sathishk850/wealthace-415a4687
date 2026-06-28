@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import logo from "@/assets/finvista-logo.png";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/components/ui/sonner";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
@@ -174,6 +175,7 @@ export function AppShell() {
         </div>
       </main>
       <MobileBottomTabs />
+      <Toaster />
     </div>
   );
 }
