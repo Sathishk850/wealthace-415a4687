@@ -97,24 +97,22 @@ function TopBar() {
         <button
           type="button"
           onClick={() => setPrivacy((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          className={cn(
+            "grid h-9 w-9 place-items-center rounded-lg transition hover:bg-surface",
+            privacy ? "text-mint" : "text-muted-foreground hover:text-foreground",
+          )}
           aria-label="Privacy mode"
+          title="Privacy mode"
         >
           <Eye className="h-4 w-4" />
-          <span className="hidden sm:inline">Privacy</span>
-          <span
-            className={cn(
-              "relative inline-flex h-5 w-9 items-center rounded-full transition",
-              privacy ? "bg-mint" : "bg-surface",
-            )}
-          >
-            <span
-              className={cn(
-                "absolute top-0.5 h-4 w-4 rounded-full bg-background shadow transition-all",
-                privacy ? "left-[18px]" : "left-0.5",
-              )}
-            />
-          </span>
+        </button>
+        <button
+          type="button"
+          aria-label="Notifications"
+          title="Notifications"
+          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
+        >
+          <Bell className="h-4 w-4" />
         </button>
         <button
           aria-label="Toggle theme"
