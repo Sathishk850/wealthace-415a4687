@@ -27,6 +27,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TextTabs } from "@/components/text-tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -78,23 +79,17 @@ function ToolsPage() {
         description="Reports, financial calculators and AI-powered insights."
       />
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0">
-          {[
-            { v: "overview", l: "Overview", i: LayoutGrid },
-            { v: "reports", l: "Reports", i: FileText },
-            { v: "calculators", l: "Financial Calculators", i: Calculator },
-            { v: "insights", l: "AI Insights", i: Sparkles },
-          ].map(({ v, l, i: Icon }) => (
-            <TabsTrigger
-              key={v}
-              value={v}
-              className="glass-card flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-xs data-[state=active]:border-[var(--primary)] data-[state=active]:text-[var(--primary)] data-[state=active]:shadow-[0_0_0_1px_var(--primary)]"
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {l}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <TextTabs
+          items={[
+            { value: "overview", label: "Overview" },
+            { value: "reports", label: "Reports" },
+            { value: "calculators", label: "Financial Calculators" },
+            { value: "reminders", label: "Reminders" },
+            { value: "insights", label: "AI Insights" },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
 
         <TabsContent value="overview" className="mt-4">
           <OverviewView onPick={setTab} />
@@ -104,6 +99,11 @@ function ToolsPage() {
         </TabsContent>
         <TabsContent value="calculators" className="mt-4">
           <FinCalculators />
+        </TabsContent>
+        <TabsContent value="reminders" className="mt-4">
+          <Card className="glass-card border-[var(--border)] p-10 text-center text-sm text-muted-foreground">
+            Reminders coming soon.
+          </Card>
         </TabsContent>
         <TabsContent value="insights" className="mt-4">
           <InsightsView />
@@ -463,19 +463,11 @@ function ReportsView() {
 
   return (
     <div className="space-y-4">
-      <Tabs value={moduleTab} onValueChange={(v) => setModuleTab(v as any)} className="w-full">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0">
-          {modTabs.map((t) => (
-            <TabsTrigger
-              key={t.v}
-              value={t.v}
-              className="glass-card rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs data-[state=active]:border-[var(--primary)] data-[state=active]:text-[var(--primary)]"
-            >
-              {t.l}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <TextTabs
+        items={modTabs.map((t) => ({ value: t.v, label: t.l }))}
+        value={moduleTab}
+        onChange={(v) => setModuleTab(v as any)}
+      />
       <Card className="glass-card border-[var(--border)] divide-y divide-[var(--border)]">
         {filtered.map((r) => (
           <ReportRowItem key={r.slug} report={r} onView={() => setPreview(r)} />
