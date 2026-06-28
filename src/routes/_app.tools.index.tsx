@@ -366,7 +366,12 @@ function ReportsView() {
   const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "rows-desc" | "module">("module");
 
   const reports = useMemo(() => {
-    const transactions = tx.data ?? [];
+    const allTx = tx.data ?? [];
+    const transactions = allTx.filter((t) => {
+      if (fromDate && t.occurred_on < fromDate) return false;
+      if (toDate && t.occurred_on > toDate) return false;
+      return true;
+    });
     const categories = cats.data ?? [];
     const budgetList = budgets.data ?? [];
     const catMap = new Map(categories.map((c) => [c.id, c]));
@@ -606,7 +611,7 @@ function ReportsView() {
       },
     ];
     return list;
-  }, [tx.data, cats.data, budgets.data, goals.data, settings.data]);
+  }, [tx.data, cats.data, budgets.data, goals.data, settings.data, fromDate, toDate]);
 
   if (loading)
     return (
