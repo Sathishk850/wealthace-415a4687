@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { logToolsActivity, useUpsertSavedCalculation } from "@/lib/tools-api";
+import { logToolsActivity, useSaveCalculation } from "@/lib/tools-api";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
@@ -83,7 +83,7 @@ export function FinCalculators() {
 
   const [active, setActive] = useState(calcs[0].id);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const saveCalc = useUpsertSavedCalculation();
+  const saveCalc = useSaveCalculation();
 
   const current = calcs.find((c) => c.id === active)!;
 
@@ -96,11 +96,10 @@ export function FinCalculators() {
     try {
       await saveCalc.mutateAsync({
         calc_type: current.id,
-        title: current.title,
+        label: current.title,
         inputs: {},
-        result: { snapshot: text },
+        outputs: { snapshot: text },
       });
-      toast.success("Calculation saved");
     } catch (e: any) {
       toast.error(e?.message || "Save failed");
     }
