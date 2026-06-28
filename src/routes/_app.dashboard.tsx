@@ -293,7 +293,7 @@ function Card({ className, children }: { className?: string; children: ReactNode
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border/70 bg-[#04141e]/90 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]",
+        "rounded-2xl border border-border bg-card shadow-[var(--shadow-sm)]",
         className,
       )}
     >
@@ -431,7 +431,7 @@ function SnapCard({
 }) {
   const id = `s-${label.replace(/\s/g, "")}`;
   return (
-    <div className="rounded-2xl border border-border/70 bg-[#04141e]/90 p-4">
+    <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start justify-between">
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
           <span
