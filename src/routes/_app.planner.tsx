@@ -36,6 +36,7 @@ import {
 } from "recharts";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TextTabs } from "@/components/text-tabs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
