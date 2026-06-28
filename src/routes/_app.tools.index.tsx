@@ -463,19 +463,11 @@ function ReportsView() {
 
   return (
     <div className="space-y-4">
-      <Tabs value={moduleTab} onValueChange={(v) => setModuleTab(v as any)} className="w-full">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0">
-          {modTabs.map((t) => (
-            <TabsTrigger
-              key={t.v}
-              value={t.v}
-              className="glass-card rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs data-[state=active]:border-[var(--primary)] data-[state=active]:text-[var(--primary)]"
-            >
-              {t.l}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <TextTabs
+        items={modTabs.map((t) => ({ value: t.v, label: t.l }))}
+        value={moduleTab}
+        onChange={(v) => setModuleTab(v as any)}
+      />
       <Card className="glass-card border-[var(--border)] divide-y divide-[var(--border)]">
         {filtered.map((r) => (
           <ReportRowItem key={r.slug} report={r} onView={() => setPreview(r)} />
