@@ -135,6 +135,138 @@ export type Database = {
           },
         ]
       }
+      notification_delivery_log: {
+        Row: {
+          attempts: number
+          channel: string
+          created_at: string
+          id: string
+          last_error: string | null
+          payload: Json
+          recipient: string | null
+          related_id: string | null
+          related_kind: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          channel: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          recipient?: string | null
+          related_id?: string | null
+          related_kind?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          recipient?: string | null
+          related_id?: string | null
+          related_kind?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          channels: Json
+          created_at: string
+          per_type: Json
+          quiet_hours: Json
+          reports: Json
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channels?: Json
+          created_at?: string
+          per_type?: Json
+          quiet_hours?: Json
+          reports?: Json
+          timezone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channels?: Json
+          created_at?: string
+          per_type?: Json
+          quiet_hours?: Json
+          reports?: Json
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          category: string
+          created_at: string
+          id: string
+          link: string | null
+          metadata: Json
+          priority: string
+          read_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json
+          priority?: string
+          read_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json
+          priority?: string
+          read_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       planner_goals: {
         Row: {
           created_at: string
@@ -222,6 +354,72 @@ export type Database = {
           updated_at?: string
           user_id?: string
           withdrawal_rate_pct?: number
+        }
+        Relationships: []
+      }
+      scheduled_reports: {
+        Row: {
+          active: boolean
+          bcc: string[]
+          cc: string[]
+          channels: Json
+          created_at: string
+          cron_expr: string | null
+          date_range: string
+          formats: string[]
+          frequency: string
+          id: string
+          include_ai_insights: boolean
+          last_run_at: string | null
+          last_status: string | null
+          name: string
+          next_run_at: string
+          recipients: string[]
+          report_keys: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          bcc?: string[]
+          cc?: string[]
+          channels?: Json
+          created_at?: string
+          cron_expr?: string | null
+          date_range?: string
+          formats?: string[]
+          frequency?: string
+          id?: string
+          include_ai_insights?: boolean
+          last_run_at?: string | null
+          last_status?: string | null
+          name: string
+          next_run_at?: string
+          recipients?: string[]
+          report_keys?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          bcc?: string[]
+          cc?: string[]
+          channels?: Json
+          created_at?: string
+          cron_expr?: string | null
+          date_range?: string
+          formats?: string[]
+          frequency?: string
+          id?: string
+          include_ai_insights?: boolean
+          last_run_at?: string | null
+          last_status?: string | null
+          name?: string
+          next_run_at?: string
+          recipients?: string[]
+          report_keys?: string[]
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

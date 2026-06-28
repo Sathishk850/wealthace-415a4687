@@ -77,6 +77,7 @@ import {
   inr as inr2,
 } from "@/lib/tools-api";
 import { RemindersView } from "@/components/reminders-view";
+import { ScheduledReportsPanel } from "@/components/scheduled-reports-panel";
 import { FinCalculators } from "./_app.tools.financial-calculator";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -717,6 +718,9 @@ function ReportsView() {
           ))
         )}
       </Card>
+      <ScheduledReportsPanel
+        reportOptions={reports.map((r) => ({ slug: r.slug, title: r.title, module: r.module }))}
+      />
       <ReportPreviewDialog report={preview} onClose={() => setPreview(null)} />
     </div>
   );
