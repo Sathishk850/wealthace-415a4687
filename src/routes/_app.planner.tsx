@@ -150,11 +150,10 @@ const goalsList = [
 function OverviewView() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <Kpi icon={Target} label="Active Goals" value="5" delta="2 on track" tone="mint" />
         <Kpi icon={PiggyBank} label="Total Saved" value={inr(2945000)} delta="of ₹96.5L target" tone="positive" />
         <Kpi icon={Flame} label="FIRE Progress" value="11.6%" delta="14.2 yrs to go" tone="warn" />
-        <Kpi icon={Wallet} label="Monthly Budget" value={inr(85000)} delta="₹62.4K spent" tone="negative" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
