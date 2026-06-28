@@ -5,6 +5,7 @@ import {
   Coins,
   Wrench,
   Eye,
+  Bell,
   Sun,
   Moon,
   CalendarClock,
