@@ -14,7 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      money_budgets: {
+        Row: {
+          amount_limit: number
+          category_id: string
+          created_at: string
+          id: string
+          period_month: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_limit: number
+          category_id: string
+          created_at?: string
+          id?: string
+          period_month: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_limit?: number
+          category_id?: string
+          created_at?: string
+          id?: string
+          period_month?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "money_budgets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "money_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      money_categories: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          kind: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          kind: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          kind?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      money_transactions: {
+        Row: {
+          account: string | null
+          amount: number
+          category_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          merchant: string
+          note: string | null
+          occurred_on: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account?: string | null
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          merchant: string
+          note?: string | null
+          occurred_on?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account?: string | null
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          merchant?: string
+          note?: string | null
+          occurred_on?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "money_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "money_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
