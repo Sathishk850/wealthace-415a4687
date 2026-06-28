@@ -23,6 +23,7 @@ import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
 import { Route as AppPlannerFireRouteImport } from './routes/_app.planner.fire'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
+import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slug'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
 
 const AuthRoute = AuthRouteImport.update({
@@ -95,6 +96,11 @@ const AppMoneyTransactionsRoute = AppMoneyTransactionsRouteImport.update({
   path: '/transactions',
   getParentRoute: () => AppMoneyRoute,
 } as any)
+const AppHoldingsSlugRoute = AppHoldingsSlugRouteImport.update({
+  id: '/holdings/$slug',
+  path: '/holdings/$slug',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
   id: '/networth',
   path: '/networth',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
+  '/holdings/$slug': typeof AppHoldingsSlugRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/planner/fire': typeof AppPlannerFireRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
+  '/holdings/$slug': typeof AppHoldingsSlugRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/planner/fire': typeof AppPlannerFireRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_app/tools': typeof AppToolsRouteWithChildren
   '/_app/wealth': typeof AppWealthRoute
   '/_app/dashboard/networth': typeof AppDashboardNetworthRoute
+  '/_app/holdings/$slug': typeof AppHoldingsSlugRoute
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
   '/_app/planner/fire': typeof AppPlannerFireRoute
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/wealth'
     | '/dashboard/networth'
+    | '/holdings/$slug'
     | '/money/transactions'
     | '/planner/fire'
     | '/tools/financial-calculator'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/wealth'
     | '/dashboard/networth'
+    | '/holdings/$slug'
     | '/money/transactions'
     | '/planner/fire'
     | '/tools/financial-calculator'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/_app/tools'
     | '/_app/wealth'
     | '/_app/dashboard/networth'
+    | '/_app/holdings/$slug'
     | '/_app/money/transactions'
     | '/_app/planner/fire'
     | '/_app/tools/financial-calculator'
@@ -307,6 +319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMoneyTransactionsRouteImport
       parentRoute: typeof AppMoneyRoute
     }
+    '/_app/holdings/$slug': {
+      id: '/_app/holdings/$slug'
+      path: '/holdings/$slug'
+      fullPath: '/holdings/$slug'
+      preLoaderRoute: typeof AppHoldingsSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard/networth': {
       id: '/_app/dashboard/networth'
       path: '/networth'
@@ -375,6 +394,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppToolsRoute: typeof AppToolsRouteWithChildren
   AppWealthRoute: typeof AppWealthRoute
+  AppHoldingsSlugRoute: typeof AppHoldingsSlugRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -385,6 +405,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppToolsRoute: AppToolsRouteWithChildren,
   AppWealthRoute: AppWealthRoute,
+  AppHoldingsSlugRoute: AppHoldingsSlugRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
