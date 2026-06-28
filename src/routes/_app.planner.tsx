@@ -109,6 +109,7 @@ const ICON_BY_TYPE: Record<GoalType, React.ComponentType<{ className?: string }>
 
 function Planner() {
   const [goalDialog, setGoalDialog] = useState<{ open: boolean; goal?: Goal }>({ open: false });
+  const [tab, setTab] = useState<"overview" | "goals" | "retirement" | "fire">("overview");
 
   return (
     <>
@@ -126,24 +127,26 @@ function Planner() {
         }
       />
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-2 sm:inline-flex sm:w-auto">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="goals">Goals</TabsTrigger>
-          <TabsTrigger value="retirement">Retirement</TabsTrigger>
-          <TabsTrigger value="fire">FIRE</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview"><OverviewView onAddGoal={() => setGoalDialog({ open: true })} /></TabsContent>
-        <TabsContent value="goals">
-          <GoalsView
-            onAddGoal={() => setGoalDialog({ open: true })}
-            onEditGoal={(g) => setGoalDialog({ open: true, goal: g })}
-          />
-        </TabsContent>
-        <TabsContent value="retirement"><RetirementView /></TabsContent>
-        <TabsContent value="fire"><FireView /></TabsContent>
-      </Tabs>
+      <TextTabs
+        className="mb-6"
+        items={[
+          { value: "overview", label: "Overview" },
+          { value: "goals", label: "Goals" },
+          { value: "retirement", label: "Retirement" },
+          { value: "fire", label: "FIRE" },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "overview" && <OverviewView onAddGoal={() => setGoalDialog({ open: true })} />}
+      {tab === "goals" && (
+        <GoalsView
+          onAddGoal={() => setGoalDialog({ open: true })}
+          onEditGoal={(g) => setGoalDialog({ open: true, goal: g })}
+        />
+      )}
+      {tab === "retirement" && <RetirementView />}
+      {tab === "fire" && <FireView />}
 
       <GoalDialog
         open={goalDialog.open}
