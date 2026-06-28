@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      generated_reports: {
+        Row: {
+          created_at: string
+          downloaded_at: string | null
+          email_status: string
+          formats: string[]
+          frequency: string | null
+          generated_at: string
+          id: string
+          name: string
+          period_end: string | null
+          period_start: string | null
+          report_keys: string[]
+          schedule_id: string | null
+          snapshot: Json
+          status: string
+          summary: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          downloaded_at?: string | null
+          email_status?: string
+          formats?: string[]
+          frequency?: string | null
+          generated_at?: string
+          id?: string
+          name: string
+          period_end?: string | null
+          period_start?: string | null
+          report_keys?: string[]
+          schedule_id?: string | null
+          snapshot?: Json
+          status?: string
+          summary?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          downloaded_at?: string | null
+          email_status?: string
+          formats?: string[]
+          frequency?: string | null
+          generated_at?: string
+          id?: string
+          name?: string
+          period_end?: string | null
+          period_start?: string | null
+          report_keys?: string[]
+          schedule_id?: string | null
+          snapshot?: Json
+          status?: string
+          summary?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_reports_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       money_budgets: {
         Row: {
           amount_limit: number

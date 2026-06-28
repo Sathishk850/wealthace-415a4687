@@ -379,3 +379,98 @@ export const FREQUENCY_LABEL: Record<ScheduleFrequency, string> = {
   yearly: "Yearly",
   custom: "Custom",
 };
+
+/* ============ Generated Reports (Report Center) ============ */
+
+export type ReportSection = {
+  key: string;
+  title: string;
+  columns: string[];
+  rows: (string | number)[][];
+  summary: { label: string; value: string }[];
+};
+
+export type GeneratedReport = {
+  id: string;
+  user_id: string;
+  schedule_id: string | null;
+  name: string;
+  report_keys: string[];
+  formats: ("pdf" | "xlsx" | "csv")[];
+  frequency: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  snapshot: { sections: ReportSection[]; period: { start: string | null; end: string | null }; generated_at: string; schedule_name?: string };
+  summary: Record<string, number>;
+  status: string;
+  email_status: string;
+  downloaded_at: string | null;
+  generated_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export const generatedKeys = {
+  list: ["generated-reports", "list"] as const,
+  one: (id: string) => ["generated-reports", id] as const,
+};
+
+export function useGeneratedReports(limit = 100) {
+  return useQuery({
+    queryKey: [...generatedKeys.list, limit],
+    queryFn: async (): Promise<GeneratedReport[]> => {
+      const { data, error } = await supabase
+        .from("generated_reports" as any)
+        .select("*")
+        .order("generated_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as unknown as GeneratedReport[];
+    },
+    refetchInterval: 60_000,
+  });
+}
+
+export function useGeneratedReport(id: string | undefined) {
+  return useQuery({
+    queryKey: id ? generatedKeys.one(id) : ["generated-reports", "none"],
+    enabled: !!id,
+    queryFn: async (): Promise<GeneratedReport | null> => {
+      const { data, error } = await supabase
+        .from("generated_reports" as any)
+        .select("*")
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as unknown as GeneratedReport | null;
+    },
+  });
+}
+
+export function useMarkReportDownloaded() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("generated_reports" as any)
+        .update({ downloaded_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["generated-reports"] }),
+  });
+}
+
+export function useDeleteGeneratedReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("generated_reports" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Report removed");
+      qc.invalidateQueries({ queryKey: ["generated-reports"] });
+    },
+  });
+}
