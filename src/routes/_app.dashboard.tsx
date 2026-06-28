@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
-  ArrowUp,
-  ArrowDown,
+  ArrowUpRight,
+  ArrowDownRight,
   Camera,
   History,
   Info,
@@ -12,19 +12,19 @@ import {
   PiggyBank,
   ArrowLeftRight,
   ArrowRight,
-  Home,
   Car,
-  Plane,
   Sparkles,
   Calendar,
-  BadgeIndianRupee,
+  ChevronDown,
+  ShoppingBag,
+  Utensils,
+  Fuel,
+  Briefcase,
 } from "lucide-react";
 import {
   Area,
   AreaChart,
   Cell,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
