@@ -5,7 +5,6 @@ import {
   Coins,
   Wrench,
   Eye,
-  Bell,
   Sun,
   Moon,
   CalendarClock,
@@ -15,6 +14,7 @@ import logo from "@/assets/finvista-logo.png";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { NotificationBell } from "@/components/notification-bell";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
@@ -107,14 +107,7 @@ function TopBar() {
         >
           <Eye className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          aria-label="Notifications"
-          title="Notifications"
-          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
-        >
-          <Bell className="h-4 w-4" />
-        </button>
+        <NotificationBell />
         <button
           aria-label="Toggle theme"
           onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
