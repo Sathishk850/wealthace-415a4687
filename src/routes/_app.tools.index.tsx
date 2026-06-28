@@ -317,9 +317,9 @@ function OverviewView({ onPick }: { onPick: (v: string) => void }) {
   );
 }
 
-function MiniStat({ label, value, icon: Icon }: { label: string; value: string; icon: LucideIcon }) {
-  return (
-    <Card className="glass-card border-[var(--border)] p-4">
+function MiniStat({ label, value, icon: Icon, onClick }: { label: string; value: string; icon: LucideIcon; onClick?: () => void }) {
+  const inner = (
+    <Card className="glass-card border-[var(--border)] p-4 transition hover:border-[var(--primary)]/40">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">{label}</div>
@@ -329,6 +329,9 @@ function MiniStat({ label, value, icon: Icon }: { label: string; value: string; 
       </div>
     </Card>
   );
+  return onClick ? (
+    <button onClick={onClick} className="text-left">{inner}</button>
+  ) : inner;
 }
 
 /* ---------------- Reports ---------------- */
