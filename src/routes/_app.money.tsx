@@ -1079,7 +1079,7 @@ function BudgetsView({
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiCard icon={Layers} label="Budgets · " + activeMonthLabel as any} value={String(rows.length)} tone="violet" />
+        <KpiCard icon={Layers} label={`Budgets · ${activeMonthLabel}`} value={String(rows.length)} tone="violet" />
         <KpiCard icon={Wallet} label="Total Budget" value={inr(totalBudget)} tone="mint" />
         <KpiCard icon={ArrowDownRight} label="Total Spent" value={inr(totalSpent)} tone="negative" />
       </div>
