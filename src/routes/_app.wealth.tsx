@@ -782,7 +782,29 @@ function FilterBtn({ label, icon: Icon = ChevronDown }: { label: string; icon?: 
   );
 }
 
-const INV_SUBTABS = ["Overview", "Mutual Funds", "Stocks", "ETFs", "Bonds", "Gold", "NPS", "Others"] as const;
+const INV_SUBTABS = ["Overview", "Holdings", "Portfolio", "SIP Tracker", "Performance", "P&L Analysis"] as const;
+const HOLDING_FILTERS = ["All", "Stocks", "Mutual Funds", "ETFs", "Gold", "Bonds", "Crypto", "Others"] as const;
+const HOLDING_SORTS = ["Latest", "Name (A-Z)", "Current Value", "P&L", "Returns %"] as const;
+
+export const HOLDINGS = [
+  { slug: "parag-parikh-flexi-cap", name: "Parag Parikh Flexi Cap Fund", sub: "Direct Growth", type: "Mutual Funds", qty: 1842.55, avgPrice: 149.25, currentPrice: 176.36, invested: 275000, current: 324850, color: "#3B82F6", date: "11 Jun 2025" },
+  { slug: "navi-nifty-50", name: "NAVI Nifty 50 Index Fund", sub: "Direct Growth", type: "Mutual Funds", qty: 1450.20, avgPrice: 127.57, currentPrice: 146.50, invested: 185000, current: 212450, color: "#14D8CF", date: "11 Jun 2025" },
+  { slug: "icici-nasdaq-100", name: "ICICI Prudential NASDAQ 100 Index Fund", sub: "Direct Growth", type: "Mutual Funds", qty: 720.45, avgPrice: 222.10, currentPrice: 257.62, invested: 160000, current: 185600, color: "#8B5CF6", date: "11 Jun 2025" },
+  { slug: "hdfc-bank", name: "HDFC Bank Ltd", sub: "NSE", type: "Stocks", qty: 85, avgPrice: 1411.76, currentPrice: 1674.12, invested: 120000, current: 142300, color: "#F59E0B", date: "11 Jun 2025" },
+  { slug: "tata-motors", name: "Tata Motors Ltd", sub: "NSE", type: "Stocks", qty: 120, avgPrice: 708.33, currentPrice: 877.08, invested: 85000, current: 105250, color: "#EF4444", date: "11 Jun 2025" },
+  { slug: "niftybees", name: "Nippon India ETF Nifty BeES", sub: "ETF", type: "ETFs", qty: 480, avgPrice: 218.75, currentPrice: 245.10, invested: 105000, current: 117648, color: "#10B981", date: "11 Jun 2025" },
+  { slug: "sgb-2024", name: "Sovereign Gold Bond 2024-25", sub: "RBI", type: "Gold", qty: 15, avgPrice: 6240, currentPrice: 6585, invested: 93600, current: 98775, color: "#F59E0B", date: "11 Jun 2025" },
+  { slug: "rbi-bond", name: "RBI Floating Rate Bond", sub: "Govt", type: "Bonds", qty: 1, avgPrice: 80000, currentPrice: 84250, invested: 80000, current: 84250, color: "#3B82F6", date: "11 Jun 2025" },
+  { slug: "btc-spot", name: "Bitcoin", sub: "BTC", type: "Crypto", qty: 0.045, avgPrice: 4250000, currentPrice: 5180000, invested: 191250, current: 233100, color: "#F97316", date: "11 Jun 2025" },
+];
+
+export function findHolding(slug: string) {
+  return HOLDINGS.find((h) => h.slug === slug);
+}
+
+function fmtINR(n: number) {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
 
 const INV_STATS = [
   { label: "Total Investment Value", value: "₹18,64,250", delta: "+12.45% vs last month", up: true, icon: Wallet, tint: "bg-mint/10 text-mint" },
