@@ -336,7 +336,7 @@ function RangeChart({
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex justify-end">
-        <div className="inline-flex items-center gap-0.5 rounded-lg border border-border/70 bg-surface/60 p-0.5">
+        <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-surface-2 p-0.5">
           {RANGES.map((r) => (
             <button
               key={r}
@@ -366,7 +366,7 @@ function RangeChart({
               dataKey="i"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#8aa0b3", fontSize: 10 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
               tickFormatter={(i) => {
                 const d = new Date();
                 d.setDate(d.getDate() - (data.length - i));
@@ -378,30 +378,31 @@ function RangeChart({
               orientation="right"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#8aa0b3", fontSize: 10 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
               width={40}
               tickFormatter={(v) => `₹${Math.round(v / 100000)}L`}
               domain={["dataMin - 50000", "dataMax + 50000"]}
             />
             <RTooltip
-              cursor={{ stroke: "#14d8cf", strokeOpacity: 0.3 }}
+              cursor={{ stroke: "var(--primary)", strokeOpacity: 0.3 }}
               contentStyle={{
-                background: "#04141e",
-                border: "1px solid #0c5d65",
+                background: "var(--popover)",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 fontSize: 12,
+                color: "var(--popover-foreground)",
               }}
-              labelStyle={{ color: "#8aa0b3" }}
+              labelStyle={{ color: "var(--muted-foreground)" }}
               formatter={(v: number) => [`₹${fmt(v)}`, "Value"]}
               labelFormatter={() => ""}
             />
             <Area
               type="monotone"
               dataKey="v"
-              stroke="#14d8cf"
+              stroke="var(--primary)"
               strokeWidth={2}
               fill={`url(#${id})`}
-              activeDot={{ r: 4, fill: "#14d8cf", stroke: "#04141e", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: "var(--primary)", stroke: "var(--card)", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -485,13 +486,13 @@ function ScoreRing({ score }: { score: number }) {
   const off = c - (c * score) / 100;
   return (
     <div className="relative grid h-[150px] w-[150px] place-items-center">
-      <svg width={150} height={150} className="-rotate-90">
-        <circle cx={75} cy={75} r={r} stroke="#0a2535" strokeWidth={10} fill="none" />
+          <svg width={150} height={150} className="-rotate-90">
+            <circle cx={75} cy={75} r={r} stroke="var(--border)" strokeWidth={10} fill="none" />
         <circle
           cx={75}
           cy={75}
           r={r}
-          stroke="#14d8cf"
+              stroke="var(--primary)"
           strokeWidth={10}
           fill="none"
           strokeLinecap="round"
@@ -529,11 +530,11 @@ function GoalCard({
   const r = 28;
   const c = 2 * Math.PI * r;
   return (
-    <div className="rounded-xl border border-border/70 bg-surface/30 p-4">
+    <div className="rounded-xl border border-border bg-surface-2 p-4">
       <div className="flex items-center gap-3">
         <div className="relative grid h-[72px] w-[72px] place-items-center">
           <svg width={72} height={72} className="-rotate-90">
-            <circle cx={36} cy={36} r={r} stroke="#0a2535" strokeWidth={6} fill="none" />
+            <circle cx={36} cy={36} r={r} stroke="var(--border)" strokeWidth={6} fill="none" />
             <circle
               cx={36}
               cy={36}
@@ -575,7 +576,7 @@ function Insight({
   body: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-surface/30 p-3.5">
+    <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
       <span
         className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
         style={{ background: `${tint}1f`, color: tint }}
