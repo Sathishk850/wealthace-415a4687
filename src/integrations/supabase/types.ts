@@ -225,6 +225,126 @@ export type Database = {
         }
         Relationships: []
       }
+      tools_activity: {
+        Row: {
+          created_at: string
+          id: string
+          item_label: string
+          item_slug: string
+          item_type: string
+          last_used_at: string
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_label: string
+          item_slug: string
+          item_type: string
+          last_used_at?: string
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_label?: string
+          item_slug?: string
+          item_type?: string
+          last_used_at?: string
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tools_reminders: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          due_date: string
+          id: string
+          kind: string
+          notes: string | null
+          notify_days_before: number
+          notify_enabled: boolean
+          recurrence: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          notify_days_before?: number
+          notify_enabled?: boolean
+          recurrence?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          notify_days_before?: number
+          notify_enabled?: boolean
+          recurrence?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tools_saved_calculations: {
+        Row: {
+          calc_type: string
+          created_at: string
+          id: string
+          inputs: Json
+          label: string
+          outputs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calc_type: string
+          created_at?: string
+          id?: string
+          inputs?: Json
+          label: string
+          outputs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calc_type?: string
+          created_at?: string
+          id?: string
+          inputs?: Json
+          label?: string
+          outputs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

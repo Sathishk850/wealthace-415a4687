@@ -5,7 +5,6 @@ import {
   FileText,
   Calculator,
   Sparkles,
-  LayoutGrid,
   Download,
   FileSpreadsheet,
   FileDown,
@@ -21,15 +20,30 @@ import {
   Loader2,
   AlertCircle,
   Lightbulb,
+  Bell,
+  Info,
+  RefreshCw,
+  Share2,
+  Bookmark,
+  ArrowRight,
+  Search,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TextTabs } from "@/components/text-tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +68,15 @@ import {
   currentMonthKey,
 } from "@/lib/money-api";
 import { useGoals, usePlannerSettings } from "@/lib/planner-api";
+import {
+  useReminders,
+  useToolsActivity,
+  logToolsActivity,
+  daysUntil,
+  REMINDER_KIND_LABEL,
+  inr as inr2,
+} from "@/lib/tools-api";
+import { RemindersView } from "@/components/reminders-view";
 import { FinCalculators } from "./_app.tools.financial-calculator";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -101,9 +124,7 @@ function ToolsPage() {
           <FinCalculators />
         </TabsContent>
         <TabsContent value="reminders" className="mt-4">
-          <Card className="glass-card border-[var(--border)] p-10 text-center text-sm text-muted-foreground">
-            Reminders coming soon.
-          </Card>
+          <RemindersView />
         </TabsContent>
         <TabsContent value="insights" className="mt-4">
           <InsightsView />
@@ -116,45 +137,189 @@ function ToolsPage() {
 /* ---------------- Overview ---------------- */
 function OverviewView({ onPick }: { onPick: (v: string) => void }) {
   const tx = useTransactions();
+  const cats = useCategories();
+  const budgets = useBudgets();
   const goals = useGoals();
-  const items: { v: string; title: string; desc: string; icon: LucideIcon }[] = [
-    { v: "reports", title: "Reports", desc: "Net worth, income, cashflow, tax — export to PDF, Excel, CSV", icon: FileText },
-    { v: "calculators", title: "Financial Calculators", desc: "SIP, EMI, CAGR, XIRR and more", icon: Calculator },
-    { v: "insights", title: "AI Insights", desc: "Spending analysis, savings & investment tips", icon: Sparkles },
-  ];
-  const totalTx = tx.data?.length ?? 0;
-  const totalGoals = goals.data?.length ?? 0;
+  const settings = usePlannerSettings();
+  const reminders = useReminders();
+  const activity = useToolsActivity();
+
+  const insights = useMemo(
+    () =>
+      buildInsights({
+        transactions: tx.data ?? [],
+        categories: cats.data ?? [],
+        budgets: budgets.data ?? [],
+        goals: goals.data ?? [],
+        settings: settings.data,
+      }),
+    [tx.data, cats.data, budgets.data, goals.data, settings.data],
+  );
+
+  const allInsights: InsightItem[] = useMemo(() => {
+    return [
+      ...insights.spending,
+      ...insights.savings,
+      ...insights.investments,
+      ...insights.recommendations,
+    ];
+  }, [insights]);
+
+  const upcoming = useMemo(() => {
+    return (reminders.data ?? [])
+      .filter((r) => r.status === "upcoming")
+      .sort((a, b) => a.due_date.localeCompare(b.due_date))
+      .slice(0, 5);
+  }, [reminders.data]);
+
+  const frequent = useMemo(() => (activity.data ?? []).slice(0, 6), [activity.data]);
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <MiniStat label="Transactions" value={String(totalTx)} icon={Activity} />
-        <MiniStat label="Active Goals" value={String(totalGoals)} icon={Target} />
-        <MiniStat label="Reports Available" value="5" icon={FileText} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MiniStat label="Reports Available" value="18" icon={FileText} onClick={() => onPick("reports")} />
+        <MiniStat label="Calculators Available" value="12" icon={Calculator} onClick={() => onPick("calculators")} />
+        <MiniStat label="AI Insights Available" value={String(allInsights.length)} icon={Sparkles} onClick={() => onPick("insights")} />
+        <MiniStat label="Upcoming Reminders" value={String(upcoming.length)} icon={Bell} onClick={() => onPick("reminders")} />
       </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        {items.map(({ v, title, desc, icon: Icon }) => (
-          <button
-            key={v}
-            onClick={() => onPick(v)}
-            className="group flex items-start gap-4 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-5 text-left transition hover:border-[var(--primary)]/40"
-          >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
-              <Icon className="h-5 w-5" />
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        {/* AI Insights Panel (Top 5) — replaces Recent Activity */}
+        <Card className="glass-card border-[var(--border)] p-5 lg:col-span-2">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[var(--primary)]" />
+              <h3 className="text-sm font-semibold text-[var(--text-main)]">AI Insights</h3>
+              <Info className="h-3.5 w-3.5 text-[var(--text-muted)]" aria-label="Personalised tips based on your data" />
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-[var(--text-main)]">{title}</div>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">{desc}</p>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1 text-xs text-[var(--primary)] hover:bg-[var(--primary)]/10"
+              onClick={() => onPick("insights")}
+            >
+              View All Insights <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
+          {allInsights.length === 0 ? (
+            <p className="text-xs text-[var(--text-muted)]">
+              Add transactions, budgets or goals to unlock personalised insights.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {allInsights.slice(0, 5).map((it, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 p-3"
+                >
+                  <Badge
+                    variant="outline"
+                    className={
+                      it.tone === "good"
+                        ? "border-[var(--primary)]/40 text-[var(--primary)]"
+                        : it.tone === "bad"
+                        ? "border-destructive/40 text-destructive"
+                        : "border-amber-400/40 text-amber-400"
+                    }
+                  >
+                    {it.tone === "good" ? "Good" : it.tone === "bad" ? "Alert" : "Tip"}
+                  </Badge>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-[var(--text-main)]">{it.title}</div>
+                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{it.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Upcoming Reminders */}
+        <Card className="glass-card border-[var(--border)] p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-[var(--primary)]" />
+              <h3 className="text-sm font-semibold text-[var(--text-main)]">Upcoming Reminders</h3>
             </div>
-          </button>
-        ))}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1 text-xs text-[var(--primary)] hover:bg-[var(--primary)]/10"
+              onClick={() => onPick("reminders")}
+            >
+              Manage <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
+          {upcoming.length === 0 ? (
+            <p className="text-xs text-[var(--text-muted)]">No upcoming reminders.</p>
+          ) : (
+            <ul className="space-y-2">
+              {upcoming.map((r) => {
+                const d = daysUntil(r.due_date);
+                return (
+                  <li key={r.id} className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm text-[var(--text-main)]">{r.title}</span>
+                      <span className={`text-[11px] ${d < 0 ? "text-destructive" : d <= r.notify_days_before ? "text-amber-400" : "text-[var(--text-muted)]"}`}>
+                        {d === 0 ? "Today" : d > 0 ? `${d}d` : `${Math.abs(d)}d late`}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">
+                      {REMINDER_KIND_LABEL[r.kind]}
+                      {r.amount > 0 ? ` · ${inr2(r.amount)}` : ""}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
       </div>
+
+      {/* Frequently Used */}
+      <Card className="glass-card border-[var(--border)] p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-[var(--primary)]" />
+          <h3 className="text-sm font-semibold text-[var(--text-main)]">Frequently Used</h3>
+        </div>
+        {frequent.length === 0 ? (
+          <p className="text-xs text-[var(--text-muted)]">
+            Recently viewed reports and calculators will appear here.
+          </p>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {frequent.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => onPick(a.item_type === "report" ? "reports" : "calculators")}
+                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 p-3 text-left transition hover:border-[var(--primary)]/40"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {a.item_type === "report" ? (
+                    <FileText className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                  ) : (
+                    <Calculator className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate text-sm text-[var(--text-main)]">{a.item_label}</div>
+                    <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                      {a.item_type} · used {a.use_count}×
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+              </button>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
 
-function MiniStat({ label, value, icon: Icon }: { label: string; value: string; icon: LucideIcon }) {
-  return (
-    <Card className="glass-card border-[var(--border)] p-4">
+function MiniStat({ label, value, icon: Icon, onClick }: { label: string; value: string; icon: LucideIcon; onClick?: () => void }) {
+  const inner = (
+    <Card className="glass-card border-[var(--border)] p-4 transition hover:border-[var(--primary)]/40">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">{label}</div>
@@ -164,6 +329,9 @@ function MiniStat({ label, value, icon: Icon }: { label: string; value: string; 
       </div>
     </Card>
   );
+  return onClick ? (
+    <button onClick={onClick} className="text-left">{inner}</button>
+  ) : inner;
 }
 
 /* ---------------- Reports ---------------- */
@@ -192,9 +360,18 @@ function ReportsView() {
   const error = tx.error || cats.error || budgets.error || goals.error || settings.error;
   const [moduleTab, setModuleTab] = useState<"all" | ReportModule>("all");
   const [preview, setPreview] = useState<ReportData | null>(null);
+  const [search, setSearch] = useState("");
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "rows-desc" | "module">("module");
 
   const reports = useMemo(() => {
-    const transactions = tx.data ?? [];
+    const allTx = tx.data ?? [];
+    const transactions = allTx.filter((t) => {
+      if (fromDate && t.occurred_on < fromDate) return false;
+      if (toDate && t.occurred_on > toDate) return false;
+      return true;
+    });
     const categories = cats.data ?? [];
     const budgetList = budgets.data ?? [];
     const catMap = new Map(categories.map((c) => [c.id, c]));
@@ -434,7 +611,7 @@ function ReportsView() {
       },
     ];
     return list;
-  }, [tx.data, cats.data, budgets.data, goals.data, settings.data]);
+  }, [tx.data, cats.data, budgets.data, goals.data, settings.data, fromDate, toDate]);
 
   if (loading)
     return (
@@ -452,7 +629,20 @@ function ReportsView() {
       </Card>
     );
 
-  const filtered = moduleTab === "all" ? reports : reports.filter((r) => r.module === moduleTab);
+  const filtered = useMemo(() => {
+    let arr = moduleTab === "all" ? reports : reports.filter((r) => r.module === moduleTab);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      arr = arr.filter(
+        (r) => r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q),
+      );
+    }
+    const sorted = [...arr];
+    if (sortBy === "title-asc") sorted.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortBy === "title-desc") sorted.sort((a, b) => b.title.localeCompare(a.title));
+    else if (sortBy === "rows-desc") sorted.sort((a, b) => b.rows.length - a.rows.length);
+    return sorted;
+  }, [reports, moduleTab, search, sortBy]);
   const modTabs: { v: "all" | ReportModule; l: string }[] = [
     { v: "all", l: "All Reports" },
     { v: "wealth", l: "Wealth" },
@@ -468,10 +658,64 @@ function ReportsView() {
         value={moduleTab}
         onChange={(v) => setModuleTab(v as any)}
       />
+      <Card className="glass-card border-[var(--border)] p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search reports..."
+              className="h-8 pl-8 bg-[var(--bg-primary)]/40 text-xs"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-[var(--text-muted)]">From</span>
+            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-8 w-[140px] bg-[var(--bg-primary)]/40 text-xs" />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-[var(--text-muted)]">To</span>
+            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-8 w-[140px] bg-[var(--bg-primary)]/40 text-xs" />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="module">Sort: Module</SelectItem>
+              <SelectItem value="title-asc">Title A–Z</SelectItem>
+              <SelectItem value="title-desc">Title Z–A</SelectItem>
+              <SelectItem value="rows-desc">Most Data</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || fromDate || toDate) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => { setSearch(""); setFromDate(""); setToDate(""); }}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      </Card>
       <Card className="glass-card border-[var(--border)] divide-y divide-[var(--border)]">
-        {filtered.map((r) => (
-          <ReportRowItem key={r.slug} report={r} onView={() => setPreview(r)} />
-        ))}
+        {filtered.length === 0 ? (
+          <div className="p-6 text-center text-xs text-[var(--text-muted)]">
+            No reports match the current filters.
+          </div>
+        ) : (
+          filtered.map((r) => (
+            <ReportRowItem
+              key={r.slug}
+              report={r}
+              onView={() => {
+                logToolsActivity("report", r.slug, r.title);
+                setPreview(r);
+              }}
+              onExport={() => logToolsActivity("report", r.slug, r.title)}
+            />
+          ))
+        )}
       </Card>
       <ReportPreviewDialog report={preview} onClose={() => setPreview(null)} />
     </div>
@@ -555,10 +799,11 @@ function printReport(report: ReportData) {
   w.document.close();
 }
 
-function ReportRowItem({ report, onView }: { report: ReportData; onView: () => void }) {
+function ReportRowItem({ report, onView, onExport }: { report: ReportData; onView: () => void; onExport?: () => void }) {
   const handle = (fmt: ReportFmt) => {
     try {
       runExport(report, fmt);
+      onExport?.();
       toast.success(`${report.title} exported`);
     } catch (e: any) {
       toast.error(e?.message || "Export failed");
@@ -684,6 +929,8 @@ function InsightsView() {
 
   const loading = tx.isLoading || cats.isLoading || budgets.isLoading || goals.isLoading || settings.isLoading;
   const error = tx.error || cats.error || budgets.error || goals.error || settings.error;
+  const [filter, setFilter] = useState<"all" | "spending" | "savings" | "investments" | "recommendations">("all");
+  const [refreshing, setRefreshing] = useState(false);
 
   const insights = useMemo(() => buildInsights({
     transactions: tx.data ?? [],
@@ -692,6 +939,16 @@ function InsightsView() {
     goals: goals.data ?? [],
     settings: settings.data,
   }), [tx.data, cats.data, budgets.data, goals.data, settings.data]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([tx.refetch(), cats.refetch(), budgets.refetch(), goals.refetch(), settings.refetch()]);
+      toast.success("Insights refreshed");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading)
     return (
@@ -722,16 +979,47 @@ function InsightsView() {
 
   return (
     <div className="space-y-4">
+      <Card className="glass-card border-[var(--border)] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "spending", "savings", "investments", "recommendations"] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => setFilter(k)}
+                className={`rounded-full border px-3 py-1 text-[11px] capitalize transition ${
+                  filter === k
+                    ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                    : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                }`}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
+      </Card>
+
       <div className="grid gap-3 md:grid-cols-3">
         <ScoreCard label="Financial Health Score" value={insights.healthScore} icon={Shield} />
         <ScoreCard label="Savings Rate" value={insights.savingsRate} suffix="%" icon={PiggyBank} />
         <ScoreCard label="Portfolio Health" value={insights.portfolioHealth} icon={Activity} />
       </div>
 
-      <InsightSection title="Spending Analysis" icon={TrendingDown} items={insights.spending} />
-      <InsightSection title="Saving Suggestions" icon={PiggyBank} items={insights.savings} />
-      <InsightSection title="Investment Insights" icon={TrendingUp} items={insights.investments} />
-      <InsightSection title="Personalised Recommendations" icon={Lightbulb} items={insights.recommendations} />
+      {(filter === "all" || filter === "spending") && (
+        <InsightSection title="Spending Analysis" icon={TrendingDown} items={insights.spending} />
+      )}
+      {(filter === "all" || filter === "savings") && (
+        <InsightSection title="Saving Suggestions" icon={PiggyBank} items={insights.savings} />
+      )}
+      {(filter === "all" || filter === "investments") && (
+        <InsightSection title="Investment Insights" icon={TrendingUp} items={insights.investments} />
+      )}
+      {(filter === "all" || filter === "recommendations") && (
+        <InsightSection title="Personalised Recommendations" icon={Lightbulb} items={insights.recommendations} />
+      )}
     </div>
   );
 }
@@ -762,6 +1050,30 @@ function InsightSection({
   icon: LucideIcon;
   items: { title: string; detail: string; tone?: "good" | "warn" | "bad" }[];
 }) {
+  const [open, setOpen] = useState<{ title: string; detail: string } | null>(null);
+  const share = async (it: { title: string; detail: string }) => {
+    const text = `${it.title} — ${it.detail}`;
+    try {
+      if (navigator.share) await navigator.share({ title: it.title, text });
+      else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Insight copied to clipboard");
+      }
+    } catch {
+      /* user cancelled */
+    }
+  };
+  const save = (it: { title: string; detail: string }) => {
+    try {
+      const k = "fintrack.saved_insights";
+      const list = JSON.parse(localStorage.getItem(k) || "[]");
+      list.unshift({ ...it, savedAt: new Date().toISOString() });
+      localStorage.setItem(k, JSON.stringify(list.slice(0, 50)));
+      toast.success("Insight saved");
+    } catch {
+      toast.error("Could not save");
+    }
+  };
   return (
     <Card className="glass-card border-[var(--border)] p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -789,14 +1101,45 @@ function InsightSection({
               >
                 {it.tone === "good" ? "Good" : it.tone === "bad" ? "Alert" : "Tip"}
               </Badge>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-[var(--text-main)]">{it.title}</div>
                 <p className="mt-0.5 text-xs text-[var(--text-muted)]">{it.detail}</p>
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setOpen(it)} aria-label="View details">
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => save(it)} aria-label="Save insight">
+                  <Bookmark className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => share(it)} aria-label="Share insight">
+                  <Share2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </li>
           ))}
         </ul>
       )}
+      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
+        <DialogContent className="max-w-md">
+          {open && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{open.title}</DialogTitle>
+                <DialogDescription>{open.detail}</DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button size="sm" variant="outline" onClick={() => save(open)}>
+                  <Bookmark className="mr-1.5 h-3.5 w-3.5" /> Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => share(open)}>
+                  <Share2 className="mr-1.5 h-3.5 w-3.5" /> Share
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

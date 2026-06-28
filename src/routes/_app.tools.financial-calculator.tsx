@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   TrendingUp,
   Landmark,
@@ -14,6 +14,8 @@ import {
   Percent,
   ArrowDownUp,
   CalendarClock,
+  Save,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -21,6 +23,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { logToolsActivity, useSaveCalculation } from "@/lib/tools-api";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
 
 export const Route = createFileRoute("/_app/tools/financial-calculator")({
   head: () => ({
@@ -63,19 +69,56 @@ export function FinCalculators() {
   const calcs: CalcDef[] = [
     { id: "sip", title: "SIP Calculator", desc: "Monthly investment growth", icon: TrendingUp, render: () => <SIPCalc /> },
     { id: "emi", title: "EMI Calculator", desc: "Loan EMI & interest", icon: Landmark, render: () => <EMICalc /> },
+    { id: "loan", title: "Loan Calculator", desc: "Total interest & payments", icon: Building2, render: () => <LoanCalc /> },
     { id: "inflation", title: "Inflation Calculator", desc: "Future value of money", icon: ArrowDownUp, render: () => <InflationCalc /> },
     { id: "lumpsum", title: "Lumpsum Calculator", desc: "One-time investment growth", icon: PiggyBank, render: () => <LumpsumCalc /> },
     { id: "cagr", title: "CAGR Calculator", desc: "Annual growth rate", icon: LineChart, render: () => <CAGRCalc /> },
     { id: "swp", title: "SWP Calculator", desc: "Systematic withdrawals", icon: Wallet, render: () => <SWPCalc /> },
     { id: "fd", title: "FD Calculator", desc: "Fixed deposit maturity", icon: Banknote, render: () => <FDCalc /> },
     { id: "rd", title: "RD Calculator", desc: "Recurring deposit maturity", icon: Coins, render: () => <RDCalc /> },
-    { id: "ppf", title: "PPF Calculator", desc: "15-year PPF corpus", icon: Building2, render: () => <PPFCalc /> },
     { id: "retirement", title: "Retirement Calculator", desc: "Corpus you need", icon: CalendarClock, render: () => <RetirementCalc /> },
     { id: "goal", title: "Goal Planner", desc: "SIP to reach a goal", icon: Target, render: () => <GoalCalc /> },
     { id: "xirr", title: "XIRR Calculator", desc: "Irregular cashflow returns", icon: Percent, render: () => <XIRRCalc /> },
   ];
 
   const [active, setActive] = useState(calcs[0].id);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const saveCalc = useSaveCalculation();
+
+  const current = calcs.find((c) => c.id === active)!;
+
+  React.useEffect(() => {
+    logToolsActivity("calculator", current.id, current.title);
+  }, [current.id, current.title]);
+
+  const handleSave = async () => {
+    const text = panelRef.current?.innerText ?? "";
+    try {
+      await saveCalc.mutateAsync({
+        calc_type: current.id,
+        label: current.title,
+        inputs: {},
+        outputs: { snapshot: text },
+      });
+    } catch (e: any) {
+      toast.error(e?.message || "Save failed");
+    }
+  };
+
+  const handleExport = () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text(current.title, 14, 16);
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(panelRef.current?.innerText ?? "—", 180);
+      doc.text(lines, 14, 26);
+      doc.save(`${current.id}-result.pdf`);
+      toast.success("Exported PDF");
+    } catch (e: any) {
+      toast.error(e?.message || "Export failed");
+    }
+  };
 
   return (
     <Tabs value={active} onValueChange={setActive} className="w-full">
@@ -97,16 +140,28 @@ export function FinCalculators() {
       {calcs.map((c) => (
         <TabsContent key={c.id} value={c.id} className="mt-4">
           <Card className="glass-card border-[var(--border)] p-5">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="rounded-lg bg-[var(--primary)]/10 p-2 text-[var(--primary)]">
-                <c.icon className="h-5 w-5" />
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-[var(--primary)]/10 p-2 text-[var(--primary)]">
+                  <c.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-[var(--text-main)]">{c.title}</h3>
+                  <p className="text-xs text-[var(--text-muted)]">{c.desc}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-semibold text-[var(--text-main)]">{c.title}</h3>
-                <p className="text-xs text-[var(--text-muted)]">{c.desc}</p>
-              </div>
+              {active === c.id && (
+                <div className="flex gap-1.5">
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleSave} disabled={saveCalc.isPending}>
+                    <Save className="h-3.5 w-3.5" /> Save
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleExport}>
+                    <Download className="h-3.5 w-3.5" /> Export
+                  </Button>
+                </div>
+              )}
             </div>
-            {c.render()}
+            <div ref={active === c.id ? panelRef : undefined}>{c.render()}</div>
           </Card>
         </TabsContent>
       ))}
@@ -228,6 +283,41 @@ function EMICalc() {
           { label: "Monthly EMI", value: fmt(emi), primary: true },
           { label: "Total Interest", value: fmt(interest) },
           { label: "Total Payment", value: fmt(total) },
+        ]}
+      />
+    </>
+  );
+}
+
+function LoanCalc() {
+  const [p, setP] = useState(2500000);
+  const [r, setR] = useState(8.5);
+  const [y, setY] = useState(15);
+  const [feePct, setFeePct] = useState(1);
+  const { emi, total, interest, fee, costOfLoan } = useMemo(() => {
+    const n = y * 12;
+    const i = r / 100 / 12;
+    const e = i === 0 ? p / n : (p * i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1);
+    const totalPay = e * n;
+    const interestPay = totalPay - p;
+    const fees = (p * feePct) / 100;
+    return { emi: e, total: totalPay, interest: interestPay, fee: fees, costOfLoan: interestPay + fees };
+  }, [p, r, y, feePct]);
+  return (
+    <>
+      <Grid>
+        <Field label="Loan Amount" value={p} onChange={setP} suffix="₹" />
+        <Field label="Interest Rate" value={r} onChange={setR} suffix="% p.a." />
+        <Field label="Tenure" value={y} onChange={setY} suffix="yrs" />
+        <Field label="Processing Fee" value={feePct} onChange={setFeePct} suffix="%" />
+      </Grid>
+      <Result
+        items={[
+          { label: "Monthly EMI", value: fmt(emi), primary: true },
+          { label: "Total Interest", value: fmt(interest) },
+          { label: "Processing Fee", value: fmt(fee) },
+          { label: "Total Payment", value: fmt(total) },
+          { label: "Cost of Loan", value: fmt(costOfLoan) },
         ]}
       />
     </>
