@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,15 +21,8 @@ export const Route = createFileRoute("/_app/reports/")({
       { name: "description", content: "Download generated reports in PDF, Excel or CSV." },
     ],
   }),
-  component: ReportsLayout,
+  component: ReportCenter,
 });
-
-function ReportsLayout() {
-  const matches = useMatches();
-  const isDetail = matches.some((m) => m.routeId === "/_app/reports/$id");
-  if (isDetail) return <Outlet />;
-  return <ReportCenter />;
-}
 
 function ReportCenter() {
   const list = useGeneratedReports();
