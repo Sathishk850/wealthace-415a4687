@@ -5,9 +5,17 @@ import {
   Coins,
   Wrench,
   Eye,
+  EyeOff,
   Sun,
   Moon,
   CalendarClock,
+  User,
+  Settings as SettingsIcon,
+  Bell as BellIcon,
+  MessageSquare,
+  Sparkles,
+  LifeBuoy,
+  LogOut,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import logo from "@/assets/finvista-logo.png";
@@ -15,6 +23,14 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
@@ -52,7 +68,11 @@ function Brand() {
 }
 
 function TopBar() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const saved = window.localStorage.getItem("fv-theme");
+    return saved === "light" ? "light" : "dark";
+  });
   const [privacy, setPrivacy] = useState(true);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -62,12 +82,18 @@ function TopBar() {
     const root = document.documentElement;
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
+    try { window.localStorage.setItem("fv-theme", theme); } catch {}
   }, [theme]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/", replace: true });
   };
+
+  const iconBtn =
+    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-[rgba(33,219,210,0.12)] hover:text-[#21DBD2]";
+  const iconBtnActive =
+    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 bg-[rgba(33,219,210,0.12)] text-[#21DBD2]";
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-border bg-surface-2/90 px-4 py-2.5 backdrop-blur-xl md:px-6">
@@ -82,13 +108,13 @@ function TopBar() {
               to={t.to}
               className={cn(
                 "relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium transition",
-                active ? "text-mint" : "text-muted-foreground hover:text-foreground",
+                active ? "text-[#21DBD2]" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4" />
               <span>{t.label}</span>
               {active && (
-                <span className="absolute inset-x-3 -bottom-[10px] h-[2px] rounded-full bg-mint" />
+                <span className="absolute inset-x-3 -bottom-[10px] h-[2px] rounded-full bg-[#21DBD2]" />
               )}
             </Link>
           );
@@ -98,36 +124,62 @@ function TopBar() {
         <button
           type="button"
           onClick={() => setPrivacy((v) => !v)}
-          className={cn(
-            "grid h-9 w-9 place-items-center rounded-lg transition hover:bg-surface",
-            privacy ? "text-mint" : "text-muted-foreground hover:text-foreground",
-          )}
-          aria-label="Privacy mode"
-          title="Privacy mode"
+          className={privacy ? iconBtnActive : iconBtn}
+          aria-label={privacy ? "Privacy on" : "Privacy off"}
+          title={privacy ? "Privacy on" : "Privacy off"}
         >
-          <Eye className="h-4 w-4" />
+          {privacy ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
         <NotificationBell />
         <button
           aria-label="Toggle theme"
           onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
+          className={iconBtnActive}
+          title={theme === "dark" ? "Dark mode" : "Light mode"}
         >
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          aria-label="Profile"
-          title="Profile · Sign out"
-          className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-mint/40 bg-mint/10 text-mint transition hover:bg-mint/20"
-        >
-          <img
-            src="https://i.pravatar.cc/64?img=12"
-            alt="Account"
-            className="h-full w-full object-cover"
-          />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Profile menu"
+              className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-[#21DBD2]/40 bg-[rgba(33,219,210,0.10)] text-[#21DBD2] transition hover:bg-[rgba(33,219,210,0.18)]"
+            >
+              <img
+                src="https://i.pravatar.cc/64?img=12"
+                alt="Account"
+                className="h-full w-full object-cover"
+              />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+              <User className="mr-2 h-4 w-4" /> My Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+              <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+              <BellIcon className="mr-2 h-4 w-4" /> Notification Preferences
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/feedback" })}>
+              <MessageSquare className="mr-2 h-4 w-4" /> Feedback
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/feedback" })}>
+              <Sparkles className="mr-2 h-4 w-4" /> What's New
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/feedback" })}>
+              <LifeBuoy className="mr-2 h-4 w-4" /> Help &amp; Support
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
@@ -160,7 +212,7 @@ function MobileBottomTabs() {
 
 export function AppShell() {
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <TopBar />
       <main className="pb-24 md:pb-0">
         <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
