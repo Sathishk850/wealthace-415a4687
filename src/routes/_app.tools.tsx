@@ -78,7 +78,7 @@ type CalcDef = {
   title: string;
   desc: string;
   icon: LucideIcon;
-  render: () => JSX.Element;
+  render: () => React.ReactNode;
 };
 
 function FinCalculators() {
