@@ -1,32 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   TrendingUp,
-  TrendingDown,
-  ArrowLeftRight,
-  LineChart,
   Plus,
-  Wallet,
   Info,
-  ArrowUpRight,
-  ArrowDownRight,
   Calendar,
   Percent,
-  Landmark,
   Car,
   Zap,
   UtensilsCrossed,
-  Home,
-  Heart,
-  Film,
-  Tag,
-  ChevronRight,
-  FileBarChart,
+  ShoppingBasket,
+  Fuel,
+  Wallet,
+  ArrowDownRight,
+  PiggyBank,
+  CalendarDays,
+  CalendarRange,
+  Activity,
+  Layers,
+  ArrowRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -35,6 +32,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_app/money")({
   head: () => ({
@@ -46,52 +44,56 @@ export const Route = createFileRoute("/_app/money")({
   component: Money,
 });
 
-const monthly = [
-  { m: "Dec '24", income: 118000, expense: 78000 },
-  { m: "Jan '25", income: 121000, expense: 82000 },
-  { m: "Feb '25", income: 119500, expense: 81500 },
-  { m: "Mar '25", income: 122000, expense: 84200 },
-  { m: "Apr '25", income: 124000, expense: 83000 },
-  { m: "May '25", income: 125000, expense: 85350 },
+const trend = [
+  { d: "04 May", income: 110000, expense: 60000 },
+  { d: "11 May", income: 118000, expense: 68000 },
+  { d: "18 May", income: 121000, expense: 74000 },
+  { d: "25 May", income: 123500, expense: 80000 },
+  { d: "01 Jun", income: 125000, expense: 85350 },
 ];
 
 const expenseCats = [
-  { name: "Housing", value: 24500, color: "#3B82F6", icon: Home },
-  { name: "Food & Dining", value: 16250, color: "#22C55E", icon: UtensilsCrossed },
-  { name: "Transport", value: 10800, color: "#F97316", icon: Car },
-  { name: "Utilities", value: 8900, color: "#A78BFA", icon: Zap },
-  { name: "Healthcare", value: 6450, color: "#EF4444", icon: Heart },
-  { name: "Entertainment", value: 5200, color: "#EC4899", icon: Film },
-  { name: "Others", value: 13250, color: "#6E8294", icon: Tag },
+  { name: "Housing", value: 24500, color: "#3B82F6" },
+  { name: "Food & Dining", value: 16250, color: "#22C55E" },
+  { name: "Transport", value: 10800, color: "#F97316" },
+  { name: "Utilities", value: 8900, color: "#A78BFA" },
+  { name: "Healthcare", value: 6450, color: "#EF4444" },
+  { name: "Entertainment", value: 5200, color: "#EC4899" },
+  { name: "Others", value: 13250, color: "#6E8294" },
 ];
 
 const totalExpense = expenseCats.reduce((s, c) => s + c.value, 0);
 
 const budgets = [
-  { name: "Food & Dining", spent: 16250, limit: 20000, color: "#22C55E", icon: UtensilsCrossed },
-  { name: "Transport", spent: 10800, limit: 15000, color: "#F97316", icon: Car },
-  { name: "Utilities", spent: 8900, limit: 10000, color: "#A78BFA", icon: Zap },
-  { name: "Entertainment", spent: 5200, limit: 8000, color: "#EC4899", icon: Film },
+  { name: "Groceries", spent: 7850, limit: 10000, pct: 78, status: "On Track", color: "#22C55E", icon: ShoppingBasket },
+  { name: "Transport", spent: 9000, limit: 15000, pct: 60, status: "On Track", color: "#F97316", icon: Car },
+  { name: "Entertainment", spent: 4100, limit: 5000, pct: 82, status: "At Risk", color: "#EC4899", icon: Activity },
+  { name: "Utilities", spent: 8900, limit: 10000, pct: 89, status: "Exceeded", color: "#A78BFA", icon: Zap },
 ];
+
+const totalBudget = 40000;
+const totalSpent = 29850;
+
+const recent = [
+  { t: "Salary", c: "HDFC Bank •••• 5678", a: 100000, pos: true, d: "31 May 2025", icon: Wallet, color: "#22C55E" },
+  { t: "Zomato", c: "Food & Dining", a: -850, pos: false, d: "30 May 2025", icon: UtensilsCrossed, color: "#F97316" },
+  { t: "Electricity Bill", c: "Utilities", a: -1250, pos: false, d: "28 May 2025", icon: Zap, color: "#FBBF24" },
+  { t: "IOCL Petrol", c: "Transport", a: -1150, pos: false, d: "27 May 2025", icon: Fuel, color: "#3B82F6" },
+];
+
+const summary = [
+  { label: "Highest Expense Day", sub: "18 May 2025", value: "₹5,620", icon: CalendarDays, color: "#EF4444" },
+  { label: "Lowest Expense Day", sub: "5 May 2025", value: "₹1,120", icon: CalendarRange, color: "#22C55E" },
+  { label: "Average Daily Expense", sub: "", value: "₹2,753", icon: Activity, color: "#A78BFA" },
+  { label: "Largest Category", sub: "Housing", value: "₹24,500", icon: Layers, color: "#3B82F6" },
+];
+
+const tabs = ["Overview", "Income", "Expenses", "Transactions", "Budgets"] as const;
 
 const inr = (n: number) =>
   "₹ " + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-
-const modules = [
-  { id: "cashflow", label: "Cashflow", desc: "Income vs expense trends", icon: LineChart },
-  { id: "income", label: "Income", desc: "Salary, business, freelance, rental, dividend", icon: TrendingUp },
-  { id: "expenses", label: "Expenses", desc: "Rent, EMI, food, bills, travel, more", icon: TrendingDown },
-  { id: "transactions", label: "Transactions", desc: "All money in & out, import/export", icon: ArrowLeftRight },
-];
-
-const quickActions = [
-  { label: "Add Income", desc: "Record your income", icon: Landmark, tone: "positive" },
-  { label: "Add Expense", desc: "Record your expense", icon: TrendingDown, tone: "negative" },
-  { label: "Add Transaction", desc: "Record money in or out", icon: ArrowLeftRight, tone: "mint" },
-  { label: "Transfer Money", desc: "Transfer between accounts", icon: ArrowLeftRight, tone: "mint" },
-  { label: "Categories", desc: "Manage income & expense tags", icon: Tag, tone: "mint" },
-  { label: "View Reports", desc: "Detailed money reports", icon: FileBarChart, tone: "mint" },
-];
+const inrShort = (n: number) =>
+  (n < 0 ? "-" : "") + "₹" + Math.abs(n).toLocaleString("en-IN");
 
 function ChartCard({
   title,
@@ -146,57 +148,30 @@ function KpiCard({
   };
   const p = palette[tone];
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
-      <div className="flex items-center gap-4">
-        <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${p.bg} ${p.fg}`}>
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-start gap-3">
+        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${p.bg} ${p.fg}`}>
           <Icon className="h-5 w-5" />
         </span>
-        <div className="min-w-0">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            {label}
-            <Info className="h-3 w-3" />
-          </div>
-          <div className="mt-0.5 font-display text-2xl font-bold tracking-tight text-foreground">
+        <div className="min-w-0 flex-1">
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
             {value}
           </div>
         </div>
       </div>
       {delta && (
-        <div className="mt-3 text-xs text-muted-foreground">
-          vs last month <span className="ml-1 font-medium text-success">↑ {delta}</span>
+        <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span>vs Apr 2025</span>
+          <span className="font-semibold text-success">↑ {delta}</span>
         </div>
       )}
     </div>
   );
 }
 
-function ModuleTile({
-  label,
-  desc,
-  icon: Icon,
-}: {
-  label: string;
-  desc: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <button className="group flex w-full items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left transition hover:border-mint/40">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-mint/10 text-mint">
-        <Icon className="h-5 w-5" />
-      </span>
-      <div className="min-w-0">
-        <div className="text-sm font-semibold text-foreground">{label}</div>
-        <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{desc}</div>
-      </div>
-    </button>
-  );
-}
-
 function Money() {
-  const opening = 102500;
-  const moneyIn = 125000;
-  const moneyOut = 85350;
-  const closing = opening + moneyIn - moneyOut;
+  const [tab, setTab] = useState<(typeof tabs)[number]>("Overview");
   return (
     <>
       <PageHeader
@@ -207,90 +182,85 @@ function Money() {
             <button className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:border-mint/40">
               <Calendar className="h-3.5 w-3.5" /> May 2025
             </button>
-            <button className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:border-mint/40">
-              <Tag className="h-3.5 w-3.5" /> Categories
-            </button>
-            <button className="inline-flex items-center gap-1.5 rounded-xl border border-success/40 bg-success/10 px-3 py-2 text-xs font-semibold text-success hover:bg-success/15">
-              <Plus className="h-3.5 w-3.5" /> Add Income
-            </button>
             <button className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-mint-foreground">
-              <Plus className="h-3.5 w-3.5" /> Add Expense
+              <Plus className="h-3.5 w-3.5" /> Add
             </button>
           </>
         }
       />
 
+      {/* Sub tabs */}
+      <div className="mb-5 flex items-center gap-6 border-b border-border">
+        {tabs.map((t) => {
+          const active = tab === t;
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`relative -mb-px py-2.5 text-sm font-medium transition ${
+                active ? "text-mint" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t}
+              {active && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-mint" />}
+            </button>
+          );
+        })}
+      </div>
+
       {/* KPI cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={ArrowDownRight} label="Total Income" value={inr(125000)} delta="12.5%" tone="positive" />
-        <KpiCard icon={ArrowUpRight} label="Total Expenses" value={inr(85350)} delta="8.2%" tone="negative" />
-        <KpiCard icon={Wallet} label="Net Savings" value={inr(39650)} delta="21.4%" tone="mint" />
+        <KpiCard icon={TrendingUp} label="Total Income" value="₹1,25,000" delta="12.5%" tone="positive" />
+        <KpiCard icon={ArrowDownRight} label="Total Expenses" value="₹85,350" delta="8.2%" tone="negative" />
+        <KpiCard icon={PiggyBank} label="Net Savings" value="₹39,650" delta="21.4%" tone="mint" />
         <KpiCard icon={Percent} label="Savings Rate" value="31.72%" delta="5.3%" tone="violet" />
       </div>
 
-      {/* Module tiles */}
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {modules.map((m) => (
-          <ModuleTile key={m.id} {...m} />
-        ))}
-      </div>
-
-      {/* Charts row */}
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <ChartCard title="Income vs Expenses" className="lg:col-span-1" action={
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-mint" />Income</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive" />Expenses</span>
-          </div>
-        }>
+      {/* Trend + Breakdown */}
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-5">
+        <ChartCard
+          title="Income vs Expense Trend"
+          className="lg:col-span-3"
+          action={
+            <div className="flex items-center gap-3 text-xs">
+              <select className="rounded-md border border-border bg-card px-2 py-1 text-muted-foreground">
+                <option>This Month</option>
+                <option>Last 3 Months</option>
+                <option>This Year</option>
+              </select>
+              <span className="flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-mint" />Income</span>
+              <span className="flex items-center gap-1.5 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-[#3B82F6]" />Expenses</span>
+            </div>
+          }
+        >
           <div className="h-64">
             <ResponsiveContainer>
-              <BarChart data={monthly} barGap={4}>
+              <LineChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
-                <XAxis dataKey="m" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${Math.round(v / 1000)}K`} />
-                <Tooltip cursor={{ fill: "rgba(20,216,207,0.06)" }} contentStyle={{ background: "#102634", border: "1px solid #1C3850", borderRadius: 12, fontSize: 12 }} formatter={(v: number) => inr(v)} />
-                <Bar dataKey="income" fill="#14D8CF" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <XAxis dataKey="d" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${Math.round(v / 100000)}L`} />
+                <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1C3850", borderRadius: 12, fontSize: 12 }} formatter={(v: number) => inr(v)} />
+                <Line type="monotone" dataKey="income" stroke="#14D8CF" strokeWidth={2.5} dot={{ r: 4, fill: "#14D8CF" }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="expense" stroke="#3B82F6" strokeWidth={2.5} dot={{ r: 4, fill: "#3B82F6" }} activeDot={{ r: 5 }} />
+              </LineChart>
             </ResponsiveContainer>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl border border-border bg-surface/40 p-3">
-            <div>
-              <div className="text-[11px] text-muted-foreground">This Month (May 2025)</div>
-              <div className="mt-1 flex items-baseline gap-3 text-xs">
-                <span className="text-muted-foreground">Income</span>
-                <span className="font-semibold text-success">{inr(125000)}</span>
-              </div>
-              <div className="mt-0.5 flex items-baseline gap-3 text-xs">
-                <span className="text-muted-foreground">Expenses</span>
-                <span className="font-semibold text-destructive">{inr(85350)}</span>
-              </div>
-            </div>
-            <div>
-              <div className="text-[11px] text-muted-foreground">Difference</div>
-              <div className="mt-1 font-display text-lg font-bold text-mint">{inr(39650)}</div>
-              <div className="text-[11px] text-success">↑ 21.4% vs last month</div>
-            </div>
           </div>
         </ChartCard>
 
-        <ChartCard title="Expense Breakdown" className="lg:col-span-1">
-          <div className="grid grid-cols-[140px_minmax(0,1fr)] items-center gap-4">
-            <div className="relative h-[140px]">
+        <ChartCard
+          title="Expense Breakdown"
+          className="lg:col-span-2"
+          action={<button className="text-xs font-semibold text-mint hover:underline">View All</button>}
+        >
+          <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-4">
+            <div className="relative h-[150px]">
               <ResponsiveContainer>
                 <PieChart>
-                  <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={48} outerRadius={68} paddingAngle={2} stroke="none">
+                  <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={48} outerRadius={72} paddingAngle={2} stroke="none">
                     {expenseCats.map((s) => <Cell key={s.name} fill={s.color} />)}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
-                <div>
-                  <div className="font-display text-base font-bold text-foreground">{inr(totalExpense)}</div>
-                  <div className="text-[10px] text-muted-foreground">Total Expenses</div>
-                </div>
-              </div>
             </div>
             <ul className="space-y-1.5 text-xs">
               {expenseCats.map((c) => {
@@ -301,72 +271,44 @@ function Money() {
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color }} />
                       <span className="truncate text-foreground">{c.name}</span>
                     </div>
-                    <div className="shrink-0 text-muted-foreground">
-                      <span className="text-foreground">{inr(c.value)}</span> · {pct}%
+                    <div className="shrink-0 text-muted-foreground tabular-nums">
+                      <span className="text-foreground">₹{c.value.toLocaleString("en-IN")}</span>
+                      <span className="ml-2">{pct}%</span>
                     </div>
                   </li>
                 );
               })}
             </ul>
           </div>
-          <button className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-mint hover:underline">
-            View all expenses <ChevronRight className="h-3 w-3" />
-          </button>
-        </ChartCard>
-
-        <ChartCard title="Cash Flow (This Month)" className="lg:col-span-1">
-          <div className="space-y-4">
-            <div>
-              <div className="text-xs text-muted-foreground">Opening Balance</div>
-              <div className="mt-0.5 font-display text-xl font-bold text-foreground">{inr(opening)}</div>
-            </div>
-            <div>
-              <div className="flex items-baseline justify-between">
-                <div className="text-xs text-muted-foreground">Money In</div>
-                <div className="text-sm font-semibold text-success">{inr(moneyIn)}</div>
-              </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface">
-                <div className="h-full rounded-full bg-success" style={{ width: "100%" }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-baseline justify-between">
-                <div className="text-xs text-muted-foreground">Money Out</div>
-                <div className="text-sm font-semibold text-destructive">{inr(moneyOut)}</div>
-              </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface">
-                <div className="h-full rounded-full bg-destructive" style={{ width: `${(moneyOut / moneyIn) * 100}%` }} />
-              </div>
-            </div>
-            <div className="flex items-center justify-between border-t border-border pt-3">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                Closing Balance <Info className="h-3 w-3" />
-              </div>
-              <div className="font-display text-lg font-bold text-mint">{inr(closing)}</div>
-            </div>
+          <div className="mt-3 border-t border-border pt-3">
+            <div className="text-[11px] text-muted-foreground">Total Expenses</div>
+            <div className="mt-0.5 font-display text-lg font-bold text-foreground">₹{totalExpense.toLocaleString("en-IN")}</div>
           </div>
         </ChartCard>
       </div>
 
       {/* Bottom row */}
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <ChartCard title="Recent Transactions" action={
-          <button className="text-xs font-semibold text-mint hover:underline">View All</button>
-        }>
+        <ChartCard
+          title="Recent Transactions"
+          action={<button className="text-xs font-semibold text-mint hover:underline">View All</button>}
+        >
           <ul className="divide-y divide-border">
-            {transactions.map((r, i) => (
+            {recent.map((r, i) => (
               <li key={i} className="flex items-center justify-between gap-3 py-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${r.pos ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: `${r.color}22`, color: r.color }}>
                     <r.icon className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-foreground">{r.t}</div>
-                    <div className="text-xs text-muted-foreground">{r.c} · {r.acc}</div>
+                    <div className="text-xs text-muted-foreground truncate">{r.c}</div>
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className={`text-sm font-semibold ${r.pos ? "text-success" : "text-destructive"}`}>{r.a}</div>
+                  <div className={`text-sm font-semibold ${r.pos ? "text-success" : "text-destructive"} tabular-nums`}>
+                    {r.pos ? "+" : ""}{inrShort(r.a)}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">{r.d}</div>
                 </div>
               </li>
@@ -374,12 +316,14 @@ function Money() {
           </ul>
         </ChartCard>
 
-        <ChartCard title="Budgets" action={
-          <button className="text-xs font-semibold text-mint hover:underline">View All</button>
-        }>
+        <ChartCard
+          title="Budget Status (May)"
+          action={<button className="text-xs font-semibold text-mint hover:underline">View All</button>}
+        >
           <ul className="space-y-3.5">
             {budgets.map((b) => {
-              const pct = Math.round((b.spent / b.limit) * 100);
+              const tone = b.status === "On Track" ? "text-success" : b.status === "At Risk" ? "text-warning" : "text-destructive";
+              const barColor = b.status === "Exceeded" ? "#EF4444" : b.status === "At Risk" ? "#F59E0B" : b.color;
               return (
                 <li key={b.name}>
                   <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -389,51 +333,55 @@ function Money() {
                       </span>
                       <span className="truncate text-sm font-medium text-foreground">{b.name}</span>
                     </div>
-                    <div className="shrink-0 text-xs">
-                      <span className="text-muted-foreground">{inr(b.spent)} / {inr(b.limit)}</span>
-                      <span className="ml-2 font-semibold text-foreground">{pct}%</span>
+                    <div className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                      ₹{b.spent.toLocaleString("en-IN")} / ₹{b.limit.toLocaleString("en-IN")}
                     </div>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-surface">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: b.color }} />
+                  <div className="flex items-center gap-3">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(b.pct, 100)}%`, background: barColor }} />
+                    </div>
+                    <span className="w-9 shrink-0 text-right text-xs font-semibold text-foreground tabular-nums">{b.pct}%</span>
+                    <span className={`w-16 shrink-0 text-right text-[11px] font-semibold ${tone}`}>{b.status}</span>
                   </div>
                 </li>
               );
             })}
           </ul>
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
+            <div>
+              <div className="text-muted-foreground">Total Budget</div>
+              <div className="mt-0.5 font-display text-base font-bold text-foreground">₹{totalBudget.toLocaleString("en-IN")}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-muted-foreground">Total Spent</div>
+              <div className="mt-0.5 font-display text-base font-bold text-foreground">₹{totalSpent.toLocaleString("en-IN")} <span className="text-xs font-medium text-muted-foreground">({Math.round((totalSpent/totalBudget)*100)}%)</span></div>
+            </div>
+          </div>
         </ChartCard>
 
-        <ChartCard title="Quick Actions">
+        <ChartCard title="Monthly Summary">
           <ul className="divide-y divide-border">
-            {quickActions.map((a) => {
-              const bg = a.tone === "positive" ? "bg-success/10 text-success" : a.tone === "negative" ? "bg-destructive/10 text-destructive" : "bg-mint/10 text-mint";
-              return (
-                <li key={a.label}>
-                  <button className="flex w-full items-center justify-between gap-3 py-3 text-left hover:bg-surface/40">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${bg}`}>
-                        <a.icon className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-foreground">{a.label}</div>
-                        <div className="text-xs text-muted-foreground">{a.desc}</div>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </button>
-                </li>
-              );
-            })}
+            {summary.map((s) => (
+              <li key={s.label} className="flex items-center justify-between gap-3 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: `${s.color}22`, color: s.color }}>
+                    <s.icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-foreground">{s.label}</div>
+                    {s.sub && <div className="text-[11px] text-muted-foreground">{s.sub}</div>}
+                  </div>
+                </div>
+                <div className="shrink-0 font-display text-base font-bold text-foreground tabular-nums">{s.value}</div>
+              </li>
+            ))}
           </ul>
+          <button className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-mint/30 bg-mint/10 px-3 py-2 text-xs font-semibold text-mint hover:bg-mint/15">
+            View Detailed Report <ArrowRight className="h-3.5 w-3.5" />
+          </button>
         </ChartCard>
       </div>
     </>
   );
 }
-
-const transactions = [
-  { d: "31 May 2025", t: "Salary", c: "HDFC Bank **** 5678", acc: "Income", a: "+₹ 1,00,000", pos: true, icon: Landmark },
-  { d: "30 May 2025", t: "Zomato", c: "Food & Dining", acc: "HDFC Card", a: "-₹ 850", pos: false, icon: UtensilsCrossed },
-  { d: "28 May 2025", t: "Electricity Bill", c: "Utilities", acc: "SBI Bank", a: "-₹ 1,250", pos: false, icon: Zap },
-  { d: "26 May 2025", t: "Uber", c: "Transport", acc: "HDFC Card", a: "-₹ 318", pos: false, icon: Car },
-];
