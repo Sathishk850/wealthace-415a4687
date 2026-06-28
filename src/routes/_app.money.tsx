@@ -1033,20 +1033,23 @@ function TransactionDialog({
           </div>
 
           <div>
-            <Label>Category</Label>
+            <Label>{kind === "income" ? "Source" : "Category"}</Label>
             {showNewCat ? (
               <div className="flex gap-2">
-                <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="New category name" />
+                <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder={kind === "income" ? "New source name" : "New category name"} />
                 <Button type="button" variant="outline" onClick={() => { setShowNewCat(false); setNewCatName(""); }}>Cancel</Button>
               </div>
             ) : (
               <div className="flex gap-2">
                 <Select value={categoryId || "none"} onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Choose category" /></SelectTrigger>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder={kind === "income" ? "Choose source" : "Choose category"} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Uncategorized</SelectItem>
                     {kindCats.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                    {missingPresets.map((p) => (
+                      <SelectItem key={`preset:${p}`} value={`preset:${p}`}>{p}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
