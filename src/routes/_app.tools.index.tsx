@@ -380,8 +380,8 @@ function ReportsView() {
           ["Retirement Age", settings.data.retirement_age ?? "—"],
           ["Current Corpus", inr(corpus)],
           ["Monthly SIP", inr(monthlySIP)],
-          ["Expected Return", `${settings.data.expected_return ?? "—"}%`],
-          ["Inflation", `${settings.data.inflation_rate ?? "—"}%`],
+          ["Pre-Retirement Return", `${settings.data.pre_return_pct ?? "—"}%`],
+          ["Inflation", `${settings.data.inflation_pct ?? "—"}%`],
         ] : [],
       },
       {
