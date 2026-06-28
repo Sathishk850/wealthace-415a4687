@@ -19,6 +19,7 @@ import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
 import { Route as AppPlannerFireRouteImport } from './routes/_app.planner.fire'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
@@ -72,6 +73,12 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppToolsFinancialCalculatorRoute =
+  AppToolsFinancialCalculatorRouteImport.update({
+    id: '/financial-calculator',
+    path: '/financial-calculator',
+    getParentRoute: () => AppToolsRoute,
+  } as any)
 const AppPlannerFireRoute = AppPlannerFireRouteImport.update({
   id: '/fire',
   path: '/fire',
@@ -96,11 +103,12 @@ export interface FileRoutesByFullPath {
   '/money': typeof AppMoneyRouteWithChildren
   '/planner': typeof AppPlannerRouteWithChildren
   '/settings': typeof AppSettingsRoute
-  '/tools': typeof AppToolsRoute
+  '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/planner/fire': typeof AppPlannerFireRoute
+  '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,11 +118,12 @@ export interface FileRoutesByTo {
   '/money': typeof AppMoneyRouteWithChildren
   '/planner': typeof AppPlannerRouteWithChildren
   '/settings': typeof AppSettingsRoute
-  '/tools': typeof AppToolsRoute
+  '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/planner/fire': typeof AppPlannerFireRoute
+  '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,11 +135,12 @@ export interface FileRoutesById {
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/planner': typeof AppPlannerRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
-  '/_app/tools': typeof AppToolsRoute
+  '/_app/tools': typeof AppToolsRouteWithChildren
   '/_app/wealth': typeof AppWealthRoute
   '/_app/dashboard/networth': typeof AppDashboardNetworthRoute
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
   '/_app/planner/fire': typeof AppPlannerFireRoute
+  '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/dashboard/networth'
     | '/money/transactions'
     | '/planner/fire'
+    | '/tools/financial-calculator'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/dashboard/networth'
     | '/money/transactions'
     | '/planner/fire'
+    | '/tools/financial-calculator'
   id:
     | '__root__'
     | '/'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard/networth'
     | '/_app/money/transactions'
     | '/_app/planner/fire'
+    | '/_app/tools/financial-calculator'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -256,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/tools/financial-calculator': {
+      id: '/_app/tools/financial-calculator'
+      path: '/financial-calculator'
+      fullPath: '/tools/financial-calculator'
+      preLoaderRoute: typeof AppToolsFinancialCalculatorRouteImport
+      parentRoute: typeof AppToolsRoute
+    }
     '/_app/planner/fire': {
       id: '/_app/planner/fire'
       path: '/fire'
@@ -316,13 +336,25 @@ const AppPlannerRouteWithChildren = AppPlannerRoute._addFileChildren(
   AppPlannerRouteChildren,
 )
 
+interface AppToolsRouteChildren {
+  AppToolsFinancialCalculatorRoute: typeof AppToolsFinancialCalculatorRoute
+}
+
+const AppToolsRouteChildren: AppToolsRouteChildren = {
+  AppToolsFinancialCalculatorRoute: AppToolsFinancialCalculatorRoute,
+}
+
+const AppToolsRouteWithChildren = AppToolsRoute._addFileChildren(
+  AppToolsRouteChildren,
+)
+
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppFeedbackRoute: typeof AppFeedbackRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppPlannerRoute: typeof AppPlannerRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
-  AppToolsRoute: typeof AppToolsRoute
+  AppToolsRoute: typeof AppToolsRouteWithChildren
   AppWealthRoute: typeof AppWealthRoute
 }
 
@@ -332,7 +364,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppPlannerRoute: AppPlannerRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
-  AppToolsRoute: AppToolsRoute,
+  AppToolsRoute: AppToolsRouteWithChildren,
   AppWealthRoute: AppWealthRoute,
 }
 
