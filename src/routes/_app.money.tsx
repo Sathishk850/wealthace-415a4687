@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
   LineChart,
@@ -903,6 +904,15 @@ function TransactionDialog({
   const upsert = useUpsertTransaction();
   const upsertCat = useUpsertCategory();
 
+  const EXPENSE_PRESETS = [
+    "Rent", "EMI", "Shopping", "Food", "Bills", "Medical",
+    "Entertainment", "Subscriptions", "Fuel", "Travel", "Other",
+  ];
+  const INCOME_PRESETS = [
+    "Salary", "Business", "Freelance", "Rental",
+    "Dividend", "Interest", "Capital Gain", "Other",
+  ];
+
   // reset when opening
   useMemo(() => {
     if (open) {
@@ -921,6 +931,9 @@ function TransactionDialog({
   }, [open, editing, defaultKind]);
 
   const kindCats = categories.filter((c) => c.kind === kind);
+  const presets = kind === "expense" ? EXPENSE_PRESETS : INCOME_PRESETS;
+  const existingNames = new Set(kindCats.map((c) => c.name.toLowerCase()));
+  const missingPresets = presets.filter((p) => !existingNames.has(p.toLowerCase()));
 
   const submit = async () => {
     setErr(null);
@@ -929,6 +942,28 @@ function TransactionDialog({
     if (!Number.isFinite(n) || n <= 0) return setErr("Enter a valid positive amount.");
     if (!date) return setErr("Pick a date.");
     let cat = categoryId || null;
+    if (cat && cat.startsWith("preset:")) {
+      const name = cat.slice("preset:".length);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+        const { data, error } = await supabase
+          .from("money_categories")
+          .insert({
+            user_id: user.id,
+            name,
+            kind,
+            color: PALETTE[(categories.length) % PALETTE.length],
+            icon: "Wallet",
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        cat = data!.id;
+      } catch (e: any) {
+        return setErr(e.message || "Failed to create category");
+      }
+    }
     if (showNewCat) {
       const name = newCatName.trim();
       if (!name) return setErr("New category name is required.");
@@ -998,20 +1033,23 @@ function TransactionDialog({
           </div>
 
           <div>
-            <Label>Category</Label>
+            <Label>{kind === "income" ? "Source" : "Category"}</Label>
             {showNewCat ? (
               <div className="flex gap-2">
-                <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="New category name" />
+                <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder={kind === "income" ? "New source name" : "New category name"} />
                 <Button type="button" variant="outline" onClick={() => { setShowNewCat(false); setNewCatName(""); }}>Cancel</Button>
               </div>
             ) : (
               <div className="flex gap-2">
                 <Select value={categoryId || "none"} onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Choose category" /></SelectTrigger>
+                  <SelectTrigger className="flex-1"><SelectValue placeholder={kind === "income" ? "Choose source" : "Choose category"} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Uncategorized</SelectItem>
                     {kindCats.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                    {missingPresets.map((p) => (
+                      <SelectItem key={`preset:${p}`} value={`preset:${p}`}>{p}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
