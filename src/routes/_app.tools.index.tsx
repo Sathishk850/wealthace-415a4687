@@ -718,6 +718,9 @@ function ReportsView() {
           ))
         )}
       </Card>
+      <ScheduledReportsPanel
+        reportOptions={reports.map((r) => ({ slug: r.slug, title: r.title, module: r.module }))}
+      />
       <ReportPreviewDialog report={preview} onClose={() => setPreview(null)} />
     </div>
   );
