@@ -14,7 +14,7 @@ import {
 import { exportReportCSV, exportReportPDF, exportReportXLSX } from "@/lib/report-export";
 import { FileDown, FileSpreadsheet, FileText, Trash2, Inbox, CheckCircle2 } from "lucide-react";
 
-export const Route = createFileRoute("/_app/reports")({
+export const Route = createFileRoute("/_app/reports/")({
   head: () => ({
     meta: [
       { title: "Report Center · FinVista" },

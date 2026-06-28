@@ -15,13 +15,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWealthRouteImport } from './routes/_app.wealth'
 import { Route as AppToolsRouteImport } from './routes/_app.tools'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
+import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
 import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
@@ -58,11 +58,6 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppReportsRoute = AppReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppPlannerRoute = AppPlannerRouteImport.update({
   id: '/planner',
   path: '/planner',
@@ -93,6 +88,11 @@ const AppToolsIndexRoute = AppToolsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppToolsRoute,
 } as any)
+const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppToolsFinancialCalculatorRoute =
   AppToolsFinancialCalculatorRouteImport.update({
     id: '/financial-calculator',
@@ -100,9 +100,9 @@ const AppToolsFinancialCalculatorRoute =
     getParentRoute: () => AppToolsRoute,
   } as any)
 const AppReportsIdRoute = AppReportsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppReportsRoute,
+  id: '/reports/$id',
+  path: '/reports/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppMoneyTransactionsRoute = AppMoneyTransactionsRouteImport.update({
   id: '/transactions',
@@ -134,7 +134,6 @@ export interface FileRoutesByFullPath {
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
-  '/reports': typeof AppReportsRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
@@ -143,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
+  '/reports/': typeof AppReportsIndexRoute
   '/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
 }
@@ -154,7 +154,6 @@ export interface FileRoutesByTo {
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
-  '/reports': typeof AppReportsRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
@@ -162,6 +161,7 @@ export interface FileRoutesByTo {
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
+  '/reports': typeof AppReportsIndexRoute
   '/tools': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
 }
@@ -175,7 +175,6 @@ export interface FileRoutesById {
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/planner': typeof AppPlannerRoute
-  '/_app/reports': typeof AppReportsRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tools': typeof AppToolsRouteWithChildren
   '/_app/wealth': typeof AppWealthRoute
@@ -184,6 +183,7 @@ export interface FileRoutesById {
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
   '/_app/reports/$id': typeof AppReportsIdRoute
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
+  '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
 }
@@ -197,7 +197,6 @@ export interface FileRouteTypes {
     | '/money'
     | '/notifications'
     | '/planner'
-    | '/reports'
     | '/settings'
     | '/tools'
     | '/wealth'
@@ -206,6 +205,7 @@ export interface FileRouteTypes {
     | '/money/transactions'
     | '/reports/$id'
     | '/tools/financial-calculator'
+    | '/reports/'
     | '/tools/'
     | '/api/public/hooks/notification-cron'
   fileRoutesByTo: FileRoutesByTo
@@ -217,7 +217,6 @@ export interface FileRouteTypes {
     | '/money'
     | '/notifications'
     | '/planner'
-    | '/reports'
     | '/settings'
     | '/wealth'
     | '/dashboard/networth'
@@ -225,6 +224,7 @@ export interface FileRouteTypes {
     | '/money/transactions'
     | '/reports/$id'
     | '/tools/financial-calculator'
+    | '/reports'
     | '/tools'
     | '/api/public/hooks/notification-cron'
   id:
@@ -237,7 +237,6 @@ export interface FileRouteTypes {
     | '/_app/money'
     | '/_app/notifications'
     | '/_app/planner'
-    | '/_app/reports'
     | '/_app/settings'
     | '/_app/tools'
     | '/_app/wealth'
@@ -246,6 +245,7 @@ export interface FileRouteTypes {
     | '/_app/money/transactions'
     | '/_app/reports/$id'
     | '/_app/tools/financial-calculator'
+    | '/_app/reports/'
     | '/_app/tools/'
     | '/api/public/hooks/notification-cron'
   fileRoutesById: FileRoutesById
@@ -301,13 +301,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/reports': {
-      id: '/_app/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AppReportsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/planner': {
       id: '/_app/planner'
       path: '/planner'
@@ -350,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppToolsIndexRouteImport
       parentRoute: typeof AppToolsRoute
     }
+    '/_app/reports/': {
+      id: '/_app/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AppReportsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/tools/financial-calculator': {
       id: '/_app/tools/financial-calculator'
       path: '/financial-calculator'
@@ -359,10 +359,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/reports/$id': {
       id: '/_app/reports/$id'
-      path: '/$id'
+      path: '/reports/$id'
       fullPath: '/reports/$id'
       preLoaderRoute: typeof AppReportsIdRouteImport
-      parentRoute: typeof AppReportsRoute
+      parentRoute: typeof AppRoute
     }
     '/_app/money/transactions': {
       id: '/_app/money/transactions'
@@ -419,18 +419,6 @@ const AppMoneyRouteWithChildren = AppMoneyRoute._addFileChildren(
   AppMoneyRouteChildren,
 )
 
-interface AppReportsRouteChildren {
-  AppReportsIdRoute: typeof AppReportsIdRoute
-}
-
-const AppReportsRouteChildren: AppReportsRouteChildren = {
-  AppReportsIdRoute: AppReportsIdRoute,
-}
-
-const AppReportsRouteWithChildren = AppReportsRoute._addFileChildren(
-  AppReportsRouteChildren,
-)
-
 interface AppToolsRouteChildren {
   AppToolsFinancialCalculatorRoute: typeof AppToolsFinancialCalculatorRoute
   AppToolsIndexRoute: typeof AppToolsIndexRoute
@@ -451,11 +439,12 @@ interface AppRouteChildren {
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPlannerRoute: typeof AppPlannerRoute
-  AppReportsRoute: typeof AppReportsRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppToolsRoute: typeof AppToolsRouteWithChildren
   AppWealthRoute: typeof AppWealthRoute
   AppHoldingsSlugRoute: typeof AppHoldingsSlugRoute
+  AppReportsIdRoute: typeof AppReportsIdRoute
+  AppReportsIndexRoute: typeof AppReportsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -464,11 +453,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPlannerRoute: AppPlannerRoute,
-  AppReportsRoute: AppReportsRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppToolsRoute: AppToolsRouteWithChildren,
   AppWealthRoute: AppWealthRoute,
   AppHoldingsSlugRoute: AppHoldingsSlugRoute,
+  AppReportsIdRoute: AppReportsIdRoute,
+  AppReportsIndexRoute: AppReportsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
