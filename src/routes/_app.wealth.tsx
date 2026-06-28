@@ -874,7 +874,21 @@ function InvestmentsView() {
         ))}
       </div>
 
-      {/* Stats */}
+      <div className="mt-4">
+        {sub === "Holdings" ? <HoldingsView /> :
+         sub === "Portfolio" ? <PortfolioView /> :
+         sub === "SIP Tracker" ? <SipTrackerView /> :
+         sub === "Performance" ? <PerformanceView /> :
+         sub === "P&L Analysis" ? <PnlAnalysisView /> :
+         <InvOverviewView />}
+      </div>
+    </>
+  );
+}
+
+function InvOverviewView() {
+  return (
+    <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {INV_STATS.map((s) => (
           <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
@@ -897,7 +911,6 @@ function InvestmentsView() {
         ))}
       </div>
 
-      {/* Allocation + Trend — equal width */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-5">
           <h3 className="text-sm font-semibold text-foreground">Investment Allocation</h3>
@@ -906,9 +919,7 @@ function InvestmentsView() {
               <ResponsiveContainer>
                 <PieChart>
                   <Pie data={INV_ALLOC} dataKey="pct" innerRadius={52} outerRadius={76} paddingAngle={2} stroke="none">
-                    {INV_ALLOC.map((a) => (
-                      <Cell key={a.name} fill={a.color} />
-                    ))}
+                    {INV_ALLOC.map((a) => (<Cell key={a.name} fill={a.color} />))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
@@ -932,9 +943,6 @@ function InvestmentsView() {
               ))}
             </div>
           </div>
-          <button className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-mint hover:underline">
-            View full allocation →
-          </button>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
@@ -964,104 +972,16 @@ function InvestmentsView() {
         </div>
       </div>
 
-      {/* Investments table — full-width like reference */}
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-sm font-semibold text-foreground">Investments (18)</h3>
-          <div className="relative ml-2 flex-1 min-w-[180px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              placeholder="Search investments..."
-              className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
-            />
-          </div>
-          <FilterBtn label="All Types" />
-          <FilterBtn label="All Status" />
-          <FilterBtn label="Sort: Latest" icon={ArrowUpDown} />
-          <div className="flex items-center gap-1 rounded-xl border border-border bg-surface-2 p-1">
-            <button className="rounded-lg bg-mint/15 p-1.5 text-mint"><List className="h-4 w-4" /></button>
-            <button className="rounded-lg p-1.5 text-muted-foreground"><LayoutGrid className="h-4 w-4" /></button>
-          </div>
-        </div>
-
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="py-3 pl-2 font-medium">Investment Name</th>
-                <th className="py-3 font-medium">Type</th>
-                <th className="py-3 font-medium">Category</th>
-                <th className="py-3 font-medium">Current Value</th>
-                <th className="py-3 font-medium">Invested Amount</th>
-                <th className="py-3 font-medium">Gain / Loss</th>
-                <th className="py-3 font-medium">Gain %</th>
-                <th className="py-3 font-medium">XIRR</th>
-                <th className="py-3 font-medium">Last Updated</th>
-                <th className="py-3 pr-2 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {INVESTMENTS.map((i) => (
-                <tr key={i.name} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
-                  <td className="py-3 pl-2">
-                    <div className="flex items-center gap-3">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: i.color }}>
-                        {i.name.slice(0, 1)}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="truncate font-medium text-foreground">{i.name}</div>
-                        {i.sub && <div className="text-[10px] text-muted-foreground">{i.sub}</div>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 text-muted-foreground">{i.type}</td>
-                  <td className="py-3 text-muted-foreground">{i.category}</td>
-                  <td className="py-3 font-medium text-foreground">{i.current}</td>
-                  <td className="py-3 text-foreground">{i.invested}</td>
-                  <td className="py-3 font-medium text-emerald-400">{i.gain}</td>
-                  <td className="py-3 font-medium text-emerald-400">{i.gainPct}</td>
-                  <td className="py-3 font-medium text-emerald-400">{i.xirr}</td>
-                  <td className="py-3 text-muted-foreground">{i.date}</td>
-                  <td className="py-3 pr-2">
-                    <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>Showing 1 to 5 of 18 investments</span>
-          <div className="flex items-center gap-2">
-            {["‹", "1", "2", "3", "4", "›"].map((p, idx) => (
-              <button key={idx} className={`h-7 min-w-7 rounded-md border border-border px-2 ${p === "1" ? "bg-mint/15 text-mint" : "text-muted-foreground hover:text-foreground"}`}>{p}</button>
-            ))}
-            <span className="ml-2">Rows per page:</span>
-            <button className="inline-flex items-center gap-1 rounded-md border border-border bg-surface-2 px-2 py-1">5 <ChevronDown className="h-3 w-3" /></button>
-          </div>
-        </div>
-      </div>
-
-      {/* Top Holdings + Asset Class Performance — below investments table */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Top Holdings</h3>
             <button className="text-xs font-medium text-mint hover:underline">View all</button>
           </div>
-          <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-            <span>Holding</span>
-            <span>Value</span>
-          </div>
           <div className="space-y-3">
             {TOP_HOLDINGS.map((h) => (
               <div key={h.name} className="flex items-center gap-2">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[10px] font-bold text-white" style={{ background: h.color }}>
-                  {h.name.slice(0, 1)}
-                </span>
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[10px] font-bold text-white" style={{ background: h.color }}>{h.name.slice(0, 1)}</span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-xs font-medium text-foreground">{h.name}</div>
                   <div className="text-[10px] text-muted-foreground">{h.sub}</div>
@@ -1095,7 +1015,6 @@ function InvestmentsView() {
               </div>
             ))}
           </div>
-          <p className="mt-5 text-[10px] text-muted-foreground">Based on market value change in 6 months</p>
         </div>
       </div>
 
@@ -1103,7 +1022,411 @@ function InvestmentsView() {
         <Info className="h-3.5 w-3.5 text-mint" />
         All values are as of 11 Jun 2025. Market values are updated at the end of each day.
       </div>
-    </>
+    </div>
+  );
+}
+
+function HoldingsView() {
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<(typeof HOLDING_FILTERS)[number]>("All");
+  const [sort, setSort] = useState<(typeof HOLDING_SORTS)[number]>("Latest");
+  const [sortOpen, setSortOpen] = useState(false);
+
+  const rows = useMemo(() => {
+    let r = HOLDINGS.map((h) => {
+      const pnl = h.current - h.invested;
+      const ret = (pnl / h.invested) * 100;
+      return { ...h, pnl, ret };
+    });
+    if (filter !== "All") r = r.filter((h) => h.type === filter);
+    if (q.trim()) {
+      const s = q.toLowerCase();
+      r = r.filter((h) => h.name.toLowerCase().includes(s) || h.type.toLowerCase().includes(s));
+    }
+    switch (sort) {
+      case "Name (A-Z)": r.sort((a, b) => a.name.localeCompare(b.name)); break;
+      case "Current Value": r.sort((a, b) => b.current - a.current); break;
+      case "P&L": r.sort((a, b) => b.pnl - a.pnl); break;
+      case "Returns %": r.sort((a, b) => b.ret - a.ret); break;
+      default: break;
+    }
+    return r;
+  }, [q, filter, sort]);
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground">Holdings ({rows.length})</h3>
+          <div className="relative ml-2 flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search holdings..."
+              className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
+            />
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setSortOpen((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" /> Sort: {sort} <ChevronDown className="h-3 w-3" />
+            </button>
+            {sortOpen && (
+              <div className="absolute right-0 z-10 mt-1 w-44 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                {HOLDING_SORTS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => { setSort(s); setSortOpen(false); }}
+                    className={`block w-full px-3 py-2 text-left text-xs hover:bg-surface-2 ${sort === s ? "text-mint" : "text-foreground"}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {HOLDING_FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                filter === f
+                  ? "border-mint/40 bg-mint/15 text-mint"
+                  : "border-border bg-surface-2 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="py-3 pl-2 font-medium">Name</th>
+                <th className="py-3 font-medium">Type</th>
+                <th className="py-3 text-right font-medium">Quantity</th>
+                <th className="py-3 text-right font-medium">Avg Price</th>
+                <th className="py-3 text-right font-medium">Current Price</th>
+                <th className="py-3 text-right font-medium">Invested</th>
+                <th className="py-3 text-right font-medium">Current</th>
+                <th className="py-3 text-right font-medium">P&L</th>
+                <th className="py-3 text-right font-medium">Returns %</th>
+                <th className="py-3 font-medium">Last Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((h) => {
+                const up = h.pnl >= 0;
+                return (
+                  <tr key={h.slug} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                    <td className="py-3 pl-2">
+                      <Link to="/holdings/$slug" params={{ slug: h.slug }} className="flex items-center gap-3">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: h.color }}>
+                          {h.name.slice(0, 1)}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-foreground hover:text-mint">{h.name}</div>
+                          {h.sub && <div className="text-[10px] text-muted-foreground">{h.sub}</div>}
+                        </div>
+                      </Link>
+                    </td>
+                    <td className="py-3 text-muted-foreground">{h.type}</td>
+                    <td className="py-3 text-right text-foreground">{h.qty.toLocaleString("en-IN", { maximumFractionDigits: 3 })}</td>
+                    <td className="py-3 text-right text-foreground">{fmtINR(h.avgPrice)}</td>
+                    <td className="py-3 text-right text-foreground">{fmtINR(h.currentPrice)}</td>
+                    <td className="py-3 text-right text-foreground">{fmtINR(h.invested)}</td>
+                    <td className="py-3 text-right font-medium text-foreground">{fmtINR(h.current)}</td>
+                    <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                      <span className="inline-flex items-center gap-1">
+                        {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                        {(up ? "+" : "") + fmtINR(h.pnl)}
+                      </span>
+                    </td>
+                    <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                      {(up ? "+" : "") + h.ret.toFixed(2)}%
+                    </td>
+                    <td className="py-3 text-muted-foreground">{h.date}</td>
+                  </tr>
+                );
+              })}
+              {rows.length === 0 && (
+                <tr><td colSpan={10} className="py-10 text-center text-sm text-muted-foreground">No holdings match your filters.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PortfolioView() {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="text-sm font-semibold text-foreground">Allocation</h3>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="relative h-[160px] w-[160px] shrink-0">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={INV_ALLOC} dataKey="pct" innerRadius={52} outerRadius={76} paddingAngle={2} stroke="none">
+                    {INV_ALLOC.map((a) => (<Cell key={a.name} fill={a.color} />))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="min-w-0 flex-1 space-y-2">
+              {INV_ALLOC.map((a) => (
+                <div key={a.name} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 text-xs">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
+                    <span className="truncate text-foreground">{a.name}</span>
+                  </div>
+                  <span className="shrink-0 font-medium text-muted-foreground">{a.pct}%</span>
+                  <span className="shrink-0 text-right font-medium text-foreground">{a.amt}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="text-sm font-semibold text-foreground">Sector Analysis</h3>
+          <div className="mt-4 space-y-3">
+            {[
+              { s: "Financials", pct: 28, color: "#3B82F6" },
+              { s: "Technology", pct: 22, color: "#14D8CF" },
+              { s: "Consumer", pct: 16, color: "#F59E0B" },
+              { s: "Energy", pct: 12, color: "#8B5CF6" },
+              { s: "Healthcare", pct: 10, color: "#10B981" },
+              { s: "Others", pct: 12, color: "#F97316" },
+            ].map((r) => (
+              <div key={r.s}>
+                <div className="mb-1.5 flex items-center justify-between text-xs">
+                  <span className="text-foreground">{r.s}</span>
+                  <span className="font-medium text-muted-foreground">{r.pct}%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, r.pct * 2.5)}%`, background: r.color }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { k: "XIRR", v: "15.62%", t: "Money-weighted return" },
+          { k: "CAGR (3Y)", v: "13.84%", t: "Annualized" },
+          { k: "Diversification", v: "8 / 10", t: "Across 6 asset classes" },
+          { k: "Portfolio Health", v: "Good", t: "Rebalance suggested" },
+        ].map((m) => (
+          <div key={m.k} className="rounded-2xl border border-border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{m.k}</div>
+            <div className="mt-1 font-display text-xl font-bold text-foreground">{m.v}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">{m.t}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
+          <h3 className="text-sm font-semibold text-foreground">Top Holdings</h3>
+          <div className="mt-3 space-y-3">
+            {TOP_HOLDINGS.map((h) => (
+              <div key={h.name} className="flex items-center gap-2">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[10px] font-bold text-white" style={{ background: h.color }}>{h.name.slice(0, 1)}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-medium text-foreground">{h.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{h.sub}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-medium text-mint">{h.pct}</div>
+                  <div className="text-[10px] text-foreground">{h.val}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-8">
+          <h3 className="text-sm font-semibold text-foreground">Asset Class Performance</h3>
+          <div className="mt-4 space-y-4">
+            {ASSET_PERF.map((a) => (
+              <div key={a.name}>
+                <div className="mb-1.5 flex items-center justify-between text-xs">
+                  <span className="text-foreground">{a.name}</span>
+                  <span className="font-medium text-emerald-400">+ {a.pct}%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div className="h-full rounded-full bg-mint" style={{ width: `${a.bar}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SipTrackerView() {
+  const sips = [
+    { name: "Parag Parikh Flexi Cap", amt: 10000, next: "05 Jul 2026", status: "Active", color: "#3B82F6" },
+    { name: "NAVI Nifty 50 Index", amt: 5000, next: "10 Jul 2026", status: "Active", color: "#14D8CF" },
+    { name: "ICICI NASDAQ 100", amt: 7500, next: "12 Jul 2026", status: "Active", color: "#8B5CF6" },
+    { name: "Quant Small Cap", amt: 5000, next: "—", status: "Paused", color: "#F59E0B" },
+  ];
+  const total = sips.filter((s) => s.status === "Active").reduce((a, b) => a + b.amt, 0);
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { k: "Monthly SIP", v: fmtINR(total) },
+          { k: "Active SIPs", v: String(sips.filter((s) => s.status === "Active").length) },
+          { k: "Paused", v: String(sips.filter((s) => s.status === "Paused").length) },
+          { k: "Yearly Outflow", v: fmtINR(total * 12) },
+        ].map((m) => (
+          <div key={m.k} className="rounded-2xl border border-border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{m.k}</div>
+            <div className="mt-1 font-display text-xl font-bold text-foreground">{m.v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">SIPs</h3>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="py-3 pl-2 font-medium">Scheme</th>
+                <th className="py-3 text-right font-medium">Amount</th>
+                <th className="py-3 font-medium">Next Date</th>
+                <th className="py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sips.map((s) => (
+                <tr key={s.name} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                  <td className="py-3 pl-2">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: s.color }}>{s.name.slice(0, 1)}</span>
+                      <span className="font-medium text-foreground">{s.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 text-right font-medium text-foreground">{fmtINR(s.amt)}</td>
+                  <td className="py-3 text-muted-foreground">{s.next}</td>
+                  <td className="py-3">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${s.status === "Active" ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"}`}>{s.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PerformanceView() {
+  const bench = [
+    { m: "Jan", port: 12.4, nifty: 9.8 },
+    { m: "Feb", port: 13.1, nifty: 10.4 },
+    { m: "Mar", port: 13.9, nifty: 11.1 },
+    { m: "Apr", port: 14.6, nifty: 11.8 },
+    { m: "May", port: 15.2, nifty: 12.2 },
+    { m: "Jun", port: 15.6, nifty: 12.9 },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[
+          { k: "1Y Return", v: "+15.62%" },
+          { k: "3Y CAGR", v: "+13.84%" },
+          { k: "vs Nifty 50", v: "+2.72%" },
+        ].map((m) => (
+          <div key={m.k} className="rounded-2xl border border-border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{m.k}</div>
+            <div className="mt-1 font-display text-xl font-bold text-mint">{m.v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Portfolio vs Benchmark (6M)</h3>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-mint" /> Portfolio</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-400" /> Nifty 50</span>
+          </div>
+        </div>
+        <div className="h-[260px]">
+          <ResponsiveContainer>
+            <AreaChart data={bench} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="perfPort" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#14D8CF" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#14D8CF" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+              <Tooltip contentStyle={{ background: "#0D2232", border: "1px solid #1B3249", borderRadius: 8, fontSize: 12 }} />
+              <Area type="monotone" dataKey="port" stroke="#14D8CF" strokeWidth={2.5} fill="url(#perfPort)" />
+              <Area type="monotone" dataKey="nifty" stroke="#8B5CF6" strokeWidth={2} fill="transparent" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PnlAnalysisView() {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { k: "Unrealized Gains", v: "₹1,88,950", tone: "text-emerald-400" },
+          { k: "Realized Gains (YTD)", v: "₹52,400", tone: "text-emerald-400" },
+          { k: "Dividends (YTD)", v: "₹18,250", tone: "text-foreground" },
+          { k: "Capital Gains Tax (Est.)", v: "₹7,860", tone: "text-rose-400" },
+        ].map((m) => (
+          <div key={m.k} className="rounded-2xl border border-border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{m.k}</div>
+            <div className={`mt-1 font-display text-xl font-bold ${m.tone}`}>{m.v}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="text-sm font-semibold text-foreground">Short-Term Capital Gains</h3>
+          <div className="mt-3 space-y-2 text-xs">
+            <div className="flex justify-between text-muted-foreground"><span>Holding period &lt; 1Y</span><span className="font-medium text-foreground">₹22,400</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>Tax rate</span><span className="font-medium text-foreground">15%</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>Estimated tax</span><span className="font-medium text-rose-400">₹3,360</span></div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="text-sm font-semibold text-foreground">Long-Term Capital Gains</h3>
+          <div className="mt-3 space-y-2 text-xs">
+            <div className="flex justify-between text-muted-foreground"><span>Holding period &gt; 1Y</span><span className="font-medium text-foreground">₹30,000</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>Exempt</span><span className="font-medium text-foreground">₹1,00,000</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>Estimated tax</span><span className="font-medium text-emerald-400">₹0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
