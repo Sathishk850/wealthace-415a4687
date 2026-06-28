@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { TextTabs } from "@/components/text-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
