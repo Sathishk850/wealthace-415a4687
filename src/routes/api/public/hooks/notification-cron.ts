@@ -222,7 +222,7 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
   },
 });
 
-async function loadPrefs(admin: ReturnType<typeof createClient>, userId: string) {
+async function loadPrefs(admin: any, userId: string) {
   const { data } = await admin
     .from("notification_preferences")
     .select("*")
@@ -237,9 +237,9 @@ async function loadPrefs(admin: ReturnType<typeof createClient>, userId: string)
     | null;
 }
 
-async function lookupEmail(admin: ReturnType<typeof createClient>, userId: string): Promise<string | null> {
+async function lookupEmail(admin: any, userId: string): Promise<string | null> {
   try {
-    // @ts-expect-error admin available on service client
+    // service client exposes admin namespace
     const { data } = await admin.auth.admin.getUserById(userId);
     return data?.user?.email ?? null;
   } catch {

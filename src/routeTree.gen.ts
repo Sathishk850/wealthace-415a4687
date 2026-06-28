@@ -25,6 +25,7 @@ import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.t
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
 import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slug'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
+import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -106,6 +107,12 @@ const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
   path: '/networth',
   getParentRoute: () => AppDashboardRoute,
 } as any)
+const ApiPublicHooksNotificationCronRoute =
+  ApiPublicHooksNotificationCronRouteImport.update({
+    id: '/api/public/hooks/notification-cron',
+    path: '/api/public/hooks/notification-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/tools/': typeof AppToolsIndexRoute
+  '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -139,6 +147,7 @@ export interface FileRoutesByTo {
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/tools': typeof AppToolsIndexRoute
+  '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -158,6 +167,7 @@ export interface FileRoutesById {
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/_app/tools/': typeof AppToolsIndexRoute
+  '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/money/transactions'
     | '/tools/financial-calculator'
     | '/tools/'
+    | '/api/public/hooks/notification-cron'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/money/transactions'
     | '/tools/financial-calculator'
     | '/tools'
+    | '/api/public/hooks/notification-cron'
   id:
     | '__root__'
     | '/'
@@ -211,12 +223,14 @@ export interface FileRouteTypes {
     | '/_app/money/transactions'
     | '/_app/tools/financial-calculator'
     | '/_app/tools/'
+    | '/api/public/hooks/notification-cron'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -333,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardNetworthRouteImport
       parentRoute: typeof AppDashboardRoute
     }
+    '/api/public/hooks/notification-cron': {
+      id: '/api/public/hooks/notification-cron'
+      path: '/api/public/hooks/notification-cron'
+      fullPath: '/api/public/hooks/notification-cron'
+      preLoaderRoute: typeof ApiPublicHooksNotificationCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -404,6 +425,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
