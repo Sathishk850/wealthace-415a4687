@@ -384,23 +384,12 @@ function Money() {
       />
 
       {/* Sub tabs */}
-      <div className="mb-5 flex items-center gap-6 border-b border-border">
-        {tabs.map((t) => {
-          const active = tab === t;
-          return (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`relative -mb-px py-2.5 text-sm font-medium transition ${
-                active ? "text-mint" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t}
-              {active && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-mint" />}
-            </button>
-          );
-        })}
-      </div>
+      <TextTabs
+        className="mb-5"
+        items={tabs as unknown as readonly string[]}
+        value={tab}
+        onChange={(v) => setTab(v as Tab)}
+      />
 
       {error && (
         <div className="mb-4 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
