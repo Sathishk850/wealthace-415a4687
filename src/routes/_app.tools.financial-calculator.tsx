@@ -289,6 +289,41 @@ function EMICalc() {
   );
 }
 
+function LoanCalc() {
+  const [p, setP] = useState(2500000);
+  const [r, setR] = useState(8.5);
+  const [y, setY] = useState(15);
+  const [feePct, setFeePct] = useState(1);
+  const { emi, total, interest, fee, costOfLoan } = useMemo(() => {
+    const n = y * 12;
+    const i = r / 100 / 12;
+    const e = i === 0 ? p / n : (p * i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1);
+    const totalPay = e * n;
+    const interestPay = totalPay - p;
+    const fees = (p * feePct) / 100;
+    return { emi: e, total: totalPay, interest: interestPay, fee: fees, costOfLoan: interestPay + fees };
+  }, [p, r, y, feePct]);
+  return (
+    <>
+      <Grid>
+        <Field label="Loan Amount" value={p} onChange={setP} suffix="₹" />
+        <Field label="Interest Rate" value={r} onChange={setR} suffix="% p.a." />
+        <Field label="Tenure" value={y} onChange={setY} suffix="yrs" />
+        <Field label="Processing Fee" value={feePct} onChange={setFeePct} suffix="%" />
+      </Grid>
+      <Result
+        items={[
+          { label: "Monthly EMI", value: fmt(emi), primary: true },
+          { label: "Total Interest", value: fmt(interest) },
+          { label: "Processing Fee", value: fmt(fee) },
+          { label: "Total Payment", value: fmt(total) },
+          { label: "Cost of Loan", value: fmt(costOfLoan) },
+        ]}
+      />
+    </>
+  );
+}
+
 function InflationCalc() {
   const [pv, setPv] = useState(100000);
   const [rate, setRate] = useState(6);
