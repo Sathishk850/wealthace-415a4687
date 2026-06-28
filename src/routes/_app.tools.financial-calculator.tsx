@@ -59,7 +59,7 @@ type CalcDef = {
   render: () => React.ReactNode;
 };
 
-function FinCalculators() {
+export function FinCalculators() {
   const calcs: CalcDef[] = [
     { id: "sip", title: "SIP Calculator", desc: "Monthly investment growth", icon: TrendingUp, render: () => <SIPCalc /> },
     { id: "emi", title: "EMI Calculator", desc: "Loan EMI & interest", icon: Landmark, render: () => <EMICalc /> },
