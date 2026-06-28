@@ -162,22 +162,11 @@ function Wealth() {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`relative px-4 py-2.5 text-sm font-medium transition ${
-              tab === t ? "text-mint" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t}
-            {tab === t && (
-              <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-mint" />
-            )}
-          </button>
-        ))}
-      </div>
+      <TextTabs
+        items={TABS as unknown as readonly string[]}
+        value={tab}
+        onChange={(v) => setTab(v as (typeof TABS)[number])}
+      />
 
       {tab === "Liabilities" ? (
         <LiabilitiesView total={liabTotal} />
@@ -859,20 +848,11 @@ function InvestmentsView() {
   return (
     <>
       {/* Sub-tabs */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-border">
-        {INV_SUBTABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setSub(t)}
-            className={`relative px-4 py-2 text-sm font-medium transition ${
-              sub === t ? "text-mint" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t}
-            {sub === t && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-mint" />}
-          </button>
-        ))}
-      </div>
+      <TextTabs
+        items={INV_SUBTABS as unknown as readonly string[]}
+        value={sub}
+        onChange={(v) => setSub(v as (typeof INV_SUBTABS)[number])}
+      />
 
       <div className="mt-4">
         {sub === "Holdings" ? <HoldingsView /> :
