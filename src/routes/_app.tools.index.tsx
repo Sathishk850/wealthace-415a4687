@@ -799,10 +799,11 @@ function printReport(report: ReportData) {
   w.document.close();
 }
 
-function ReportRowItem({ report, onView }: { report: ReportData; onView: () => void }) {
+function ReportRowItem({ report, onView, onExport }: { report: ReportData; onView: () => void; onExport?: () => void }) {
   const handle = (fmt: ReportFmt) => {
     try {
       runExport(report, fmt);
+      onExport?.();
       toast.success(`${report.title} exported`);
     } catch (e: any) {
       toast.error(e?.message || "Export failed");
