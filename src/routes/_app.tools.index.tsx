@@ -929,6 +929,8 @@ function InsightsView() {
 
   const loading = tx.isLoading || cats.isLoading || budgets.isLoading || goals.isLoading || settings.isLoading;
   const error = tx.error || cats.error || budgets.error || goals.error || settings.error;
+  const [filter, setFilter] = useState<"all" | "spending" | "savings" | "investments" | "recommendations">("all");
+  const [refreshing, setRefreshing] = useState(false);
 
   const insights = useMemo(() => buildInsights({
     transactions: tx.data ?? [],
@@ -937,6 +939,16 @@ function InsightsView() {
     goals: goals.data ?? [],
     settings: settings.data,
   }), [tx.data, cats.data, budgets.data, goals.data, settings.data]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([tx.refetch(), cats.refetch(), budgets.refetch(), goals.refetch(), settings.refetch()]);
+      toast.success("Insights refreshed");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading)
     return (
@@ -967,16 +979,47 @@ function InsightsView() {
 
   return (
     <div className="space-y-4">
+      <Card className="glass-card border-[var(--border)] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "spending", "savings", "investments", "recommendations"] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => setFilter(k)}
+                className={`rounded-full border px-3 py-1 text-[11px] capitalize transition ${
+                  filter === k
+                    ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                    : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                }`}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} /> Refresh
+          </Button>
+        </div>
+      </Card>
+
       <div className="grid gap-3 md:grid-cols-3">
         <ScoreCard label="Financial Health Score" value={insights.healthScore} icon={Shield} />
         <ScoreCard label="Savings Rate" value={insights.savingsRate} suffix="%" icon={PiggyBank} />
         <ScoreCard label="Portfolio Health" value={insights.portfolioHealth} icon={Activity} />
       </div>
 
-      <InsightSection title="Spending Analysis" icon={TrendingDown} items={insights.spending} />
-      <InsightSection title="Saving Suggestions" icon={PiggyBank} items={insights.savings} />
-      <InsightSection title="Investment Insights" icon={TrendingUp} items={insights.investments} />
-      <InsightSection title="Personalised Recommendations" icon={Lightbulb} items={insights.recommendations} />
+      {(filter === "all" || filter === "spending") && (
+        <InsightSection title="Spending Analysis" icon={TrendingDown} items={insights.spending} />
+      )}
+      {(filter === "all" || filter === "savings") && (
+        <InsightSection title="Saving Suggestions" icon={PiggyBank} items={insights.savings} />
+      )}
+      {(filter === "all" || filter === "investments") && (
+        <InsightSection title="Investment Insights" icon={TrendingUp} items={insights.investments} />
+      )}
+      {(filter === "all" || filter === "recommendations") && (
+        <InsightSection title="Personalised Recommendations" icon={Lightbulb} items={insights.recommendations} />
+      )}
     </div>
   );
 }
@@ -1007,6 +1050,30 @@ function InsightSection({
   icon: LucideIcon;
   items: { title: string; detail: string; tone?: "good" | "warn" | "bad" }[];
 }) {
+  const [open, setOpen] = useState<{ title: string; detail: string } | null>(null);
+  const share = async (it: { title: string; detail: string }) => {
+    const text = `${it.title} — ${it.detail}`;
+    try {
+      if (navigator.share) await navigator.share({ title: it.title, text });
+      else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Insight copied to clipboard");
+      }
+    } catch {
+      /* user cancelled */
+    }
+  };
+  const save = (it: { title: string; detail: string }) => {
+    try {
+      const k = "fintrack.saved_insights";
+      const list = JSON.parse(localStorage.getItem(k) || "[]");
+      list.unshift({ ...it, savedAt: new Date().toISOString() });
+      localStorage.setItem(k, JSON.stringify(list.slice(0, 50)));
+      toast.success("Insight saved");
+    } catch {
+      toast.error("Could not save");
+    }
+  };
   return (
     <Card className="glass-card border-[var(--border)] p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -1034,14 +1101,45 @@ function InsightSection({
               >
                 {it.tone === "good" ? "Good" : it.tone === "bad" ? "Alert" : "Tip"}
               </Badge>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-[var(--text-main)]">{it.title}</div>
                 <p className="mt-0.5 text-xs text-[var(--text-muted)]">{it.detail}</p>
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setOpen(it)} aria-label="View details">
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => save(it)} aria-label="Save insight">
+                  <Bookmark className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => share(it)} aria-label="Share insight">
+                  <Share2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </li>
           ))}
         </ul>
       )}
+      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
+        <DialogContent className="max-w-md">
+          {open && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{open.title}</DialogTitle>
+                <DialogDescription>{open.detail}</DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button size="sm" variant="outline" onClick={() => save(open)}>
+                  <Bookmark className="mr-1.5 h-3.5 w-3.5" /> Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => share(open)}>
+                  <Share2 className="mr-1.5 h-3.5 w-3.5" /> Share
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
