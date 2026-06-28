@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit2, Trash2, CalendarClock, Mail } from "lucide-react";
+import { Plus, Edit2, Trash2, CalendarClock, Mail, FolderOpen } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import {
   useScheduledReports,
   useDeleteScheduledReport,
@@ -34,6 +35,10 @@ export function ScheduledReportsPanel({
             Email awaiting domain
           </Badge>
         </div>
+        <div className="flex items-center gap-2">
+        <Button asChild size="sm" variant="outline" className="h-7 gap-1 text-xs">
+          <Link to="/reports"><FolderOpen className="h-3.5 w-3.5" /> Report Center</Link>
+        </Button>
         <Button
           size="sm"
           onClick={() => { setEditing(undefined); setOpen(true); }}
@@ -41,9 +46,10 @@ export function ScheduledReportsPanel({
         >
           <Plus className="h-3.5 w-3.5" /> New schedule
         </Button>
+        </div>
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
-        Reports are generated automatically and queued for delivery. Email delivery turns on automatically once your sender domain is verified — no setup changes needed.
+        Reports are generated automatically on schedule and saved to the Report Center, where you can download them as PDF, Excel or CSV immediately. Email delivery turns on automatically once your sender domain is verified — no other changes needed.
       </p>
 
       {(list.data ?? []).length === 0 ? (

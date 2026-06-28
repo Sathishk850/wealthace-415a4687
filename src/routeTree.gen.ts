@@ -23,6 +23,7 @@ import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
+import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
 import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slug'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
@@ -98,6 +99,11 @@ const AppToolsFinancialCalculatorRoute =
     path: '/financial-calculator',
     getParentRoute: () => AppToolsRoute,
   } as any)
+const AppReportsIdRoute = AppReportsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppReportsRoute,
+} as any)
 const AppMoneyTransactionsRoute = AppMoneyTransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
@@ -128,13 +134,14 @@ export interface FileRoutesByFullPath {
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
-  '/reports': typeof AppReportsRoute
+  '/reports': typeof AppReportsRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/holdings/$slug': typeof AppHoldingsSlugRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
+  '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
@@ -147,12 +154,13 @@ export interface FileRoutesByTo {
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
-  '/reports': typeof AppReportsRoute
+  '/reports': typeof AppReportsRouteWithChildren
   '/settings': typeof AppSettingsRoute
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/holdings/$slug': typeof AppHoldingsSlugRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
+  '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/tools': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
@@ -167,13 +175,14 @@ export interface FileRoutesById {
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/planner': typeof AppPlannerRoute
-  '/_app/reports': typeof AppReportsRoute
+  '/_app/reports': typeof AppReportsRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tools': typeof AppToolsRouteWithChildren
   '/_app/wealth': typeof AppWealthRoute
   '/_app/dashboard/networth': typeof AppDashboardNetworthRoute
   '/_app/holdings/$slug': typeof AppHoldingsSlugRoute
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
+  '/_app/reports/$id': typeof AppReportsIdRoute
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/_app/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/dashboard/networth'
     | '/holdings/$slug'
     | '/money/transactions'
+    | '/reports/$id'
     | '/tools/financial-calculator'
     | '/tools/'
     | '/api/public/hooks/notification-cron'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/dashboard/networth'
     | '/holdings/$slug'
     | '/money/transactions'
+    | '/reports/$id'
     | '/tools/financial-calculator'
     | '/tools'
     | '/api/public/hooks/notification-cron'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard/networth'
     | '/_app/holdings/$slug'
     | '/_app/money/transactions'
+    | '/_app/reports/$id'
     | '/_app/tools/financial-calculator'
     | '/_app/tools/'
     | '/api/public/hooks/notification-cron'
@@ -345,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppToolsFinancialCalculatorRouteImport
       parentRoute: typeof AppToolsRoute
     }
+    '/_app/reports/$id': {
+      id: '/_app/reports/$id'
+      path: '/$id'
+      fullPath: '/reports/$id'
+      preLoaderRoute: typeof AppReportsIdRouteImport
+      parentRoute: typeof AppReportsRoute
+    }
     '/_app/money/transactions': {
       id: '/_app/money/transactions'
       path: '/transactions'
@@ -400,6 +419,18 @@ const AppMoneyRouteWithChildren = AppMoneyRoute._addFileChildren(
   AppMoneyRouteChildren,
 )
 
+interface AppReportsRouteChildren {
+  AppReportsIdRoute: typeof AppReportsIdRoute
+}
+
+const AppReportsRouteChildren: AppReportsRouteChildren = {
+  AppReportsIdRoute: AppReportsIdRoute,
+}
+
+const AppReportsRouteWithChildren = AppReportsRoute._addFileChildren(
+  AppReportsRouteChildren,
+)
+
 interface AppToolsRouteChildren {
   AppToolsFinancialCalculatorRoute: typeof AppToolsFinancialCalculatorRoute
   AppToolsIndexRoute: typeof AppToolsIndexRoute
@@ -420,7 +451,7 @@ interface AppRouteChildren {
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPlannerRoute: typeof AppPlannerRoute
-  AppReportsRoute: typeof AppReportsRoute
+  AppReportsRoute: typeof AppReportsRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppToolsRoute: typeof AppToolsRouteWithChildren
   AppWealthRoute: typeof AppWealthRoute
@@ -433,7 +464,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPlannerRoute: AppPlannerRoute,
-  AppReportsRoute: AppReportsRoute,
+  AppReportsRoute: AppReportsRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppToolsRoute: AppToolsRouteWithChildren,
   AppWealthRoute: AppWealthRoute,
