@@ -124,9 +124,7 @@ function ToolsPage() {
           <FinCalculators />
         </TabsContent>
         <TabsContent value="reminders" className="mt-4">
-          <Card className="glass-card border-[var(--border)] p-10 text-center text-sm text-muted-foreground">
-            Reminders coming soon.
-          </Card>
+          <RemindersView />
         </TabsContent>
         <TabsContent value="insights" className="mt-4">
           <InsightsView />
