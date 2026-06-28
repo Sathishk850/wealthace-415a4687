@@ -629,7 +629,20 @@ function ReportsView() {
       </Card>
     );
 
-  const filtered = moduleTab === "all" ? reports : reports.filter((r) => r.module === moduleTab);
+  const filtered = useMemo(() => {
+    let arr = moduleTab === "all" ? reports : reports.filter((r) => r.module === moduleTab);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      arr = arr.filter(
+        (r) => r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q),
+      );
+    }
+    const sorted = [...arr];
+    if (sortBy === "title-asc") sorted.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortBy === "title-desc") sorted.sort((a, b) => b.title.localeCompare(a.title));
+    else if (sortBy === "rows-desc") sorted.sort((a, b) => b.rows.length - a.rows.length);
+    return sorted;
+  }, [reports, moduleTab, search, sortBy]);
   const modTabs: { v: "all" | ReportModule; l: string }[] = [
     { v: "all", l: "All Reports" },
     { v: "wealth", l: "Wealth" },
@@ -645,10 +658,64 @@ function ReportsView() {
         value={moduleTab}
         onChange={(v) => setModuleTab(v as any)}
       />
+      <Card className="glass-card border-[var(--border)] p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search reports..."
+              className="h-8 pl-8 bg-[var(--bg-primary)]/40 text-xs"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-[var(--text-muted)]">From</span>
+            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-8 w-[140px] bg-[var(--bg-primary)]/40 text-xs" />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-[var(--text-muted)]">To</span>
+            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-8 w-[140px] bg-[var(--bg-primary)]/40 text-xs" />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="module">Sort: Module</SelectItem>
+              <SelectItem value="title-asc">Title A–Z</SelectItem>
+              <SelectItem value="title-desc">Title Z–A</SelectItem>
+              <SelectItem value="rows-desc">Most Data</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || fromDate || toDate) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => { setSearch(""); setFromDate(""); setToDate(""); }}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      </Card>
       <Card className="glass-card border-[var(--border)] divide-y divide-[var(--border)]">
-        {filtered.map((r) => (
-          <ReportRowItem key={r.slug} report={r} onView={() => setPreview(r)} />
-        ))}
+        {filtered.length === 0 ? (
+          <div className="p-6 text-center text-xs text-[var(--text-muted)]">
+            No reports match the current filters.
+          </div>
+        ) : (
+          filtered.map((r) => (
+            <ReportRowItem
+              key={r.slug}
+              report={r}
+              onView={() => {
+                logToolsActivity("report", r.slug, r.title);
+                setPreview(r);
+              }}
+              onExport={() => logToolsActivity("report", r.slug, r.title)}
+            />
+          ))
+        )}
       </Card>
       <ReportPreviewDialog report={preview} onClose={() => setPreview(null)} />
     </div>
