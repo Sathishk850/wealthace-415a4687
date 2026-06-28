@@ -100,7 +100,7 @@ export function useNotifications(limit = 50) {
     queryKey: [...notifKeys.list, limit],
     queryFn: async (): Promise<Notification[]> => {
       const { data, error } = await supabase
-        .from("notifications" as never)
+        .from("notifications" as any)
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -116,7 +116,7 @@ export function useUnreadCount() {
     queryKey: notifKeys.unread,
     queryFn: async (): Promise<number> => {
       const { count, error } = await supabase
-        .from("notifications" as never)
+        .from("notifications" as any)
         .select("id", { head: true, count: "exact" })
         .is("read_at", null);
       if (error) throw error;
@@ -130,7 +130,7 @@ export function useMarkRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ids: string[] | "all") => {
-      const q = supabase.from("notifications" as never).update({ read_at: new Date().toISOString() });
+      const q = supabase.from("notifications" as any).update({ read_at: new Date().toISOString() });
       const { error } = ids === "all"
         ? await q.is("read_at", null)
         : await q.in("id", ids);
@@ -146,7 +146,7 @@ export function useDeleteNotification() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("notifications" as never).delete().eq("id", id);
+      const { error } = await supabase.from("notifications" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
@@ -163,7 +163,7 @@ export async function createNotification(input: {
   metadata?: Record<string, unknown>;
 }) {
   const user_id = await uid();
-  const { error } = await supabase.from("notifications" as never).insert({
+  const { error } = await supabase.from("notifications" as any).insert({
     user_id,
     title: input.title,
     body: input.body ?? null,
@@ -194,7 +194,7 @@ export function usePreferences() {
     queryFn: async (): Promise<NotificationPreferences> => {
       const user_id = await uid();
       const { data, error } = await supabase
-        .from("notification_preferences" as never)
+        .from("notification_preferences" as any)
         .select("*")
         .eq("user_id", user_id)
         .maybeSingle();
@@ -211,7 +211,7 @@ export function useUpdatePreferences() {
     mutationFn: async (patch: Partial<NotificationPreferences>) => {
       const user_id = await uid();
       const { error } = await supabase
-        .from("notification_preferences" as never)
+        .from("notification_preferences" as any)
         .upsert({ user_id, ...patch }, { onConflict: "user_id" });
       if (error) throw error;
     },
@@ -230,7 +230,7 @@ export function useScheduledReports() {
     queryKey: notifKeys.schedules,
     queryFn: async (): Promise<ScheduledReport[]> => {
       const { data, error } = await supabase
-        .from("scheduled_reports" as never)
+        .from("scheduled_reports" as any)
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -273,10 +273,10 @@ export function useUpsertScheduledReport() {
         next_run_at,
       };
       if (input.id) {
-        const { error } = await supabase.from("scheduled_reports" as never).update(payload).eq("id", input.id);
+        const { error } = await supabase.from("scheduled_reports" as any).update(payload).eq("id", input.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("scheduled_reports" as never).insert({ ...payload, user_id });
+        const { error } = await supabase.from("scheduled_reports" as any).insert({ ...payload, user_id });
         if (error) throw error;
       }
     },
@@ -292,7 +292,7 @@ export function useDeleteScheduledReport() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("scheduled_reports" as never).delete().eq("id", id);
+      const { error } = await supabase.from("scheduled_reports" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -306,7 +306,7 @@ export function useToggleScheduledReport() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-      const { error } = await supabase.from("scheduled_reports" as never).update({ active }).eq("id", id);
+      const { error } = await supabase.from("scheduled_reports" as any).update({ active }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: notifKeys.schedules }),
@@ -320,7 +320,7 @@ export function useDeliveryLog(limit = 100) {
     queryKey: [...notifKeys.log, limit],
     queryFn: async (): Promise<DeliveryLog[]> => {
       const { data, error } = await supabase
-        .from("notification_delivery_log" as never)
+        .from("notification_delivery_log" as any)
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -347,7 +347,7 @@ export async function enqueueDelivery(input: {
   scheduled_for?: string;
 }) {
   const user_id = await uid();
-  const { error } = await supabase.from("notification_delivery_log" as never).insert({
+  const { error } = await supabase.from("notification_delivery_log" as any).insert({
     user_id,
     channel: input.channel,
     template: input.template,
