@@ -19,7 +19,6 @@ import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
@@ -78,11 +77,6 @@ const AppFeedbackRoute = AppFeedbackRouteImport.update({
   path: '/feedback',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppToolsIndexRoute = AppToolsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -115,9 +109,9 @@ const AppHoldingsSlugRoute = AppHoldingsSlugRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
-  id: '/networth',
-  path: '/networth',
-  getParentRoute: () => AppDashboardRoute,
+  id: '/dashboard/networth',
+  path: '/dashboard/networth',
+  getParentRoute: () => AppRoute,
 } as any)
 const ApiPublicHooksNotificationCronRoute =
   ApiPublicHooksNotificationCronRouteImport.update({
@@ -129,7 +123,6 @@ const ApiPublicHooksNotificationCronRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
@@ -149,7 +142,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
@@ -170,7 +162,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_app/dashboard': typeof AppDashboardRouteWithChildren
   '/_app/feedback': typeof AppFeedbackRoute
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
@@ -192,7 +183,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/dashboard'
     | '/feedback'
     | '/money'
     | '/notifications'
@@ -212,7 +202,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/dashboard'
     | '/feedback'
     | '/money'
     | '/notifications'
@@ -232,7 +221,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
-    | '/_app/dashboard'
     | '/_app/feedback'
     | '/_app/money'
     | '/_app/notifications'
@@ -329,13 +317,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFeedbackRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/tools/': {
       id: '/_app/tools/'
       path: '/'
@@ -380,10 +361,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/dashboard/networth': {
       id: '/_app/dashboard/networth'
-      path: '/networth'
+      path: '/dashboard/networth'
       fullPath: '/dashboard/networth'
       preLoaderRoute: typeof AppDashboardNetworthRouteImport
-      parentRoute: typeof AppDashboardRoute
+      parentRoute: typeof AppRoute
     }
     '/api/public/hooks/notification-cron': {
       id: '/api/public/hooks/notification-cron'
@@ -394,18 +375,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AppDashboardRouteChildren {
-  AppDashboardNetworthRoute: typeof AppDashboardNetworthRoute
-}
-
-const AppDashboardRouteChildren: AppDashboardRouteChildren = {
-  AppDashboardNetworthRoute: AppDashboardNetworthRoute,
-}
-
-const AppDashboardRouteWithChildren = AppDashboardRoute._addFileChildren(
-  AppDashboardRouteChildren,
-)
 
 interface AppMoneyRouteChildren {
   AppMoneyTransactionsRoute: typeof AppMoneyTransactionsRoute
@@ -434,7 +403,6 @@ const AppToolsRouteWithChildren = AppToolsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
-  AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppFeedbackRoute: typeof AppFeedbackRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -442,13 +410,13 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppToolsRoute: typeof AppToolsRouteWithChildren
   AppWealthRoute: typeof AppWealthRoute
+  AppDashboardNetworthRoute: typeof AppDashboardNetworthRoute
   AppHoldingsSlugRoute: typeof AppHoldingsSlugRoute
   AppReportsIdRoute: typeof AppReportsIdRoute
   AppReportsIndexRoute: typeof AppReportsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppDashboardRoute: AppDashboardRouteWithChildren,
   AppFeedbackRoute: AppFeedbackRoute,
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
@@ -456,6 +424,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppToolsRoute: AppToolsRouteWithChildren,
   AppWealthRoute: AppWealthRoute,
+  AppDashboardNetworthRoute: AppDashboardNetworthRoute,
   AppHoldingsSlugRoute: AppHoldingsSlugRoute,
   AppReportsIdRoute: AppReportsIdRoute,
   AppReportsIndexRoute: AppReportsIndexRoute,
