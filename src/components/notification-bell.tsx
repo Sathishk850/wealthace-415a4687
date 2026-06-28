@@ -49,11 +49,16 @@ export function NotificationBell() {
         <button
           type="button"
           aria-label="Notifications"
-          className="relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-surface hover:text-foreground"
+          className={cn(
+            "relative grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 hover:bg-[rgba(33,219,210,0.12)]",
+            count > 0
+              ? "bg-[rgba(33,219,210,0.12)] text-[#21DBD2]"
+              : "text-muted-foreground hover:text-foreground",
+          )}
         >
           <Bell className="h-4 w-4" />
           {count > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-mint px-1 text-[10px] font-bold text-mint-foreground">
+            <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[#21DBD2] px-1 text-[10px] font-bold text-[#0F172A]">
               {count > 99 ? "99+" : count}
             </span>
           )}
