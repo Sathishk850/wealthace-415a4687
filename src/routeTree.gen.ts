@@ -19,6 +19,7 @@ import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
 import { Route as AppPlannerFireRouteImport } from './routes/_app.planner.fire'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
@@ -73,6 +74,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppToolsIndexRoute = AppToolsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppToolsRoute,
+} as any)
 const AppToolsFinancialCalculatorRoute =
   AppToolsFinancialCalculatorRouteImport.update({
     id: '/financial-calculator',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/planner/fire': typeof AppPlannerFireRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
+  '/tools/': typeof AppToolsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,12 +125,12 @@ export interface FileRoutesByTo {
   '/money': typeof AppMoneyRouteWithChildren
   '/planner': typeof AppPlannerRouteWithChildren
   '/settings': typeof AppSettingsRoute
-  '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
   '/planner/fire': typeof AppPlannerFireRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
+  '/tools': typeof AppToolsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -141,6 +148,7 @@ export interface FileRoutesById {
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
   '/_app/planner/fire': typeof AppPlannerFireRoute
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
+  '/_app/tools/': typeof AppToolsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -158,6 +166,7 @@ export interface FileRouteTypes {
     | '/money/transactions'
     | '/planner/fire'
     | '/tools/financial-calculator'
+    | '/tools/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -167,12 +176,12 @@ export interface FileRouteTypes {
     | '/money'
     | '/planner'
     | '/settings'
-    | '/tools'
     | '/wealth'
     | '/dashboard/networth'
     | '/money/transactions'
     | '/planner/fire'
     | '/tools/financial-calculator'
+    | '/tools'
   id:
     | '__root__'
     | '/'
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/_app/money/transactions'
     | '/_app/planner/fire'
     | '/_app/tools/financial-calculator'
+    | '/_app/tools/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -269,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/tools/': {
+      id: '/_app/tools/'
+      path: '/'
+      fullPath: '/tools/'
+      preLoaderRoute: typeof AppToolsIndexRouteImport
+      parentRoute: typeof AppToolsRoute
+    }
     '/_app/tools/financial-calculator': {
       id: '/_app/tools/financial-calculator'
       path: '/financial-calculator'
@@ -338,10 +355,12 @@ const AppPlannerRouteWithChildren = AppPlannerRoute._addFileChildren(
 
 interface AppToolsRouteChildren {
   AppToolsFinancialCalculatorRoute: typeof AppToolsFinancialCalculatorRoute
+  AppToolsIndexRoute: typeof AppToolsIndexRoute
 }
 
 const AppToolsRouteChildren: AppToolsRouteChildren = {
   AppToolsFinancialCalculatorRoute: AppToolsFinancialCalculatorRoute,
+  AppToolsIndexRoute: AppToolsIndexRoute,
 }
 
 const AppToolsRouteWithChildren = AppToolsRoute._addFileChildren(
