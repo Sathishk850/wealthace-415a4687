@@ -360,6 +360,10 @@ function ReportsView() {
   const error = tx.error || cats.error || budgets.error || goals.error || settings.error;
   const [moduleTab, setModuleTab] = useState<"all" | ReportModule>("all");
   const [preview, setPreview] = useState<ReportData | null>(null);
+  const [search, setSearch] = useState("");
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "rows-desc" | "module">("module");
 
   const reports = useMemo(() => {
     const transactions = tx.data ?? [];
