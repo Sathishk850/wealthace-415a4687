@@ -62,7 +62,7 @@ function Planner() {
     <>
       <PageHeader
         title="Planner"
-        description="Goals, retirement, FIRE roadmap and monthly budgets."
+        description="Goals, retirement and your FIRE roadmap."
         actions={
           <>
             <Button variant="outline" size="sm" className="gap-1.5">
@@ -81,14 +81,12 @@ function Planner() {
           <TabsTrigger value="goals">Goals</TabsTrigger>
           <TabsTrigger value="retirement">Retirement</TabsTrigger>
           <TabsTrigger value="fire">FIRE</TabsTrigger>
-          <TabsTrigger value="budget">Budget</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><OverviewView /></TabsContent>
         <TabsContent value="goals"><GoalsView /></TabsContent>
         <TabsContent value="retirement"><RetirementView /></TabsContent>
         <TabsContent value="fire"><FireView /></TabsContent>
-        <TabsContent value="budget"><BudgetView /></TabsContent>
       </Tabs>
     </>
   );
