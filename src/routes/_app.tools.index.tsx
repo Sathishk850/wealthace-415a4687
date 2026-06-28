@@ -5,7 +5,6 @@ import {
   FileText,
   Calculator,
   Sparkles,
-  LayoutGrid,
   Download,
   FileSpreadsheet,
   FileDown,
@@ -21,15 +20,30 @@ import {
   Loader2,
   AlertCircle,
   Lightbulb,
+  Bell,
+  Info,
+  RefreshCw,
+  Share2,
+  Bookmark,
+  ArrowRight,
+  Search,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TextTabs } from "@/components/text-tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +68,15 @@ import {
   currentMonthKey,
 } from "@/lib/money-api";
 import { useGoals, usePlannerSettings } from "@/lib/planner-api";
+import {
+  useReminders,
+  useToolsActivity,
+  logToolsActivity,
+  daysUntil,
+  REMINDER_KIND_LABEL,
+  inr as inr2,
+} from "@/lib/tools-api";
+import { RemindersView } from "@/components/reminders-view";
 import { FinCalculators } from "./_app.tools.financial-calculator";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
