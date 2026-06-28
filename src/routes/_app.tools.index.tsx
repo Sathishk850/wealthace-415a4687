@@ -137,38 +137,182 @@ function ToolsPage() {
 /* ---------------- Overview ---------------- */
 function OverviewView({ onPick }: { onPick: (v: string) => void }) {
   const tx = useTransactions();
+  const cats = useCategories();
+  const budgets = useBudgets();
   const goals = useGoals();
-  const items: { v: string; title: string; desc: string; icon: LucideIcon }[] = [
-    { v: "reports", title: "Reports", desc: "Net worth, income, cashflow, tax — export to PDF, Excel, CSV", icon: FileText },
-    { v: "calculators", title: "Financial Calculators", desc: "SIP, EMI, CAGR, XIRR and more", icon: Calculator },
-    { v: "insights", title: "AI Insights", desc: "Spending analysis, savings & investment tips", icon: Sparkles },
-  ];
-  const totalTx = tx.data?.length ?? 0;
-  const totalGoals = goals.data?.length ?? 0;
+  const settings = usePlannerSettings();
+  const reminders = useReminders();
+  const activity = useToolsActivity();
+
+  const insights = useMemo(
+    () =>
+      buildInsights({
+        transactions: tx.data ?? [],
+        categories: cats.data ?? [],
+        budgets: budgets.data ?? [],
+        goals: goals.data ?? [],
+        settings: settings.data,
+      }),
+    [tx.data, cats.data, budgets.data, goals.data, settings.data],
+  );
+
+  const allInsights: InsightItem[] = useMemo(() => {
+    return [
+      ...insights.spending,
+      ...insights.savings,
+      ...insights.investments,
+      ...insights.recommendations,
+    ];
+  }, [insights]);
+
+  const upcoming = useMemo(() => {
+    return (reminders.data ?? [])
+      .filter((r) => r.status === "upcoming")
+      .sort((a, b) => a.due_date.localeCompare(b.due_date))
+      .slice(0, 5);
+  }, [reminders.data]);
+
+  const frequent = useMemo(() => (activity.data ?? []).slice(0, 6), [activity.data]);
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <MiniStat label="Transactions" value={String(totalTx)} icon={Activity} />
-        <MiniStat label="Active Goals" value={String(totalGoals)} icon={Target} />
-        <MiniStat label="Reports Available" value="5" icon={FileText} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MiniStat label="Reports Available" value="18" icon={FileText} onClick={() => onPick("reports")} />
+        <MiniStat label="Calculators Available" value="12" icon={Calculator} onClick={() => onPick("calculators")} />
+        <MiniStat label="AI Insights Available" value={String(allInsights.length)} icon={Sparkles} onClick={() => onPick("insights")} />
+        <MiniStat label="Upcoming Reminders" value={String(upcoming.length)} icon={Bell} onClick={() => onPick("reminders")} />
       </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        {items.map(({ v, title, desc, icon: Icon }) => (
-          <button
-            key={v}
-            onClick={() => onPick(v)}
-            className="group flex items-start gap-4 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-5 text-left transition hover:border-[var(--primary)]/40"
-          >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
-              <Icon className="h-5 w-5" />
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        {/* AI Insights Panel (Top 5) — replaces Recent Activity */}
+        <Card className="glass-card border-[var(--border)] p-5 lg:col-span-2">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[var(--primary)]" />
+              <h3 className="text-sm font-semibold text-[var(--text-main)]">AI Insights</h3>
+              <Info className="h-3.5 w-3.5 text-[var(--text-muted)]" aria-label="Personalised tips based on your data" />
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-[var(--text-main)]">{title}</div>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">{desc}</p>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1 text-xs text-[var(--primary)] hover:bg-[var(--primary)]/10"
+              onClick={() => onPick("insights")}
+            >
+              View All Insights <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
+          {allInsights.length === 0 ? (
+            <p className="text-xs text-[var(--text-muted)]">
+              Add transactions, budgets or goals to unlock personalised insights.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {allInsights.slice(0, 5).map((it, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 p-3"
+                >
+                  <Badge
+                    variant="outline"
+                    className={
+                      it.tone === "good"
+                        ? "border-[var(--primary)]/40 text-[var(--primary)]"
+                        : it.tone === "bad"
+                        ? "border-destructive/40 text-destructive"
+                        : "border-amber-400/40 text-amber-400"
+                    }
+                  >
+                    {it.tone === "good" ? "Good" : it.tone === "bad" ? "Alert" : "Tip"}
+                  </Badge>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-[var(--text-main)]">{it.title}</div>
+                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{it.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Upcoming Reminders */}
+        <Card className="glass-card border-[var(--border)] p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-[var(--primary)]" />
+              <h3 className="text-sm font-semibold text-[var(--text-main)]">Upcoming Reminders</h3>
             </div>
-          </button>
-        ))}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1 text-xs text-[var(--primary)] hover:bg-[var(--primary)]/10"
+              onClick={() => onPick("reminders")}
+            >
+              Manage <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
+          {upcoming.length === 0 ? (
+            <p className="text-xs text-[var(--text-muted)]">No upcoming reminders.</p>
+          ) : (
+            <ul className="space-y-2">
+              {upcoming.map((r) => {
+                const d = daysUntil(r.due_date);
+                return (
+                  <li key={r.id} className="rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm text-[var(--text-main)]">{r.title}</span>
+                      <span className={`text-[11px] ${d < 0 ? "text-destructive" : d <= r.notify_days_before ? "text-amber-400" : "text-[var(--text-muted)]"}`}>
+                        {d === 0 ? "Today" : d > 0 ? `${d}d` : `${Math.abs(d)}d late`}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">
+                      {REMINDER_KIND_LABEL[r.kind]}
+                      {r.amount > 0 ? ` · ${inr2(r.amount)}` : ""}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
       </div>
+
+      {/* Frequently Used */}
+      <Card className="glass-card border-[var(--border)] p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-[var(--primary)]" />
+          <h3 className="text-sm font-semibold text-[var(--text-main)]">Frequently Used</h3>
+        </div>
+        {frequent.length === 0 ? (
+          <p className="text-xs text-[var(--text-muted)]">
+            Recently viewed reports and calculators will appear here.
+          </p>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {frequent.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => onPick(a.item_type === "report" ? "reports" : "calculators")}
+                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 p-3 text-left transition hover:border-[var(--primary)]/40"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {a.item_type === "report" ? (
+                    <FileText className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                  ) : (
+                    <Calculator className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate text-sm text-[var(--text-main)]">{a.item_label}</div>
+                    <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                      {a.item_type} · used {a.use_count}×
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+              </button>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
