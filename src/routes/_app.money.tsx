@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   TrendingUp,
-  TrendingDown,
-  ArrowLeftRight,
   Plus,
   Info,
   Calendar,
@@ -13,7 +11,6 @@ import {
   ShoppingBasket,
   Fuel,
   Wallet,
-  ArrowUpRight,
   ArrowDownRight,
   PiggyBank,
   CalendarDays,
