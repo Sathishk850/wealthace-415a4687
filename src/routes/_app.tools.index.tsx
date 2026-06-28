@@ -77,6 +77,7 @@ import {
   inr as inr2,
 } from "@/lib/tools-api";
 import { RemindersView } from "@/components/reminders-view";
+import { ScheduledReportsPanel } from "@/components/scheduled-reports-panel";
 import { FinCalculators } from "./_app.tools.financial-calculator";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
