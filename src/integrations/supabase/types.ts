@@ -428,39 +428,51 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          chart_animations: boolean
+          compact_mode: boolean
           created_at: string
           currency: string
           date_format: string
+          default_chart_range: string
           full_name: string | null
           language: string
           number_format: string
           phone: string | null
+          theme: string
           timezone: string
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          chart_animations?: boolean
+          compact_mode?: boolean
           created_at?: string
           currency?: string
           date_format?: string
+          default_chart_range?: string
           full_name?: string | null
           language?: string
           number_format?: string
           phone?: string | null
+          theme?: string
           timezone?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          chart_animations?: boolean
+          compact_mode?: boolean
           created_at?: string
           currency?: string
           date_format?: string
+          default_chart_range?: string
           full_name?: string | null
           language?: string
           number_format?: string
           phone?: string | null
+          theme?: string
           timezone?: string
           updated_at?: string
           user_id?: string
