@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   ArrowUp,
   ArrowDown,
@@ -12,9 +12,7 @@ import {
   PiggyBank,
   ArrowLeftRight,
   ArrowRight,
-  Home,
-  Car,
-  Plane,
+  Target,
   Sparkles,
   Calendar,
   BadgeIndianRupee,
@@ -43,6 +41,13 @@ import {
   defaultChartRange,
   type ChartRangeValue,
 } from "@/components/chart-range-selector";
+import { useAssets, useLiabilities, useInvestments, inr as inrW } from "@/lib/wealth-api";
+import { useTransactions } from "@/lib/money-api";
+import { useGoals } from "@/lib/planner-api";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -58,33 +63,248 @@ export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
 });
 
-function genSeries(base: number, points: number, vol: number) {
-  let v = base;
-  return Array.from({ length: points }, (_, i) => {
-    v = v + (Math.sin(i / 3) * vol + (Math.random() - 0.3) * vol);
-    return { i, v: Math.max(v, base * 0.85), label: `D${i + 1}` };
-  });
-}
-
-const NET_SERIES = genSeries(6500000, 30, 28000);
-const PORT_SERIES = genSeries(5500000, 30, 22000);
-const MICRO_UP = genSeries(100, 24, 4).map((d) => ({ ...d }));
-const MICRO_DOWN = genSeries(100, 24, 4).map((d, i) => ({ ...d, v: 110 - i * 0.4 + Math.random() * 4 }));
-
-const ALLOCATION = [
-  { name: "Equity", value: 48.6, color: "#3b82f6" },
-  { name: "Mutual Funds", value: 28.7, color: "#14d8cf" },
-  { name: "Debt", value: 12.3, color: "#d9b800" },
-  { name: "Gold", value: 6.1, color: "#ff8a3c" },
-  { name: "Cash & Others", value: 4.3, color: "#a855f7" },
-];
-
 function fmt(n: number) {
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n);
 }
 
+const ALLOC_COLORS = ["#14d8cf", "#3b82f6", "#d9b800", "#ff8a3c", "#a855f7", "#00c896", "#ff4d4d", "#7c3aed"];
+
+type Snapshot = {
+  id: string;
+  snapshot_date: string;
+  net_worth: number;
+  assets_total: number;
+  liabilities_total: number;
+  investments_total: number;
+  savings_total: number;
+};
+
+function useSnapshots() {
+  return useQuery({
+    queryKey: ["wealth", "snapshots"] as const,
+    queryFn: async (): Promise<Snapshot[]> => {
+      const { data, error } = await supabase
+        .from("wealth_snapshots" as never)
+        .select("*")
+        .order("snapshot_date", { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        id: r.id,
+        snapshot_date: r.snapshot_date,
+        net_worth: Number(r.net_worth ?? 0),
+        assets_total: Number(r.assets_total ?? 0),
+        liabilities_total: Number(r.liabilities_total ?? 0),
+        investments_total: Number(r.investments_total ?? 0),
+        savings_total: Number(r.savings_total ?? 0),
+      }));
+    },
+  });
+}
+
+function useCreateSnapshot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Omit<Snapshot, "id" | "snapshot_date"> & { snapshot_date?: string }) => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Not signed in");
+      const { error } = await supabase.from("wealth_snapshots" as never).insert({
+        user_id: u.user.id,
+        snapshot_date: payload.snapshot_date ?? new Date().toISOString().slice(0, 10),
+        net_worth: payload.net_worth,
+        assets_total: payload.assets_total,
+        liabilities_total: payload.liabilities_total,
+        investments_total: payload.investments_total,
+        savings_total: payload.savings_total,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Snapshot saved");
+      qc.invalidateQueries({ queryKey: ["wealth", "snapshots"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save snapshot"),
+  });
+}
+
 function Dashboard() {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const assetsQ = useAssets();
+  const liabilitiesQ = useLiabilities();
+  const investmentsQ = useInvestments();
+  const txnsQ = useTransactions();
+  const goalsQ = useGoals();
+  const snapsQ = useSnapshots();
+  const createSnap = useCreateSnapshot();
+
+  const assets = assetsQ.data ?? [];
+  const liabilities = liabilitiesQ.data ?? [];
+  const investments = investmentsQ.data ?? [];
+  const txns = txnsQ.data ?? [];
+  const goals = goalsQ.data ?? [];
+  const snaps = snapsQ.data ?? [];
+
+  const totals = useMemo(() => {
+    const assetsTotal = assets.reduce((s, a) => s + (a.current_value || 0), 0);
+    const investmentsTotal = investments.reduce((s, i) => s + (i.current_value ?? 0), 0);
+    const liabilitiesTotal = liabilities.reduce((s, l) => s + (l.outstanding || 0), 0);
+    const totalAssets = assetsTotal + investmentsTotal;
+    const netWorth = totalAssets - liabilitiesTotal;
+
+    // This month income / expense
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
+    const thisMonth = txns.filter((t) => t.occurred_on >= monthStart);
+    const lastMonth = txns.filter((t) => t.occurred_on >= lastMonthStart && t.occurred_on < monthStart);
+    const income = thisMonth.filter((t) => t.kind === "income").reduce((s, t) => s + t.amount, 0);
+    const expense = thisMonth.filter((t) => t.kind === "expense").reduce((s, t) => s + t.amount, 0);
+    const lastIncome = lastMonth.filter((t) => t.kind === "income").reduce((s, t) => s + t.amount, 0);
+    const lastExpense = lastMonth.filter((t) => t.kind === "expense").reduce((s, t) => s + t.amount, 0);
+    const savings = Math.max(income - expense, 0);
+    const netCashFlow = income - expense;
+    const lastSavings = Math.max(lastIncome - lastExpense, 0);
+    const lastNetCashFlow = lastIncome - lastExpense;
+
+    return {
+      assetsTotal: totalAssets,
+      assetsOnlyTotal: assetsTotal,
+      investmentsTotal,
+      liabilitiesTotal,
+      netWorth,
+      savings,
+      netCashFlow,
+      lastSavings,
+      lastNetCashFlow,
+      income,
+      expense,
+      lastIncome,
+      lastExpense,
+    };
+  }, [assets, liabilities, investments, txns]);
+
+  // Allocation: group investments by category
+  const allocation = useMemo(() => {
+    if (!investments.length) return [] as { name: string; value: number; pct: number; color: string }[];
+    const map = new Map<string, number>();
+    for (const i of investments) {
+      const v = i.current_value ?? 0;
+      if (!v) continue;
+      map.set(i.category, (map.get(i.category) ?? 0) + v);
+    }
+    const total = Array.from(map.values()).reduce((s, v) => s + v, 0);
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value], idx) => ({
+        name,
+        value,
+        pct: total > 0 ? (value / total) * 100 : 0,
+        color: ALLOC_COLORS[idx % ALLOC_COLORS.length],
+      }));
+  }, [investments]);
+
+  const netWorthSeries = useMemo(
+    () => snaps.map((s, i) => ({ i, v: s.net_worth, label: s.snapshot_date })),
+    [snaps],
+  );
+  const portfolioSeries = useMemo(
+    () => snaps.map((s, i) => ({ i, v: s.investments_total, label: s.snapshot_date })),
+    [snaps],
+  );
+
+  // Net worth deltas from snapshot history
+  const netDelta = useMemo(() => {
+    if (snaps.length === 0) return { day: 0, dayPct: 0, month: 0, monthPct: 0 };
+    const last = snaps[snaps.length - 1].net_worth;
+    const prev = snaps[snaps.length - 2]?.net_worth ?? last;
+    const monthAgoIso = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const monthRef = [...snaps].reverse().find((s) => s.snapshot_date <= monthAgoIso)?.net_worth ?? snaps[0].net_worth;
+    return {
+      day: last - prev,
+      dayPct: prev ? ((last - prev) / Math.abs(prev)) * 100 : 0,
+      month: last - monthRef,
+      monthPct: monthRef ? ((last - monthRef) / Math.abs(monthRef)) * 100 : 0,
+    };
+  }, [snaps]);
+
+  // Financial score (simple, transparent rules)
+  const score = useMemo(() => {
+    const debtRatio = totals.assetsTotal > 0 ? totals.liabilitiesTotal / totals.assetsTotal : 0;
+    const savingsRate = totals.income > 0 ? (totals.income - totals.expense) / totals.income : 0;
+    const invShare = totals.assetsTotal > 0 ? totals.investmentsTotal / totals.assetsTotal : 0;
+    const cashFlow = totals.netCashFlow >= 0 ? 1 : 0;
+    const diversity = Math.min(allocation.length / 4, 1);
+    const debtScore = Math.round(Math.max(0, 1 - debtRatio) * 100);
+    const savingsScore = Math.round(Math.max(0, Math.min(savingsRate / 0.3, 1)) * 100);
+    const allocScore = Math.round(Math.min(invShare / 0.5, 1) * 100);
+    const cashScore = cashFlow * 100;
+    const divScore = Math.round(diversity * 100);
+    const total = Math.round((debtScore + savingsScore + allocScore + cashScore + divScore) / 5);
+    return {
+      total,
+      rows: [
+        { k: "Asset Allocation", v: allocScore },
+        { k: "Debt Management", v: debtScore },
+        { k: "Savings Rate", v: savingsScore },
+        { k: "Cash Flow", v: cashScore },
+        { k: "Diversification", v: divScore },
+      ],
+    };
+  }, [totals, allocation]);
+
+  const insights = useMemo(() => {
+    const list: { icon: any; tint: string; title: string; body: string }[] = [];
+    if (totals.lastExpense > 0) {
+      const diff = totals.expense - totals.lastExpense;
+      const pct = (Math.abs(diff) / totals.lastExpense) * 100;
+      list.push({
+        icon: BadgeIndianRupee,
+        tint: diff <= 0 ? "#00c896" : "#ff8a3c",
+        title: diff <= 0 ? `Expenses down ${pct.toFixed(1)}%` : `Expenses up ${pct.toFixed(1)}%`,
+        body: `${diff <= 0 ? "Saved" : "Spent"} ₹${fmt(Math.abs(diff))} vs last month.`,
+      });
+    }
+    if (totals.income > 0) {
+      const rate = ((totals.income - totals.expense) / totals.income) * 100;
+      list.push({
+        icon: TrendingUp,
+        tint: "#14d8cf",
+        title: `Savings rate ${rate.toFixed(0)}%`,
+        body: rate >= 20 ? "Strong saver — keep it up." : "Aim for at least 20% to build resilience.",
+      });
+    }
+    const activeSip = investments.find((i) => i.is_sip && i.sip_active && i.sip_next_date);
+    if (activeSip?.sip_next_date) {
+      list.push({
+        icon: Calendar,
+        tint: "#3b82f6",
+        title: `SIP of ₹${fmt(activeSip.sip_amount ?? 0)} due`,
+        body: `${activeSip.name} · ${new Date(activeSip.sip_next_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}.`,
+      });
+    }
+    const emergency = goals.find((g) => g.goal_type === "emergency_fund");
+    if (emergency) {
+      const pct = emergency.target_amount > 0 ? (emergency.saved_amount / emergency.target_amount) * 100 : 0;
+      list.push({
+        icon: Sparkles,
+        tint: "#a855f7",
+        title: `Emergency fund at ${pct.toFixed(0)}%`,
+        body: pct >= 100 ? "Fully funded — well done!" : "Keep saving toward the target.",
+      });
+    }
+    return list.slice(0, 4);
+  }, [totals, investments, goals]);
+
+  const onSnapshot = () => {
+    createSnap.mutate({
+      net_worth: totals.netWorth,
+      assets_total: totals.assetsTotal,
+      liabilities_total: totals.liabilitiesTotal,
+      investments_total: totals.investmentsTotal,
+      savings_total: totals.savings,
+    });
+  };
+
+  const loading = assetsQ.isLoading || liabilitiesQ.isLoading || investmentsQ.isLoading;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -95,21 +315,27 @@ function Dashboard() {
             <div>
               <CardHeader title="Net Worth" tip="Total of assets minus liabilities across all your accounts." />
               <div className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
-                ₹ 73,14,850
+                {loading ? "—" : `₹ ${fmt(totals.netWorth)}`}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm">
-                <span className="inline-flex items-center gap-1.5 font-semibold text-success">
-                  <ArrowUp className="h-3.5 w-3.5" /> ₹2,45,000 (2.18%)
-                  <span className="text-muted-foreground font-normal"> Today</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-danger">
-                  <ArrowDown className="h-3.5 w-3.5" /> ₹51,648 (-0.70%)
-                  <span className="text-muted-foreground font-normal"> This Month</span>
-                </span>
+                {snaps.length >= 2 ? (
+                  <>
+                    <DeltaPill amount={netDelta.day} pct={netDelta.dayPct} label="Since last snapshot" />
+                    <DeltaPill amount={netDelta.month} pct={netDelta.monthPct} label="Last 30 days" />
+                  </>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Take snapshots to track changes over time.
+                  </span>
+                )}
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
-                <button className="inline-flex items-center gap-2 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground transition hover:bg-[var(--primary-hover)]">
-                  <Camera className="h-4 w-4" /> Snapshot
+                <button
+                  onClick={onSnapshot}
+                  disabled={createSnap.isPending || loading}
+                  className="inline-flex items-center gap-2 rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground transition hover:bg-[var(--primary-hover)] disabled:opacity-60"
+                >
+                  <Camera className="h-4 w-4" /> {createSnap.isPending ? "Saving…" : "Snapshot"}
                 </button>
                 <button
                   onClick={() => setHistoryOpen(true)}
@@ -120,7 +346,11 @@ function Dashboard() {
               </div>
             </div>
             <div className="min-h-[220px]">
-              <RangeChart data={NET_SERIES} height={220} />
+              {netWorthSeries.length >= 2 ? (
+                <RangeChart data={netWorthSeries} height={220} />
+              ) : (
+                <EmptyChart height={220} message="Take your first snapshot to start tracking history." />
+              )}
             </div>
           </div>
         </Card>
@@ -129,18 +359,26 @@ function Dashboard() {
         <div className="col-span-12">
           <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Financial Snapshot</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-            <SnapCard label="Assets" value="₹ 1,15,38,850" delta="7.60% vs last month" up icon={Wallet} accent="#14d8cf" series={MICRO_UP} />
-            <SnapCard label="Liabilities" value="₹ 42,24,000" delta="2.10% vs last month" up={false} icon={Banknote} accent="#ff4d4d" series={MICRO_DOWN} />
-            <SnapCard label="Investments" value="₹ 58,78,450" delta="6.35% vs last month" up icon={TrendingUp} accent="#00c896" series={MICRO_UP} />
-            <SnapCard label="Savings" value="₹ 6,89,600" delta="1.25% vs last month" up icon={PiggyBank} accent="#3b82f6" series={MICRO_UP} />
-            <SnapCard
+            <LiveSnap label="Assets" value={totals.assetsTotal} snaps={snaps} field="assets_total" icon={Wallet} accent="#14d8cf" />
+            <LiveSnap label="Liabilities" value={totals.liabilitiesTotal} snaps={snaps} field="liabilities_total" icon={Banknote} accent="#ff4d4d" goodIsDown />
+            <LiveSnap label="Investments" value={totals.investmentsTotal} snaps={snaps} field="investments_total" icon={TrendingUp} accent="#00c896" />
+            <LiveSnap
+              label="Savings"
+              value={totals.savings}
+              delta={totals.savings - totals.lastSavings}
+              deltaBase={totals.lastSavings}
+              icon={PiggyBank}
+              accent="#3b82f6"
+              series={snaps.map((s, i) => ({ i, v: s.savings_total }))}
+            />
+            <LiveSnap
               label="Net Cash Flow"
-              value="₹ 1,22,800"
-              delta="12.6% vs last month"
-              up
+              value={totals.netCashFlow}
+              delta={totals.netCashFlow - totals.lastNetCashFlow}
+              deltaBase={Math.abs(totals.lastNetCashFlow)}
               icon={ArrowLeftRight}
               accent="#a855f7"
-              series={MICRO_UP}
+              series={snaps.map((s, i) => ({ i, v: s.savings_total }))}
               tip="Net Cash Flow = Total income received minus total expenses paid during the period. Positive means you're saving; negative means you're spending more than you earn."
             />
           </div>
@@ -149,50 +387,49 @@ function Dashboard() {
         {/* Asset Allocation + Portfolio Performance */}
         <Card className="col-span-12 p-6 lg:col-span-6">
           <CardHeader title="Asset Allocation" tip="Breakdown of your investments by asset class." />
-          <div className="mt-4 grid grid-cols-1 items-center gap-4 sm:grid-cols-[180px_1fr]">
-            <div className="relative mx-auto h-[180px] w-[180px]">
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={ALLOCATION}
-                    dataKey="value"
-                    innerRadius={58}
-                    outerRadius={86}
-                    paddingAngle={2}
-                    stroke="none"
-                  >
-                    {ALLOCATION.map((a) => (
-                      <Cell key={a.name} fill={a.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                <div className="text-center">
-                  <div className="text-[11px] text-muted-foreground">Total</div>
-                  <div className="font-display text-base font-bold text-foreground">
-                    ₹73,14,850
+          {allocation.length === 0 ? (
+            <EmptyState
+              className="mt-4"
+              title="No investments yet"
+              body="Add investments in Wealth to see your allocation breakdown."
+            />
+          ) : (
+            <div className="mt-4 grid grid-cols-1 items-center gap-4 sm:grid-cols-[180px_1fr]">
+              <div className="relative mx-auto h-[180px] w-[180px]">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie data={allocation} dataKey="value" innerRadius={58} outerRadius={86} paddingAngle={2} stroke="none">
+                      {allocation.map((a) => (
+                        <Cell key={a.name} fill={a.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 grid place-items-center">
+                  <div className="text-center">
+                    <div className="text-[11px] text-muted-foreground">Total</div>
+                    <div className="font-display text-base font-bold text-foreground">₹{fmt(totals.investmentsTotal)}</div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="space-y-2.5 text-sm">
-              {ALLOCATION.map((a) => (
-                <div key={a.name} className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2 text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
-                    {a.name}
-                  </span>
-                  <span className="font-semibold text-foreground">{a.value}%</span>
+              <div className="space-y-2.5 text-sm">
+                {allocation.map((a) => (
+                  <div key={a.name} className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-2 text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
+                      {a.name}
+                    </span>
+                    <span className="font-semibold text-foreground">{a.pct.toFixed(1)}%</span>
+                  </div>
+                ))}
+                <div className="pt-2 text-right">
+                  <Link to="/wealth" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
+                    View Details <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
-              ))}
-              <div className="pt-2 text-right">
-                <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
-                  View Details <ArrowRight className="h-3 w-3" />
-                </a>
               </div>
             </div>
-          </div>
+          )}
         </Card>
 
         <Card className="col-span-12 p-6 lg:col-span-6">
@@ -203,20 +440,26 @@ function Dashboard() {
             <div>
               <div className="text-xs text-muted-foreground">Current Value</div>
               <div className="mt-1 font-display text-2xl font-bold text-foreground">
-                ₹ 58,78,450
+                ₹ {fmt(totals.investmentsTotal)}
               </div>
-              <div className="mt-1 text-xs font-semibold text-success">
-                ▲ ₹1,48,850 (2.60%)
-              </div>
+              {portfolioSeries.length >= 2 ? (
+                <PortfolioDelta series={portfolioSeries} />
+              ) : (
+                <div className="mt-1 text-xs text-muted-foreground">No history yet</div>
+              )}
             </div>
           </div>
           <div className="mt-3 h-[180px]">
-            <RangeChart data={PORT_SERIES} height={180} compact />
+            {portfolioSeries.length >= 2 ? (
+              <RangeChart data={portfolioSeries} height={180} compact />
+            ) : (
+              <EmptyChart height={180} message="No portfolio snapshots yet." />
+            )}
           </div>
           <div className="mt-2 text-right">
-            <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
+            <Link to="/wealth" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
               View Portfolio <ArrowRight className="h-3 w-3" />
-            </a>
+            </Link>
           </div>
         </Card>
 
@@ -224,15 +467,9 @@ function Dashboard() {
         <Card className="col-span-12 p-6 lg:col-span-6">
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
           <div className="mt-4 grid grid-cols-[160px_1fr] items-center gap-6">
-            <ScoreRing score={82} />
+            <ScoreRing score={score.total} />
             <div className="space-y-2.5 text-sm">
-              {[
-                { k: "Asset Allocation", v: 92 },
-                { k: "Debt Management", v: 74 },
-                { k: "Savings Rate", v: 81 },
-                { k: "Cash Flow", v: 79 },
-                { k: "Diversification", v: 88 },
-              ].map((row) => (
+              {score.rows.map((row) => (
                 <div key={row.k} className="flex items-center gap-3">
                   <span className="w-32 shrink-0 text-muted-foreground">{row.k}</span>
                   <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
@@ -244,11 +481,6 @@ function Dashboard() {
                   <span className="w-8 text-right font-semibold text-foreground">{row.v}</span>
                 </div>
               ))}
-              <div className="pt-1 text-right">
-                <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
-                  View Score Details <ArrowRight className="h-3 w-3" />
-                </a>
-              </div>
             </div>
           </div>
         </Card>
@@ -256,36 +488,143 @@ function Dashboard() {
         <Card className="col-span-12 p-6 lg:col-span-6">
           <div className="flex items-center justify-between">
             <CardHeader title="Goal Progress" tip="Progress toward your active financial goals." />
-            <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
+            <Link to="/planner" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
               View All Goals <ArrowRight className="h-3 w-3" />
-            </a>
+            </Link>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <GoalCard icon={Home} color="#14d8cf" name="House Purchase" pct={68} saved="₹34,00,000" target="₹50,00,000" eta="Dec 2028" />
-            <GoalCard icon={Car} color="#d9b800" name="Car Purchase" pct={35} saved="₹3,50,000" target="₹10,00,000" eta="Jun 2027" />
-            <GoalCard icon={Plane} color="#a855f7" name="Europe Trip" pct={81} saved="₹2,43,000" target="₹3,00,000" eta="Oct 2026" />
-          </div>
+          {goals.length === 0 ? (
+            <EmptyState className="mt-4" title="No goals yet" body="Create goals in Planner to track progress here." />
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {goals.slice(0, 3).map((g, idx) => {
+                const pct = g.target_amount > 0 ? Math.min(100, Math.round((g.saved_amount / g.target_amount) * 100)) : 0;
+                const color = ALLOC_COLORS[idx % ALLOC_COLORS.length];
+                return (
+                  <GoalCard
+                    key={g.id}
+                    icon={Target}
+                    color={color}
+                    name={g.name}
+                    pct={pct}
+                    saved={`₹${fmt(g.saved_amount)}`}
+                    target={`₹${fmt(g.target_amount)}`}
+                    eta={g.target_date ? new Date(g.target_date).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "—"}
+                  />
+                );
+              })}
+            </div>
+          )}
         </Card>
 
         {/* Financial Insights — full width */}
         <Card className="col-span-12 p-6">
           <div className="flex items-center justify-between">
             <CardHeader title="Financial Insights" tip="Smart, personalized observations about your finances." />
-            <a className="inline-flex items-center gap-1 text-xs font-semibold text-mint" href="#">
-              View All Insights <ArrowRight className="h-3 w-3" />
-            </a>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Insight icon={TrendingUp} tint="#14d8cf" title="Savings rate increased 8%" body="Great job! You're saving more than 75% of users." />
-            <Insight icon={BadgeIndianRupee} tint="#d9b800" title="Expenses down by 3%" body="Nice! You spent ₹1,900 less than last month." />
-            <Insight icon={Calendar} tint="#3b82f6" title="SIP of ₹25,000 is due tomorrow" body="Pn Parag Parikh Flexi Cap Fund · Due on 13 Jun 2026." />
-            <Insight icon={Sparkles} tint="#a855f7" title="Emergency fund is at 72%" body="You're on track. Target 6 months of expenses." />
-          </div>
+          {insights.length === 0 ? (
+            <EmptyState className="mt-4" title="No insights yet" body="Add transactions and goals to see personalized insights." />
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {insights.map((it, idx) => (
+                <Insight key={idx} icon={it.icon} tint={it.tint} title={it.title} body={it.body} />
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 
       <SnapshotHistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
     </TooltipProvider>
+  );
+}
+
+function DeltaPill({ amount, pct, label }: { amount: number; pct: number; label: string }) {
+  const up = amount >= 0;
+  const Icon = up ? ArrowUp : ArrowDown;
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 font-semibold", up ? "text-success" : "text-danger")}>
+      <Icon className="h-3.5 w-3.5" /> ₹{fmt(Math.abs(amount))} ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%)
+      <span className="text-muted-foreground font-normal"> {label}</span>
+    </span>
+  );
+}
+
+function PortfolioDelta({ series }: { series: { v: number }[] }) {
+  const last = series[series.length - 1]?.v ?? 0;
+  const first = series[0]?.v ?? 0;
+  const diff = last - first;
+  const pct = first ? (diff / Math.abs(first)) * 100 : 0;
+  const up = diff >= 0;
+  return (
+    <div className={cn("mt-1 text-xs font-semibold", up ? "text-success" : "text-danger")}>
+      {up ? "▲" : "▼"} ₹{fmt(Math.abs(diff))} ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%)
+    </div>
+  );
+}
+
+function EmptyChart({ height, message }: { height: number; message: string }) {
+  return (
+    <div
+      className="flex w-full items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground"
+      style={{ height }}
+    >
+      {message}
+    </div>
+  );
+}
+
+function EmptyState({ title, body, className }: { title: string; body: string; className?: string }) {
+  return (
+    <div className={cn("rounded-xl border border-dashed border-border p-6 text-center", className)}>
+      <div className="text-sm font-semibold text-foreground">{title}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{body}</div>
+    </div>
+  );
+}
+
+function LiveSnap({
+  label, value, snaps, field, icon, accent, goodIsDown, tip, delta, deltaBase, series,
+}: {
+  label: string;
+  value: number;
+  snaps?: Snapshot[];
+  field?: "assets_total" | "liabilities_total" | "investments_total" | "savings_total";
+  icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+  goodIsDown?: boolean;
+  tip?: string;
+  delta?: number;
+  deltaBase?: number;
+  series?: { i: number; v: number }[];
+}) {
+  let computedDelta = delta ?? 0;
+  let computedBase = deltaBase ?? 0;
+  let computedSeries = series ?? [];
+  if (snaps && field) {
+    computedSeries = snaps.map((s, i) => ({ i, v: Number(s[field]) }));
+    if (snaps.length >= 2) {
+      const last = Number(snaps[snaps.length - 1][field]);
+      const prev = Number(snaps[snaps.length - 2][field]);
+      computedDelta = last - prev;
+      computedBase = Math.abs(prev);
+    }
+  }
+  const hasHistory = computedSeries.length >= 2;
+  const pct = computedBase > 0 ? (computedDelta / computedBase) * 100 : 0;
+  const isUpVisual = computedDelta >= 0;
+  const isGood = goodIsDown ? !isUpVisual : isUpVisual;
+  return (
+    <SnapCard
+      label={label}
+      value={`₹ ${fmt(value)}`}
+      delta={hasHistory ? `${isUpVisual ? "+" : ""}${pct.toFixed(2)}% vs last snapshot` : "No history yet"}
+      up={isGood}
+      icon={icon}
+      accent={accent}
+      series={computedSeries.length ? computedSeries : [{ i: 0, v: value }, { i: 1, v: value }]}
+      tip={tip}
+      muted={!hasHistory}
+    />
   );
 }
 
