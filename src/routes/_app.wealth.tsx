@@ -6,6 +6,8 @@ import { AssetsView } from "@/components/wealth/assets-view";
 import { LiabilitiesView as LiveLiabilitiesView } from "@/components/wealth/liabilities-view";
 import { InvestmentsView as LiveInvestmentsView } from "@/components/wealth/investments-view";
 import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insurance-view";
+import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
+import { FamilyView as LiveFamilyView } from "@/components/wealth/family-view";
 import {
   Wallet,
   TrendingUp,
@@ -185,9 +187,9 @@ function Wealth() {
       ) : tab === "Insurance" ? (
         <LiveInsuranceView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "Accounts" ? (
-        <AccountsView />
+        <LiveAccountsView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "Family" ? (
-        <FamilyView />
+        <LiveFamilyView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {tab} module coming soon.
