@@ -91,6 +91,7 @@ export const wealthKeys = {
   accounts: ["wealth", "accounts"] as const,
   insurance: ["wealth", "insurance"] as const,
   investments: ["wealth", "investments"] as const,
+  investmentTxns: ["wealth", "investment_txns"] as const,
 };
 
 async function uid() {
@@ -431,4 +432,436 @@ export function groupByCategory<T extends { category: string }>(
       pct: total ? (amt / total) * 100 : 0,
     }))
     .sort((a, b) => b.amt - a.amt);
+}
+
+/* =================== INVESTMENTS =================== */
+export type InvestmentCategory =
+  | "Mutual Funds"
+  | "Stocks"
+  | "ETFs"
+  | "Gold"
+  | "Bonds"
+  | "Crypto"
+  | "Others";
+
+export const INVESTMENT_CATEGORIES: InvestmentCategory[] = [
+  "Mutual Funds",
+  "Stocks",
+  "ETFs",
+  "Gold",
+  "Bonds",
+  "Crypto",
+  "Others",
+];
+
+export type SipFrequency = "monthly" | "weekly" | "quarterly" | "yearly";
+
+export type Investment = {
+  id: string;
+  user_id: string;
+  name: string;
+  symbol: string | null;
+  category: string;
+  sub_category: string | null;
+  quantity: number;
+  avg_price: number;
+  current_price: number;
+  invested_value: number | null;
+  current_value: number | null;
+  purchase_date: string | null;
+  account_id: string | null;
+  owner_member_id: string | null;
+  is_sip: boolean;
+  sip_amount: number | null;
+  sip_frequency: string | null;
+  sip_start_date: string | null;
+  sip_next_date: string | null;
+  sip_active: boolean | null;
+  notes: string | null;
+  status: string;
+  last_updated: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InvestmentInput = {
+  id?: string;
+  name: string;
+  symbol?: string | null;
+  category: string;
+  sub_category?: string | null;
+  quantity: number;
+  avg_price: number;
+  current_price: number;
+  purchase_date?: string | null;
+  is_sip?: boolean;
+  sip_amount?: number | null;
+  sip_frequency?: string | null;
+  sip_start_date?: string | null;
+  sip_next_date?: string | null;
+  sip_active?: boolean | null;
+  notes?: string | null;
+  status?: string;
+  last_updated?: string;
+};
+
+export function useInvestments() {
+  return useQuery({
+    queryKey: wealthKeys.investments,
+    queryFn: async (): Promise<Investment[]> => {
+      const { data, error } = await supabase
+        .from("wealth_investments")
+        .select("*")
+        .order("last_updated", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        quantity: num(r.quantity),
+        avg_price: num(r.avg_price),
+        current_price: num(r.current_price),
+        invested_value: r.invested_value == null ? null : num(r.invested_value),
+        current_value: r.current_value == null ? null : num(r.current_value),
+        sip_amount: r.sip_amount == null ? null : num(r.sip_amount),
+      })) as Investment[];
+    },
+  });
+}
+
+function investmentPayload(i: InvestmentInput) {
+  const qty = Number(i.quantity) || 0;
+  const avg = Number(i.avg_price) || 0;
+  const cur = Number(i.current_price) || 0;
+  return {
+    name: i.name.trim(),
+    symbol: i.symbol?.trim() || null,
+    category: i.category,
+    sub_category: i.sub_category?.trim() || null,
+    quantity: qty,
+    avg_price: avg,
+    current_price: cur,
+    invested_value: qty * avg,
+    current_value: qty * cur,
+    purchase_date: i.purchase_date || null,
+    is_sip: !!i.is_sip,
+    sip_amount: numOrNull(i.sip_amount),
+    sip_frequency: i.sip_frequency || null,
+    sip_start_date: i.sip_start_date || null,
+    sip_next_date: i.sip_next_date || null,
+    sip_active: i.is_sip ? (i.sip_active ?? true) : false,
+    notes: i.notes?.trim() || null,
+    status: i.status || "active",
+    last_updated: i.last_updated || new Date().toISOString().slice(0, 10),
+  };
+}
+
+export function useUpsertInvestment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: InvestmentInput) => {
+      const user_id = await uid();
+      const payload = investmentPayload(input);
+      if (input.id) {
+        const { error } = await supabase
+          .from("wealth_investments")
+          .update(payload)
+          .eq("id", input.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("wealth_investments")
+          .insert({ ...payload, user_id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Investment saved");
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save investment"),
+  });
+}
+
+export function useDeleteInvestment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("wealth_investments").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Investment deleted");
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete"),
+  });
+}
+
+export function useBulkInsertInvestments() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: InvestmentInput[]) => {
+      const user_id = await uid();
+      const payload = rows.map((r) => ({ ...investmentPayload(r), user_id }));
+      if (!payload.length) return 0;
+      const { error } = await supabase.from("wealth_investments").insert(payload);
+      if (error) throw error;
+      return payload.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Imported ${count} investment${count === 1 ? "" : "s"}`);
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
+    },
+    onError: (e: Error) => toast.error(e.message || "Import failed"),
+  });
+}
+
+/* =================== INSURANCE =================== */
+export type InsuranceType =
+  | "Term Life"
+  | "Health"
+  | "Vehicle"
+  | "Personal Accident"
+  | "Property"
+  | "Travel"
+  | "Other";
+
+export const INSURANCE_TYPES: InsuranceType[] = [
+  "Term Life",
+  "Health",
+  "Vehicle",
+  "Personal Accident",
+  "Property",
+  "Travel",
+  "Other",
+];
+
+export type Insurance = {
+  id: string;
+  user_id: string;
+  policy_name: string;
+  policy_number: string | null;
+  policy_type: string;
+  provider: string | null;
+  coverage_amount: number;
+  premium_amount: number | null;
+  premium_frequency: string | null;
+  start_date: string | null;
+  renewal_date: string | null;
+  end_date: string | null;
+  nominee_member_id: string | null;
+  insured_member_id: string | null;
+  claim_status: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InsuranceInput = {
+  id?: string;
+  policy_name: string;
+  policy_number?: string | null;
+  policy_type: string;
+  provider?: string | null;
+  coverage_amount: number;
+  premium_amount?: number | null;
+  premium_frequency?: string | null;
+  start_date?: string | null;
+  renewal_date?: string | null;
+  end_date?: string | null;
+  status?: string;
+  notes?: string | null;
+};
+
+export function useInsurance() {
+  return useQuery({
+    queryKey: wealthKeys.insurance,
+    queryFn: async (): Promise<Insurance[]> => {
+      const { data, error } = await supabase
+        .from("wealth_insurance")
+        .select("*")
+        .order("renewal_date", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        coverage_amount: num(r.coverage_amount),
+        premium_amount: r.premium_amount == null ? null : num(r.premium_amount),
+      })) as Insurance[];
+    },
+  });
+}
+
+function insurancePayload(i: InsuranceInput) {
+  return {
+    policy_name: i.policy_name.trim(),
+    policy_number: i.policy_number?.trim() || null,
+    policy_type: i.policy_type,
+    provider: i.provider?.trim() || null,
+    coverage_amount: Number(i.coverage_amount) || 0,
+    premium_amount: numOrNull(i.premium_amount),
+    premium_frequency: i.premium_frequency || null,
+    start_date: i.start_date || null,
+    renewal_date: i.renewal_date || null,
+    end_date: i.end_date || null,
+    status: i.status || "active",
+    notes: i.notes?.trim() || null,
+  };
+}
+
+export function useUpsertInsurance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: InsuranceInput) => {
+      const user_id = await uid();
+      const payload = insurancePayload(input);
+      if (input.id) {
+        const { error } = await supabase
+          .from("wealth_insurance")
+          .update(payload)
+          .eq("id", input.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("wealth_insurance")
+          .insert({ ...payload, user_id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Policy saved");
+      qc.invalidateQueries({ queryKey: wealthKeys.insurance });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save policy"),
+  });
+}
+
+export function useDeleteInsurance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("wealth_insurance").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Policy deleted");
+      qc.invalidateQueries({ queryKey: wealthKeys.insurance });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete"),
+  });
+}
+
+export function useBulkInsertInsurance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: InsuranceInput[]) => {
+      const user_id = await uid();
+      const payload = rows.map((r) => ({ ...insurancePayload(r), user_id }));
+      if (!payload.length) return 0;
+      const { error } = await supabase.from("wealth_insurance").insert(payload);
+      if (error) throw error;
+      return payload.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Imported ${count} polic${count === 1 ? "y" : "ies"}`);
+      qc.invalidateQueries({ queryKey: wealthKeys.insurance });
+    },
+    onError: (e: Error) => toast.error(e.message || "Import failed"),
+  });
+}
+
+/* =================== Investment math =================== */
+
+/** Compute CAGR % from invested → current over years (>= 0.01). */
+export function cagrPct(invested: number, current: number, years: number) {
+  if (invested <= 0 || current <= 0 || years <= 0.01) return 0;
+  return (Math.pow(current / invested, 1 / years) - 1) * 100;
+}
+
+function yearsBetween(a: Date, b: Date) {
+  return (b.getTime() - a.getTime()) / (365.25 * 86400000);
+}
+
+/**
+ * XIRR via Newton-Raphson on { date, amount } cashflows.
+ * Outflows (buys) should be negative; inflows (current value / sells) positive.
+ * Returns percentage. Falls back to a simple CAGR if Newton fails to converge.
+ */
+export function xirr(
+  flows: { date: Date; amount: number }[],
+  guess = 0.1,
+): number {
+  const cf = flows.filter((f) => f.amount !== 0 && !isNaN(f.amount));
+  if (cf.length < 2) return 0;
+  const hasPos = cf.some((f) => f.amount > 0);
+  const hasNeg = cf.some((f) => f.amount < 0);
+  if (!hasPos || !hasNeg) return 0;
+  const t0 = cf[0].date;
+  const npv = (r: number) =>
+    cf.reduce(
+      (s, f) => s + f.amount / Math.pow(1 + r, yearsBetween(t0, f.date)),
+      0,
+    );
+  const dnpv = (r: number) =>
+    cf.reduce((s, f) => {
+      const t = yearsBetween(t0, f.date);
+      return s - (t * f.amount) / Math.pow(1 + r, t + 1);
+    }, 0);
+  let r = guess;
+  for (let i = 0; i < 80; i++) {
+    const v = npv(r);
+    const d = dnpv(r);
+    if (!isFinite(v) || !isFinite(d) || d === 0) break;
+    const r1 = r - v / d;
+    if (!isFinite(r1)) break;
+    if (Math.abs(r1 - r) < 1e-7) {
+      r = r1;
+      return r * 100;
+    }
+    r = r1;
+    if (r < -0.999) r = -0.999;
+    if (r > 10) r = 10;
+  }
+  // Fallback to CAGR using first outflow to last inflow
+  const out = cf.find((f) => f.amount < 0)!;
+  const last = cf[cf.length - 1];
+  return cagrPct(Math.abs(out.amount), Math.abs(last.amount), yearsBetween(out.date, last.date) || 1);
+}
+
+/** Aggregate XIRR for a set of investments using purchase_date → current_value. */
+export function portfolioXirr(rows: Investment[]) {
+  const today = new Date();
+  const flows: { date: Date; amount: number }[] = [];
+  let totalCurrent = 0;
+  for (const r of rows) {
+    const invested = r.invested_value ?? r.quantity * r.avg_price;
+    const current = r.current_value ?? r.quantity * r.current_price;
+    if (invested > 0 && r.purchase_date) {
+      flows.push({ date: new Date(r.purchase_date), amount: -invested });
+    }
+    totalCurrent += current;
+  }
+  if (!flows.length || totalCurrent <= 0) return 0;
+  flows.push({ date: today, amount: totalCurrent });
+  flows.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return xirr(flows);
+}
+
+/** Per-investment XIRR (single buy → current value). */
+export function singleXirr(inv: Investment) {
+  const invested = inv.invested_value ?? inv.quantity * inv.avg_price;
+  const current = inv.current_value ?? inv.quantity * inv.current_price;
+  if (!inv.purchase_date || invested <= 0 || current <= 0) return 0;
+  return xirr([
+    { date: new Date(inv.purchase_date), amount: -invested },
+    { date: new Date(), amount: current },
+  ]);
+}
+
+/** Days from today to date — negative if past. */
+export function daysUntil(date: string | null) {
+  if (!date) return null;
+  const d = new Date(date).getTime();
+  return Math.ceil((d - Date.now()) / 86400000);
 }
