@@ -217,7 +217,7 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
             Cancel
           </Button>
           <ClearButton
-            dirty={isDirty(form as unknown as Record<string, unknown>, (existing ? form : empty) as unknown as Record<string, unknown>) && !existing}
+            dirty={isDirty(form as unknown as Record<string, unknown>, empty as unknown as Record<string, unknown>)}
             disabled={upsert.isPending}
             onClear={() => setForm(empty)}
           />
