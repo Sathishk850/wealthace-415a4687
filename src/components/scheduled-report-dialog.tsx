@@ -120,7 +120,7 @@ export function ScheduledReportDialog({
         <DialogHeader>
           <DialogTitle>{initial?.id ? "Edit schedule" : "Schedule a report"}</DialogTitle>
           <DialogDescription>
-            FinTrack will generate and deliver these reports automatically.
+            FinVista will generate and deliver these reports automatically.
           </DialogDescription>
         </DialogHeader>
 
