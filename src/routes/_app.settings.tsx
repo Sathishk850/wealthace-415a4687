@@ -593,10 +593,259 @@ function DangerZoneCard() {
 function DataTab() {
   return (
     <div className="space-y-4">
-      <PlaceholderCard
-        title="Data management"
-        items={["Import Data", "Export Data", "Backup", "Restore"]}
-      />
+      <ExportBackupCard />
+      <RestoreCard />
+      <WipeCard />
     </div>
+  );
+}
+
+const USER_TABLES = [
+  "money_budgets",
+  "money_categories",
+  "money_transactions",
+  "planner_goals",
+  "planner_settings",
+  "wealth_accounts",
+  "wealth_assets",
+  "wealth_family_members",
+  "wealth_insurance",
+  "wealth_investments",
+  "wealth_investment_txns",
+  "wealth_liabilities",
+  "tools_reminders",
+  "tools_saved_calculations",
+  "tools_activity",
+  "notification_preferences",
+  "scheduled_reports",
+] as const;
+
+type TableName = (typeof USER_TABLES)[number];
+
+function downloadBlob(filename: string, content: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function toCSV(rows: Record<string, unknown>[]): string {
+  if (!rows.length) return "";
+  const cols = Array.from(rows.reduce((s, r) => { Object.keys(r).forEach((k) => s.add(k)); return s; }, new Set<string>()));
+  const esc = (v: unknown) => {
+    if (v === null || v === undefined) return "";
+    const s = typeof v === "object" ? JSON.stringify(v) : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
+}
+
+async function fetchAllUserData() {
+  const out: Record<string, Record<string, unknown>[]> = {};
+  for (const t of USER_TABLES) {
+    // RLS scopes to current user
+    const { data, error } = await supabase.from(t as TableName).select("*");
+    if (error) throw new Error(`${t}: ${error.message}`);
+    out[t] = (data ?? []) as Record<string, unknown>[];
+  }
+  return out;
+}
+
+function ExportBackupCard() {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const exportJSON = async () => {
+    setBusy("json");
+    try {
+      const data = await fetchAllUserData();
+      const payload = { version: 1, exported_at: new Date().toISOString(), data };
+      downloadBlob(`fintrack-backup-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(payload, null, 2), "application/json");
+      toast.success("Backup downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally { setBusy(null); }
+  };
+
+  const exportCSV = async () => {
+    setBusy("csv");
+    try {
+      const data = await fetchAllUserData();
+      const stamp = new Date().toISOString().slice(0, 10);
+      // Bundle as multiple CSVs concatenated with headers, plus one combined zip-like text? Simplest: download each non-empty table.
+      let any = false;
+      for (const [t, rows] of Object.entries(data)) {
+        if (!rows.length) continue;
+        any = true;
+        downloadBlob(`${t}-${stamp}.csv`, toCSV(rows), "text/csv");
+      }
+      if (!any) toast.info("No data to export");
+      else toast.success("CSV files downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally { setBusy(null); }
+  };
+
+  return (
+    <Card className="glass-card border-[var(--border)] p-6">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-foreground">Export & backup</h3>
+        <p className="text-xs text-muted-foreground">
+          Download a full backup of your data. JSON preserves structure for restore; CSV is one file per module.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={exportJSON} disabled={!!busy}>
+          {busy === "json" ? "Preparing…" : "Download JSON backup"}
+        </Button>
+        <Button variant="outline" onClick={exportCSV} disabled={!!busy}>
+          {busy === "csv" ? "Preparing…" : "Download CSV files"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function RestoreCard() {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"merge" | "replace">("merge");
+
+  const onFile = async (file: File) => {
+    setBusy(true);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as { version?: number; data?: Record<string, Record<string, unknown>[]> };
+      if (!parsed?.data || typeof parsed.data !== "object") throw new Error("Invalid backup file");
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Not signed in");
+
+      let inserted = 0;
+      for (const t of USER_TABLES) {
+        const rows = parsed.data[t];
+        if (!Array.isArray(rows) || !rows.length) continue;
+        if (mode === "replace") {
+          const { error: delErr } = await supabase.from(t as TableName).delete().eq("user_id", uid);
+          if (delErr) throw new Error(`${t}: ${delErr.message}`);
+        }
+        // Rewrite user_id to current user; let server regenerate timestamps
+        const cleaned = rows.map((r) => ({ ...r, user_id: uid }));
+        const { error } = await supabase.from(t as TableName).upsert(cleaned as never);
+        if (error) throw new Error(`${t}: ${error.message}`);
+        inserted += cleaned.length;
+      }
+      toast.success(`Restored ${inserted} records`);
+      qc.invalidateQueries();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Restore failed");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Card className="glass-card border-[var(--border)] p-6">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-foreground">Restore from backup</h3>
+        <p className="text-xs text-muted-foreground">
+          Upload a JSON backup previously exported from FinTrack.
+        </p>
+      </div>
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setMode("merge")}
+          className={`rounded-lg border px-4 py-3 text-left text-sm transition ${mode === "merge" ? "border-[var(--primary)] bg-[var(--primary)]/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
+        >
+          <div className="font-medium">Merge</div>
+          <div className="text-xs text-muted-foreground">Add records; existing ones update by id.</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("replace")}
+          className={`rounded-lg border px-4 py-3 text-left text-sm transition ${mode === "replace" ? "border-[var(--primary)] bg-[var(--primary)]/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
+        >
+          <div className="font-medium">Replace</div>
+          <div className="text-xs text-muted-foreground">Wipe current data per module before restoring.</div>
+        </button>
+      </div>
+      <label className="inline-flex">
+        <input
+          type="file"
+          accept="application/json"
+          className="hidden"
+          disabled={busy}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }}
+        />
+        <span className={`inline-flex h-10 cursor-pointer items-center rounded-md border border-border px-4 text-sm font-medium hover:bg-surface/60 ${busy ? "pointer-events-none opacity-60" : ""}`}>
+          {busy ? "Restoring…" : "Choose backup file"}
+        </span>
+      </label>
+    </Card>
+  );
+}
+
+function WipeCard() {
+  const qc = useQueryClient();
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const onWipe = async () => {
+    setBusy(true);
+    try {
+      const { data } = await supabase.auth.getUser();
+      const uid = data.user?.id;
+      if (!uid) throw new Error("Not signed in");
+      for (const t of USER_TABLES) {
+        const { error } = await supabase.from(t as TableName).delete().eq("user_id", uid);
+        if (error) throw new Error(`${t}: ${error.message}`);
+      }
+      toast.success("All data wiped");
+      qc.invalidateQueries();
+      setConfirmText("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Card className="glass-card border border-destructive/40 p-6">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-destructive">Wipe all data</h3>
+        <p className="text-xs text-muted-foreground">
+          Removes every record across modules but keeps your account. Export a backup first.
+        </p>
+      </div>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive">Wipe my data</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wipe all financial data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes transactions, goals, assets, reminders, and more. Type
+              <span className="font-semibold text-foreground"> WIPE </span>
+              below to confirm.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="WIPE" />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmText("")}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={confirmText !== "WIPE" || busy}
+              onClick={(e) => { e.preventDefault(); onWipe(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {busy ? "Wiping…" : "Wipe forever"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 }
