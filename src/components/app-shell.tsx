@@ -156,22 +156,19 @@ function TopBar() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+            <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
               <User className="mr-2 h-4 w-4" /> My Profile
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
               <SettingsIcon className="mr-2 h-4 w-4" /> Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
-              <BellIcon className="mr-2 h-4 w-4" /> Notification Preferences
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate({ to: "/feedback" })}>
               <MessageSquare className="mr-2 h-4 w-4" /> Feedback
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: "/feedback" })}>
+            <DropdownMenuItem onClick={() => navigate({ to: "/whats-new" })}>
               <Sparkles className="mr-2 h-4 w-4" /> What's New
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: "/feedback" })}>
+            <DropdownMenuItem onClick={() => navigate({ to: "/help" })}>
               <LifeBuoy className="mr-2 h-4 w-4" /> Help &amp; Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
