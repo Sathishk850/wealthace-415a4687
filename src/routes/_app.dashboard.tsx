@@ -226,30 +226,42 @@ function Dashboard() {
     };
   }, [snaps]);
 
-  // Financial score (simple, transparent rules)
+  // Financial score — live-calculated; null when insufficient data
   const score = useMemo(() => {
-    const debtRatio = totals.assetsTotal > 0 ? totals.liabilitiesTotal / totals.assetsTotal : 0;
-    const savingsRate = totals.income > 0 ? (totals.income - totals.expense) / totals.income : 0;
-    const invShare = totals.assetsTotal > 0 ? totals.investmentsTotal / totals.assetsTotal : 0;
-    const cashFlow = totals.netCashFlow >= 0 ? 1 : 0;
-    const diversity = Math.min(allocation.length / 4, 1);
-    const debtScore = Math.round(Math.max(0, 1 - debtRatio) * 100);
-    const savingsScore = Math.round(Math.max(0, Math.min(savingsRate / 0.3, 1)) * 100);
-    const allocScore = Math.round(Math.min(invShare / 0.5, 1) * 100);
-    const cashScore = cashFlow * 100;
-    const divScore = Math.round(diversity * 100);
-    const total = Math.round((debtScore + savingsScore + allocScore + cashScore + divScore) / 5);
-    return {
-      total,
-      rows: [
-        { k: "Asset Allocation", v: allocScore },
-        { k: "Debt Management", v: debtScore },
-        { k: "Savings Rate", v: savingsScore },
-        { k: "Cash Flow", v: cashScore },
-        { k: "Diversification", v: divScore },
-      ],
-    };
-  }, [totals, allocation]);
+    const hasAssets = totals.assetsTotal > 0;
+    const hasInvestments = investments.length > 0;
+    const hasIncome = totals.income > 0;
+    const monthTxnCount =
+      (totals.income > 0 ? 1 : 0) + (totals.expense > 0 ? 1 : 0);
+    const hasMonthActivity = monthTxnCount > 0;
+
+    const allocScore = hasAssets
+      ? Math.round(Math.min(totals.investmentsTotal / totals.assetsTotal / 0.5, 1) * 100)
+      : null;
+    const debtScore = hasAssets
+      ? Math.round(Math.max(0, 1 - totals.liabilitiesTotal / totals.assetsTotal) * 100)
+      : null;
+    const savingsScore = hasIncome
+      ? Math.round(Math.max(0, Math.min(((totals.income - totals.expense) / totals.income) / 0.3, 1)) * 100)
+      : null;
+    const cashScore = hasMonthActivity ? (totals.netCashFlow >= 0 ? 100 : 0) : null;
+    const divScore = hasInvestments
+      ? Math.round(Math.min(allocation.length / 4, 1) * 100)
+      : null;
+
+    const rows = [
+      { k: "Asset Allocation", v: allocScore },
+      { k: "Debt Management", v: debtScore },
+      { k: "Savings Rate", v: savingsScore },
+      { k: "Cash Flow", v: cashScore },
+      { k: "Diversification", v: divScore },
+    ];
+    const available = rows.map((r) => r.v).filter((v): v is number => v !== null);
+    const total = available.length > 0
+      ? Math.round(available.reduce((s, v) => s + v, 0) / available.length)
+      : null;
+    return { total, rows, hasAny: available.length > 0 };
+  }, [totals, allocation, investments]);
 
   const insights = useMemo(() => {
     const list: { icon: any; tint: string; title: string; body: string }[] = [];
@@ -473,16 +485,25 @@ function Dashboard() {
                 <div key={row.k} className="flex items-center gap-3">
                   <span className="w-32 shrink-0 text-muted-foreground">{row.k}</span>
                   <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-mint"
-                      style={{ width: `${row.v}%` }}
-                    />
+                    {row.v !== null && (
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-mint"
+                        style={{ width: `${row.v}%` }}
+                      />
+                    )}
                   </div>
-                  <span className="w-8 text-right font-semibold text-foreground">{row.v}</span>
+                  <span className="w-8 text-right font-semibold text-foreground">
+                    {row.v === null ? "—" : row.v}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
+          {!score.hasAny && (
+            <p className="mt-4 text-xs text-muted-foreground">
+              Add more financial data to calculate your Financial Score.
+            </p>
+          )}
         </Card>
 
         <Card className="col-span-12 p-6 lg:col-span-6">
@@ -807,31 +828,46 @@ function SnapCard({
   );
 }
 
-function ScoreRing({ score }: { score: number }) {
+function ScoreRing({ score }: { score: number | null }) {
   const r = 58;
   const c = 2 * Math.PI * r;
-  const off = c - (c * score) / 100;
+  const value = score ?? 0;
+  const off = c - (c * value) / 100;
+  const band =
+    score === null
+      ? { label: "Not Available", hint: "Add data to calculate" }
+      : score >= 80
+        ? { label: "Excellent", hint: "You're doing great!" }
+        : score >= 60
+          ? { label: "Good", hint: "Keep building momentum." }
+          : score >= 40
+            ? { label: "Fair", hint: "Room to improve." }
+            : { label: "Needs Work", hint: "Focus on the basics." };
   return (
     <div className="relative grid h-[150px] w-[150px] place-items-center">
-          <svg width={150} height={150} className="-rotate-90">
-            <circle cx={75} cy={75} r={r} stroke="var(--border)" strokeWidth={10} fill="none" />
-        <circle
-          cx={75}
-          cy={75}
-          r={r}
-              stroke="var(--primary)"
-          strokeWidth={10}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={off}
-        />
+      <svg width={150} height={150} className="-rotate-90">
+        <circle cx={75} cy={75} r={r} stroke="var(--border)" strokeWidth={10} fill="none" />
+        {score !== null && (
+          <circle
+            cx={75}
+            cy={75}
+            r={r}
+            stroke="var(--primary)"
+            strokeWidth={10}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={off}
+          />
+        )}
       </svg>
       <div className="absolute text-center">
-        <div className="font-display text-3xl font-bold text-foreground">{score}</div>
+        <div className="font-display text-3xl font-bold text-foreground">
+          {score === null ? "—" : score}
+        </div>
         <div className="text-[10px] text-muted-foreground">/100</div>
-        <div className="mt-1 text-xs font-semibold text-mint">Excellent</div>
-        <div className="text-[10px] text-muted-foreground">You're doing great!</div>
+        <div className="mt-1 text-xs font-semibold text-mint">{band.label}</div>
+        <div className="text-[10px] text-muted-foreground">{band.hint}</div>
       </div>
     </div>
   );
