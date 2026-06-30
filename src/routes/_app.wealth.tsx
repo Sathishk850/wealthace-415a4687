@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import { TextTabs } from "@/components/text-tabs";
 import { AssetsView } from "@/components/wealth/assets-view";
 import { LiabilitiesView as LiveLiabilitiesView } from "@/components/wealth/liabilities-view";
+import { InvestmentsView as LiveInvestmentsView } from "@/components/wealth/investments-view";
+import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insurance-view";
 import {
   Wallet,
   TrendingUp,
@@ -179,9 +181,9 @@ function Wealth() {
       ) : tab === "Liabilities" ? (
         <LiveLiabilitiesView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "Investments" ? (
-        <InvestmentsView />
+        <LiveInvestmentsView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "Insurance" ? (
-        <InsuranceView />
+        <LiveInsuranceView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "Accounts" ? (
         <AccountsView />
       ) : tab === "Family" ? (
