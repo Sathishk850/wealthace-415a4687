@@ -196,7 +196,7 @@ export function FamilyView({
         <Empty primary="No members yet" secondary="Add family members to link them to assets, accounts and nominees." cta={{ label: "Add member", onClick: () => { setEditing(null); setDialogOpen(true); } }} />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4">
             <div className="rounded-2xl border border-border bg-card p-5">
               <h3 className="text-sm font-semibold text-foreground">Wealth Distribution</h3>
               {alloc.items.length === 0 ? (
@@ -232,32 +232,6 @@ export function FamilyView({
                   </div>
                 </div>
               )}
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <h3 className="text-sm font-semibold text-foreground">Upcoming Birthdays</h3>
-              <div className="mt-4 space-y-2.5">
-                {nextBirthdays(rows).slice(0, 5).map((b) => (
-                  <div key={b.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${TINTS[b.idx % TINTS.length]} font-semibold`}>
-                        {initials(b.name)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-xs font-medium text-foreground">{b.name}</div>
-                        <div className="truncate text-[10px] text-muted-foreground">{b.relationship}{b.turning != null ? ` · Turning ${b.turning}` : ""}</div>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-xs font-medium text-foreground">{formatDate(b.nextDateISO)}</div>
-                      <div className="text-[10px] text-muted-foreground">in {b.days}d</div>
-                    </div>
-                  </div>
-                ))}
-                {nextBirthdays(rows).length === 0 && (
-                  <EmptyMini label="Add date of birth to members to see birthdays." />
-                )}
-              </div>
             </div>
           </div>
 
@@ -439,33 +413,6 @@ export function FamilyView({
 /* =============== Helpers =============== */
 function initials(name: string) {
   return name.split(" ").map((p) => p[0] ?? "").slice(0, 2).join("").toUpperCase();
-}
-
-function nextBirthdays(rows: FamilyMember[]) {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const items = rows
-    .map((r, idx) => {
-      if (!r.date_of_birth) return null;
-      const dob = new Date(r.date_of_birth);
-      if (isNaN(dob.getTime())) return null;
-      let next = new Date(now.getFullYear(), dob.getMonth(), dob.getDate());
-      if (next.getTime() < today.getTime()) next = new Date(now.getFullYear() + 1, dob.getMonth(), dob.getDate());
-      const days = Math.ceil((next.getTime() - today.getTime()) / 86400000);
-      const turning = next.getFullYear() - dob.getFullYear();
-      return {
-        id: r.id,
-        name: r.name,
-        relationship: r.relationship,
-        nextDateISO: next.toISOString().slice(0, 10),
-        days,
-        turning,
-        idx,
-      };
-    })
-    .filter((x): x is NonNullable<typeof x> => !!x)
-    .sort((a, b) => a.days - b.days);
-  return items;
 }
 
 function Stat({ label, value, sub, icon: Icon, tint }: { label: string; value: string; sub: string; icon: any; tint: string }) {
