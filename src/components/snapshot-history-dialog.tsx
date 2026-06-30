@@ -8,6 +8,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  ChartRangeSelector,
+  defaultChartRange,
+  formatRangeLabel,
+  type ChartRangeValue,
+} from "@/components/chart-range-selector";
 
 type Snap = { date: string; iso: string; net: number; change: number };
 
@@ -25,9 +31,6 @@ const SNAPSHOTS: Snap[] = [
   { date: "31 Aug 2025", iso: "2025-08-31", net: 10555453, change: 162954 },
 ];
 
-const RANGES = ["All", "YTD", "1Y", "6M", "3M", "1M", "Custom"] as const;
-type Range = (typeof RANGES)[number];
-
 function fmt(n: number) {
   return new Intl.NumberFormat("en-IN").format(Math.abs(n));
 }
@@ -39,26 +42,15 @@ export function SnapshotHistoryDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const [range, setRange] = useState<Range>("All");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [applied, setApplied] = useState<{ s: string; e: string } | null>(null);
+  const [range, setRange] = useState<ChartRangeValue>(() => defaultChartRange("1M"));
 
   const rows = useMemo(() => {
-    if (range === "Custom" && applied?.s && applied?.e) {
-      return SNAPSHOTS.filter((s) => s.iso >= applied.s && s.iso <= applied.e);
-    }
-    const now = new Date("2026-06-07");
-    const cutoff = new Date(now);
-    if (range === "1M") cutoff.setMonth(now.getMonth() - 1);
-    else if (range === "3M") cutoff.setMonth(now.getMonth() - 3);
-    else if (range === "6M") cutoff.setMonth(now.getMonth() - 6);
-    else if (range === "1Y") cutoff.setFullYear(now.getFullYear() - 1);
-    else if (range === "YTD") cutoff.setMonth(0, 1);
-    else return SNAPSHOTS;
-    const iso = cutoff.toISOString().slice(0, 10);
-    return SNAPSHOTS.filter((s) => s.iso >= iso);
-  }, [range, applied]);
+    const startIso = range.start ? range.start.toISOString().slice(0, 10) : null;
+    const endIso = range.end.toISOString().slice(0, 10);
+    return SNAPSHOTS.filter(
+      (s) => (!startIso || s.iso >= startIso) && s.iso <= endIso,
+    );
+  }, [range]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,76 +66,11 @@ export function SnapshotHistoryDialog({
           </DialogHeader>
 
           {/* Filter row */}
-          <div className="mt-6 flex flex-wrap items-end gap-4">
-            <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-surface/60 p-1">
-              {RANGES.slice(0, 6).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRange(r)}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                    range === r
-                      ? "border border-mint/60 bg-mint/10 text-mint"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {r}
-                </button>
-              ))}
-              <button
-                onClick={() => setRange("Custom")}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                  range === "Custom"
-                    ? "border border-mint/60 bg-mint/10 text-mint"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Calendar className="h-3.5 w-3.5" /> Custom
-              </button>
-            </div>
-
-            <div className="flex flex-1 flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-medium text-muted-foreground">
-                  Custom range
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-surface/60 px-3 py-2">
-                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    <input
-                      type="date"
-                      value={start}
-                      onChange={(e) => setStart(e.target.value)}
-                      placeholder="Select start date"
-                      className="bg-transparent text-xs text-foreground outline-none [color-scheme:dark]"
-                    />
-                  </div>
-                  <span className="text-muted-foreground">–</span>
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-surface/60 px-3 py-2">
-                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    <input
-                      type="date"
-                      value={end}
-                      onChange={(e) => setEnd(e.target.value)}
-                      placeholder="Select end date"
-                      className="bg-transparent text-xs text-foreground outline-none [color-scheme:dark]"
-                    />
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  if (start && end) {
-                    setRange("Custom");
-                    setApplied({ s: start, e: end });
-                  }
-                }}
-                className="rounded-lg bg-mint px-5 py-2 text-sm font-semibold text-mint-foreground transition hover:bg-[var(--primary-hover)]"
-              >
-                Apply
-              </button>
-            </div>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
+            <p className="text-xs text-muted-foreground">
+              Showing snapshots for <span className="text-foreground">{formatRangeLabel(range)}</span>
+            </p>
+            <ChartRangeSelector value={range} onChange={setRange} />
           </div>
 
           {/* Table */}
