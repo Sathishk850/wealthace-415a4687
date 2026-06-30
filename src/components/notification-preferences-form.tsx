@@ -60,7 +60,7 @@ export function NotificationPreferencesForm() {
           <Info className="h-3.5 w-3.5 text-muted-foreground" aria-label="Channels enabled globally" />
         </div>
         <p className="mb-4 text-xs text-muted-foreground">
-          Pick which channels FinTrack uses by default for all notifications.
+          Pick which channels FinVista uses by default for all notifications.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {CHANNELS.map((c) => {
