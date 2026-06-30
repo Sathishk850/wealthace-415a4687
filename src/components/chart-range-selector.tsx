@@ -13,7 +13,6 @@ export type ChartRangeValue = {
 };
 
 const PRESET_BUTTONS: { key: Exclude<ChartRangeKey, "CUSTOM">; label: string }[] = [
-  { key: "1D", label: "1D" },
   { key: "1M", label: "1M" },
   { key: "3M", label: "3M" },
   { key: "6M", label: "6M" },
@@ -35,9 +34,6 @@ function computeRange(key: Exclude<ChartRangeKey, "CUSTOM">): ChartRangeValue {
   const end = new Date();
   const start = new Date(end);
   switch (key) {
-    case "1D":
-      start.setDate(end.getDate() - 1);
-      break;
     case "1M":
       start.setMonth(end.getMonth() - 1);
       break;
