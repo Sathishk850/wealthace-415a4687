@@ -611,6 +611,434 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_accounts: {
+        Row: {
+          account_number_masked: string | null
+          account_type: string
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          ifsc: string | null
+          name: string
+          notes: string | null
+          owner_member_id: string | null
+          provider: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number_masked?: string | null
+          account_type: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          ifsc?: string | null
+          name: string
+          notes?: string | null
+          owner_member_id?: string | null
+          provider?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_number_masked?: string | null
+          account_type?: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          ifsc?: string | null
+          name?: string
+          notes?: string | null
+          owner_member_id?: string | null
+          provider?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wealth_assets: {
+        Row: {
+          category: string
+          created_at: string
+          current_value: number
+          id: string
+          last_updated: string
+          location: string | null
+          name: string
+          notes: string | null
+          owner_member_id: string | null
+          purchase_date: string | null
+          purchase_value: number | null
+          quantity: number | null
+          status: string
+          sub_category: string | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          last_updated?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          owner_member_id?: string | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          quantity?: number | null
+          status?: string
+          sub_category?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_value?: number
+          id?: string
+          last_updated?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          owner_member_id?: string | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          quantity?: number | null
+          status?: string
+          sub_category?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wealth_family_members: {
+        Row: {
+          aadhaar_masked: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          gender: string | null
+          id: string
+          is_dependent: boolean
+          is_nominee: boolean
+          name: string
+          notes: string | null
+          pan: string | null
+          phone: string | null
+          relationship: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aadhaar_masked?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          is_dependent?: boolean
+          is_nominee?: boolean
+          name: string
+          notes?: string | null
+          pan?: string | null
+          phone?: string | null
+          relationship: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aadhaar_masked?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          is_dependent?: boolean
+          is_nominee?: boolean
+          name?: string
+          notes?: string | null
+          pan?: string | null
+          phone?: string | null
+          relationship?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wealth_insurance: {
+        Row: {
+          claim_status: string | null
+          coverage_amount: number
+          created_at: string
+          end_date: string | null
+          id: string
+          insured_member_id: string | null
+          nominee_member_id: string | null
+          notes: string | null
+          policy_name: string
+          policy_number: string | null
+          policy_type: string
+          premium_amount: number | null
+          premium_frequency: string | null
+          provider: string | null
+          renewal_date: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          claim_status?: string | null
+          coverage_amount?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          insured_member_id?: string | null
+          nominee_member_id?: string | null
+          notes?: string | null
+          policy_name: string
+          policy_number?: string | null
+          policy_type: string
+          premium_amount?: number | null
+          premium_frequency?: string | null
+          provider?: string | null
+          renewal_date?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          claim_status?: string | null
+          coverage_amount?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          insured_member_id?: string | null
+          nominee_member_id?: string | null
+          notes?: string | null
+          policy_name?: string
+          policy_number?: string | null
+          policy_type?: string
+          premium_amount?: number | null
+          premium_frequency?: string | null
+          provider?: string | null
+          renewal_date?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wealth_investment_txns: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          investment_id: string
+          notes: string | null
+          occurred_on: string
+          price: number
+          quantity: number
+          txn_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          investment_id: string
+          notes?: string | null
+          occurred_on?: string
+          price: number
+          quantity: number
+          txn_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          investment_id?: string
+          notes?: string | null
+          occurred_on?: string
+          price?: number
+          quantity?: number
+          txn_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_investment_txns_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wealth_investments: {
+        Row: {
+          account_id: string | null
+          avg_price: number
+          category: string
+          created_at: string
+          current_price: number
+          current_value: number | null
+          id: string
+          invested_value: number | null
+          is_sip: boolean
+          last_updated: string
+          name: string
+          notes: string | null
+          owner_member_id: string | null
+          purchase_date: string | null
+          quantity: number
+          sip_active: boolean | null
+          sip_amount: number | null
+          sip_frequency: string | null
+          sip_next_date: string | null
+          sip_start_date: string | null
+          status: string
+          sub_category: string | null
+          symbol: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          avg_price?: number
+          category: string
+          created_at?: string
+          current_price?: number
+          current_value?: number | null
+          id?: string
+          invested_value?: number | null
+          is_sip?: boolean
+          last_updated?: string
+          name: string
+          notes?: string | null
+          owner_member_id?: string | null
+          purchase_date?: string | null
+          quantity?: number
+          sip_active?: boolean | null
+          sip_amount?: number | null
+          sip_frequency?: string | null
+          sip_next_date?: string | null
+          sip_start_date?: string | null
+          status?: string
+          sub_category?: string | null
+          symbol?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          avg_price?: number
+          category?: string
+          created_at?: string
+          current_price?: number
+          current_value?: number | null
+          id?: string
+          invested_value?: number | null
+          is_sip?: boolean
+          last_updated?: string
+          name?: string
+          notes?: string | null
+          owner_member_id?: string | null
+          purchase_date?: string | null
+          quantity?: number
+          sip_active?: boolean | null
+          sip_amount?: number | null
+          sip_frequency?: string | null
+          sip_next_date?: string | null
+          sip_start_date?: string | null
+          status?: string
+          sub_category?: string | null
+          symbol?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wealth_liabilities: {
+        Row: {
+          category: string
+          created_at: string
+          due_date: string | null
+          emi: number | null
+          end_date: string | null
+          id: string
+          interest_rate: number | null
+          lender: string | null
+          name: string
+          notes: string | null
+          outstanding: number
+          owner_member_id: string | null
+          principal: number | null
+          start_date: string | null
+          status: string
+          tenure_months: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          due_date?: string | null
+          emi?: number | null
+          end_date?: string | null
+          id?: string
+          interest_rate?: number | null
+          lender?: string | null
+          name: string
+          notes?: string | null
+          outstanding?: number
+          owner_member_id?: string | null
+          principal?: number | null
+          start_date?: string | null
+          status?: string
+          tenure_months?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          due_date?: string | null
+          emi?: number | null
+          end_date?: string | null
+          id?: string
+          interest_rate?: number | null
+          lender?: string | null
+          name?: string
+          notes?: string | null
+          outstanding?: number
+          owner_member_id?: string | null
+          principal?: number | null
+          start_date?: string | null
+          status?: string
+          tenure_months?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
