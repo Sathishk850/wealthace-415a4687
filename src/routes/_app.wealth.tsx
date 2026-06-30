@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { TextTabs } from "@/components/text-tabs";
+import { AssetsView } from "@/components/wealth/assets-view";
+import { LiabilitiesView as LiveLiabilitiesView } from "@/components/wealth/liabilities-view";
 import {
   Wallet,
   TrendingUp,
@@ -136,8 +138,8 @@ const LIABILITIES = [
 
 function Wealth() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Assets");
-  const total = useMemo(() => "₹1,15,38,850", []);
-  const liabTotal = "₹42,24,000";
+  // Ref captures the "open add dialog" handler exposed by the active tab's view.
+  const addRef = useRef<(() => void) | null>(null);
 
   const addLabel =
     tab === "Liabilities" ? "Add Liability"
@@ -157,7 +159,10 @@ function Wealth() {
             Track, analyze, and grow your overall financial wealth.
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-xl bg-mint px-4 py-2.5 text-sm font-semibold text-[#04121C] transition hover:brightness-110">
+        <button
+          onClick={() => addRef.current?.()}
+          className="inline-flex items-center gap-2 rounded-xl bg-mint px-4 py-2.5 text-sm font-semibold text-[#04121C] transition hover:brightness-110"
+        >
           <Plus className="h-4 w-4" /> {addLabel}
         </button>
       </div>
@@ -169,8 +174,10 @@ function Wealth() {
         onChange={(v) => setTab(v as (typeof TABS)[number])}
       />
 
-      {tab === "Liabilities" ? (
-        <LiabilitiesView total={liabTotal} />
+      {tab === "Assets" ? (
+        <AssetsView registerAdd={(fn) => { addRef.current = fn; }} />
+      ) : tab === "Liabilities" ? (
+        <LiveLiabilitiesView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "Investments" ? (
         <InvestmentsView />
       ) : tab === "Insurance" ? (
@@ -179,183 +186,10 @@ function Wealth() {
         <AccountsView />
       ) : tab === "Family" ? (
         <FamilyView />
-      ) : tab !== "Assets" ? (
+      ) : (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           {tab} module coming soon.
         </div>
-      ) : (
-      <>
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-start gap-3">
-              <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${s.tint}`}>
-                <s.icon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  {s.label} <Info className="h-3 w-3 opacity-60" />
-                </div>
-                <div className="mt-1 font-display text-xl font-bold text-foreground">{s.value}</div>
-                <div
-                  className={`mt-1 inline-flex items-center gap-1 text-xs font-medium ${
-                    s.up === null ? "text-muted-foreground" : s.up ? "text-emerald-400" : "text-rose-400"
-                  }`}
-                >
-                  {s.up !== null && (s.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />)}
-                  {s.delta}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Allocation + Trend */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
-          <h3 className="text-sm font-semibold text-foreground">Asset Allocation</h3>
-          <div className="mt-4 flex items-center gap-5">
-            <div className="relative h-[180px] w-[180px] shrink-0">
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={ALLOC} dataKey="pct" innerRadius={58} outerRadius={82} paddingAngle={2} stroke="none">
-                    {ALLOC.map((a) => (
-                      <Cell key={a.name} fill={a.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
-                <div>
-                  <div className="font-display text-base font-bold text-foreground">{total}</div>
-                  <div className="text-[10px] text-muted-foreground">Total Assets</div>
-                </div>
-              </div>
-            </div>
-            <div className="min-w-0 flex-1 space-y-2">
-              {ALLOC.map((a) => (
-                <div key={a.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-xs">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
-                    <span className="truncate text-foreground">{a.name}</span>
-                  </div>
-                  <span className="font-medium text-muted-foreground">{a.pct}%</span>
-                  <span className="text-right font-medium text-foreground">{a.amt}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <button className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-mint hover:underline">
-            View full breakdown →
-          </button>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-7">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Asset Growth Trend</h3>
-            <button className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
-              6M <ChevronDown className="h-3 w-3" />
-            </button>
-          </div>
-          <div className="h-[230px]">
-            <ResponsiveContainer>
-              <AreaChart data={TREND} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="growth" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#14D8CF" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#14D8CF" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis
-                  tick={{ fill: "#6E8294", fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => `₹${v}L`}
-                />
-                <Tooltip
-                  contentStyle={{ background: "#0D2232", border: "1px solid #1B3249", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number) => [`₹${v}L`, "Value"]}
-                />
-                <Area type="monotone" dataKey="v" stroke="#14D8CF" strokeWidth={2.5} fill="url(#growth)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Assets table */}
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              placeholder="Search assets..."
-              className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
-            />
-          </div>
-          <FilterBtn label="All Categories" />
-          <FilterBtn label="All Status" />
-          <FilterBtn label="Sort: Latest" icon={ArrowUpDown} />
-          <div className="ml-auto flex items-center gap-1 rounded-xl border border-border bg-surface-2 p-1">
-            <button className="rounded-lg bg-mint/15 p-1.5 text-mint"><List className="h-4 w-4" /></button>
-            <button className="rounded-lg p-1.5 text-muted-foreground"><LayoutGrid className="h-4 w-4" /></button>
-          </div>
-        </div>
-
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="py-3 pl-2 font-medium">Asset Name</th>
-                <th className="py-3 font-medium">Category</th>
-                <th className="py-3 font-medium">Current Value</th>
-                <th className="py-3 font-medium">Gain / Loss</th>
-                <th className="py-3 font-medium">All Time Return</th>
-                <th className="py-3 font-medium">Last Updated</th>
-                <th className="py-3 pr-2 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ASSETS.map((a) => (
-                <tr key={a.name} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
-                  <td className="py-3 pl-2">
-                    <div className="flex items-center gap-3">
-                      <div className={`grid h-8 w-8 place-items-center rounded-lg ${a.tint}`}>
-                        <a.icon className="h-4 w-4" />
-                      </div>
-                      <span className="font-medium text-foreground">{a.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 text-muted-foreground">{a.category}</td>
-                  <td className="py-3 font-medium text-foreground">{a.value}</td>
-                  <td className={`py-3 font-medium ${a.up ? "text-emerald-400" : "text-rose-400"}`}>
-                    <span className="inline-flex items-center gap-1">
-                      {a.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                      {a.gain} <span className="text-xs opacity-80">{a.gainPct}</span>
-                    </span>
-                  </td>
-                  <td className={`py-3 font-medium ${a.up ? "text-emerald-400" : "text-rose-400"}`}>
-                    <span className="inline-flex items-center gap-1">
-                      {a.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                      {a.ret}
-                    </span>
-                  </td>
-                  <td className="py-3 text-muted-foreground">{a.date}</td>
-                  <td className="py-3 pr-2">
-                    <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      </>
       )}
     </div>
   );
