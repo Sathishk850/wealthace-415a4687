@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWealthRouteImport } from './routes/_app.wealth'
 import { Route as AppToolsRouteImport } from './routes/_app.tools'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
@@ -56,6 +57,11 @@ const AppToolsRoute = AppToolsRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPlannerRoute = AppPlannerRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
+  '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
+  '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/wealth': typeof AppWealthRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/planner': typeof AppPlannerRoute
+  '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tools': typeof AppToolsRouteWithChildren
   '/_app/wealth': typeof AppWealthRoute
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/money'
     | '/notifications'
     | '/planner'
+    | '/profile'
     | '/settings'
     | '/tools'
     | '/wealth'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/money'
     | '/notifications'
     | '/planner'
+    | '/profile'
     | '/settings'
     | '/wealth'
     | '/dashboard/networth'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/_app/money'
     | '/_app/notifications'
     | '/_app/planner'
+    | '/_app/profile'
     | '/_app/settings'
     | '/_app/tools'
     | '/_app/wealth'
@@ -299,6 +311,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/planner': {
@@ -439,6 +458,7 @@ interface AppRouteChildren {
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPlannerRoute: typeof AppPlannerRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppToolsRoute: typeof AppToolsRouteWithChildren
   AppWealthRoute: typeof AppWealthRoute
@@ -453,6 +473,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPlannerRoute: AppPlannerRoute,
+  AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppToolsRoute: AppToolsRouteWithChildren,
   AppWealthRoute: AppWealthRoute,
