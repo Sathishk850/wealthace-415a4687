@@ -755,6 +755,7 @@ function SnapCard({
   accent: string;
   series: { i: number; v: number }[];
   tip?: string;
+  muted?: boolean;
 }) {
   const id = `s-${label.replace(/\s/g, "")}`;
   return (
