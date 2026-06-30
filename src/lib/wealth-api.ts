@@ -865,3 +865,284 @@ export function daysUntil(date: string | null) {
   const d = new Date(date).getTime();
   return Math.ceil((d - Date.now()) / 86400000);
 }
+
+/* =================== ACCOUNTS =================== */
+export type AccountType =
+  | "Bank Account"
+  | "Credit Card"
+  | "Wallet"
+  | "Loan"
+  | "Cash"
+  | "Other";
+
+export const ACCOUNT_TYPES: AccountType[] = [
+  "Bank Account",
+  "Credit Card",
+  "Wallet",
+  "Loan",
+  "Cash",
+  "Other",
+];
+
+export type Account = {
+  id: string;
+  user_id: string;
+  name: string;
+  account_type: string;
+  provider: string | null;
+  account_number_masked: string | null;
+  ifsc: string | null;
+  balance: number;
+  currency: string;
+  owner_member_id: string | null;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AccountInput = {
+  id?: string;
+  name: string;
+  account_type: string;
+  provider?: string | null;
+  account_number_masked?: string | null;
+  ifsc?: string | null;
+  balance: number;
+  currency?: string;
+  owner_member_id?: string | null;
+  status?: string;
+  notes?: string | null;
+};
+
+export function useAccounts() {
+  return useQuery({
+    queryKey: wealthKeys.accounts,
+    queryFn: async (): Promise<Account[]> => {
+      const { data, error } = await supabase
+        .from("wealth_accounts")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({ ...r, balance: num(r.balance) })) as Account[];
+    },
+  });
+}
+
+function accountPayload(a: AccountInput) {
+  return {
+    name: a.name.trim(),
+    account_type: a.account_type,
+    provider: a.provider?.trim() || null,
+    account_number_masked: a.account_number_masked?.trim() || null,
+    ifsc: a.ifsc?.trim() || null,
+    balance: Number(a.balance) || 0,
+    currency: a.currency || "INR",
+    owner_member_id: a.owner_member_id || null,
+    status: a.status || "active",
+    notes: a.notes?.trim() || null,
+  };
+}
+
+export function useUpsertAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: AccountInput) => {
+      const user_id = await uid();
+      const payload = accountPayload(input);
+      if (input.id) {
+        const { error } = await supabase.from("wealth_accounts").update(payload).eq("id", input.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("wealth_accounts").insert({ ...payload, user_id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Account saved");
+      qc.invalidateQueries({ queryKey: wealthKeys.accounts });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save account"),
+  });
+}
+
+export function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("wealth_accounts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Account deleted");
+      qc.invalidateQueries({ queryKey: wealthKeys.accounts });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete"),
+  });
+}
+
+export function useBulkInsertAccounts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: AccountInput[]) => {
+      const user_id = await uid();
+      const payload = rows.map((r) => ({ ...accountPayload(r), user_id }));
+      if (!payload.length) return 0;
+      const { error } = await supabase.from("wealth_accounts").insert(payload);
+      if (error) throw error;
+      return payload.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Imported ${count} account${count === 1 ? "" : "s"}`);
+      qc.invalidateQueries({ queryKey: wealthKeys.accounts });
+    },
+    onError: (e: Error) => toast.error(e.message || "Import failed"),
+  });
+}
+
+/* =================== FAMILY =================== */
+export const RELATIONSHIPS = [
+  "Self",
+  "Spouse",
+  "Son",
+  "Daughter",
+  "Father",
+  "Mother",
+  "Brother",
+  "Sister",
+  "Grandfather",
+  "Grandmother",
+  "Other",
+] as const;
+export type Relationship = (typeof RELATIONSHIPS)[number];
+
+export type FamilyMember = {
+  id: string;
+  user_id: string;
+  name: string;
+  relationship: string;
+  date_of_birth: string | null;
+  gender: string | null;
+  is_dependent: boolean;
+  is_nominee: boolean;
+  pan: string | null;
+  aadhaar_masked: string | null;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FamilyMemberInput = {
+  id?: string;
+  name: string;
+  relationship: string;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  is_dependent?: boolean;
+  is_nominee?: boolean;
+  pan?: string | null;
+  aadhaar_masked?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+};
+
+export function useFamily() {
+  return useQuery({
+    queryKey: wealthKeys.family,
+    queryFn: async (): Promise<FamilyMember[]> => {
+      const { data, error } = await supabase
+        .from("wealth_family_members")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as FamilyMember[];
+    },
+  });
+}
+
+function familyPayload(m: FamilyMemberInput) {
+  return {
+    name: m.name.trim(),
+    relationship: m.relationship,
+    date_of_birth: m.date_of_birth || null,
+    gender: m.gender?.trim() || null,
+    is_dependent: !!m.is_dependent,
+    is_nominee: !!m.is_nominee,
+    pan: m.pan?.trim() || null,
+    aadhaar_masked: m.aadhaar_masked?.trim() || null,
+    email: m.email?.trim() || null,
+    phone: m.phone?.trim() || null,
+    notes: m.notes?.trim() || null,
+  };
+}
+
+export function useUpsertFamilyMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: FamilyMemberInput) => {
+      const user_id = await uid();
+      const payload = familyPayload(input);
+      if (input.id) {
+        const { error } = await supabase.from("wealth_family_members").update(payload).eq("id", input.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("wealth_family_members").insert({ ...payload, user_id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Member saved");
+      qc.invalidateQueries({ queryKey: wealthKeys.family });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save member"),
+  });
+}
+
+export function useDeleteFamilyMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("wealth_family_members").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Member deleted");
+      qc.invalidateQueries({ queryKey: wealthKeys.family });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete"),
+  });
+}
+
+export function useBulkInsertFamily() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: FamilyMemberInput[]) => {
+      const user_id = await uid();
+      const payload = rows.map((r) => ({ ...familyPayload(r), user_id }));
+      if (!payload.length) return 0;
+      const { error } = await supabase.from("wealth_family_members").insert(payload);
+      if (error) throw error;
+      return payload.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Imported ${count} member${count === 1 ? "" : "s"}`);
+      qc.invalidateQueries({ queryKey: wealthKeys.family });
+    },
+    onError: (e: Error) => toast.error(e.message || "Import failed"),
+  });
+}
+
+/** Age in whole years from a YYYY-MM-DD date. */
+export function ageFromDob(dob: string | null): number | null {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age;
+}
