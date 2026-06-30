@@ -1114,6 +1114,45 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_snapshots: {
+        Row: {
+          assets_total: number
+          created_at: string
+          id: string
+          investments_total: number
+          liabilities_total: number
+          net_worth: number
+          savings_total: number
+          snapshot_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assets_total?: number
+          created_at?: string
+          id?: string
+          investments_total?: number
+          liabilities_total?: number
+          net_worth?: number
+          savings_total?: number
+          snapshot_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assets_total?: number
+          created_at?: string
+          id?: string
+          investments_total?: number
+          liabilities_total?: number
+          net_worth?: number
+          savings_total?: number
+          snapshot_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
