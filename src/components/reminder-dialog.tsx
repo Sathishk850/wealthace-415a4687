@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { ClearButton } from "@/components/clear-button";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -173,6 +174,19 @@ export function ReminderDialog({
           ) : <span />}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <ClearButton
+              dirty={!!(title || amount || notes)}
+              onClear={() => {
+                setKind("custom");
+                setTitle("");
+                setAmount(0);
+                setDueDate(today);
+                setRecurrence("monthly");
+                setNotifyDays(1);
+                setNotifyEnabled(true);
+                setNotes("");
+              }}
+            />
             <Button
               className="bg-mint text-mint-foreground hover:bg-mint/90"
               onClick={submit}
