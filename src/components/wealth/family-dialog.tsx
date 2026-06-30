@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { ClearButton, isDirty } from "@/components/clear-button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
@@ -177,6 +178,11 @@ export function FamilyDialog({ open, onOpenChange, existing }: Props) {
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>Cancel</Button>
+          <ClearButton
+            dirty={isDirty(form as unknown as Record<string, unknown>, empty as unknown as Record<string, unknown>)}
+            disabled={upsert.isPending}
+            onClear={() => setForm(empty)}
+          />
           <Button
             className="bg-mint text-[#04121C] hover:brightness-110"
             onClick={submit}
