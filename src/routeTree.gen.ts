@@ -20,6 +20,7 @@ import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
+import { Route as AppHelpRouteImport } from './routes/_app.help'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
@@ -85,6 +86,11 @@ const AppMoneyRoute = AppMoneyRouteImport.update({
   path: '/money',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHelpRoute = AppHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFeedbackRoute = AppFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
+  '/help': typeof AppHelpRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
+  '/help': typeof AppHelpRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_app/dashboard': typeof AppDashboardRouteWithChildren
   '/_app/feedback': typeof AppFeedbackRoute
+  '/_app/help': typeof AppHelpRoute
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/planner': typeof AppPlannerRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/feedback'
+    | '/help'
     | '/money'
     | '/notifications'
     | '/planner'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/feedback'
+    | '/help'
     | '/money'
     | '/notifications'
     | '/planner'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_app/dashboard'
     | '/_app/feedback'
+    | '/_app/help'
     | '/_app/money'
     | '/_app/notifications'
     | '/_app/planner'
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/money'
       fullPath: '/money'
       preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/help': {
+      id: '/_app/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof AppHelpRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/feedback': {
@@ -474,6 +493,7 @@ const AppToolsRouteWithChildren = AppToolsRoute._addFileChildren(
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppFeedbackRoute: typeof AppFeedbackRoute
+  AppHelpRoute: typeof AppHelpRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPlannerRoute: typeof AppPlannerRoute
@@ -490,6 +510,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRouteWithChildren,
   AppFeedbackRoute: AppFeedbackRoute,
+  AppHelpRoute: AppHelpRoute,
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPlannerRoute: AppPlannerRoute,
