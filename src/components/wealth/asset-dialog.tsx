@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ClearButton, isDirty } from "@/components/clear-button";
 import {
   ASSET_CATEGORIES,
   type Asset,
@@ -215,6 +216,11 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>
             Cancel
           </Button>
+          <ClearButton
+            dirty={isDirty(form as unknown as Record<string, unknown>, (existing ? form : empty) as unknown as Record<string, unknown>) && !existing}
+            disabled={upsert.isPending}
+            onClear={() => setForm(empty)}
+          />
           <Button
             className="bg-mint text-[#04121C] hover:brightness-110"
             onClick={submit}
