@@ -53,10 +53,10 @@ const MOBILE_TABS: NavItem[] = [
 function Brand() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5">
-      <img src={logo} alt="FinTrack" width={36} height={36} className="h-9 w-9 rounded-lg" />
+      <img src={logo} alt="FinVista" width={36} height={36} className="h-9 w-9 rounded-lg" />
       <div className="flex flex-col leading-tight">
         <span className="font-display text-[17px] font-bold tracking-tight text-foreground">
-          FinTrack
+          FinVista
         </span>
         <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
           Know Your Worth
