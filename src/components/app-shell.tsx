@@ -11,7 +11,6 @@ import {
   CalendarClock,
   User,
   Settings as SettingsIcon,
-  Bell as BellIcon,
   MessageSquare,
   Sparkles,
   LifeBuoy,
