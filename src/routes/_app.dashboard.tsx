@@ -226,30 +226,42 @@ function Dashboard() {
     };
   }, [snaps]);
 
-  // Financial score (simple, transparent rules)
+  // Financial score — live-calculated; null when insufficient data
   const score = useMemo(() => {
-    const debtRatio = totals.assetsTotal > 0 ? totals.liabilitiesTotal / totals.assetsTotal : 0;
-    const savingsRate = totals.income > 0 ? (totals.income - totals.expense) / totals.income : 0;
-    const invShare = totals.assetsTotal > 0 ? totals.investmentsTotal / totals.assetsTotal : 0;
-    const cashFlow = totals.netCashFlow >= 0 ? 1 : 0;
-    const diversity = Math.min(allocation.length / 4, 1);
-    const debtScore = Math.round(Math.max(0, 1 - debtRatio) * 100);
-    const savingsScore = Math.round(Math.max(0, Math.min(savingsRate / 0.3, 1)) * 100);
-    const allocScore = Math.round(Math.min(invShare / 0.5, 1) * 100);
-    const cashScore = cashFlow * 100;
-    const divScore = Math.round(diversity * 100);
-    const total = Math.round((debtScore + savingsScore + allocScore + cashScore + divScore) / 5);
-    return {
-      total,
-      rows: [
-        { k: "Asset Allocation", v: allocScore },
-        { k: "Debt Management", v: debtScore },
-        { k: "Savings Rate", v: savingsScore },
-        { k: "Cash Flow", v: cashScore },
-        { k: "Diversification", v: divScore },
-      ],
-    };
-  }, [totals, allocation]);
+    const hasAssets = totals.assetsTotal > 0;
+    const hasInvestments = investments.length > 0;
+    const hasIncome = totals.income > 0;
+    const monthTxnCount =
+      (totals.income > 0 ? 1 : 0) + (totals.expense > 0 ? 1 : 0);
+    const hasMonthActivity = monthTxnCount > 0;
+
+    const allocScore = hasAssets
+      ? Math.round(Math.min(totals.investmentsTotal / totals.assetsTotal / 0.5, 1) * 100)
+      : null;
+    const debtScore = hasAssets
+      ? Math.round(Math.max(0, 1 - totals.liabilitiesTotal / totals.assetsTotal) * 100)
+      : null;
+    const savingsScore = hasIncome
+      ? Math.round(Math.max(0, Math.min(((totals.income - totals.expense) / totals.income) / 0.3, 1)) * 100)
+      : null;
+    const cashScore = hasMonthActivity ? (totals.netCashFlow >= 0 ? 100 : 0) : null;
+    const divScore = hasInvestments
+      ? Math.round(Math.min(allocation.length / 4, 1) * 100)
+      : null;
+
+    const rows = [
+      { k: "Asset Allocation", v: allocScore },
+      { k: "Debt Management", v: debtScore },
+      { k: "Savings Rate", v: savingsScore },
+      { k: "Cash Flow", v: cashScore },
+      { k: "Diversification", v: divScore },
+    ];
+    const available = rows.map((r) => r.v).filter((v): v is number => v !== null);
+    const total = available.length > 0
+      ? Math.round(available.reduce((s, v) => s + v, 0) / available.length)
+      : null;
+    return { total, rows, hasAny: available.length > 0 };
+  }, [totals, allocation, investments]);
 
   const insights = useMemo(() => {
     const list: { icon: any; tint: string; title: string; body: string }[] = [];
