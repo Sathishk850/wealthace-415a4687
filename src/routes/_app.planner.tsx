@@ -91,7 +91,7 @@ import {
 export const Route = createFileRoute("/_app/planner")({
   head: () => ({
     meta: [
-      { title: "Planner · FinTrack" },
+      { title: "Planner · FinVista" },
       { name: "description", content: "Set goals, budgets and your FIRE roadmap." },
     ],
   }),

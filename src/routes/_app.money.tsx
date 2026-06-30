@@ -91,7 +91,7 @@ import {
 export const Route = createFileRoute("/_app/money")({
   head: () => ({
     meta: [
-      { title: "Money · FinTrack" },
+      { title: "Money · FinVista" },
       { name: "description", content: "Track cashflow, income, expenses and every transaction." },
     ],
   }),
