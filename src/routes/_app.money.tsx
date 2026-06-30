@@ -1303,6 +1303,15 @@ function BudgetDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <ClearButton
+            dirty={!!(categoryId || amount)}
+            disabled={upsert.isPending}
+            onClear={() => {
+              setCategoryId("");
+              setAmount("");
+              setErr(null);
+            }}
+          />
           <Button onClick={submit} disabled={upsert.isPending}>
             {upsert.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
             {editing ? "Save changes" : "Add budget"}
