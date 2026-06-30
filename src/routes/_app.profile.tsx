@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ClearButton } from "@/components/clear-button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
@@ -130,6 +131,11 @@ function ProfilePage() {
                     <Button variant="outline" size="sm" onClick={() => { setEditing(false); profileQuery.refetch(); }}>
                       <X className="mr-1.5 h-4 w-4" /> Cancel
                     </Button>
+                    <ClearButton
+                      dirty={!!(form.full_name || form.phone || form.avatar_url)}
+                      disabled={save.isPending}
+                      onClear={() => setForm({ full_name: "", phone: "", avatar_url: "" })}
+                    />
                     <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
                       {save.isPending ? "Saving…" : "Save changes"}
                     </Button>
