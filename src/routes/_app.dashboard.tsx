@@ -485,16 +485,25 @@ function Dashboard() {
                 <div key={row.k} className="flex items-center gap-3">
                   <span className="w-32 shrink-0 text-muted-foreground">{row.k}</span>
                   <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-mint"
-                      style={{ width: `${row.v}%` }}
-                    />
+                    {row.v !== null && (
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-mint"
+                        style={{ width: `${row.v}%` }}
+                      />
+                    )}
                   </div>
-                  <span className="w-8 text-right font-semibold text-foreground">{row.v}</span>
+                  <span className="w-8 text-right font-semibold text-foreground">
+                    {row.v === null ? "—" : row.v}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
+          {!score.hasAny && (
+            <p className="mt-4 text-xs text-muted-foreground">
+              Add more financial data to calculate your Financial Score.
+            </p>
+          )}
         </Card>
 
         <Card className="col-span-12 p-6 lg:col-span-6">
