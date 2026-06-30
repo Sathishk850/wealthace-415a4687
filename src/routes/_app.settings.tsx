@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -213,13 +214,164 @@ function SelectField({
   );
 }
 
+type Appearance = {
+  theme: "system" | "light" | "dark";
+  compact_mode: boolean;
+  default_chart_range: string;
+  chart_animations: boolean;
+};
+
+const APPEARANCE_DEFAULTS: Appearance = {
+  theme: "system",
+  compact_mode: false,
+  default_chart_range: "3M",
+  chart_animations: true,
+};
+
+const CHART_RANGES = ["1M", "3M", "6M", "1Y"];
+
+function applyTheme(theme: Appearance["theme"]) {
+  if (typeof window === "undefined") return;
+  const root = document.documentElement;
+  let mode: "dark" | "light" = "dark";
+  if (theme === "system") {
+    mode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  } else {
+    mode = theme;
+  }
+  root.classList.toggle("dark", mode === "dark");
+  try { window.localStorage.setItem("fv-theme", mode); } catch {}
+}
+
 function AppearanceTab() {
+  const qc = useQueryClient();
+  const [form, setForm] = useState<Appearance>(APPEARANCE_DEFAULTS);
+
+  const userQuery = useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return data.user;
+    },
+  });
+
+  const prefsQuery = useQuery({
+    queryKey: ["profile-appearance", userQuery.data?.id],
+    enabled: !!userQuery.data?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("theme, compact_mode, default_chart_range, chart_animations")
+        .eq("user_id", userQuery.data!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as Appearance | null) ?? null;
+    },
+  });
+
+  useEffect(() => {
+    if (prefsQuery.data) setForm({ ...APPEARANCE_DEFAULTS, ...prefsQuery.data });
+  }, [prefsQuery.data]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("compact", form.compact_mode);
+  }, [form.compact_mode]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const userId = userQuery.data?.id;
+      if (!userId) throw new Error("Not signed in");
+      const { error } = await supabase.from("profiles").upsert({ user_id: userId, ...form });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      applyTheme(form.theme);
+      toast.success("Appearance saved");
+      qc.invalidateQueries({ queryKey: ["profile-appearance"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed to save"),
+  });
+
+  const set = <K extends keyof Appearance>(k: K, v: Appearance[K]) => setForm((s) => ({ ...s, [k]: v }));
+
   return (
     <div className="space-y-4">
-      <PlaceholderCard
-        title="Display"
-        items={["Theme (Dark / Light / System)", "Dashboard Preferences", "Chart Preferences"]}
-      />
+      <Card className="glass-card border-[var(--border)] p-6">
+        <div className="mb-5">
+          <h3 className="text-sm font-semibold text-foreground">Theme</h3>
+          <p className="text-xs text-muted-foreground">Choose how FinTrack looks on this account.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {(["system", "light", "dark"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => { set("theme", t); applyTheme(t); }}
+              className={`rounded-lg border px-4 py-3 text-left text-sm transition ${
+                form.theme === t
+                  ? "border-[var(--primary)] bg-[var(--primary)]/10 text-foreground"
+                  : "border-border bg-surface/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className="font-medium capitalize">{t}</div>
+              <div className="text-xs text-muted-foreground">
+                {t === "system" ? "Match device" : t === "light" ? "Always light" : "Always dark"}
+              </div>
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="glass-card border-[var(--border)] p-6">
+        <div className="mb-5">
+          <h3 className="text-sm font-semibold text-foreground">Dashboard & charts</h3>
+          <p className="text-xs text-muted-foreground">Defaults applied when opening modules and charts.</p>
+        </div>
+        <div className="space-y-5">
+          <ToggleRow
+            label="Compact mode"
+            description="Tighter spacing across tables and cards."
+            checked={form.compact_mode}
+            onChange={(v) => set("compact_mode", v)}
+          />
+          <ToggleRow
+            label="Chart animations"
+            description="Smooth entry transitions on charts."
+            checked={form.chart_animations}
+            onChange={(v) => set("chart_animations", v)}
+          />
+          <div className="grid gap-1.5 sm:max-w-xs">
+            <Label className="text-xs font-medium text-muted-foreground">Default chart range</Label>
+            <Select value={form.default_chart_range} onValueChange={(v) => set("default_chart_range", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CHART_RANGES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end">
+          <Button onClick={() => save.mutate()} disabled={save.isPending || prefsQuery.isLoading}>
+            {save.isPending ? "Saving…" : "Save appearance"}
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function ToggleRow({
+  label, description, checked, onChange,
+}: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <div className="text-sm font-medium text-foreground">{label}</div>
+        <div className="text-xs text-muted-foreground">{description}</div>
+      </div>
+      <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }
