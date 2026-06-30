@@ -8,6 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ClearButton } from "@/components/clear-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -231,6 +232,24 @@ export function ScheduledReportDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <ClearButton
+            dirty={!!(name || keys.length || recipients || cc || bcc)}
+            disabled={upsert.isPending}
+            onClear={() => {
+              setName("");
+              setKeys([]);
+              setFormats(["pdf"]);
+              setFrequency("monthly");
+              setDateRange("last_period");
+              setRecipients("");
+              setCc("");
+              setBcc("");
+              setEmailEnabled(true);
+              setInAppEnabled(true);
+              setAiInsights(true);
+              setActive(true);
+            }}
+          />
           <Button
             onClick={submit}
             disabled={upsert.isPending || !name.trim() || keys.length === 0}
