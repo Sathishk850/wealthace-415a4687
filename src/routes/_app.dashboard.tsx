@@ -828,31 +828,46 @@ function SnapCard({
   );
 }
 
-function ScoreRing({ score }: { score: number }) {
+function ScoreRing({ score }: { score: number | null }) {
   const r = 58;
   const c = 2 * Math.PI * r;
-  const off = c - (c * score) / 100;
+  const value = score ?? 0;
+  const off = c - (c * value) / 100;
+  const band =
+    score === null
+      ? { label: "Not Available", hint: "Add data to calculate" }
+      : score >= 80
+        ? { label: "Excellent", hint: "You're doing great!" }
+        : score >= 60
+          ? { label: "Good", hint: "Keep building momentum." }
+          : score >= 40
+            ? { label: "Fair", hint: "Room to improve." }
+            : { label: "Needs Work", hint: "Focus on the basics." };
   return (
     <div className="relative grid h-[150px] w-[150px] place-items-center">
-          <svg width={150} height={150} className="-rotate-90">
-            <circle cx={75} cy={75} r={r} stroke="var(--border)" strokeWidth={10} fill="none" />
-        <circle
-          cx={75}
-          cy={75}
-          r={r}
-              stroke="var(--primary)"
-          strokeWidth={10}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={off}
-        />
+      <svg width={150} height={150} className="-rotate-90">
+        <circle cx={75} cy={75} r={r} stroke="var(--border)" strokeWidth={10} fill="none" />
+        {score !== null && (
+          <circle
+            cx={75}
+            cy={75}
+            r={r}
+            stroke="var(--primary)"
+            strokeWidth={10}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={off}
+          />
+        )}
       </svg>
       <div className="absolute text-center">
-        <div className="font-display text-3xl font-bold text-foreground">{score}</div>
+        <div className="font-display text-3xl font-bold text-foreground">
+          {score === null ? "—" : score}
+        </div>
         <div className="text-[10px] text-muted-foreground">/100</div>
-        <div className="mt-1 text-xs font-semibold text-mint">Excellent</div>
-        <div className="text-[10px] text-muted-foreground">You're doing great!</div>
+        <div className="mt-1 text-xs font-semibold text-mint">{band.label}</div>
+        <div className="text-[10px] text-muted-foreground">{band.hint}</div>
       </div>
     </div>
   );
