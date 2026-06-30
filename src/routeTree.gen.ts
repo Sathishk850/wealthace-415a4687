@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWhatsNewRouteImport } from './routes/_app.whats-new'
 import { Route as AppWealthRouteImport } from './routes/_app.wealth'
 import { Route as AppToolsRouteImport } from './routes/_app.tools'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
+import { Route as AppHelpRouteImport } from './routes/_app.help'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
@@ -43,6 +46,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWhatsNewRoute = AppWhatsNewRouteImport.update({
+  id: '/whats-new',
+  path: '/whats-new',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppWealthRoute = AppWealthRouteImport.update({
   id: '/wealth',
   path: '/wealth',
@@ -58,6 +66,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPlannerRoute = AppPlannerRouteImport.update({
   id: '/planner',
   path: '/planner',
@@ -71,6 +84,11 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
 const AppMoneyRoute = AppMoneyRouteImport.update({
   id: '/money',
   path: '/money',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHelpRoute = AppHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFeedbackRoute = AppFeedbackRouteImport.update({
@@ -131,12 +149,15 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
+  '/help': typeof AppHelpRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
+  '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/tools': typeof AppToolsRouteWithChildren
   '/wealth': typeof AppWealthRoute
+  '/whats-new': typeof AppWhatsNewRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/holdings/$slug': typeof AppHoldingsSlugRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
@@ -151,11 +172,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
+  '/help': typeof AppHelpRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
+  '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/wealth': typeof AppWealthRoute
+  '/whats-new': typeof AppWhatsNewRoute
   '/dashboard/networth': typeof AppDashboardNetworthRoute
   '/holdings/$slug': typeof AppHoldingsSlugRoute
   '/money/transactions': typeof AppMoneyTransactionsRoute
@@ -172,12 +196,15 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_app/dashboard': typeof AppDashboardRouteWithChildren
   '/_app/feedback': typeof AppFeedbackRoute
+  '/_app/help': typeof AppHelpRoute
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/planner': typeof AppPlannerRoute
+  '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tools': typeof AppToolsRouteWithChildren
   '/_app/wealth': typeof AppWealthRoute
+  '/_app/whats-new': typeof AppWhatsNewRoute
   '/_app/dashboard/networth': typeof AppDashboardNetworthRoute
   '/_app/holdings/$slug': typeof AppHoldingsSlugRoute
   '/_app/money/transactions': typeof AppMoneyTransactionsRoute
@@ -194,12 +221,15 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/feedback'
+    | '/help'
     | '/money'
     | '/notifications'
     | '/planner'
+    | '/profile'
     | '/settings'
     | '/tools'
     | '/wealth'
+    | '/whats-new'
     | '/dashboard/networth'
     | '/holdings/$slug'
     | '/money/transactions'
@@ -214,11 +244,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/feedback'
+    | '/help'
     | '/money'
     | '/notifications'
     | '/planner'
+    | '/profile'
     | '/settings'
     | '/wealth'
+    | '/whats-new'
     | '/dashboard/networth'
     | '/holdings/$slug'
     | '/money/transactions'
@@ -234,12 +267,15 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_app/dashboard'
     | '/_app/feedback'
+    | '/_app/help'
     | '/_app/money'
     | '/_app/notifications'
     | '/_app/planner'
+    | '/_app/profile'
     | '/_app/settings'
     | '/_app/tools'
     | '/_app/wealth'
+    | '/_app/whats-new'
     | '/_app/dashboard/networth'
     | '/_app/holdings/$slug'
     | '/_app/money/transactions'
@@ -280,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/whats-new': {
+      id: '/_app/whats-new'
+      path: '/whats-new'
+      fullPath: '/whats-new'
+      preLoaderRoute: typeof AppWhatsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/wealth': {
       id: '/_app/wealth'
       path: '/wealth'
@@ -301,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/planner': {
       id: '/_app/planner'
       path: '/planner'
@@ -320,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/money'
       fullPath: '/money'
       preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/help': {
+      id: '/_app/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof AppHelpRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/feedback': {
@@ -436,12 +493,15 @@ const AppToolsRouteWithChildren = AppToolsRoute._addFileChildren(
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppFeedbackRoute: typeof AppFeedbackRoute
+  AppHelpRoute: typeof AppHelpRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPlannerRoute: typeof AppPlannerRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppToolsRoute: typeof AppToolsRouteWithChildren
   AppWealthRoute: typeof AppWealthRoute
+  AppWhatsNewRoute: typeof AppWhatsNewRoute
   AppHoldingsSlugRoute: typeof AppHoldingsSlugRoute
   AppReportsIdRoute: typeof AppReportsIdRoute
   AppReportsIndexRoute: typeof AppReportsIndexRoute
@@ -450,12 +510,15 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRouteWithChildren,
   AppFeedbackRoute: AppFeedbackRoute,
+  AppHelpRoute: AppHelpRoute,
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPlannerRoute: AppPlannerRoute,
+  AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppToolsRoute: AppToolsRouteWithChildren,
   AppWealthRoute: AppWealthRoute,
+  AppWhatsNewRoute: AppWhatsNewRoute,
   AppHoldingsSlugRoute: AppHoldingsSlugRoute,
   AppReportsIdRoute: AppReportsIdRoute,
   AppReportsIndexRoute: AppReportsIndexRoute,
@@ -472,13 +535,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
