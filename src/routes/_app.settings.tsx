@@ -11,6 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
+import { getPinStatus, setPin, disablePin, deleteAccount } from "@/lib/pin.functions";
+import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({
@@ -379,17 +394,199 @@ function ToggleRow({
 function SecurityTab() {
   return (
     <div className="space-y-4">
-      <PlaceholderCard
-        title="Account security"
-        items={[
-          "Change Password",
-          "PIN Login (enable / create / change / reset)",
-          "Active Sessions",
-          "Login History",
-          "Delete Account",
-        ]}
-      />
+      <ChangePasswordCard />
+      <PinCard />
+      <DangerZoneCard />
     </div>
+  );
+}
+
+function ChangePasswordCard() {
+  const [pw, setPw] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (pw.length < 8) return toast.error("Password must be at least 8 characters");
+    if (pw !== confirm) return toast.error("Passwords don't match");
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password updated");
+    setPw(""); setConfirm("");
+  };
+
+  return (
+    <Card className="glass-card border-[var(--border)] p-6">
+      <div className="mb-5">
+        <h3 className="text-sm font-semibold text-foreground">Change password</h3>
+        <p className="text-xs text-muted-foreground">Use at least 8 characters with a mix of letters and numbers.</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">New password</Label>
+          <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">Confirm new password</Label>
+          <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+        </div>
+      </div>
+      <div className="mt-6 flex justify-end">
+        <Button onClick={submit} disabled={busy || !pw || !confirm}>
+          {busy ? "Updating…" : "Update password"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function PinCard() {
+  const qc = useQueryClient();
+  const fetchStatus = useServerFn(getPinStatus);
+  const setPinFn = useServerFn(setPin);
+  const disablePinFn = useServerFn(disablePin);
+
+  const status = useQuery({ queryKey: ["pin-status"], queryFn: () => fetchStatus() });
+  const enabled = !!status.data?.enabled;
+
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+
+  const reset = () => { setCurrentPin(""); setNewPin(""); setConfirmPin(""); };
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!/^\d{4,8}$/.test(newPin)) throw new Error("PIN must be 4–8 digits");
+      if (newPin !== confirmPin) throw new Error("PINs don't match");
+      await setPinFn({ data: enabled ? { pin: newPin, currentPin } : { pin: newPin } });
+    },
+    onSuccess: () => {
+      toast.success(enabled ? "PIN updated" : "PIN enabled");
+      reset();
+      qc.invalidateQueries({ queryKey: ["pin-status"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const disable = useMutation({
+    mutationFn: async () => {
+      if (!/^\d{4,8}$/.test(currentPin)) throw new Error("Enter your current PIN");
+      await disablePinFn({ data: { currentPin } });
+    },
+    onSuccess: () => {
+      toast.success("PIN disabled");
+      reset();
+      qc.invalidateQueries({ queryKey: ["pin-status"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  return (
+    <Card className="glass-card border-[var(--border)] p-6">
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">PIN login</h3>
+          <p className="text-xs text-muted-foreground">
+            Quick 4–8 digit unlock. Hashed server-side; never stored in plain text.
+          </p>
+        </div>
+        <span className={`rounded-full px-2 py-0.5 text-xs ${enabled ? "bg-[var(--primary)]/15 text-[var(--primary)]" : "bg-surface/40 text-muted-foreground border border-border"}`}>
+          {status.isLoading ? "…" : enabled ? "Enabled" : "Disabled"}
+        </span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {enabled && (
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Current PIN</Label>
+            <Input inputMode="numeric" maxLength={8} type="password" value={currentPin} onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, ""))} />
+          </div>
+        )}
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">{enabled ? "New PIN" : "Create PIN"}</Label>
+          <Input inputMode="numeric" maxLength={8} type="password" value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">Confirm PIN</Label>
+          <Input inputMode="numeric" maxLength={8} type="password" value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))} />
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
+        {enabled && (
+          <Button variant="outline" onClick={() => disable.mutate()} disabled={disable.isPending || !currentPin}>
+            {disable.isPending ? "Disabling…" : "Disable PIN"}
+          </Button>
+        )}
+        <Button onClick={() => save.mutate()} disabled={save.isPending || !newPin || !confirmPin}>
+          {save.isPending ? "Saving…" : enabled ? "Change PIN" : "Enable PIN"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function DangerZoneCard() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const deleteFn = useServerFn(deleteAccount);
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const onConfirm = async () => {
+    setBusy(true);
+    try {
+      await deleteFn();
+      await qc.cancelQueries();
+      qc.clear();
+      await supabase.auth.signOut();
+      toast.success("Account deleted");
+      navigate({ to: "/auth", replace: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to delete account");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="glass-card border border-destructive/40 p-6">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-destructive">Delete account</h3>
+        <p className="text-xs text-muted-foreground">
+          Permanently removes your account and all associated data. This cannot be undone.
+        </p>
+      </div>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive">Delete my account</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete your account, profile, and all financial data. Type
+              <span className="font-semibold text-foreground"> DELETE </span>
+              below to confirm.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="DELETE" />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmText("")}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={confirmText !== "DELETE" || busy}
+              onClick={(e) => { e.preventDefault(); onConfirm(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {busy ? "Deleting…" : "Delete forever"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 }
 
