@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { ClearButton } from "@/components/clear-button";
 import {
   Target,
   Flame,
@@ -662,6 +663,19 @@ function GoalDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <ClearButton
+            dirty={!!(name || notes || target || (Number(saved) > 0) || (Number(monthly) > 0) || date)}
+            disabled={upsert.isPending}
+            onClear={() => {
+              setName("");
+              setGoalType("custom");
+              setTarget("");
+              setSaved("0");
+              setDate("");
+              setMonthly("0");
+              setNotes("");
+            }}
+          />
           <Button onClick={submit} disabled={!valid || upsert.isPending} className="bg-mint text-mint-foreground hover:bg-mint/90">
             {upsert.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
             {isEdit ? "Save Changes" : "Create Goal"}

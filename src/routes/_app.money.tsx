@@ -35,6 +35,7 @@ import {
   Cell,
 } from "recharts";
 import { useMemo, useState } from "react";
+import { ClearButton } from "@/components/clear-button";
 import {
   Dialog,
   DialogContent,
@@ -1060,6 +1061,19 @@ function TransactionDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <ClearButton
+            dirty={!!(amount || merchant || account || note || categoryId)}
+            disabled={upsert.isPending}
+            onClear={() => {
+              setAmount("");
+              setDate(todayIso());
+              setCategoryId("");
+              setMerchant("");
+              setAccount("");
+              setNote("");
+              setErr(null);
+            }}
+          />
           <Button onClick={submit} disabled={upsert.isPending}>
             {upsert.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
             {editing ? "Save changes" : "Add transaction"}
@@ -1289,6 +1303,15 @@ function BudgetDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <ClearButton
+            dirty={!!(categoryId || amount)}
+            disabled={upsert.isPending}
+            onClear={() => {
+              setCategoryId("");
+              setAmount("");
+              setErr(null);
+            }}
+          />
           <Button onClick={submit} disabled={upsert.isPending}>
             {upsert.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
             {editing ? "Save changes" : "Add budget"}

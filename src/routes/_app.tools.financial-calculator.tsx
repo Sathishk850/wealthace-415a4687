@@ -16,6 +16,7 @@ import {
   CalendarClock,
   Save,
   Download,
+  Eraser,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -84,6 +85,7 @@ export function FinCalculators() {
   const [active, setActive] = useState(calcs[0].id);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const saveCalc = useSaveCalculation();
+  const [resetCounter, setResetCounter] = useState(0);
 
   const current = calcs.find((c) => c.id === active)!;
 
@@ -155,13 +157,24 @@ export function FinCalculators() {
                   <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleSave} disabled={saveCalc.isPending}>
                     <Save className="h-3.5 w-3.5" /> Save
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5"
+                    onClick={() => {
+                      if (!window.confirm("Reset this calculator's inputs to defaults? Saved calculations won't change.")) return;
+                      setResetCounter((n) => n + 1);
+                    }}
+                  >
+                    <Eraser className="h-3.5 w-3.5" /> Clear
+                  </Button>
                   <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleExport}>
                     <Download className="h-3.5 w-3.5" /> Export
                   </Button>
                 </div>
               )}
             </div>
-            <div ref={active === c.id ? panelRef : undefined}>{c.render()}</div>
+            <div ref={active === c.id ? panelRef : undefined} key={`${c.id}-${resetCounter}`}>{c.render()}</div>
           </Card>
         </TabsContent>
       ))}
