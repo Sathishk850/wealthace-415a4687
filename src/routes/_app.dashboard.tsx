@@ -38,6 +38,11 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { SnapshotHistoryDialog } from "@/components/snapshot-history-dialog";
+import {
+  ChartRangeSelector,
+  defaultChartRange,
+  type ChartRangeValue,
+} from "@/components/chart-range-selector";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -52,9 +57,6 @@ export const Route = createFileRoute("/_app/dashboard")({
   }),
   component: Dashboard,
 });
-
-const RANGES = ["1D", "1W", "1M", "3M", "6M", "1Y", "All"] as const;
-type Range = (typeof RANGES)[number];
 
 function genSeries(base: number, points: number, vol: number) {
   let v = base;
@@ -331,27 +333,12 @@ function RangeChart({
   height: number;
   compact?: boolean;
 }) {
-  const [range, setRange] = useState<Range>("1M");
+  const [range, setRange] = useState<ChartRangeValue>(() => defaultChartRange("1M"));
   const id = `g-${Math.random().toString(36).slice(2, 8)}`;
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex justify-end">
-        <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-surface-2 p-0.5">
-          {RANGES.map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className={cn(
-                "rounded-md px-2 py-0.5 text-[11px] font-semibold transition",
-                range === r
-                  ? "border border-mint/50 bg-mint/10 text-mint"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        <ChartRangeSelector value={range} onChange={setRange} />
       </div>
       <div style={{ height: compact ? height : height }} className="flex-1">
         <ResponsiveContainer>
