@@ -835,14 +835,16 @@ function ScoreRing({ score }: { score: number | null }) {
   const off = c - (c * value) / 100;
   const band =
     score === null
-      ? { label: "Not Available", hint: "Add data to calculate" }
-      : score >= 80
-        ? { label: "Excellent", hint: "You're doing great!" }
-        : score >= 60
-          ? { label: "Good", hint: "Keep building momentum." }
-          : score >= 40
-            ? { label: "Fair", hint: "Room to improve." }
-            : { label: "Needs Work", hint: "Focus on the basics." };
+      ? { label: "Not Available", hint: "Add more financial data to calculate your Financial Score." }
+      : score >= 90
+        ? { label: "Excellent", hint: "Your finances are in excellent shape." }
+        : score >= 75
+          ? { label: "Very Good", hint: "You're managing your finances well." }
+          : score >= 60
+            ? { label: "Good", hint: "You're on the right track." }
+            : score >= 40
+              ? { label: "Fair", hint: "There's room for improvement." }
+              : { label: "Needs Improvement", hint: "Consider improving your financial health." };
   return (
     <div className="relative grid h-[150px] w-[150px] place-items-center">
       <svg width={150} height={150} className="-rotate-90">
