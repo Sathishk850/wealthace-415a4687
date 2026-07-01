@@ -54,8 +54,8 @@ export function SnapshotHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl border-border bg-[#02101c] p-0">
-        <div className="p-7">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-5xl overflow-y-auto border-border bg-[#02101c] p-0">
+        <div className="p-4 sm:p-7">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold tracking-tight">
               Snapshot history
@@ -74,7 +74,8 @@ export function SnapshotHistoryDialog({
           </div>
 
           {/* Table */}
-          <div className="mt-6 overflow-hidden rounded-xl border border-border/60">
+          <div className="mt-6 overflow-x-auto rounded-xl border border-border/60">
+            <div className="min-w-[520px]">
             <div className="grid grid-cols-[2fr_2fr_1.2fr] border-b border-border/60 px-4 py-3 text-xs font-semibold text-muted-foreground">
               <button className="flex items-center gap-1 text-left">
                 Date <ArrowUpDown className="h-3 w-3" />
@@ -92,16 +93,16 @@ export function SnapshotHistoryDialog({
                   key={r.iso}
                   className="grid grid-cols-[2fr_2fr_1.2fr] items-center border-b border-border/30 px-4 py-3.5 text-sm last:border-b-0 hover:bg-surface/40"
                 >
-                  <div className="flex items-center gap-3 text-foreground">
-                    <span className="grid h-7 w-7 place-items-center rounded-md border border-border/60 bg-surface/60 text-muted-foreground">
+                  <div className="flex min-w-0 items-center gap-3 text-foreground">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border/60 bg-surface/60 text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
                     </span>
-                    {r.date}
+                    <span className="truncate">{r.date}</span>
                   </div>
-                  <div className="font-medium text-foreground">₹{fmt(r.net)}</div>
+                  <div className="truncate font-medium text-foreground">₹{fmt(r.net)}</div>
                   <div
                     className={cn(
-                      "text-right font-semibold",
+                      "truncate text-right font-semibold",
                       r.change >= 0 ? "text-success" : "text-danger",
                     )}
                   >
@@ -110,14 +111,15 @@ export function SnapshotHistoryDialog({
                 </div>
               ))}
             </div>
+            </div>
           </div>
 
           {/* Footer */}
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <p className="text-xs text-muted-foreground">
               Showing 1 to {rows.length} of {SNAPSHOTS.length} snapshots
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground">
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
@@ -141,7 +143,7 @@ export function SnapshotHistoryDialog({
               <button className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground">
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
-              <button className="ml-3 inline-flex items-center gap-2 rounded-lg border border-mint/40 bg-mint/5 px-4 py-2 text-xs font-semibold text-mint hover:bg-mint/10">
+              <button className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-mint/40 bg-mint/5 px-4 py-2 text-xs font-semibold text-mint hover:bg-mint/10 sm:ml-3">
                 <Download className="h-3.5 w-3.5" /> Export CSV
               </button>
             </div>
