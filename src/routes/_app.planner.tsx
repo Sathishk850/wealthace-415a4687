@@ -817,7 +817,7 @@ function RetirementView() {
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1B3249" />
-              <XAxis dataKey="age" stroke="#6E8294" fontSize={11} tickFormatter={(v) => `Age ${v}`} />
+              <XAxis dataKey="age" stroke="#6E8294" fontSize={11} tickFormatter={(v) => `Age ${v}`} {...smartXAxisProps} />
               <YAxis stroke="#6E8294" fontSize={11} tickFormatter={(v) => `${v}L`} />
               <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }} formatter={(v: number) => `₹${v}L`} />
               <Legend />
