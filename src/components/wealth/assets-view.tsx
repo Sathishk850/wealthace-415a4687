@@ -311,7 +311,7 @@ export function AssetsView({
                       <stop offset="100%" stopColor="#14D8CF" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
                   <YAxis
                     tick={{ fill: "#6E8294", fontSize: 11 }}
                     axisLine={false}

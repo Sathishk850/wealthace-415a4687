@@ -434,7 +434,7 @@ function Money() {
                   <ResponsiveContainer>
                     <LineChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
-                      <XAxis dataKey="d" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} />
+                      <XAxis dataKey="d" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false}  {...smartXAxisProps} />
                       <YAxis stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${Math.round(v / 1000)}k`} />
                       <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1C3850", borderRadius: 12, fontSize: 12 }} formatter={(v: number) => inr(v)} />
                       <Line type="monotone" dataKey="income" stroke="#14D8CF" strokeWidth={2.5} dot={{ r: 4, fill: "#14D8CF" }} activeDot={{ r: 5 }} />

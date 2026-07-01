@@ -716,7 +716,7 @@ function ProjectionChart({ settings, yearsSpan }: { settings: PlannerSettings; y
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#1B3249" />
-        <XAxis dataKey="year" stroke="#6E8294" fontSize={11} />
+        <XAxis dataKey="year" stroke="#6E8294" fontSize={11}  {...smartXAxisProps} />
         <YAxis stroke="#6E8294" fontSize={11} tickFormatter={(v) => `${v}L`} />
         <Tooltip
           contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }}
