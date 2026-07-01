@@ -478,12 +478,12 @@ function Dashboard() {
         {/* Financial Score + Goal Progress */}
         <Card className="col-span-12 p-6 lg:col-span-6">
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-4 grid grid-cols-1 items-center gap-6 sm:grid-cols-[160px_1fr]">
-            <ScoreRing score={score.total} />
-            <div className="space-y-2.5 text-sm">
+          <div className="mt-4 flex flex-col items-center gap-6">
+            <ScoreGauge score={score.total} />
+            <div className="w-full space-y-2.5 text-sm">
               {score.rows.map((row) => (
-                <div key={row.k} className="flex items-center gap-3">
-                  <span className="w-32 shrink-0 text-muted-foreground">{row.k}</span>
+                <div key={row.k} className="flex items-center gap-2 sm:gap-3">
+                  <span className="w-24 shrink-0 truncate text-xs text-muted-foreground sm:w-32 sm:text-sm">{row.k}</span>
                   <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                     {row.v !== null && (
                       <div
@@ -492,7 +492,7 @@ function Dashboard() {
                       />
                     )}
                   </div>
-                  <span className="w-8 text-right font-semibold text-foreground">
+                  <span className="w-8 shrink-0 text-right text-xs font-semibold text-foreground sm:text-sm">
                     {row.v === null ? "—" : row.v}
                   </span>
                 </div>
@@ -500,7 +500,7 @@ function Dashboard() {
             </div>
           </div>
           {!score.hasAny && (
-            <p className="mt-4 text-xs text-muted-foreground">
+            <p className="mt-4 text-center text-xs text-muted-foreground">
               Add more financial data to calculate your Financial Score.
             </p>
           )}
