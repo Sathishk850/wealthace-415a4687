@@ -478,12 +478,12 @@ function Dashboard() {
         {/* Financial Score + Goal Progress */}
         <Card className="col-span-12 p-6 lg:col-span-6">
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-4 grid grid-cols-1 items-center gap-6 sm:grid-cols-[160px_1fr]">
-            <ScoreRing score={score.total} />
-            <div className="space-y-2.5 text-sm">
+          <div className="mt-4 flex flex-col items-center gap-6">
+            <ScoreGauge score={score.total} />
+            <div className="w-full space-y-2.5 text-sm">
               {score.rows.map((row) => (
-                <div key={row.k} className="flex items-center gap-3">
-                  <span className="w-32 shrink-0 text-muted-foreground">{row.k}</span>
+                <div key={row.k} className="flex items-center gap-2 sm:gap-3">
+                  <span className="w-24 shrink-0 truncate text-xs text-muted-foreground sm:w-32 sm:text-sm">{row.k}</span>
                   <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                     {row.v !== null && (
                       <div
@@ -492,7 +492,7 @@ function Dashboard() {
                       />
                     )}
                   </div>
-                  <span className="w-8 text-right font-semibold text-foreground">
+                  <span className="w-8 shrink-0 text-right text-xs font-semibold text-foreground sm:text-sm">
                     {row.v === null ? "—" : row.v}
                   </span>
                 </div>
@@ -500,7 +500,7 @@ function Dashboard() {
             </div>
           </div>
           {!score.hasAny && (
-            <p className="mt-4 text-xs text-muted-foreground">
+            <p className="mt-4 text-center text-xs text-muted-foreground">
               Add more financial data to calculate your Financial Score.
             </p>
           )}
@@ -828,48 +828,103 @@ function SnapCard({
   );
 }
 
-function ScoreRing({ score }: { score: number | null }) {
-  const r = 58;
-  const c = 2 * Math.PI * r;
-  const value = score ?? 0;
-  const off = c - (c * value) / 100;
+function ScoreGauge({ score }: { score: number | null }) {
   const band =
     score === null
-      ? { label: "Not Available", hint: "Add more financial data to calculate your Financial Score." }
+      ? { label: "Not Available", color: "var(--muted-foreground)", hint: "Add more financial data to calculate your Financial Score." }
       : score >= 90
-        ? { label: "Excellent", hint: "Your finances are in excellent shape." }
+        ? { label: "Excellent", color: "#00c896", hint: "Your finances are in excellent shape." }
         : score >= 75
-          ? { label: "Very Good", hint: "You're managing your finances well." }
+          ? { label: "Very Good", color: "#14d8cf", hint: "You're managing your finances well." }
           : score >= 60
-            ? { label: "Good", hint: "You're on the right track." }
+            ? { label: "Good", color: "#d9b800", hint: "You're on the right track. Keep it up!" }
             : score >= 40
-              ? { label: "Fair", hint: "There's room for improvement." }
-              : { label: "Needs Improvement", hint: "Consider improving your financial health." };
+              ? { label: "Fair", color: "#ff8a3c", hint: "There's room for improvement." }
+              : { label: "Needs Improvement", color: "#ff4d4d", hint: "Consider improving your financial health." };
+
+  // Gauge geometry — semi-circle inside a 200x120 viewBox, scales via width:100%.
+  const cx = 100;
+  const cy = 100;
+  const R = 82;
+  const SW = 14;
+  // 5 color segments across 180°: red, orange, yellow, teal, green
+  const segs = [
+    { from: 0, to: 20, color: "#ff4d4d" },
+    { from: 20, to: 40, color: "#ff8a3c" },
+    { from: 40, to: 60, color: "#d9b800" },
+    { from: 60, to: 80, color: "#14d8cf" },
+    { from: 80, to: 100, color: "#00c896" },
+  ];
+  const pctToAngle = (p: number) => 180 + (p / 100) * 180; // 180°..360°
+  const polar = (a: number, rad = R) => {
+    const r = (a * Math.PI) / 180;
+    return { x: cx + rad * Math.cos(r), y: cy + rad * Math.sin(r) };
+  };
+  const arcPath = (from: number, to: number) => {
+    const a1 = pctToAngle(from);
+    const a2 = pctToAngle(to);
+    const p1 = polar(a1);
+    const p2 = polar(a2);
+    const large = a2 - a1 > 180 ? 1 : 0;
+    return `M ${p1.x} ${p1.y} A ${R} ${R} 0 ${large} 1 ${p2.x} ${p2.y}`;
+  };
+
+  const needleAngle = score === null ? null : pctToAngle(Math.max(0, Math.min(100, score)));
+  const needleTip = needleAngle !== null ? polar(needleAngle, R + 6) : null;
+  const needleBase = needleAngle !== null ? polar(needleAngle, R - SW / 2 - 4) : null;
+
   return (
-    <div className="relative grid h-[150px] w-[150px] place-items-center">
-      <svg width={150} height={150} className="-rotate-90">
-        <circle cx={75} cy={75} r={r} stroke="var(--border)" strokeWidth={10} fill="none" />
-        {score !== null && (
-          <circle
-            cx={75}
-            cy={75}
-            r={r}
-            stroke="var(--primary)"
-            strokeWidth={10}
-            fill="none"
+    <div className="w-full max-w-[320px]">
+      <svg viewBox="0 0 200 120" className="block w-full" aria-hidden>
+        {score === null ? (
+          <path
+            d={arcPath(0, 100)}
+            stroke="var(--border)"
+            strokeWidth={SW}
             strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={off}
+            fill="none"
+            strokeDasharray="4 6"
           />
+        ) : (
+          segs.map((s) => (
+            <path
+              key={s.from}
+              d={arcPath(s.from, s.to)}
+              stroke={s.color}
+              strokeWidth={SW}
+              strokeLinecap="butt"
+              fill="none"
+              opacity={score >= s.from && score <= s.to ? 1 : 0.35}
+            />
+          ))
+        )}
+        {needleTip && needleBase && (
+          <>
+            <line
+              x1={needleBase.x}
+              y1={needleBase.y}
+              x2={needleTip.x}
+              y2={needleTip.y}
+              stroke="var(--foreground)"
+              strokeWidth={3}
+              strokeLinecap="round"
+            />
+            <circle cx={cx} cy={cy} r={4} fill="var(--foreground)" />
+          </>
         )}
       </svg>
-      <div className="absolute text-center">
-        <div className="font-display text-3xl font-bold text-foreground">
-          {score === null ? "—" : score}
+      <div className="-mt-2 text-center">
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {score === null ? "" : "Your Score"}
         </div>
-        <div className="text-[10px] text-muted-foreground">/100</div>
-        <div className="mt-1 text-xs font-semibold text-mint">{band.label}</div>
-        <div className="text-[10px] text-muted-foreground">{band.hint}</div>
+        <div className="font-display text-4xl font-bold leading-none text-foreground">
+          {score === null ? "—" : score}
+          <span className="ml-1 align-middle text-sm font-medium text-muted-foreground">/100</span>
+        </div>
+        <div className="mt-1 text-sm font-semibold" style={{ color: band.color }}>
+          {band.label}
+        </div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">{band.hint}</div>
       </div>
     </div>
   );
