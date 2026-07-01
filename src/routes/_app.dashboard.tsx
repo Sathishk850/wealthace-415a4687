@@ -41,6 +41,7 @@ import {
   defaultChartRange,
   type ChartRangeValue,
 } from "@/components/chart-range-selector";
+import { smartXAxisProps, formatAxisTick, filterSeriesByRange } from "@/lib/chart-axis";
 import { useAssets, useLiabilities, useInvestments, inr as inrW } from "@/lib/wealth-api";
 import { useTransactions } from "@/lib/money-api";
 import { useGoals } from "@/lib/planner-api";
