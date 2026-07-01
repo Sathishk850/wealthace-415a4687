@@ -51,14 +51,14 @@ export function RemindersView() {
           <Bell className="h-4 w-4 text-[var(--primary)]" />
           <h3 className="text-sm font-semibold text-[var(--text-main)]">Reminders</h3>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <div className="relative min-w-0 flex-1 sm:flex-none">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search..."
-              className="h-8 w-44 pl-8 bg-[var(--bg-primary)]/40 text-xs"
+              className="h-8 w-full pl-8 bg-[var(--bg-primary)]/40 text-xs sm:w-44"
             />
           </div>
           <div className="flex items-center rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 p-0.5">
