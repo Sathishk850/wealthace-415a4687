@@ -5,7 +5,6 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ChartRangeSelector,
@@ -64,12 +63,6 @@ export function SnapshotHistoryDialog({
           <DialogPrimitive.Description className="text-[14px] text-muted-foreground">
             Track your net worth over time based on your snapshots.
           </DialogPrimitive.Description>
-          <DialogPrimitive.Close
-            aria-label="Close"
-            className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-md text-muted-foreground opacity-80 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <X className="h-5 w-5" />
-          </DialogPrimitive.Close>
         </div>
 
         {/* FILTER */}
