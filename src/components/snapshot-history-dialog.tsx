@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
-import { Calendar, Download, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ChartRangeSelector,
@@ -54,100 +53,103 @@ export function SnapshotHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-5xl overflow-y-auto border-border bg-[#02101c] p-0">
-        <div className="p-4 sm:p-7">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold tracking-tight">
-              Snapshot history
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Track your net worth over time based on your snapshots.
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent
+        className="grid h-[88vh] max-h-[88vh] w-[95vw] max-w-5xl grid-rows-[auto_auto_1fr_auto] gap-0 overflow-hidden border-border bg-[#02101c] p-0 sm:h-auto sm:max-h-[90vh]"
+      >
+        {/* HEADER */}
+        <div className="relative flex flex-col gap-1 border-b border-border/60 p-4 pr-14 sm:p-6 sm:pr-16">
+          <DialogPrimitive.Title className="text-[22px] font-bold leading-tight tracking-tight sm:text-2xl">
+            Snapshot History
+          </DialogPrimitive.Title>
+          <DialogPrimitive.Description className="text-[14px] text-muted-foreground">
+            Track your net worth over time based on your snapshots.
+          </DialogPrimitive.Description>
+          <DialogPrimitive.Close
+            aria-label="Close"
+            className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-md text-muted-foreground opacity-80 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <X className="h-5 w-5" />
+          </DialogPrimitive.Close>
+        </div>
 
-          {/* Filter row */}
-          <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
-            <p className="text-xs text-muted-foreground">
-              Showing snapshots for <span className="text-foreground">{formatRangeLabel(range)}</span>
-            </p>
-            <ChartRangeSelector value={range} onChange={setRange} />
+        {/* FILTER */}
+        <div className="flex flex-col gap-1.5 border-b border-border/60 px-4 py-3 sm:px-6">
+          <ChartRangeSelector value={range} onChange={setRange} className="!items-start" />
+          <p className="text-[12px] text-muted-foreground">
+            <span className="text-foreground">{formatRangeLabel(range)}</span>
+          </p>
+        </div>
+
+        {/* TABLE */}
+        <div className="flex min-h-0 flex-col overflow-hidden">
+          <div className="grid grid-cols-[40%_35%_25%] border-b border-border/60 bg-[#02101c] px-3 py-3 text-[14px] font-semibold text-muted-foreground sm:px-4">
+            <button className="flex items-center gap-1 text-left">
+              Date <ArrowUpDown className="h-3 w-3" />
+            </button>
+            <button className="flex items-center justify-end gap-1">
+              Net Worth <ArrowUpDown className="h-3 w-3" />
+            </button>
+            <button className="flex items-center justify-end gap-1">
+              Change <ArrowUpDown className="h-3 w-3" />
+            </button>
           </div>
-
-          {/* Table */}
-          <div className="mt-6 overflow-x-auto rounded-xl border border-border/60">
-            <div className="min-w-[520px]">
-            <div className="grid grid-cols-[2fr_2fr_1.2fr] border-b border-border/60 px-4 py-3 text-xs font-semibold text-muted-foreground">
-              <button className="flex items-center gap-1 text-left">
-                Date <ArrowUpDown className="h-3 w-3" />
-              </button>
-              <button className="flex items-center gap-1">
-                Net worth <ArrowUpDown className="h-3 w-3" />
-              </button>
-              <button className="flex items-center justify-end gap-1">
-                Change <ArrowUpDown className="h-3 w-3" />
-              </button>
-            </div>
-            <div className="max-h-[420px] overflow-y-auto">
-              {rows.map((r) => (
-                <div
-                  key={r.iso}
-                  className="grid grid-cols-[2fr_2fr_1.2fr] items-center border-b border-border/30 px-4 py-3.5 text-sm last:border-b-0 hover:bg-surface/40"
-                >
-                  <div className="flex min-w-0 items-center gap-3 text-foreground">
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border/60 bg-surface/60 text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="truncate">{r.date}</span>
-                  </div>
-                  <div className="truncate font-medium text-foreground">₹{fmt(r.net)}</div>
-                  <div
-                    className={cn(
-                      "truncate text-right font-semibold",
-                      r.change >= 0 ? "text-success" : "text-danger",
-                    )}
-                  >
-                    {r.change >= 0 ? "+" : "-"}₹{fmt(r.change)}
-                  </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {rows.map((r) => (
+              <div
+                key={r.iso}
+                className="grid min-h-[56px] grid-cols-[40%_35%_25%] items-center border-b border-border/30 px-3 py-3 text-[16px] last:border-b-0 hover:bg-surface/40 sm:px-4"
+              >
+                <div className="min-w-0 truncate text-foreground">{r.date}</div>
+                <div className="truncate text-right font-medium text-foreground">
+                  ₹{fmt(r.net)}
                 </div>
-              ))}
-            </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <p className="text-xs text-muted-foreground">
-              Showing 1 to {rows.length} of {SNAPSHOTS.length} snapshots
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground">
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-              {[1, 2, 3].map((p) => (
-                <button
-                  key={p}
+                <div
                   className={cn(
-                    "grid h-8 w-8 place-items-center rounded-md text-xs font-semibold",
-                    p === 1
-                      ? "bg-mint text-mint-foreground"
-                      : "border border-border text-muted-foreground hover:text-foreground",
+                    "truncate text-right font-semibold",
+                    r.change >= 0 ? "text-success" : "text-danger",
                   )}
                 >
-                  {p}
-                </button>
-              ))}
-              <span className="px-1 text-muted-foreground">…</span>
-              <button className="grid h-8 w-8 place-items-center rounded-md border border-border text-xs font-semibold text-muted-foreground hover:text-foreground">
-                3
-              </button>
-              <button className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground">
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-              <button className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-mint/40 bg-mint/5 px-4 py-2 text-xs font-semibold text-mint hover:bg-mint/10 sm:ml-3">
-                <Download className="h-3.5 w-3.5" /> Export CSV
-              </button>
-            </div>
+                  {r.change >= 0 ? "+" : "-"}₹{fmt(r.change)}
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-2.5 sm:px-6 sm:py-3">
+          <div className="flex items-center gap-1">
+            <button
+              aria-label="Previous page"
+              className="grid h-11 w-11 place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {[1, 2, 3].map((p) => (
+              <button
+                key={p}
+                className={cn(
+                  "grid h-11 min-w-11 place-items-center rounded-md px-2 text-[13px] font-semibold",
+                  p === 1
+                    ? "bg-mint text-mint-foreground"
+                    : "border border-border text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              aria-label="Next page"
+              className="grid h-11 w-11 place-items-center rounded-md border border-border text-muted-foreground hover:text-foreground"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <button className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg border border-mint/40 bg-mint/5 px-3 text-[13px] font-semibold text-mint hover:bg-mint/10">
+            <Download className="h-4 w-4" />
+            <span className="hidden xs:inline sm:inline">Export CSV</span>
+            <span className="xs:hidden sm:hidden">CSV</span>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
