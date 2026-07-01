@@ -27,15 +27,15 @@ export function ScheduledReportsPanel({
 
   return (
     <Card className="glass-card border-[var(--border)] p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <CalendarClock className="h-4 w-4 text-mint" />
           <h3 className="text-sm font-semibold text-foreground">Scheduled Report Delivery</h3>
           <Badge variant="outline" className="border-amber-400/40 text-[10px] text-amber-400">
             Email awaiting domain
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
         <Button asChild size="sm" variant="outline" className="h-7 gap-1 text-xs">
           <Link to="/reports"><FolderOpen className="h-3.5 w-3.5" /> Report Center</Link>
         </Button>
