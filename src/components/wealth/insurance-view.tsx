@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   TrendingUp,
   Plus,

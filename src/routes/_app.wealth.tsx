@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { TextTabs } from "@/components/text-tabs";

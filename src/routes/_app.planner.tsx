@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import { useMemo, useState } from "react";
 import { ClearButton } from "@/components/clear-button";
 import {
