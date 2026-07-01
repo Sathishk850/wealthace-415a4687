@@ -142,18 +142,18 @@ export function FinCalculators() {
       {calcs.map((c) => (
         <TabsContent key={c.id} value={c.id} className="mt-4">
           <Card className="glass-card border-[var(--border)] p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-[var(--primary)]/10 p-2 text-[var(--primary)]">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="shrink-0 rounded-lg bg-[var(--primary)]/10 p-2 text-[var(--primary)]">
                   <c.icon className="h-5 w-5" />
                 </div>
-                <div>
-                  <h3 className="text-base font-semibold text-[var(--text-main)]">{c.title}</h3>
+                <div className="min-w-0">
+                  <h3 className="truncate text-base font-semibold text-[var(--text-main)]">{c.title}</h3>
                   <p className="text-xs text-[var(--text-muted)]">{c.desc}</p>
                 </div>
               </div>
               {active === c.id && (
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleSave} disabled={saveCalc.isPending}>
                     <Save className="h-3.5 w-3.5" /> Save
                   </Button>
