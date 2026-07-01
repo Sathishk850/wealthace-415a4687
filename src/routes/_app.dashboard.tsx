@@ -478,7 +478,7 @@ function Dashboard() {
         {/* Financial Score + Goal Progress */}
         <Card className="col-span-12 p-6 lg:col-span-6">
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-4 grid grid-cols-[160px_1fr] items-center gap-6">
+          <div className="mt-4 grid grid-cols-1 items-center gap-6 sm:grid-cols-[160px_1fr]">
             <ScoreRing score={score.total} />
             <div className="space-y-2.5 text-sm">
               {score.rows.map((row) => (
