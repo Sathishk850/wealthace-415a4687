@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { TextTabs } from "@/components/text-tabs";
@@ -607,7 +608,7 @@ function InvOverviewView() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
                 <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}L`} />
                 <Tooltip contentStyle={{ background: "#0D2232", border: "1px solid #1B3249", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [`₹${v}L`, "Value"]} />
                 <Area type="monotone" dataKey="v" stroke="#14D8CF" strokeWidth={2.5} fill="url(#invGrad)" />
@@ -1024,7 +1025,7 @@ function PerformanceView() {
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
               <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
               <Tooltip contentStyle={{ background: "#0D2232", border: "1px solid #1B3249", borderRadius: 8, fontSize: 12 }} />
               <Area type="monotone" dataKey="port" stroke="#14D8CF" strokeWidth={2.5} fill="url(#perfPort)" />
@@ -1186,7 +1187,7 @@ function InsuranceView() {
             <ResponsiveContainer>
               <BarChart data={INS_TIMELINE} margin={{ top: 16, right: 8, left: -10, bottom: 0 }}>
                 <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
                 <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v / 1000}K`} />
                 <Tooltip cursor={{ fill: "#14D8CF10" }} contentStyle={{ background: "#0D2232", border: "1px solid #1B3249", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Premium"]} />
                 <Bar dataKey="v" radius={[6, 6, 0, 0]} maxBarSize={42}>

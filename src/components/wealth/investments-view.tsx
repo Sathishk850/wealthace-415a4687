@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart,
   Pie,
@@ -459,7 +460,7 @@ function Overview({
                         </linearGradient>
                       </defs>
                       <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
                       <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => inrCompact(v as number)} />
                       <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [inr(v), "Value"]} />
                       <Area type="monotone" dataKey="v" stroke="#14D8CF" strokeWidth={2.5} fill="url(#invGrad)" />
@@ -1000,7 +1001,7 @@ function Performance({
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
                 <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => inrCompact(v as number)} />
                 <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [inr(v), ""]} />
                 <Area type="monotone" dataKey="cur" stroke="#14D8CF" strokeWidth={2.5} fill="url(#perfCur)" />

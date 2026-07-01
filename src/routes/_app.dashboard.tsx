@@ -41,6 +41,7 @@ import {
   defaultChartRange,
   type ChartRangeValue,
 } from "@/components/chart-range-selector";
+import { smartXAxisProps, formatAxisTick, filterSeriesByRange } from "@/lib/chart-axis";
 import { useAssets, useLiabilities, useInvestments, inr as inrW } from "@/lib/wealth-api";
 import { useTransactions } from "@/lib/money-api";
 import { useGoals } from "@/lib/planner-api";
@@ -689,12 +690,14 @@ function RangeChart({
   height,
   compact,
 }: {
-  data: { i: number; v: number }[];
+  data: { i: number; v: number; label?: string }[];
   height: number;
   compact?: boolean;
 }) {
   const [range, setRange] = useState<ChartRangeValue>(() => defaultChartRange("1M"));
   const id = `g-${Math.random().toString(36).slice(2, 8)}`;
+  const filtered = useMemo(() => filterSeriesByRange(data, range), [data, range]);
+  const series = filtered.length > 0 ? filtered : data;
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex justify-end">
@@ -702,7 +705,7 @@ function RangeChart({
       </div>
       <div style={{ height: compact ? height : height }} className="flex-1">
         <ResponsiveContainer>
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <AreaChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#14d8cf" stopOpacity={0.45} />
@@ -710,16 +713,12 @@ function RangeChart({
               </linearGradient>
             </defs>
             <XAxis
-              dataKey="i"
+              dataKey="label"
               axisLine={false}
               tickLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
-              tickFormatter={(i) => {
-                const d = new Date();
-                d.setDate(d.getDate() - (data.length - i));
-                return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
-              }}
-              interval={Math.floor(data.length / 5)}
+              tickFormatter={(label: string) => formatAxisTick(label, range)}
+              {...smartXAxisProps}
             />
             <YAxis
               orientation="right"

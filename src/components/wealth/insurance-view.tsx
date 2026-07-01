@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
@@ -235,7 +236,7 @@ export function InsuranceView({
                   <ResponsiveContainer>
                     <BarChart data={timeline} margin={{ top: 16, right: 8, left: -10, bottom: 0 }}>
                       <CartesianGrid stroke="#1B3249" strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
                       <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${Math.round((v as number) / 1000)}K`} />
                       <Tooltip cursor={{ fill: "#14D8CF10" }} contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [inr(v), "Premium"]} />
                       <Bar dataKey="v" radius={[6, 6, 0, 0]} maxBarSize={42}>

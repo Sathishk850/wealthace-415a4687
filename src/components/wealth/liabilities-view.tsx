@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart,
   Pie,
@@ -312,7 +313,7 @@ export function LiabilitiesView({
                       <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
                   <YAxis
                     tick={{ fill: "#6E8294", fontSize: 11 }}
                     axisLine={false}
