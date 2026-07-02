@@ -144,23 +144,45 @@ function Splash({ leaving }: { leaving: boolean }) {
 }
 
 function Landing() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      document.querySelectorAll<HTMLElement>(".reveal").forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("is-visible");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
+    );
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5">
             <img src={logo} alt="FinVista" className="h-9 w-9 rounded-lg" />
             <span className="font-display text-base font-bold">FinVista</span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="hover:text-foreground">
+            <a href="#features" className="nav-link transition-colors hover:text-foreground">
               Features
             </a>
-            <a href="#how" className="hover:text-foreground">
+            <a href="#how" className="nav-link transition-colors hover:text-foreground">
               How it works
             </a>
-            <a href="#pricing" className="hover:text-foreground">
+            <a href="#pricing" className="nav-link transition-colors hover:text-foreground">
               Pricing
             </a>
           </nav>
@@ -168,14 +190,14 @@ function Landing() {
             <Link
               to="/auth"
               search={{ mode: "signin" }}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               Sign in
             </Link>
             <Link
               to="/auth"
               search={{ mode: "signup" }}
-              className="rounded-lg bg-mint px-3.5 py-2 text-sm font-semibold text-mint-foreground transition hover:opacity-90"
+              className="btn-primary-glow rounded-lg bg-mint px-3.5 py-2 text-sm font-semibold text-mint-foreground"
             >
               Sign up
             </Link>
@@ -187,32 +209,32 @@ function Landing() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(20,216,207,0.18),transparent_60%)]" />
         <div className="mx-auto max-w-6xl px-6 py-20 text-center md:py-28">
-          <span className="inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">
+          <span className="load-badge inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">
             <Sparkles className="h-3.5 w-3.5" /> Personal finance, reimagined
           </span>
-          <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
+          <h1 className="load-headline mt-6 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
             Know your worth.
             <br />
             <span className="bg-gradient-to-r from-mint to-accent bg-clip-text text-transparent">
               Grow it with clarity.
             </span>
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
+          <p className="load-desc mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
             Track every asset, liability, investment and goal in one beautiful dashboard. Built for people who care
             about where their money goes.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/auth"
               search={{ mode: "signup" }}
-              className="inline-flex items-center gap-2 rounded-xl bg-mint px-5 py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90"
+              className="btn-primary-glow inline-flex items-center gap-2 rounded-xl bg-mint px-5 py-3 text-sm font-semibold text-mint-foreground"
             >
               Start Free <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/auth"
               search={{ mode: "signin" }}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-semibold text-foreground backdrop-blur hover:border-mint/40"
+              className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-semibold text-foreground backdrop-blur"
             >
               I have an account
             </Link>
@@ -221,7 +243,7 @@ function Landing() {
       </section>
 
       {/* Features */}
-      <section id="features" className="mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
+      <section id="features" className="reveal mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { icon: Wallet, title: "Unified net worth", desc: "All assets and liabilities, one number you trust." },
@@ -234,12 +256,13 @@ function Landing() {
             { icon: Shield, title: "Private by design", desc: "Your data stays yours. Always encrypted." },
             { icon: Sparkles, title: "AI insights", desc: "Smart nudges on cashflow, savings and risk." },
             { icon: ArrowRight, title: "Built for everyday", desc: "Snap your net worth in seconds. Daily-ready." },
-          ].map((f) => (
+          ].map((f, i) => (
             <div
               key={f.title}
-              className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur transition hover:border-mint/40"
+              className="feature-card reveal rounded-2xl border border-border bg-card/60 p-6 backdrop-blur"
+              style={{ transitionDelay: `${i * 90}ms` }}
             >
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-mint/10 text-mint">
+              <div className="feature-icon grid h-10 w-10 place-items-center rounded-xl bg-mint/10 text-mint">
                 <f.icon className="h-5 w-5" />
               </div>
               <h3 className="mt-4 font-display text-base font-semibold">{f.title}</h3>
@@ -250,7 +273,7 @@ function Landing() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
+      <section id="how" className="reveal mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
         <div className="mb-10 text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">How it works</span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
@@ -270,8 +293,12 @@ function Landing() {
               desc: "Get a unified, beautiful view of where you stand right now.",
             },
             { n: "03", title: "Plan & grow", desc: "Set goals, track cashflow, and let AI nudge you toward them." },
-          ].map((s) => (
-            <div key={s.n} className="relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur">
+          ].map((s, i) => (
+            <div
+              key={s.n}
+              className="feature-card reveal relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur"
+              style={{ transitionDelay: `${i * 90}ms` }}
+            >
               <div className="font-display text-4xl font-extrabold text-mint/40">{s.n}</div>
               <h3 className="mt-2 font-display text-base font-semibold">{s.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{s.desc}</p>
@@ -281,14 +308,14 @@ function Landing() {
       </section>
 
       {/* CTA */}
-      <section id="pricing" className="mx-auto max-w-4xl px-6 py-20 text-center">
+      <section id="pricing" className="reveal mx-auto max-w-4xl px-6 py-20 text-center">
         <div className="rounded-3xl border border-mint/25 bg-gradient-to-br from-card to-mint/5 p-10">
           <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Ready to know your worth?</h2>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">Free to start. No credit card required.</p>
           <Link
             to="/auth"
             search={{ mode: "signup" }}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90"
+            className="btn-primary-glow mt-6 inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3 text-sm font-semibold text-mint-foreground"
           >
             Start Free <ArrowRight className="h-4 w-4" />
           </Link>
@@ -298,6 +325,73 @@ function Landing() {
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} FinVista · Know your worth
       </footer>
+
+      <style>{`
+        @keyframes navDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+        .load-nav { opacity: 0; animation: navDown 400ms ease-out 0ms forwards; }
+        .load-badge { opacity: 0; animation: fadeIn 400ms ease-out 250ms forwards; }
+        .load-headline { opacity: 0; animation: slideUp 500ms ease-out 450ms forwards; }
+        .load-desc { opacity: 0; animation: fadeIn 500ms ease-out 800ms forwards; }
+        .load-cta { opacity: 0; animation: scaleIn 400ms ease-out 1050ms forwards; }
+
+        .nav-link { position: relative; }
+        .nav-link::after {
+          content: ""; position: absolute; left: 0; right: 0; bottom: -4px;
+          height: 1.5px; background: var(--mint, #14D8CF);
+          transform: scaleX(0); transform-origin: left;
+          transition: transform 250ms ease-out;
+        }
+        .nav-link:hover::after { transform: scaleX(1); }
+
+        .btn-primary-glow {
+          transition: transform 250ms ease-out, box-shadow 250ms ease-out, opacity 200ms ease-out;
+          will-change: transform;
+        }
+        .btn-primary-glow:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--mint, #14D8CF) 55%, transparent);
+          opacity: 0.95;
+        }
+
+        .btn-secondary-glow {
+          transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out;
+          will-change: transform;
+        }
+        .btn-secondary-glow:hover {
+          transform: translateY(-2px);
+          border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent);
+          box-shadow: 0 0 0 1px color-mix(in oklab, var(--mint, #14D8CF) 30%, transparent),
+                      0 8px 24px -12px color-mix(in oklab, var(--mint, #14D8CF) 35%, transparent);
+        }
+
+        .reveal {
+          opacity: 0; transform: translateY(20px);
+          transition: opacity 500ms ease-out, transform 500ms ease-out;
+          will-change: opacity, transform;
+        }
+        .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+        .feature-card {
+          transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out, opacity 500ms ease-out;
+        }
+        .feature-card:hover {
+          transform: translateY(-4px);
+          border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent);
+          box-shadow: 0 14px 40px -18px color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent);
+        }
+        .feature-icon { transition: transform 250ms ease-out; }
+        .feature-card:hover .feature-icon { transform: scale(1.08); }
+
+        @media (prefers-reduced-motion: reduce) {
+          .load-nav, .load-badge, .load-headline, .load-desc, .load-cta { animation: none; opacity: 1; transform: none; }
+          .reveal { opacity: 1; transform: none; transition: none; }
+          .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
+        }
+      `}</style>
     </div>
   );
 }
