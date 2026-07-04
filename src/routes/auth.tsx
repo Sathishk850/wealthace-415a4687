@@ -1,9 +1,30 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+
+const SUPABASE_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
+
+function applyRememberDevice(remember: boolean) {
+  if (typeof window === "undefined") return;
+  if (remember) {
+    window.sessionStorage.removeItem("finvista_session_only");
+    return;
+  }
+  window.sessionStorage.setItem("finvista_session_only", "1");
+}
+
+function installSessionOnlyGuard() {
+  if (typeof window === "undefined") return;
+  const handler = () => {
+    if (window.sessionStorage.getItem("finvista_session_only") === "1") {
+      window.localStorage.removeItem(SUPABASE_STORAGE_KEY);
+    }
+  };
+  window.addEventListener("pagehide", handler);
+}
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -19,11 +40,15 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  useEffect(() => {
+    installSessionOnlyGuard();
+  }, []);
   const { mode: initialMode } = useSearch({ from: "/auth" });
-  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [suggestGoogle, setSuggestGoogle] = useState(false);
+  const [remember, setRemember] = useState(true);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -74,6 +99,7 @@ function AuthPage() {
           return;
         }
         if (data.session) {
+          applyRememberDevice(remember);
           navigate({ to: "/dashboard" });
         } else {
           setMessage({
@@ -81,7 +107,7 @@ function AuthPage() {
             text: "Check your email to confirm your account, then sign in.",
           });
         }
-      } else {
+      } else if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           const code = (error as { code?: string }).code ?? "";
@@ -96,7 +122,20 @@ function AuthPage() {
           }
           return;
         }
+        applyRememberDevice(remember);
         navigate({ to: "/dashboard" });
+      } else if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) {
+          setMessage({ type: "error", text: error.message });
+          return;
+        }
+        setMessage({
+          type: "success",
+          text: "If an account exists for that email, a password reset link is on its way.",
+        });
       }
     } finally {
       setSubmitting(false);
@@ -160,9 +199,9 @@ function AuthPage() {
             <div className="mt-6 grid grid-cols-2 rounded-xl border border-border bg-background/40 p-1">
               <button
                 type="button"
-                onClick={() => setMode("signin")}
+                onClick={() => { setMode("signin"); setMessage(null); }}
                 className={`rounded-lg py-2 text-sm font-medium transition ${
-                  mode === "signin"
+                  mode === "signin" || mode === "forgot"
                     ? "bg-background text-foreground shadow"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -171,7 +210,7 @@ function AuthPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setMode("signup")}
+                onClick={() => { setMode("signup"); setMessage(null); }}
                 className={`rounded-lg py-2 text-sm font-medium transition ${
                   mode === "signup"
                     ? "bg-background text-foreground shadow"
@@ -190,15 +229,66 @@ function AuthPage() {
                 <Field label="Full name" name="fullName" type="text" placeholder="Ada Lovelace" />
               )}
               <Field label="Email" name="email" type="email" placeholder="you@example.com" />
-              <PasswordField label="Password" name="password" placeholder="••••••••" />
+              {mode !== "forgot" && (
+                <PasswordField
+                  label="Password"
+                  name="password"
+                  placeholder="••••••••"
+                  rightSlot={
+                    mode === "signin" ? (
+                      <button
+                        type="button"
+                        onClick={() => { setMode("forgot"); setMessage(null); }}
+                        className="text-xs font-medium text-mint hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    ) : null
+                  }
+                />
+              )}
+
+              {mode === "signin" && (
+                <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="h-4 w-4 rounded border-border bg-background/60 text-mint accent-mint focus:ring-mint/30"
+                  />
+                  Remember this device
+                </label>
+              )}
+
+              {mode === "forgot" && (
+                <p className="-mt-1 text-xs text-muted-foreground">
+                  Enter your email and we'll send you a link to reset your password.
+                </p>
+              )}
 
               <button
                 type="submit"
                 disabled={submitting}
                 className="mt-2 w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90 disabled:opacity-60"
               >
-                {submitting ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+                {submitting
+                  ? "Please wait…"
+                  : mode === "signin"
+                    ? "Sign in"
+                    : mode === "signup"
+                      ? "Create account"
+                      : "Send reset link"}
               </button>
+
+              {mode === "forgot" && (
+                <button
+                  type="button"
+                  onClick={() => { setMode("signin"); setMessage(null); }}
+                  className="block w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  ← Back to sign in
+                </button>
+              )}
             </form>
 
             {message && (
@@ -281,15 +371,20 @@ function PasswordField({
   label,
   name,
   placeholder,
+  rightSlot,
 }: {
   label: string;
   name: string;
   placeholder: string;
+  rightSlot?: React.ReactNode;
 }) {
   const [show, setShow] = useState(false);
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="mb-1.5 flex items-center justify-between text-xs font-medium text-muted-foreground">
+        <span>{label}</span>
+        {rightSlot}
+      </span>
       <div className="relative">
         <input
           name={name}
