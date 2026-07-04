@@ -1,6 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet, LineChart, PiggyBank, Sparkles, Shield, ArrowRight } from "lucide-react";
+import {
+  Wallet,
+  LineChart,
+  PiggyBank,
+  Sparkles,
+  Shield,
+  ArrowRight,
+  Play,
+  ShieldCheck,
+  CloudOff,
+  RefreshCw,
+  PieChart,
+  BarChart3,
+  Target,
+  Bell,
+  Lock,
+  Cloud,
+} from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -170,36 +187,41 @@ function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img src={logo} alt="FinVista" className="h-9 w-9 rounded-lg" />
-            <span className="font-display text-base font-bold">FinVista</span>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <img src={logo} alt="FinVista" className="h-9 w-9 shrink-0 rounded-lg" />
+            <span className="leading-tight">
+              <span className="block font-display text-base font-bold">FinVista</span>
+              <span className="block text-[10px] font-medium tracking-[0.18em] text-mint">
+                KNOW YOUR WORTH
+              </span>
+            </span>
           </Link>
-          <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
+          <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
             <a href="#features" className="nav-link transition-colors hover:text-foreground">
               Features
             </a>
-            <a href="#how" className="nav-link transition-colors hover:text-foreground">
-              How it works
-            </a>
             <a href="#pricing" className="nav-link transition-colors hover:text-foreground">
               Pricing
+            </a>
+            <a href="#security" className="nav-link transition-colors hover:text-foreground">
+              Security
             </a>
           </nav>
           <div className="flex items-center gap-2">
             <Link
               to="/auth"
               search={{ mode: "signin" }}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="btn-secondary-glow rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground"
             >
-              Sign in
+              Sign In
             </Link>
             <Link
               to="/auth"
               search={{ mode: "signup" }}
-              className="btn-primary-glow rounded-lg bg-mint px-3.5 py-2 text-sm font-semibold text-mint-foreground"
+              className="btn-primary-glow hidden rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground sm:inline-flex"
             >
-              Sign up
+              Get Started Free
             </Link>
           </div>
         </div>
@@ -207,37 +229,93 @@ function Landing() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(20,216,207,0.18),transparent_60%)]" />
-        <div className="mx-auto max-w-6xl px-6 py-20 text-center md:py-28">
-          <span className="load-badge inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">
-            <Sparkles className="h-3.5 w-3.5" /> Personal finance, reimagined
-          </span>
-          <h1 className="load-headline mt-6 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-            Know your worth.
-            <br />
-            <span className="bg-gradient-to-r from-mint to-accent bg-clip-text text-transparent">
-              Grow it with clarity.
+        {/* soft top glow */}
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(20,216,207,0.12),transparent_60%)]" />
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-6 lg:py-24">
+          {/* Left column — copy */}
+          <div className="relative z-10 text-center lg:text-left">
+            <span className="load-badge inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3.5 py-1.5 text-xs font-semibold text-mint">
+              <Sparkles className="h-3.5 w-3.5" /> All-in-one Personal Finance Platform
             </span>
-          </h1>
-          <p className="load-desc mx-auto mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
-            Track every asset, liability, investment and goal in one beautiful dashboard. Built for people who care
-            about where their money goes.
-          </p>
-          <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              to="/auth"
-              search={{ mode: "signup" }}
-              className="btn-primary-glow inline-flex items-center gap-2 rounded-xl bg-mint px-5 py-3 text-sm font-semibold text-mint-foreground"
-            >
-              Start Free <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              to="/auth"
-              search={{ mode: "signin" }}
-              className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-semibold text-foreground backdrop-blur"
-            >
-              I have an account
-            </Link>
+
+            <h1 className="load-headline mt-6 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl xl:text-[68px]">
+              Take Control of
+              <br />
+              Your{" "}
+              <span className="bg-gradient-to-r from-mint to-accent bg-clip-text text-transparent">
+                Financial Future
+              </span>
+            </h1>
+
+            <p className="load-desc mx-auto mt-6 max-w-xl text-base text-muted-foreground sm:text-lg lg:mx-0">
+              Track, plan, and grow your wealth with FinVista.
+              <br className="hidden sm:block" />
+              All your finances, in one secure and intelligent platform.
+            </p>
+
+            <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                className="btn-primary-glow inline-flex items-center gap-2 rounded-2xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
+              >
+                Get Started Free <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#features"
+                className="btn-secondary-glow inline-flex items-center gap-2 rounded-2xl border border-border bg-card/60 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur"
+              >
+                Explore Features <Play className="h-3.5 w-3.5 fill-current" />
+              </a>
+            </div>
+
+            {/* Trust strip */}
+            <div className="load-cta mt-10 grid grid-cols-1 gap-5 text-left sm:grid-cols-3">
+              {[
+                { icon: ShieldCheck, title: "Hi-Level Security", desc: "256-bit encryption to keep your data safe" },
+                { icon: CloudOff, title: "Works Offline", desc: "Access your finances anytime, anywhere" },
+                { icon: RefreshCw, title: "Auto Sync", desc: "Secure cloud backup when you're online" },
+              ].map((t) => (
+                <div key={t.title} className="flex items-start gap-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint">
+                    <t.icon className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-mint">{t.title}</div>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{t.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right column — animated aura (replaces phone) */}
+          <div className="relative aspect-square w-full max-w-[560px] justify-self-center lg:justify-self-end">
+            <Aura />
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom feature strip */}
+      <section id="features" className="reveal mx-auto max-w-7xl px-6 pb-16 scroll-mt-24">
+        <div className="rounded-3xl border border-border/70 bg-card/40 p-6 backdrop-blur md:p-8">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { icon: PieChart, title: "All in One", desc: "Manage all your finances in one place" },
+              { icon: BarChart3, title: "Smart Insights", desc: "AI-powered insights to help you grow" },
+              { icon: Target, title: "Plan Better", desc: "Set goals and plan your financial future" },
+              { icon: Bell, title: "Stay Alert", desc: "Smart alerts for bills, renewals & due dates" },
+              { icon: Lock, title: "Secure", desc: "Your data is encrypted and always private" },
+              { icon: Cloud, title: "Works Offline", desc: "Access your finances anytime, anywhere" },
+            ].map((f) => (
+              <div key={f.title} className="feature-card min-w-0">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-mint/10 text-mint">
+                  <f.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-3 font-display text-sm font-semibold">{f.title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -273,7 +351,7 @@ function Landing() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="reveal mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
+      <section id="how" className="reveal mx-auto max-w-7xl px-6 py-16 scroll-mt-24">
         <div className="mb-10 text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">How it works</span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
@@ -308,7 +386,7 @@ function Landing() {
       </section>
 
       {/* CTA */}
-      <section id="pricing" className="reveal mx-auto max-w-4xl px-6 py-20 text-center">
+      <section id="pricing" className="reveal mx-auto max-w-4xl px-6 py-20 text-center scroll-mt-24">
         <div className="rounded-3xl border border-mint/25 bg-gradient-to-br from-card to-mint/5 p-10">
           <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Ready to know your worth?</h2>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">Free to start. No credit card required.</p>
@@ -321,6 +399,8 @@ function Landing() {
           </Link>
         </div>
       </section>
+
+      <div id="security" className="sr-only" aria-hidden="true" />
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} FinVista · Know your worth
