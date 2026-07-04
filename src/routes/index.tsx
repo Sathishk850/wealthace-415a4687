@@ -508,6 +508,12 @@ function Landing() {
         @keyframes orbPulse { 0%, 100% { filter: drop-shadow(0 0 6px rgba(20,216,207,0.4)); } 50% { filter: drop-shadow(0 0 22px rgba(20,216,207,0.85)); } }
         @keyframes particleDrift { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(-40px); } }
         @keyframes trailShift { 0%, 100% { stroke-dashoffset: 0; } 50% { stroke-dashoffset: -20; } }
+        @keyframes areaDraw { to { stroke-dashoffset: 0; } }
+        @keyframes areaFade { from { opacity: 0; } to { opacity: 1; } }
+
+        .area-fill { opacity: 0; animation: areaFade 900ms ease-out 1400ms forwards; }
+        .area-line { stroke-dasharray: 900; stroke-dashoffset: 900; animation: areaDraw 1800ms ease-out 700ms forwards; }
+        .area-dot { opacity: 0; animation: areaFade 400ms ease-out 2400ms forwards; }
 
         .bar-group > rect,
         .bar-group > polygon { transform-box: fill-box; transform-origin: bottom; }
@@ -580,7 +586,8 @@ function Landing() {
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
           .aura-ring, .aura-glow, .coin-glow, .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge,
           .bar-group, .trend-line, .trend-arrow, .data-trails path, .hero-breath, .hero-breath-2, .particle,
-          .coin-inr, .coin-usd, .coin-eur { animation: none; opacity: 1; stroke-dashoffset: 0; transform: none; }
+          .coin-inr, .coin-usd, .coin-eur,
+          .area-fill, .area-line, .area-dot { animation: none; opacity: 1; stroke-dashoffset: 0; transform: none; }
         }
       `}</style>
     </div>
