@@ -567,29 +567,138 @@ function Aura() {
 }
 
 function FinanceIllustration() {
-  const particles = Array.from({ length: 18 }, (_, i) => ({
+  // Bar heights (in %) rising left to right
+  const bars = [28, 40, 34, 52, 46, 66, 78];
+  // Trend line points across the 400x260 svg viewport
+  const trendPoints = "20,200 80,175 140,155 200,120 260,100 320,70 372,42";
+  const particles = Array.from({ length: 22 }, (_, i) => ({
     key: i,
-    left: ((i * 53) % 100),
-    top: 20 + ((i * 37) % 70),
+    left: (i * 47) % 100,
+    top: (i * 29) % 100,
     size: 2 + ((i * 3) % 3),
-    delay: (i % 8) * 0.6,
-    dur: 5 + ((i * 7) % 30) / 10,
+    delay: (i % 10) * 0.5,
+    dur: 6 + ((i * 7) % 40) / 10,
   }));
+
   return (
-    <div className="hero-illus relative h-full w-full">
-      {/* Soft radial glow behind illustration */}
-      <div className="graph-glow absolute inset-[4%] rounded-full bg-[radial-gradient(circle_at_50%_55%,rgba(20,216,207,0.32),transparent_65%)] blur-2xl" />
+    <div
+      className="hero-illus relative aspect-square w-full"
+      aria-label="Glowing 3D bar chart with upward trend line and floating rupee, dollar and euro currency symbols"
+      role="img"
+    >
+      {/* Soft radial teal breathing glow — fades illustration into page */}
+      <div className="hero-breath pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_55%_60%,rgba(20,216,207,0.32),rgba(20,216,207,0.08)_38%,transparent_70%)]" />
+      <div className="hero-breath-2 pointer-events-none absolute inset-[10%] bg-[radial-gradient(circle_at_50%_50%,rgba(20,216,207,0.22),transparent_65%)] blur-2xl" />
 
-      {/* Hero image */}
-      <img
-        src={heroFinance}
-        alt="FinVista 3D finance illustration with glowing uptrend chart and USD, INR, EUR currency coins"
-        width={1024}
-        height={1024}
-        className="relative z-10 h-full w-full object-contain drop-shadow-[0_20px_60px_rgba(20,216,207,0.25)]"
-      />
+      {/* Faint financial grid — masked to fade into background */}
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_78%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_78%)]"
+        viewBox="0 0 400 400"
+        fill="none"
+      >
+        <defs>
+          <pattern id="fv-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+            <path d="M32 0H0V32" stroke="rgba(20,216,207,0.18)" strokeWidth="0.6" />
+          </pattern>
+        </defs>
+        <rect width="400" height="400" fill="url(#fv-grid)" />
+      </svg>
 
-      {/* Floating particles overlay */}
+      {/* Curved subtle data trails */}
+      <svg
+        className="data-trails pointer-events-none absolute inset-0 h-full w-full"
+        viewBox="0 0 400 400"
+        fill="none"
+      >
+        <path d="M-20 320 C 90 260, 160 300, 260 220 S 380 140, 440 90" stroke="rgba(20,216,207,0.18)" strokeWidth="1.2" strokeDasharray="2 6" />
+        <path d="M-20 360 C 120 320, 220 340, 300 260 S 420 200, 460 160" stroke="rgba(20,216,207,0.12)" strokeWidth="1" strokeDasharray="2 8" />
+      </svg>
+
+      {/* Main chart SVG */}
+      <svg
+        className="relative z-10 h-full w-full"
+        viewBox="0 0 400 300"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient id="fv-bar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#5eead4" />
+            <stop offset="60%" stopColor="#14D8CF" />
+            <stop offset="100%" stopColor="#0e7c78" />
+          </linearGradient>
+          <linearGradient id="fv-bar-top" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#a7f3ef" />
+            <stop offset="100%" stopColor="#14D8CF" />
+          </linearGradient>
+          <linearGradient id="fv-line" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#14D8CF" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#a7f3ef" />
+          </linearGradient>
+          <radialGradient id="fv-arrow-glow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stopColor="#a7f3ef" stopOpacity="1" />
+            <stop offset="100%" stopColor="#14D8CF" stopOpacity="0" />
+          </radialGradient>
+          <filter id="fv-blur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" />
+          </filter>
+        </defs>
+
+        {/* Bars (3D-ish with side face) */}
+        {bars.map((h, i) => {
+          const barW = 26;
+          const gap = 22;
+          const x = 30 + i * (barW + gap);
+          const y = 240 - (h / 100) * 200;
+          const height = 240 - y;
+          const depth = 6;
+          return (
+            <g key={i} className="bar-group" style={{ transformOrigin: `${x + barW / 2}px 240px`, animationDelay: `${300 + i * 90}ms` }}>
+              {/* soft glow under bar */}
+              <ellipse cx={x + barW / 2} cy={244} rx={barW * 0.9} ry={4} fill="rgba(20,216,207,0.35)" filter="url(#fv-blur)" />
+              {/* side face for 3D */}
+              <polygon points={`${x + barW},${y} ${x + barW + depth},${y - depth} ${x + barW + depth},${240 - depth} ${x + barW},240`} fill="rgba(20,216,207,0.35)" />
+              {/* top face */}
+              <polygon points={`${x},${y} ${x + depth},${y - depth} ${x + barW + depth},${y - depth} ${x + barW},${y}`} fill="url(#fv-bar-top)" />
+              {/* front face */}
+              <rect x={x} y={y} width={barW} height={height} rx={3} fill="url(#fv-bar)" />
+            </g>
+          );
+        })}
+
+        {/* Trend line (drawn on load) */}
+        <polyline
+          className="trend-line"
+          points={trendPoints}
+          stroke="url(#fv-line)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          filter="drop-shadow(0 0 6px rgba(20,216,207,0.75))"
+        />
+
+        {/* Trend arrow head at end */}
+        <g className="trend-arrow" style={{ transformOrigin: "372px 42px" }}>
+          <circle cx="372" cy="42" r="22" fill="url(#fv-arrow-glow)" opacity="0.9" />
+          <path
+            d="M358 52 L378 32 M378 32 L366 32 M378 32 L378 44"
+            stroke="#a7f3ef"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            filter="drop-shadow(0 0 6px rgba(20,216,207,0.9))"
+          />
+        </g>
+      </svg>
+
+      {/* Floating 3D currency symbols */}
+      <CurrencyOrb symbol="₹" className="coin-inr absolute left-[6%] top-[16%] h-14 w-14 md:h-16 md:w-16" />
+      <CurrencyOrb symbol="$" className="coin-usd absolute right-[10%] top-[8%] h-16 w-16 md:h-20 md:w-20" />
+      <CurrencyOrb symbol="€" className="coin-eur absolute left-[38%] bottom-[6%] h-14 w-14 md:h-16 md:w-16" />
+
+      {/* Drifting particles */}
       {particles.map((p) => (
         <span
           key={p.key}
@@ -607,6 +716,28 @@ function FinanceIllustration() {
       ))}
     </div>
   );
+}
+
+function CurrencyOrb({ symbol, className }: { symbol: string; className?: string }) {
+  return (
+    <div className={`currency-orb z-20 ${className ?? ""}`}>
+      <div className="relative h-full w-full">
+        {/* glow halo */}
+        <div className="absolute inset-[-30%] rounded-full bg-[radial-gradient(circle,rgba(20,216,207,0.55),transparent_65%)] blur-md" />
+        {/* orb body */}
+        <div className="relative grid h-full w-full place-items-center rounded-full bg-[radial-gradient(circle_at_30%_28%,#a7f3ef,rgba(20,216,207,0.85)_45%,rgba(6,49,47,0.9))] shadow-[inset_0_-6px_14px_rgba(0,0,0,0.4),0_10px_30px_-6px_rgba(20,216,207,0.55)]">
+          {/* top highlight */}
+          <span className="pointer-events-none absolute left-[18%] top-[14%] h-[26%] w-[38%] rounded-full bg-white/60 blur-[3px]" />
+          {/* subtle reflection below */}
+          <span className="pointer-events-none absolute inset-x-[20%] bottom-[10%] h-[10%] rounded-full bg-white/20 blur-sm" />
+          <span className="relative font-display text-2xl font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] md:text-3xl">
+            {symbol}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 }
 
 function _AuraLegacy() {
