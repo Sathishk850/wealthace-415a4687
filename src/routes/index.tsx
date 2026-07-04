@@ -19,6 +19,7 @@ import {
   Cloud,
 } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
+import heroFinance from "@/assets/hero-finance.jpg";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
