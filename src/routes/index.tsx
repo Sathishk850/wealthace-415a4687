@@ -24,11 +24,47 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FinVista — Know your worth" },
+      { title: "FinVista — Know Your Worth | Personal Finance Dashboard" },
       {
         name: "description",
         content:
-          "FinVista is your all-in-one personal finance dashboard — net worth, cashflow, investments and goals in one place.",
+          "Track net worth, cashflow, investments and goals in one secure, intelligent dashboard. Start free — no credit card required.",
+      },
+      { property: "og:title", content: "FinVista — Know Your Worth | Personal Finance Dashboard" },
+      {
+        property: "og:description",
+        content:
+          "Track net worth, cashflow, investments and goals in one secure, intelligent dashboard. Start free — no credit card required.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "/" },
+      { property: "og:site_name", content: "FinVista" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@FinVista" },
+      { name: "twitter:title", content: "FinVista — Know Your Worth | Personal Finance Dashboard" },
+      {
+        name: "twitter:description",
+        content:
+          "Track net worth, cashflow, investments and goals in one secure, intelligent dashboard. Start free — no credit card required.",
+      },
+    ],
+    links: [{ rel: "canonical", href: "/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "FinVista",
+          url: "/",
+          description:
+            "FinVista is your all-in-one personal finance dashboard — net worth, cashflow, investments and goals in one place.",
+          publisher: {
+            "@type": "Organization",
+            name: "FinVista",
+            url: "/",
+          },
+        }),
       },
     ],
   }),
