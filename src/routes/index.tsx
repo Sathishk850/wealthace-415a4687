@@ -257,8 +257,20 @@ function Landing() {
             <a href="#pricing" className="nav-link transition-colors hover:text-foreground">
               Pricing
             </a>
-            <a href="#security" className="nav-link transition-colors hover:text-foreground">
-              Security
+            <a
+              href="#about"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById("about");
+                if (!el) return;
+                const header = document.querySelector("header");
+                const offset = header ? header.getBoundingClientRect().height + 16 : 96;
+                const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top, behavior: "smooth" });
+              }}
+              className="nav-link transition-colors hover:text-foreground"
+            >
+              About
             </a>
           </nav>
           <div className="flex items-center gap-2">
