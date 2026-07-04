@@ -349,16 +349,9 @@ function Landing() {
             </div>
           </div>
 
-          {/* Right illustration */}
-          <div className="load-hero-illus relative w-full">
-            <div className="graph-glow pointer-events-none absolute inset-[4%] rounded-full bg-[radial-gradient(circle_at_50%_55%,rgba(20,216,207,0.28),transparent_65%)] blur-2xl" />
-            <img
-              src={heroFinance}
-              alt="FinVista dashboard preview with net worth, investments, cash flow and portfolio breakdown"
-              width={1280}
-              height={1024}
-              className="relative z-10 h-auto w-full drop-shadow-[0_20px_60px_rgba(20,216,207,0.25)]"
-            />
+          {/* Right illustration - blended into background */}
+          <div className="load-hero-illus relative w-full lg:pl-8">
+            <FinanceIllustration />
           </div>
         </div>
       </section>
