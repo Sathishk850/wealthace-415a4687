@@ -3,20 +3,22 @@ import { useEffect, useState } from "react";
 import {
   Wallet,
   LineChart,
-  PiggyBank,
   Sparkles,
   Shield,
   ArrowRight,
-  Play,
   ShieldCheck,
-  CloudOff,
-  RefreshCw,
-  PieChart,
-  BarChart3,
-  Target,
-  Bell,
+  Wifi,
   Lock,
-  Cloud,
+  PieChart,
+  Target,
+  Calculator,
+  Download,
+  TrendingUp,
+  Landmark,
+  Monitor,
+  CircleCheck,
+  LayoutGrid,
+  CreditCard,
 } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 import heroFinance from "@/assets/hero-finance.jpg";
@@ -200,7 +202,6 @@ function Splash({ leaving }: { leaving: boolean }) {
 function Landing() {
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Force dark theme on the landing page
     const root = document.documentElement;
     const hadDark = root.classList.contains("dark");
     root.classList.add("dark");
@@ -229,13 +230,23 @@ function Landing() {
     };
   }, []);
 
+  const smoothTo = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (!el) return;
+    const header = document.querySelector("header");
+    const offset = header ? header.getBoundingClientRect().height + 16 : 96;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Ambient animated background orbs */}
+      {/* Ambient animated background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.28),transparent_65%)] blur-3xl" />
-        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,183,176,0.22),transparent_65%)] blur-3xl" />
-        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle_at_center,rgba(32,231,229,0.18),transparent_65%)] blur-3xl" />
+        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.22),transparent_65%)] blur-3xl" />
+        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,183,176,0.18),transparent_65%)] blur-3xl" />
+        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle_at_center,rgba(32,231,229,0.15),transparent_65%)] blur-3xl" />
         <div className="grid-fade absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.05)_1px,transparent_1px)] bg-[size:56px_56px]" />
       </div>
 
@@ -243,48 +254,23 @@ function Landing() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <img src={logo} alt="FinVista" className="h-9 w-9 shrink-0 rounded-lg" />
+            <img src={logo} alt="FinVista" className="h-10 w-10 shrink-0 rounded-lg" />
             <span className="leading-tight">
-              <span className="block font-display text-base font-bold">FinVista</span>
-              <span className="block text-[10px] font-medium tracking-[0.18em] text-mint">
-                KNOW YOUR WORTH
+              <span className="flex items-center gap-2 font-display text-lg font-bold">
+                FinVista
+                <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-mint">
+                  Aura
+                </span>
+              </span>
+              <span className="block text-[10px] font-medium tracking-wide text-muted-foreground">
+                Know your worth
               </span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="nav-link transition-colors hover:text-foreground">
-              Features
-            </a>
-            <a
-              href="#how"
-              onClick={(e) => {
-                e.preventDefault();
-                const el = document.getElementById("how");
-                if (!el) return;
-                const header = document.querySelector("header");
-                const offset = header ? header.getBoundingClientRect().height + 16 : 96;
-                const top = el.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({ top, behavior: "smooth" });
-              }}
-              className="nav-link transition-colors hover:text-foreground"
-            >
-              How It Works
-            </a>
-            <a
-              href="#about"
-              onClick={(e) => {
-                e.preventDefault();
-                const el = document.getElementById("about");
-                if (!el) return;
-                const header = document.querySelector("header");
-                const offset = header ? header.getBoundingClientRect().height + 16 : 96;
-                const top = el.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({ top, behavior: "smooth" });
-              }}
-              className="nav-link transition-colors hover:text-foreground"
-            >
-              About
-            </a>
+          <nav className="hidden items-center gap-9 text-sm text-muted-foreground md:flex">
+            <a href="#features" onClick={smoothTo("features")} className="nav-link transition-colors hover:text-foreground">Features</a>
+            <a href="#how" onClick={smoothTo("how")} className="nav-link transition-colors hover:text-foreground">How It Works</a>
+            <a href="#about" onClick={smoothTo("about")} className="nav-link transition-colors hover:text-foreground">About</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link
@@ -297,7 +283,7 @@ function Landing() {
             <Link
               to="/auth"
               search={{ mode: "signup" }}
-              className="btn-primary-glow hidden rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground sm:inline-flex"
+              className="btn-primary-glow rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground"
             >
               Get Started Free
             </Link>
@@ -307,196 +293,179 @@ function Landing() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {/* soft top glow */}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(20,216,207,0.12),transparent_60%)]" />
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-[1.05fr_1fr] lg:gap-6 lg:py-24">
-          {/* Left column — copy */}
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-[1fr_1.1fr] lg:gap-10 lg:py-20">
+          {/* Left copy */}
           <div className="relative z-10 text-center lg:text-left">
-            <span className="load-badge inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3.5 py-1.5 text-xs font-semibold text-mint">
-              <Sparkles className="h-3.5 w-3.5" /> All-in-one Personal Finance Platform
+            <span className="load-badge inline-flex items-center gap-2 text-sm font-semibold text-mint">
+              <ShieldCheck className="h-4 w-4" /> All-in-one Personal Finance Platform
             </span>
 
-            <h1 className="load-headline mt-6 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl xl:text-[68px]">
-              Take Control of
-              <br />
-              Your{" "}
+            <h1 className="load-headline mt-5 font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[64px]">
+              Know Your Worth.<br />
+              Grow Your{" "}
               <span className="gradient-shimmer bg-gradient-to-r from-mint via-cyan-300 to-accent bg-clip-text text-transparent">
-                Financial Future
+                Wealth.
               </span>
             </h1>
 
-            <p className="load-desc mx-auto mt-6 max-w-xl text-base text-muted-foreground sm:text-lg lg:mx-0">
-              Track, plan, and grow your wealth with FinVista.
-              <br className="hidden sm:block" />
-              All your finances, in one secure and intelligent platform.
+            <p className="load-desc mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
+              Track your assets, investments, expenses and goals in one secure dashboard. Get complete clarity about your financial life.
             </p>
 
             <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               <Link
                 to="/auth"
                 search={{ mode: "signup" }}
-                className="btn-primary-glow btn-shine inline-flex items-center gap-2 rounded-2xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
+                className="btn-primary-glow btn-shine inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
               >
                 Get Started Free <ArrowRight className="h-4 w-4 arrow-nudge" />
               </Link>
               <a
                 href="#features"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const el = document.getElementById("features");
-                  if (!el) return;
-                  const header = document.querySelector("header");
-                  const offset = header ? header.getBoundingClientRect().height + 16 : 96;
-                  const top = el.getBoundingClientRect().top + window.scrollY - offset;
-                  window.scrollTo({ top, behavior: "smooth" });
-                }}
-                className="btn-secondary-glow inline-flex items-center gap-2 rounded-2xl border border-border bg-card/60 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur"
+                onClick={smoothTo("features")}
+                className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur"
               >
-                Explore Features <Play className="h-3.5 w-3.5 fill-current" />
+                Explore Features <LayoutGrid className="h-4 w-4" />
               </a>
             </div>
 
-            {/* Trust strip */}
-            <div className="load-cta mt-10 grid grid-cols-1 gap-5 text-left sm:grid-cols-3">
-              {[
-                { icon: ShieldCheck, title: "Hi-Level Security", desc: "256-bit encryption to keep your data safe" },
-                { icon: CloudOff, title: "Works Offline", desc: "Access your finances anytime, anywhere" },
-                { icon: RefreshCw, title: "Auto Sync", desc: "Secure cloud backup when you're online" },
-              ].map((t) => (
-                <div key={t.title} className="flex items-start gap-3">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint">
-                    <t.icon className="h-4.5 w-4.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-mint">{t.title}</div>
-                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{t.desc}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground lg:justify-start">
+              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-mint" /> Bank-level Security</span>
+              <span className="inline-flex items-center gap-2"><Wifi className="h-4 w-4 text-mint" /> Offline First</span>
+              <span className="inline-flex items-center gap-2"><Lock className="h-4 w-4 text-mint" /> Your Data, Your Control</span>
             </div>
           </div>
 
-          {/* Right column — animated aura (replaces phone) */}
-          <div className="load-hero-illus relative aspect-square w-full max-w-[560px] justify-self-center lg:justify-self-end">
-            <FinanceIllustration />
-          </div>
-        </div>
-      </section>
-
-      {/* Bottom feature strip */}
-      <section id="features" className="reveal mx-auto max-w-7xl px-6 pb-16 scroll-mt-24">
-        <div className="rounded-3xl border border-border/70 bg-card/40 p-6 backdrop-blur md:p-8">
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
-            {[
-              { icon: PieChart, title: "All in One", desc: "Manage all your finances in one place" },
-              { icon: BarChart3, title: "Smart Insights", desc: "AI-powered insights to help you grow" },
-              { icon: Target, title: "Plan Better", desc: "Set goals and plan your financial future" },
-              { icon: Bell, title: "Stay Alert", desc: "Smart alerts for bills, renewals & due dates" },
-              { icon: Lock, title: "Secure", desc: "Your data is encrypted and always private" },
-              { icon: Cloud, title: "Works Offline", desc: "Access your finances anytime, anywhere" },
-            ].map((f) => (
-              <div key={f.title} className="feature-card min-w-0">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-mint/10 text-mint">
-                  <f.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mt-3 font-display text-sm font-semibold">{f.title}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
-              </div>
-            ))}
+          {/* Right illustration */}
+          <div className="load-hero-illus relative w-full">
+            <div className="graph-glow pointer-events-none absolute inset-[4%] rounded-full bg-[radial-gradient(circle_at_50%_55%,rgba(20,216,207,0.28),transparent_65%)] blur-2xl" />
+            <img
+              src={heroFinance}
+              alt="FinVista dashboard preview with net worth, investments, cash flow and portfolio breakdown"
+              width={1280}
+              height={1024}
+              className="relative z-10 h-auto w-full drop-shadow-[0_20px_60px_rgba(20,216,207,0.25)]"
+            />
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section id="features" className="reveal mx-auto max-w-6xl px-6 py-16 scroll-mt-24">
-        <div className="grid gap-4 md:grid-cols-3">
+      <section id="features" className="reveal mx-auto max-w-7xl px-6 py-20 scroll-mt-24">
+        <div className="text-center">
+          <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">Features</h2>
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+            Everything you need to manage your finances in one place.
+          </p>
+        </div>
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {[
-            { icon: Wallet, title: "Unified net worth", desc: "All assets and liabilities, one number you trust." },
-            {
-              icon: LineChart,
-              title: "Investment insights",
-              desc: "Track allocation, returns and SIPs across accounts.",
-            },
-            { icon: PiggyBank, title: "Goal planner", desc: "Plan retirement, FIRE, vacations, anything." },
-            { icon: Shield, title: "Private by design", desc: "Your data stays yours. Always encrypted." },
-            { icon: Sparkles, title: "AI insights", desc: "Smart nudges on cashflow, savings and risk." },
-            { icon: ArrowRight, title: "Built for everyday", desc: "Snap your net worth in seconds. Daily-ready." },
-          ].map((f, i) => (
-            <div
-              key={f.title}
-              className="feature-card reveal rounded-2xl border border-border bg-card/60 p-6 backdrop-blur"
-              style={{ transitionDelay: `${i * 90}ms` }}
-            >
-              <div className="feature-icon grid h-10 w-10 place-items-center rounded-xl bg-mint/10 text-mint">
+            { icon: PieChart, title: "Net Worth Tracking", desc: "Track your total net worth in real time with beautiful insights." },
+            { icon: Wallet, title: "Manage Money", desc: "Track income, expenses and cash flow effortlessly." },
+            { icon: TrendingUp, title: "Investments", desc: "Track all your investments including stocks, mutual funds, gold and more." },
+            { icon: Target, title: "Goal Planning", desc: "Set financial goals and track progress towards achieving them." },
+            { icon: Calculator, title: "Smart Tools", desc: "EMI calculator, SIP calculator and more smart tools." },
+            { icon: Download, title: "Export & Backup", desc: "Export your data and keep it safe. Your data belongs to you." },
+          ].map((f) => (
+            <div key={f.title} className="feature-card rounded-2xl border border-border bg-card/60 p-5 backdrop-blur">
+              <div className="feature-icon grid h-11 w-11 place-items-center rounded-xl bg-mint/10 text-mint">
                 <f.icon className="h-5 w-5" />
               </div>
               <h3 className="mt-4 font-display text-base font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{f.desc}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how" className="reveal mx-auto max-w-7xl px-6 py-16 scroll-mt-24">
-        <div className="mb-10 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">How it works</span>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Three steps to financial clarity
-          </h2>
+      {/* How It Works */}
+      <section id="how" className="reveal mx-auto max-w-7xl px-6 py-20 scroll-mt-24">
+        <div className="text-center">
+          <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">How It Works</h2>
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Three simple steps to financial clarity.</p>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="relative mt-14 grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div aria-hidden className="pointer-events-none absolute left-[16%] right-[16%] top-[54px] hidden border-t border-dashed border-mint/30 md:block" />
           {[
-            {
-              n: "01",
-              title: "Add your accounts",
-              desc: "Connect or manually add assets, liabilities and investments in minutes.",
-            },
-            {
-              n: "02",
-              title: "See your net worth",
-              desc: "Get a unified, beautiful view of where you stand right now.",
-            },
-            { n: "03", title: "Plan & grow", desc: "Set goals, track cashflow, and let AI nudge you toward them." },
-          ].map((s, i) => (
-            <div
-              key={s.n}
-              className="feature-card reveal relative rounded-2xl border border-border bg-card/60 p-6 backdrop-blur"
-              style={{ transitionDelay: `${i * 90}ms` }}
-            >
-              <div className="font-display text-4xl font-extrabold text-mint/40">{s.n}</div>
-              <h3 className="mt-2 font-display text-base font-semibold">{s.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{s.desc}</p>
+            { n: 1, icon: Landmark, title: "Add Your Accounts", desc: "Connect or manually add your assets, investments, liabilities and bank balances." },
+            { n: 2, icon: Monitor, title: "Track Your Net Worth", desc: "FinVista automatically organizes your finances into one beautiful dashboard." },
+            { n: 3, icon: CircleCheck, title: "Grow With Confidence", desc: "Monitor your progress, achieve financial goals and make smarter financial decisions." },
+          ].map((s) => (
+            <div key={s.n} className="relative">
+              <div className="mx-auto mb-4 grid h-9 w-9 place-items-center rounded-full bg-mint text-sm font-bold text-mint-foreground shadow-[0_0_20px_rgba(20,216,207,0.5)]">
+                {s.n}
+              </div>
+              <div className="feature-card rounded-2xl border border-border bg-card/60 p-6 text-center backdrop-blur">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-mint/10 text-mint">
+                  <s.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mt-4 font-display text-lg font-semibold">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+              </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section id="pricing" className="reveal mx-auto max-w-4xl px-6 py-20 text-center scroll-mt-24">
-        <div className="rounded-3xl border border-mint/25 bg-gradient-to-br from-card to-mint/5 p-10">
-          <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Ready to know your worth?</h2>
-          <p className="mx-auto mt-3 max-w-md text-muted-foreground">Free to start. No credit card required.</p>
-          <Link
-            to="/auth"
-            search={{ mode: "signup" }}
-            className="btn-primary-glow mt-6 inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3 text-sm font-semibold text-mint-foreground"
-          >
-            Start Free <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
       </section>
 
       {/* About */}
-      <section id="about" className="reveal mx-auto max-w-4xl px-6 py-20 text-center scroll-mt-24">
-        <div className="rounded-3xl border border-border/70 bg-card/40 p-8 backdrop-blur md:p-12">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">Who we are</span>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">About FinVista</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            FinVista is a modern personal finance platform designed to help you understand, track, and grow your wealth
-            with confidence. From assets and investments to expenses and financial goals, everything is organized in one
-            secure, intelligent dashboard—so you always know your worth.
-          </p>
+      <section id="about" className="reveal mx-auto max-w-7xl px-6 py-20 scroll-mt-24">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
+          {/* Shield illustration */}
+          <div className="relative mx-auto aspect-square w-full max-w-md">
+            <div className="absolute inset-[10%] rounded-full border border-mint/20" />
+            <div className="aura-ring absolute inset-[6%] rounded-full border border-dashed border-mint/25" />
+            <div className="absolute inset-[22%] rounded-full border border-mint/10" />
+            <div className="aura-glow absolute inset-[26%] rounded-full bg-mint/10 blur-2xl" />
+
+            {/* Center shield */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div className="grid h-36 w-32 place-items-center rounded-[24px] bg-gradient-to-b from-mint/30 to-mint/10 shadow-[0_0_40px_rgba(20,216,207,0.35)]">
+                <Shield className="h-16 w-16 text-mint" fill="currentColor" fillOpacity={0.15} />
+                <span className="absolute font-display text-3xl font-black text-mint">F</span>
+              </div>
+            </div>
+
+            {/* Orbiting icons */}
+            {[
+              { icon: Lock, className: "left-[8%] top-[32%]" },
+              { icon: CreditCard, className: "right-[6%] top-[22%]" },
+              { icon: Wallet, className: "left-[14%] bottom-[16%]" },
+              { icon: PieChart, className: "right-[10%] bottom-[20%]" },
+            ].map((o, i) => (
+              <div
+                key={i}
+                className={`coin-glow absolute grid h-12 w-12 place-items-center rounded-xl bg-card/80 text-mint backdrop-blur ${o.className}`}
+                style={{ animationDelay: `${i * 0.8}s` }}
+              >
+                <o.icon className="h-5 w-5" />
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">About FinVista</h2>
+            <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Know Your Worth.</p>
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
+              FinVista is a modern personal finance platform that helps you track, organize and grow your wealth in one secure, intelligent dashboard. From assets and investments to expenses and financial goals, everything is designed to give you complete financial clarity.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                className="btn-primary-glow inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3 text-sm font-semibold text-mint-foreground"
+              >
+                Get Started Free <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#features"
+                onClick={smoothTo("features")}
+                className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-6 py-3 text-sm font-semibold text-foreground backdrop-blur"
+              >
+                Explore Features
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -510,80 +479,27 @@ function Landing() {
         @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
         @keyframes auraSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes auraSpinRev { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-        @keyframes auraPulse {
-          0%, 100% { opacity: 0.55; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.04); }
-        }
-        @keyframes auraFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.15; }
-          50% { opacity: 1; }
-        }
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        @keyframes orbDrift1 {
-          0%, 100% { transform: translate(0,0) scale(1); }
-          50% { transform: translate(60px, 40px) scale(1.08); }
-        }
-        @keyframes orbDrift2 {
-          0%, 100% { transform: translate(0,0) scale(1); }
-          50% { transform: translate(-50px, 30px) scale(1.1); }
-        }
-        @keyframes orbDrift3 {
-          0%, 100% { transform: translate(0,0) scale(1); }
-          50% { transform: translate(30px, -50px) scale(1.06); }
-        }
-        @keyframes gridPulse {
-          0%, 100% { opacity: 0.35; }
-          50% { opacity: 0.7; }
-        }
-        @keyframes shine {
-          0% { transform: translateX(-120%) skewX(-20deg); }
-          100% { transform: translateX(220%) skewX(-20deg); }
-        }
-        @keyframes arrowNudge {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(4px); }
-        }
-        @keyframes floatY {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
+        @keyframes auraPulse { 0%, 100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+        @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes orbDrift1 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(60px, 40px) scale(1.08); } }
+        @keyframes orbDrift2 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-50px, 30px) scale(1.1); } }
+        @keyframes orbDrift3 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px, -50px) scale(1.06); } }
+        @keyframes gridPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.7; } }
+        @keyframes shine { 0% { transform: translateX(-120%) skewX(-20deg); } 100% { transform: translateX(220%) skewX(-20deg); } }
+        @keyframes arrowNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
         @keyframes heroSlideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-        @keyframes drawLine { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
-        @keyframes arrowGlow { 0%, 100% { filter: drop-shadow(0 0 4px rgba(20,216,207,0.55)); } 50% { filter: drop-shadow(0 0 14px rgba(20,216,207,0.95)); } }
-        @keyframes coinFloat1 { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
-        @keyframes coinFloat2 { 0%, 100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-14px) rotate(-3deg); } }
-        @keyframes coinFloat3 { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
-        @keyframes coinPulse { 0%, 100% { box-shadow: 0 0 20px -4px rgba(20,216,207,0.35), inset 0 0 20px rgba(20,216,207,0.15); } 50% { box-shadow: 0 0 36px -2px rgba(20,216,207,0.75), inset 0 0 24px rgba(20,216,207,0.25); } }
-        @keyframes particleDrift { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-30px); opacity: 0; } }
-        @keyframes dataLineFlow { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
-
-        .load-hero-illus { opacity: 0; animation: heroSlideIn 700ms cubic-bezier(0.2,0.7,0.2,1) 600ms forwards; }
-        .bar-grow { transform-origin: bottom; transform: scaleY(0); animation: barGrow 900ms cubic-bezier(0.2,0.7,0.2,1) forwards; }
-        .draw-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: drawLine 1600ms ease-out 700ms forwards; }
-        .arrow-glow { opacity: 0; animation: fadeIn 400ms ease-out 2200ms forwards, arrowGlow 3.5s ease-in-out 2600ms infinite; }
-        .coin-1 { animation: coinFloat1 5s ease-in-out infinite; }
-        .coin-2 { animation: coinFloat2 6s ease-in-out infinite; }
-        .coin-3 { animation: coinFloat3 4.5s ease-in-out infinite; }
-        .coin-glow { animation: coinPulse 4s ease-in-out infinite; }
-        .coin-face { transition: transform 250ms ease-out, filter 250ms ease-out; }
-        .coin-wrap:hover .coin-face { transform: scale(1.06); filter: brightness(1.15); }
-        .particle { animation: particleDrift 6s ease-in-out infinite; }
-        .data-line { stroke-dasharray: 8 12; animation: dataLineFlow 12s linear infinite; }
+        @keyframes coinPulse {
+          0%, 100% { box-shadow: 0 0 12px -2px rgba(20,216,207,0.35); }
+          50% { box-shadow: 0 0 26px 0px rgba(20,216,207,0.7); }
+        }
+        @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
         .load-nav { opacity: 0; animation: navDown 400ms ease-out 0ms forwards; }
         .load-badge { opacity: 0; animation: fadeIn 400ms ease-out 250ms forwards; }
         .load-headline { opacity: 0; animation: slideUp 500ms ease-out 450ms forwards; }
         .load-desc { opacity: 0; animation: fadeIn 500ms ease-out 800ms forwards; }
         .load-cta { opacity: 0; animation: scaleIn 400ms ease-out 1050ms forwards; }
+        .load-hero-illus { opacity: 0; animation: heroSlideIn 700ms cubic-bezier(0.2,0.7,0.2,1) 600ms forwards, floatY 8s ease-in-out 1300ms infinite; }
 
         .nav-link { position: relative; }
         .nav-link::after {
@@ -594,55 +510,26 @@ function Landing() {
         }
         .nav-link:hover::after { transform: scaleX(1); }
 
-        .btn-primary-glow {
-          transition: transform 250ms ease-out, box-shadow 250ms ease-out, opacity 200ms ease-out;
-          will-change: transform;
-        }
-        .btn-primary-glow:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--mint, #14D8CF) 55%, transparent);
-          opacity: 0.95;
-        }
+        .btn-primary-glow { transition: transform 250ms ease-out, box-shadow 250ms ease-out, opacity 200ms ease-out; will-change: transform; }
+        .btn-primary-glow:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--mint, #14D8CF) 55%, transparent); opacity: 0.95; }
+        .btn-primary-glow:active { transform: translateY(-1px) scale(0.98); }
 
-        .btn-secondary-glow {
-          transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out;
-          will-change: transform;
-        }
-        .btn-secondary-glow:hover {
-          transform: translateY(-2px);
-          border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent);
-          box-shadow: 0 0 0 1px color-mix(in oklab, var(--mint, #14D8CF) 30%, transparent),
-                      0 8px 24px -12px color-mix(in oklab, var(--mint, #14D8CF) 35%, transparent);
-        }
+        .btn-secondary-glow { transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out; will-change: transform; }
+        .btn-secondary-glow:hover { transform: translateY(-2px); border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--mint, #14D8CF) 30%, transparent), 0 8px 24px -12px color-mix(in oklab, var(--mint, #14D8CF) 35%, transparent); }
 
-        .reveal {
-          opacity: 0; transform: translateY(20px);
-          transition: opacity 500ms ease-out, transform 500ms ease-out;
-          will-change: opacity, transform;
-        }
+        .reveal { opacity: 0; transform: translateY(20px); transition: opacity 500ms ease-out, transform 500ms ease-out; will-change: opacity, transform; }
         .reveal.is-visible { opacity: 1; transform: translateY(0); }
 
-        .feature-card {
-          transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out, opacity 500ms ease-out;
-        }
-        .feature-card:hover {
-          transform: translateY(-4px);
-          border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent);
-          box-shadow: 0 14px 40px -18px color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent);
-        }
+        .feature-card { transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out; }
+        .feature-card:hover { transform: translateY(-4px); border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent); box-shadow: 0 14px 40px -18px color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent); }
         .feature-icon { transition: transform 250ms ease-out; }
         .feature-card:hover .feature-icon { transform: scale(1.08); }
 
-        .aura-wrap { animation: auraFloat 9s ease-in-out infinite; }
         .aura-ring { animation: auraSpin 40s linear infinite; }
-        .aura-ring-rev { animation: auraSpinRev 55s linear infinite; }
         .aura-glow { animation: auraPulse 6s ease-in-out infinite; }
-        .aura-dot { animation: twinkle 3.6s ease-in-out infinite; }
+        .coin-glow { animation: coinPulse 4s ease-in-out infinite, floatY 5s ease-in-out infinite; }
 
-        .gradient-shimmer {
-          background-size: 200% 200%;
-          animation: gradientShift 6s ease-in-out infinite;
-        }
+        .gradient-shimmer { background-size: 200% 200%; animation: gradientShift 6s ease-in-out infinite; }
         .orb-1 { animation: orbDrift1 18s ease-in-out infinite; will-change: transform; }
         .orb-2 { animation: orbDrift2 22s ease-in-out infinite; will-change: transform; }
         .orb-3 { animation: orbDrift3 26s ease-in-out infinite; will-change: transform; }
@@ -658,21 +545,17 @@ function Landing() {
         .btn-shine:hover::before { animation: shine 900ms ease-out forwards; }
         .btn-primary-glow:hover .arrow-nudge { animation: arrowNudge 700ms ease-in-out infinite; }
 
-        .feature-card { animation: floatY 6s ease-in-out infinite; animation-play-state: paused; }
-        .feature-card:hover { animation-play-state: running; }
-
         @media (prefers-reduced-motion: reduce) {
-          .load-nav, .load-badge, .load-headline, .load-desc, .load-cta { animation: none; opacity: 1; transform: none; }
+          .load-nav, .load-badge, .load-headline, .load-desc, .load-cta, .load-hero-illus { animation: none; opacity: 1; transform: none; }
           .reveal { opacity: 1; transform: none; transition: none; }
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
-          .aura-wrap, .aura-ring, .aura-ring-rev, .aura-glow, .aura-dot { animation: none; }
-          .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge, .feature-card { animation: none; }
-          .load-hero-illus, .bar-grow, .draw-line, .arrow-glow, .coin-1, .coin-2, .coin-3, .coin-glow, .particle, .data-line { animation: none; opacity: 1; transform: none; }
+          .aura-ring, .aura-glow, .coin-glow, .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge { animation: none; }
         }
       `}</style>
     </div>
   );
 }
+
 
 function Aura() {
   return <FinanceIllustration />;
