@@ -554,6 +554,29 @@ function Landing() {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-6px); }
         }
+        @keyframes heroSlideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        @keyframes drawLine { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+        @keyframes arrowGlow { 0%, 100% { filter: drop-shadow(0 0 4px rgba(20,216,207,0.55)); } 50% { filter: drop-shadow(0 0 14px rgba(20,216,207,0.95)); } }
+        @keyframes coinFloat1 { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+        @keyframes coinFloat2 { 0%, 100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-14px) rotate(-3deg); } }
+        @keyframes coinFloat3 { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-8px) rotate(3deg); } }
+        @keyframes coinPulse { 0%, 100% { box-shadow: 0 0 20px -4px rgba(20,216,207,0.35), inset 0 0 20px rgba(20,216,207,0.15); } 50% { box-shadow: 0 0 36px -2px rgba(20,216,207,0.75), inset 0 0 24px rgba(20,216,207,0.25); } }
+        @keyframes particleDrift { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-30px); opacity: 0; } }
+        @keyframes dataLineFlow { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+
+        .load-hero-illus { opacity: 0; animation: heroSlideIn 700ms cubic-bezier(0.2,0.7,0.2,1) 600ms forwards; }
+        .bar-grow { transform-origin: bottom; transform: scaleY(0); animation: barGrow 900ms cubic-bezier(0.2,0.7,0.2,1) forwards; }
+        .draw-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: drawLine 1600ms ease-out 700ms forwards; }
+        .arrow-glow { opacity: 0; animation: fadeIn 400ms ease-out 2200ms forwards, arrowGlow 3.5s ease-in-out 2600ms infinite; }
+        .coin-1 { animation: coinFloat1 5s ease-in-out infinite; }
+        .coin-2 { animation: coinFloat2 6s ease-in-out infinite; }
+        .coin-3 { animation: coinFloat3 4.5s ease-in-out infinite; }
+        .coin-glow { animation: coinPulse 4s ease-in-out infinite; }
+        .coin-face { transition: transform 250ms ease-out, filter 250ms ease-out; }
+        .coin-wrap:hover .coin-face { transform: scale(1.06); filter: brightness(1.15); }
+        .particle { animation: particleDrift 6s ease-in-out infinite; }
+        .data-line { stroke-dasharray: 8 12; animation: dataLineFlow 12s linear infinite; }
 
         .load-nav { opacity: 0; animation: navDown 400ms ease-out 0ms forwards; }
         .load-badge { opacity: 0; animation: fadeIn 400ms ease-out 250ms forwards; }
@@ -643,6 +666,7 @@ function Landing() {
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
           .aura-wrap, .aura-ring, .aura-ring-rev, .aura-glow, .aura-dot { animation: none; }
           .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge, .feature-card { animation: none; }
+          .load-hero-illus, .bar-grow, .draw-line, .arrow-glow, .coin-1, .coin-2, .coin-3, .coin-glow, .particle, .data-line { animation: none; opacity: 1; transform: none; }
         }
       `}</style>
     </div>
