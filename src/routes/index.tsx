@@ -508,6 +508,12 @@ function Landing() {
         @keyframes orbPulse { 0%, 100% { filter: drop-shadow(0 0 6px rgba(20,216,207,0.4)); } 50% { filter: drop-shadow(0 0 22px rgba(20,216,207,0.85)); } }
         @keyframes particleDrift { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(-40px); } }
         @keyframes trailShift { 0%, 100% { stroke-dashoffset: 0; } 50% { stroke-dashoffset: -20; } }
+        @keyframes areaDraw { to { stroke-dashoffset: 0; } }
+        @keyframes areaFade { from { opacity: 0; } to { opacity: 1; } }
+
+        .area-fill { opacity: 0; animation: areaFade 900ms ease-out 1400ms forwards; }
+        .area-line { stroke-dasharray: 900; stroke-dashoffset: 900; animation: areaDraw 1800ms ease-out 700ms forwards; }
+        .area-dot { opacity: 0; animation: areaFade 400ms ease-out 2400ms forwards; }
 
         .bar-group > rect,
         .bar-group > polygon { transform-box: fill-box; transform-origin: bottom; }
@@ -580,7 +586,8 @@ function Landing() {
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
           .aura-ring, .aura-glow, .coin-glow, .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge,
           .bar-group, .trend-line, .trend-arrow, .data-trails path, .hero-breath, .hero-breath-2, .particle,
-          .coin-inr, .coin-usd, .coin-eur { animation: none; opacity: 1; stroke-dashoffset: 0; transform: none; }
+          .coin-inr, .coin-usd, .coin-eur,
+          .area-fill, .area-line, .area-dot { animation: none; opacity: 1; stroke-dashoffset: 0; transform: none; }
         }
       `}</style>
     </div>
@@ -668,7 +675,35 @@ function FinanceIllustration() {
           <filter id="fv-blur" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" />
           </filter>
+          <linearGradient id="fv-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#14D8CF" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#14D8CF" stopOpacity="0" />
+          </linearGradient>
         </defs>
+
+        {/* Animated area chart behind bars */}
+        <g className="area-chart">
+          <path
+            className="area-fill"
+            d="M0,220 C 40,200 70,210 100,180 S 170,150 210,160 S 290,120 330,100 S 390,70 400,60 L400,260 L0,260 Z"
+            fill="url(#fv-area)"
+          />
+          <path
+            className="area-line"
+            d="M0,220 C 40,200 70,210 100,180 S 170,150 210,160 S 290,120 330,100 S 390,70 400,60"
+            stroke="rgba(167,243,239,0.55)"
+            strokeWidth="1.5"
+            fill="none"
+            filter="drop-shadow(0 0 4px rgba(20,216,207,0.6))"
+          />
+          <circle className="area-dot" r="4" fill="#a7f3ef" filter="drop-shadow(0 0 6px rgba(20,216,207,0.9))">
+            <animateMotion
+              dur="7s"
+              repeatCount="indefinite"
+              path="M0,220 C 40,200 70,210 100,180 S 170,150 210,160 S 290,120 330,100 S 390,70 400,60"
+            />
+          </circle>
+        </g>
 
         {/* Bars (3D-ish with side face) */}
         {bars.map((h, i) => {
