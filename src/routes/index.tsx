@@ -738,7 +738,6 @@ function CurrencyOrb({ symbol, className }: { symbol: string; className?: string
     </div>
   );
 }
-}
 
 function _AuraLegacy() {
   // legacy aura kept for potential reuse
