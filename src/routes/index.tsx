@@ -163,10 +163,16 @@ function Splash({ leaving }: { leaving: boolean }) {
 function Landing() {
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Force dark theme on the landing page
+    const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    root.classList.add("dark");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
       document.querySelectorAll<HTMLElement>(".reveal").forEach((el) => el.classList.add("is-visible"));
-      return;
+      return () => {
+        if (!hadDark) root.classList.remove("dark");
+      };
     }
     const io = new IntersectionObserver(
       (entries) => {
@@ -180,11 +186,22 @@ function Landing() {
       { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
     );
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      if (!hadDark) root.classList.remove("dark");
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Ambient animated background orbs */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.28),transparent_65%)] blur-3xl" />
+        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,183,176,0.22),transparent_65%)] blur-3xl" />
+        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle_at_center,rgba(32,231,229,0.18),transparent_65%)] blur-3xl" />
+        <div className="grid-fade absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.05)_1px,transparent_1px)] bg-[size:56px_56px]" />
+      </div>
+
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
@@ -242,7 +259,7 @@ function Landing() {
               Take Control of
               <br />
               Your{" "}
-              <span className="bg-gradient-to-r from-mint to-accent bg-clip-text text-transparent">
+              <span className="gradient-shimmer bg-gradient-to-r from-mint via-cyan-300 to-accent bg-clip-text text-transparent">
                 Financial Future
               </span>
             </h1>
@@ -257,9 +274,9 @@ function Landing() {
               <Link
                 to="/auth"
                 search={{ mode: "signup" }}
-                className="btn-primary-glow inline-flex items-center gap-2 rounded-2xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
+                className="btn-primary-glow btn-shine inline-flex items-center gap-2 rounded-2xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
               >
-                Get Started Free <ArrowRight className="h-4 w-4" />
+                Get Started Free <ArrowRight className="h-4 w-4 arrow-nudge" />
               </Link>
               <a
                 href="#features"
@@ -425,6 +442,38 @@ function Landing() {
           0%, 100% { opacity: 0.15; }
           50% { opacity: 1; }
         }
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes orbDrift1 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(60px, 40px) scale(1.08); }
+        }
+        @keyframes orbDrift2 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(-50px, 30px) scale(1.1); }
+        }
+        @keyframes orbDrift3 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(30px, -50px) scale(1.06); }
+        }
+        @keyframes gridPulse {
+          0%, 100% { opacity: 0.35; }
+          50% { opacity: 0.7; }
+        }
+        @keyframes shine {
+          0% { transform: translateX(-120%) skewX(-20deg); }
+          100% { transform: translateX(220%) skewX(-20deg); }
+        }
+        @keyframes arrowNudge {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(4px); }
+        }
+        @keyframes floatY {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
 
         .load-nav { opacity: 0; animation: navDown 400ms ease-out 0ms forwards; }
         .load-badge { opacity: 0; animation: fadeIn 400ms ease-out 250ms forwards; }
@@ -486,11 +535,34 @@ function Landing() {
         .aura-glow { animation: auraPulse 6s ease-in-out infinite; }
         .aura-dot { animation: twinkle 3.6s ease-in-out infinite; }
 
+        .gradient-shimmer {
+          background-size: 200% 200%;
+          animation: gradientShift 6s ease-in-out infinite;
+        }
+        .orb-1 { animation: orbDrift1 18s ease-in-out infinite; will-change: transform; }
+        .orb-2 { animation: orbDrift2 22s ease-in-out infinite; will-change: transform; }
+        .orb-3 { animation: orbDrift3 26s ease-in-out infinite; will-change: transform; }
+        .grid-fade { animation: gridPulse 8s ease-in-out infinite; mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%); }
+
+        .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+        .btn-shine::before {
+          content: ""; position: absolute; inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+          transform: translateX(-120%) skewX(-20deg);
+          pointer-events: none;
+        }
+        .btn-shine:hover::before { animation: shine 900ms ease-out forwards; }
+        .btn-primary-glow:hover .arrow-nudge { animation: arrowNudge 700ms ease-in-out infinite; }
+
+        .feature-card { animation: floatY 6s ease-in-out infinite; animation-play-state: paused; }
+        .feature-card:hover { animation-play-state: running; }
+
         @media (prefers-reduced-motion: reduce) {
           .load-nav, .load-badge, .load-headline, .load-desc, .load-cta { animation: none; opacity: 1; transform: none; }
           .reveal { opacity: 1; transform: none; transition: none; }
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
           .aura-wrap, .aura-ring, .aura-ring-rev, .aura-glow, .aura-dot { animation: none; }
+          .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge, .feature-card { animation: none; }
         }
       `}</style>
     </div>
