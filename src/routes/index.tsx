@@ -254,8 +254,20 @@ function Landing() {
             <a href="#features" className="nav-link transition-colors hover:text-foreground">
               Features
             </a>
-            <a href="#pricing" className="nav-link transition-colors hover:text-foreground">
-              Pricing
+            <a
+              href="#how"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById("how");
+                if (!el) return;
+                const header = document.querySelector("header");
+                const offset = header ? header.getBoundingClientRect().height + 16 : 96;
+                const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top, behavior: "smooth" });
+              }}
+              className="nav-link transition-colors hover:text-foreground"
+            >
+              How It Works
             </a>
             <a
               href="#about"
@@ -328,6 +340,15 @@ function Landing() {
               </Link>
               <a
                 href="#features"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const el = document.getElementById("features");
+                  if (!el) return;
+                  const header = document.querySelector("header");
+                  const offset = header ? header.getBoundingClientRect().height + 16 : 96;
+                  const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                  window.scrollTo({ top, behavior: "smooth" });
+                }}
                 className="btn-secondary-glow inline-flex items-center gap-2 rounded-2xl border border-border bg-card/60 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur"
               >
                 Explore Features <Play className="h-3.5 w-3.5 fill-current" />
@@ -355,8 +376,8 @@ function Landing() {
           </div>
 
           {/* Right column — animated aura (replaces phone) */}
-          <div className="relative aspect-square w-full max-w-[560px] justify-self-center lg:justify-self-end">
-            <Aura />
+          <div className="load-hero-illus relative aspect-square w-full max-w-[560px] justify-self-center lg:justify-self-end">
+            <FinanceIllustration />
           </div>
         </div>
       </section>
