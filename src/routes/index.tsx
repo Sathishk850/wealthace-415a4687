@@ -330,17 +330,17 @@ function Landing() {
               </a>
             </div>
 
-            <div className="load-cta mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="load-cta mt-8 flex flex-wrap items-start justify-center gap-6 sm:gap-8 lg:justify-start">
               {[
                 { Icon: ShieldCheck, title: "Hi-Level Security", desc: "256-bit encryption to keep your data safe" },
                 { Icon: Wifi, title: "Works Offline", desc: "Access your finances anytime, anywhere" },
                 { Icon: Lock, title: "Auto Sync", desc: "Secure cloud backup when you're online" },
               ].map(({ Icon, title, desc }) => (
-                <div key={title} className="flex items-start gap-3 rounded-xl border border-border bg-card/60 p-4 backdrop-blur">
+                <div key={title} className="flex items-center gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 text-left">
                     <div className="text-sm font-semibold text-mint">{title}</div>
                     <div className="text-xs text-muted-foreground">{desc}</div>
                   </div>
