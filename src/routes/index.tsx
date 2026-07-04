@@ -332,7 +332,7 @@ function Landing() {
               </a>
             </div>
 
-            <div className="load-cta mt-8 flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-center lg:justify-start md:gap-0">
+            <div className="load-cta mt-8 flex flex-col items-center gap-6 md:flex-row md:items-stretch md:justify-center lg:justify-start md:gap-0">
               {[
                 { Icon: ShieldCheck, title: "Hi-Level Security", desc: "256-bit encryption to keep your data safe." },
                 { Icon: WifiOff, title: "Works Offline", desc: "Access your finances anytime, anywhere." },
@@ -340,13 +340,13 @@ function Landing() {
               ].map(({ Icon, title, desc }, i) => (
                 <div
                   key={title}
-                  className="hero-feature-item group flex items-center gap-3"
+                  className="hero-feature-item group relative flex flex-1 items-center gap-3 md:justify-center lg:justify-start"
                   style={{ animationDelay: `${i * 120}ms` }}
                 >
                   {i > 0 && (
                     <span
                       aria-hidden
-                      className="hidden md:block mr-6 lg:mr-10 h-10 w-px bg-[#22E6D8]/15"
+                      className="pointer-events-none absolute left-0 top-1/2 hidden h-10 w-px -translate-x-1/2 -translate-y-1/2 bg-[#22E6D8]/15 md:block"
                     />
                   )}
                   <div className="hero-feature-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#0A2F32]/60">
@@ -359,6 +359,7 @@ function Landing() {
                 </div>
               ))}
             </div>
+
 
           </div>
 
