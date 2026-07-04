@@ -163,10 +163,16 @@ function Splash({ leaving }: { leaving: boolean }) {
 function Landing() {
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Force dark theme on the landing page
+    const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    root.classList.add("dark");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
       document.querySelectorAll<HTMLElement>(".reveal").forEach((el) => el.classList.add("is-visible"));
-      return;
+      return () => {
+        if (!hadDark) root.classList.remove("dark");
+      };
     }
     const io = new IntersectionObserver(
       (entries) => {
@@ -180,11 +186,22 @@ function Landing() {
       { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
     );
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      if (!hadDark) root.classList.remove("dark");
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Ambient animated background orbs */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.28),transparent_65%)] blur-3xl" />
+        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,183,176,0.22),transparent_65%)] blur-3xl" />
+        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle_at_center,rgba(32,231,229,0.18),transparent_65%)] blur-3xl" />
+        <div className="grid-fade absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.05)_1px,transparent_1px)] bg-[size:56px_56px]" />
+      </div>
+
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
