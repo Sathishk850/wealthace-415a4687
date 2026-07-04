@@ -5,6 +5,27 @@ import logo from "@/assets/finvista-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 
+const SUPABASE_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
+
+function applyRememberDevice(remember: boolean) {
+  if (typeof window === "undefined") return;
+  if (remember) {
+    window.sessionStorage.removeItem("finvista_session_only");
+    return;
+  }
+  window.sessionStorage.setItem("finvista_session_only", "1");
+}
+
+function installSessionOnlyGuard() {
+  if (typeof window === "undefined") return;
+  const handler = () => {
+    if (window.sessionStorage.getItem("finvista_session_only") === "1") {
+      window.localStorage.removeItem(SUPABASE_STORAGE_KEY);
+    }
+  };
+  window.addEventListener("pagehide", handler);
+}
+
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     mode: (s.mode === "signup" ? "signup" : "signin") as "signin" | "signup",
@@ -19,6 +40,9 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  useEffect(() => {
+    installSessionOnlyGuard();
+  }, []);
   const { mode: initialMode } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -347,15 +371,20 @@ function PasswordField({
   label,
   name,
   placeholder,
+  rightSlot,
 }: {
   label: string;
   name: string;
   placeholder: string;
+  rightSlot?: React.ReactNode;
 }) {
   const [show, setShow] = useState(false);
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="mb-1.5 flex items-center justify-between text-xs font-medium text-muted-foreground">
+        <span>{label}</span>
+        {rightSlot}
+      </span>
       <div className="relative">
         <input
           name={name}
