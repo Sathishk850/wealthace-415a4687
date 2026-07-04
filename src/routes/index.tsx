@@ -360,8 +360,8 @@ function Landing() {
               ))}
             </div>
 
-
           </div>
+
 
           {/* Right illustration - blended into background */}
           <div className="load-hero-illus relative w-full lg:pl-8">
