@@ -668,7 +668,35 @@ function FinanceIllustration() {
           <filter id="fv-blur" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" />
           </filter>
+          <linearGradient id="fv-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#14D8CF" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#14D8CF" stopOpacity="0" />
+          </linearGradient>
         </defs>
+
+        {/* Animated area chart behind bars */}
+        <g className="area-chart">
+          <path
+            className="area-fill"
+            d="M0,220 C 40,200 70,210 100,180 S 170,150 210,160 S 290,120 330,100 S 390,70 400,60 L400,260 L0,260 Z"
+            fill="url(#fv-area)"
+          />
+          <path
+            className="area-line"
+            d="M0,220 C 40,200 70,210 100,180 S 170,150 210,160 S 290,120 330,100 S 390,70 400,60"
+            stroke="rgba(167,243,239,0.55)"
+            strokeWidth="1.5"
+            fill="none"
+            filter="drop-shadow(0 0 4px rgba(20,216,207,0.6))"
+          />
+          <circle className="area-dot" r="4" fill="#a7f3ef" filter="drop-shadow(0 0 6px rgba(20,216,207,0.9))">
+            <animateMotion
+              dur="7s"
+              repeatCount="indefinite"
+              path="M0,220 C 40,200 70,210 100,180 S 170,150 210,160 S 290,120 330,100 S 390,70 400,60"
+            />
+          </circle>
+        </g>
 
         {/* Bars (3D-ish with side face) */}
         {bars.map((h, i) => {
