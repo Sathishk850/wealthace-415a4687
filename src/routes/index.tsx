@@ -8,8 +8,11 @@ import {
   ArrowRight,
   ShieldCheck,
   Wifi,
+  WifiOff,
   Lock,
+  Cloud,
   PieChart,
+
   Target,
   Calculator,
   Download,
@@ -329,27 +332,36 @@ function Landing() {
               </a>
             </div>
 
-            <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-4 lg:justify-start">
+            <div className="load-cta mt-8 flex flex-col items-center gap-6 md:flex-row md:items-stretch md:justify-center lg:justify-start md:gap-0">
               {[
-                { Icon: ShieldCheck, title: "Hi-Level Security", desc: "256-bit encryption to keep your data safe" },
-                { Icon: Wifi, title: "Works Offline", desc: "Access your finances anytime, anywhere" },
-                { Icon: Lock, title: "Auto Sync", desc: "Secure cloud backup when you're online" },
+                { Icon: ShieldCheck, title: "Hi-Level Security", desc: "256-bit encryption to keep your data safe." },
+                { Icon: WifiOff, title: "Works Offline", desc: "Access your finances anytime, anywhere." },
+                { Icon: Cloud, title: "Auto Sync", desc: "Secure cloud backup when you're online." },
               ].map(({ Icon, title, desc }, i) => (
-                <div key={title} className="flex items-center gap-6">
-                  {i > 0 && <span aria-hidden className="hidden h-10 w-px bg-border/70 sm:block" />}
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 text-left">
-                      <div className="text-sm font-semibold text-mint">{title}</div>
-                      <div className="text-xs text-muted-foreground">{desc}</div>
-                    </div>
+                <div
+                  key={title}
+                  className="hero-feature-item group relative flex flex-1 items-center gap-3 md:justify-center lg:justify-start"
+                  style={{ animationDelay: `${i * 120}ms` }}
+                >
+                  {i > 0 && (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute left-0 top-1/2 hidden h-10 w-px -translate-x-1/2 -translate-y-1/2 bg-[#22E6D8]/15 md:block"
+                    />
+                  )}
+                  <div className="hero-feature-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#0A2F32]/60">
+                    <Icon className="h-5 w-5 text-[#22E6D8]" />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="hero-feature-title text-sm font-semibold text-foreground">{title}</div>
+                    <div className="text-xs text-[#AAB6C4]">{desc}</div>
                   </div>
                 </div>
               ))}
             </div>
+
           </div>
+
 
           {/* Right illustration - blended into background */}
           <div className="load-hero-illus relative w-full lg:pl-8">
