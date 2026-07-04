@@ -411,6 +411,20 @@ function Landing() {
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes auraSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes auraSpinRev { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+        @keyframes auraPulse {
+          0%, 100% { opacity: 0.55; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.04); }
+        }
+        @keyframes auraFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.15; }
+          50% { opacity: 1; }
+        }
 
         .load-nav { opacity: 0; animation: navDown 400ms ease-out 0ms forwards; }
         .load-badge { opacity: 0; animation: fadeIn 400ms ease-out 250ms forwards; }
@@ -466,12 +480,72 @@ function Landing() {
         .feature-icon { transition: transform 250ms ease-out; }
         .feature-card:hover .feature-icon { transform: scale(1.08); }
 
+        .aura-wrap { animation: auraFloat 9s ease-in-out infinite; }
+        .aura-ring { animation: auraSpin 40s linear infinite; }
+        .aura-ring-rev { animation: auraSpinRev 55s linear infinite; }
+        .aura-glow { animation: auraPulse 6s ease-in-out infinite; }
+        .aura-dot { animation: twinkle 3.6s ease-in-out infinite; }
+
         @media (prefers-reduced-motion: reduce) {
           .load-nav, .load-badge, .load-headline, .load-desc, .load-cta { animation: none; opacity: 1; transform: none; }
           .reveal { opacity: 1; transform: none; transition: none; }
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
+          .aura-wrap, .aura-ring, .aura-ring-rev, .aura-glow, .aura-dot { animation: none; }
         }
       `}</style>
+    </div>
+  );
+}
+
+function Aura() {
+  // Deterministic particle field so SSR + client render match
+  const particles = Array.from({ length: 46 }, (_, i) => {
+    const angle = (i * 137.5) % 360;
+    const radius = 34 + ((i * 53) % 22); // 34–56%
+    const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
+    const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
+    const size = 1 + ((i * 7) % 3);
+    const delay = (i % 12) * 0.25;
+    const dur = 3 + ((i * 11) % 40) / 10;
+    return { x, y, size, delay, dur, key: i };
+  });
+
+  return (
+    <div className="aura-wrap absolute inset-0">
+      {/* Outer soft halo */}
+      <div className="aura-glow absolute inset-[6%] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.35),rgba(20,216,207,0.06)_55%,transparent_72%)] blur-2xl" />
+
+      {/* Rotating dashed ring */}
+      <div className="aura-ring absolute inset-[10%] rounded-full border border-dashed border-mint/25" />
+      {/* Solid faint ring */}
+      <div className="absolute inset-[16%] rounded-full border border-mint/15" />
+      {/* Reverse ring */}
+      <div className="aura-ring-rev absolute inset-[22%] rounded-full border border-mint/10" />
+
+      {/* Meridian lines (subtle sphere hint) */}
+      <div className="absolute inset-[10%] rounded-full border border-mint/10 [transform:rotateY(70deg)]" />
+      <div className="absolute inset-[10%] rounded-full border border-mint/10 [transform:rotateX(70deg)]" />
+
+      {/* Inner core glow */}
+      <div className="aura-glow absolute inset-[36%] rounded-full bg-mint/15 blur-2xl" />
+
+      {/* Particle field */}
+      {particles.map((p) => (
+        <span
+          key={p.key}
+          className="aura-dot absolute rounded-full bg-mint"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            transform: "translate(-50%, -50%)",
+            boxShadow: "0 0 8px rgba(20,216,207,0.9)",
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.dur}s`,
+          }}
+        />
+      ))}
     </div>
   );
 }
