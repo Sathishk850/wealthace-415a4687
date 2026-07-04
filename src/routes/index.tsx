@@ -674,7 +674,159 @@ function Landing() {
 }
 
 function Aura() {
-  // Deterministic particle field so SSR + client render match
+  return <FinanceIllustration />;
+}
+
+function FinanceIllustration() {
+  const bars = [
+    { x: 40, h: 60, delay: 0 },
+    { x: 90, h: 95, delay: 100 },
+    { x: 140, h: 130, delay: 200 },
+    { x: 190, h: 170, delay: 300 },
+    { x: 240, h: 210, delay: 400 },
+    { x: 290, h: 250, delay: 500 },
+  ];
+  const particles = Array.from({ length: 18 }, (_, i) => ({
+    key: i,
+    left: ((i * 53) % 100),
+    top: 20 + ((i * 37) % 70),
+    size: 2 + ((i * 3) % 3),
+    delay: (i % 8) * 0.6,
+    dur: 5 + ((i * 7) % 30) / 10,
+  }));
+  return (
+    <div className="hero-illus relative h-full w-full">
+      {/* Soft radial glow behind graph */}
+      <div className="graph-glow absolute inset-[8%] rounded-full bg-[radial-gradient(circle_at_50%_55%,rgba(20,216,207,0.28),transparent_65%)] blur-2xl" />
+
+      {/* Floating particles */}
+      {particles.map((p) => (
+        <span
+          key={p.key}
+          className="particle absolute rounded-full bg-mint/70"
+          style={{
+            left: `${p.left}%`,
+            top: `${p.top}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            boxShadow: "0 0 8px rgba(20,216,207,0.9)",
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.dur}s`,
+          }}
+        />
+      ))}
+
+      {/* Graph */}
+      <svg
+        viewBox="0 0 360 340"
+        className="absolute inset-0 h-full w-full"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor="#0b3a3f" />
+            <stop offset="60%" stopColor="#14D8CF" stopOpacity="0.75" />
+            <stop offset="100%" stopColor="#20E7E5" />
+          </linearGradient>
+          <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#14D8CF" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#20E7E5" />
+          </linearGradient>
+          <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Faint animated data lines */}
+        <path
+          className="data-line"
+          d="M 0 260 C 80 240, 160 280, 240 250 S 360 220, 360 240"
+          stroke="rgba(20,216,207,0.18)"
+          strokeWidth="1"
+          fill="none"
+        />
+        <path
+          className="data-line"
+          d="M 0 200 C 90 180, 180 220, 270 190 S 360 170, 360 180"
+          stroke="rgba(20,216,207,0.12)"
+          strokeWidth="1"
+          fill="none"
+          style={{ animationDuration: "16s" }}
+        />
+
+        {/* Bars */}
+        {bars.map((b) => (
+          <rect
+            key={b.x}
+            className="bar-grow"
+            x={b.x}
+            y={280 - b.h}
+            width="30"
+            height={b.h}
+            rx="4"
+            fill="url(#barGrad)"
+            style={{ animationDelay: `${b.delay}ms`, transformBox: "fill-box" }}
+          />
+        ))}
+
+        {/* Uptrend line */}
+        <path
+          className="draw-line"
+          d="M 55 240 L 105 205 L 155 170 L 205 130 L 255 95 L 305 55"
+          stroke="url(#lineGrad)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          filter="url(#softGlow)"
+        />
+
+        {/* Arrow tip */}
+        <g className="arrow-glow" transform="translate(305 55)">
+          <path d="M -12 6 L 0 -6 L 12 6" stroke="#20E7E5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M 0 -6 L 0 10" stroke="#20E7E5" strokeWidth="3" strokeLinecap="round" fill="none" />
+        </g>
+      </svg>
+
+      {/* Floating currency coins */}
+      <div className="coin-wrap absolute left-[10%] bottom-[6%] coin-1">
+        <Coin symbol="$" color="#14D8CF" />
+      </div>
+      <div className="coin-wrap absolute left-1/2 -translate-x-1/2 bottom-[2%] coin-2">
+        <Coin symbol="₹" color="#F4C430" />
+      </div>
+      <div className="coin-wrap absolute right-[8%] bottom-[8%] coin-3">
+        <Coin symbol="€" color="#4D8CFF" />
+      </div>
+    </div>
+  );
+}
+
+function Coin({ symbol, color }: { symbol: string; color: string }) {
+  return (
+    <div
+      className="coin-face coin-glow grid h-20 w-20 place-items-center rounded-full sm:h-24 sm:w-24"
+      style={{
+        background: `radial-gradient(circle at 30% 25%, ${color}55, #061824 75%)`,
+        border: `1px solid ${color}66`,
+      }}
+    >
+      <span
+        className="font-display text-3xl font-bold sm:text-4xl"
+        style={{ color, textShadow: `0 0 12px ${color}88` }}
+      >
+        {symbol}
+      </span>
+    </div>
+  );
+}
+
+function _AuraLegacy() {
+  // legacy aura kept for potential reuse
   const particles = Array.from({ length: 46 }, (_, i) => {
     const angle = (i * 137.5) % 360;
     const radius = 34 + ((i * 53) % 22); // 34–56%
