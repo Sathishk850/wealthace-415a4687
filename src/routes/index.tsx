@@ -124,9 +124,10 @@ function HomeRoute() {
 function Splash({ leaving }: { leaving: boolean }) {
   return (
     <div
-      className={`fixed inset-0 z-[100] grid place-items-center bg-background transition-opacity duration-700 ${
+      className={`fixed inset-0 z-[100] grid place-items-center bg-[#050505] transition-opacity duration-700 ${
         leaving ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
+
       aria-hidden={leaving}
     >
       {/* Ambient glow */}
@@ -243,7 +244,7 @@ function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#050505] text-foreground">
       {/* Ambient animated background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.22),transparent_65%)] blur-3xl" />
@@ -253,7 +254,8 @@ function Landing() {
       </div>
 
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-[#050505]/70 backdrop-blur-xl load-nav">
+
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
             <img src={logo} alt="FinVista" className="h-10 w-10 shrink-0 rounded-lg" />
