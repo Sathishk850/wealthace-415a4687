@@ -442,6 +442,38 @@ function Landing() {
           0%, 100% { opacity: 0.15; }
           50% { opacity: 1; }
         }
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes orbDrift1 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(60px, 40px) scale(1.08); }
+        }
+        @keyframes orbDrift2 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(-50px, 30px) scale(1.1); }
+        }
+        @keyframes orbDrift3 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(30px, -50px) scale(1.06); }
+        }
+        @keyframes gridPulse {
+          0%, 100% { opacity: 0.35; }
+          50% { opacity: 0.7; }
+        }
+        @keyframes shine {
+          0% { transform: translateX(-120%) skewX(-20deg); }
+          100% { transform: translateX(220%) skewX(-20deg); }
+        }
+        @keyframes arrowNudge {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(4px); }
+        }
+        @keyframes floatY {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
 
         .load-nav { opacity: 0; animation: navDown 400ms ease-out 0ms forwards; }
         .load-badge { opacity: 0; animation: fadeIn 400ms ease-out 250ms forwards; }
@@ -503,11 +535,34 @@ function Landing() {
         .aura-glow { animation: auraPulse 6s ease-in-out infinite; }
         .aura-dot { animation: twinkle 3.6s ease-in-out infinite; }
 
+        .gradient-shimmer {
+          background-size: 200% 200%;
+          animation: gradientShift 6s ease-in-out infinite;
+        }
+        .orb-1 { animation: orbDrift1 18s ease-in-out infinite; will-change: transform; }
+        .orb-2 { animation: orbDrift2 22s ease-in-out infinite; will-change: transform; }
+        .orb-3 { animation: orbDrift3 26s ease-in-out infinite; will-change: transform; }
+        .grid-fade { animation: gridPulse 8s ease-in-out infinite; mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%); }
+
+        .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+        .btn-shine::before {
+          content: ""; position: absolute; inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+          transform: translateX(-120%) skewX(-20deg);
+          pointer-events: none;
+        }
+        .btn-shine:hover::before { animation: shine 900ms ease-out forwards; }
+        .btn-primary-glow:hover .arrow-nudge { animation: arrowNudge 700ms ease-in-out infinite; }
+
+        .feature-card { animation: floatY 6s ease-in-out infinite; animation-play-state: paused; }
+        .feature-card:hover { animation-play-state: running; }
+
         @media (prefers-reduced-motion: reduce) {
           .load-nav, .load-badge, .load-headline, .load-desc, .load-cta { animation: none; opacity: 1; transform: none; }
           .reveal { opacity: 1; transform: none; transition: none; }
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
           .aura-wrap, .aura-ring, .aura-ring-rev, .aura-glow, .aura-dot { animation: none; }
+          .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge, .feature-card { animation: none; }
         }
       `}</style>
     </div>
