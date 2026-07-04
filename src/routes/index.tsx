@@ -499,6 +499,31 @@ function Landing() {
         }
         @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
+        @keyframes barRise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        @keyframes arrowPop { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes heroBreath { 0%, 100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+        @keyframes floatSlow { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(4px,-10px); } }
+        @keyframes floatSlowAlt { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-6px,-14px); } }
+        @keyframes floatSlow2 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(8px,-6px); } }
+        @keyframes orbPulse { 0%, 100% { filter: drop-shadow(0 0 6px rgba(20,216,207,0.4)); } 50% { filter: drop-shadow(0 0 22px rgba(20,216,207,0.85)); } }
+        @keyframes particleDrift { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(-40px); } }
+        @keyframes trailShift { 0%, 100% { stroke-dashoffset: 0; } 50% { stroke-dashoffset: -20; } }
+
+        .bar-group > rect,
+        .bar-group > polygon { transform-box: fill-box; transform-origin: bottom; }
+        .bar-group { transform-box: fill-box; transform-origin: center bottom; opacity: 0; animation: barRise 900ms cubic-bezier(0.2,0.8,0.2,1) forwards; }
+        .trend-line { stroke-dasharray: 600; stroke-dashoffset: 600; animation: drawLine 1400ms ease-out 900ms forwards; }
+        .trend-arrow { opacity: 0; animation: arrowPop 500ms cubic-bezier(0.2,0.8,0.2,1) 2200ms forwards, orbPulse 3.5s ease-in-out 2700ms infinite; transform-box: fill-box; }
+        .data-trails path { stroke-dasharray: 4 10; animation: trailShift 12s linear infinite; }
+        .hero-breath { animation: heroBreath 6s ease-in-out infinite; }
+        .hero-breath-2 { animation: heroBreath 8s ease-in-out infinite reverse; }
+        .particle { animation: particleDrift 6s ease-in-out infinite; }
+
+        .coin-inr { animation: floatSlow 5s ease-in-out infinite, orbPulse 4s ease-in-out infinite; }
+        .coin-usd { animation: floatSlowAlt 6s ease-in-out infinite, orbPulse 5s ease-in-out 0.6s infinite; }
+        .coin-eur { animation: floatSlow2 5.5s ease-in-out infinite, orbPulse 4.5s ease-in-out 1.2s infinite; }
+
         .load-nav { opacity: 0; animation: navDown 400ms ease-out 0ms forwards; }
         .load-badge { opacity: 0; animation: fadeIn 400ms ease-out 250ms forwards; }
         .load-headline { opacity: 0; animation: slideUp 500ms ease-out 450ms forwards; }
@@ -554,7 +579,9 @@ function Landing() {
           .load-nav, .load-badge, .load-headline, .load-desc, .load-cta, .load-hero-illus { animation: none; opacity: 1; transform: none; }
           .reveal { opacity: 1; transform: none; transition: none; }
           .btn-primary-glow, .btn-secondary-glow, .feature-card, .feature-icon, .nav-link::after { transition: none; }
-          .aura-ring, .aura-glow, .coin-glow, .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge { animation: none; }
+          .aura-ring, .aura-glow, .coin-glow, .gradient-shimmer, .orb-1, .orb-2, .orb-3, .grid-fade, .btn-shine::before, .arrow-nudge,
+          .bar-group, .trend-line, .trend-arrow, .data-trails path, .hero-breath, .hero-breath-2, .particle,
+          .coin-inr, .coin-usd, .coin-eur { animation: none; opacity: 1; stroke-dashoffset: 0; transform: none; }
         }
       `}</style>
     </div>
