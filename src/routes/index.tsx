@@ -259,7 +259,7 @@ function Landing() {
               Take Control of
               <br />
               Your{" "}
-              <span className="bg-gradient-to-r from-mint to-accent bg-clip-text text-transparent">
+              <span className="gradient-shimmer bg-gradient-to-r from-mint via-cyan-300 to-accent bg-clip-text text-transparent">
                 Financial Future
               </span>
             </h1>
@@ -274,9 +274,9 @@ function Landing() {
               <Link
                 to="/auth"
                 search={{ mode: "signup" }}
-                className="btn-primary-glow inline-flex items-center gap-2 rounded-2xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
+                className="btn-primary-glow btn-shine inline-flex items-center gap-2 rounded-2xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
               >
-                Get Started Free <ArrowRight className="h-4 w-4" />
+                Get Started Free <ArrowRight className="h-4 w-4 arrow-nudge" />
               </Link>
               <a
                 href="#features"
