@@ -257,8 +257,20 @@ function Landing() {
             <a href="#pricing" className="nav-link transition-colors hover:text-foreground">
               Pricing
             </a>
-            <a href="#security" className="nav-link transition-colors hover:text-foreground">
-              Security
+            <a
+              href="#about"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById("about");
+                if (!el) return;
+                const header = document.querySelector("header");
+                const offset = header ? header.getBoundingClientRect().height + 16 : 96;
+                const top = el.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top, behavior: "smooth" });
+              }}
+              className="nav-link transition-colors hover:text-foreground"
+            >
+              About
             </a>
           </nav>
           <div className="flex items-center gap-2">
@@ -453,7 +465,18 @@ function Landing() {
         </div>
       </section>
 
-      <div id="security" className="sr-only" aria-hidden="true" />
+      {/* About */}
+      <section id="about" className="reveal mx-auto max-w-4xl px-6 py-20 text-center scroll-mt-24">
+        <div className="rounded-3xl border border-border/70 bg-card/40 p-8 backdrop-blur md:p-12">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">Who we are</span>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight md:text-4xl">About FinVista</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            FinVista is a modern personal finance platform designed to help you understand, track, and grow your wealth
+            with confidence. From assets and investments to expenses and financial goals, everything is organized in one
+            secure, intelligent dashboard—so you always know your worth.
+          </p>
+        </div>
+      </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} FinVista · Know your worth
