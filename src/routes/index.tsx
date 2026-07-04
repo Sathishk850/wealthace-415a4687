@@ -615,7 +615,7 @@ function FinanceIllustration() {
 
   return (
     <div
-      className="hero-illus relative aspect-square w-full"
+      className="hero-illus relative aspect-square w-full [mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_88%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_88%)]"
       aria-label="Glowing 3D bar chart with upward trend line and floating rupee, dollar and euro currency symbols"
       role="img"
     >
