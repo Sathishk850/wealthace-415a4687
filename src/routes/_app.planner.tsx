@@ -931,7 +931,7 @@ function RetirementView() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1B3249" />
                 <XAxis dataKey="age" stroke="#6E8294" fontSize={11} tickFormatter={(v) => `Age ${v}`} {...smartXAxisProps} />
                 <YAxis stroke="#6E8294" fontSize={11} tickFormatter={(v) => `${v}L`} />
-                <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }} formatter={(v: number) => `₹${v}L`} />
+                <RechartsTooltip contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }} formatter={(v: number) => `₹${v}L`} />
                 <Legend />
                 <Line type="monotone" dataKey="corpus" stroke="#14D8CF" strokeWidth={2.5} name="Projected" dot={false} />
                 <Line type="monotone" dataKey="target" stroke="#f59e0b" strokeWidth={2.5} strokeDasharray="5 5" name="Target" dot={false} />
