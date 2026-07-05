@@ -949,7 +949,7 @@ function RetirementView() {
             </ResponsiveContainer>
           ) : (
             <div className="grid h-[280px] place-items-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
-              Enter your current age, retirement age, life expectancy and monthly expense to see your projection.
+              Enter your current age, retirement age, life expectancy, monthly expense, inflation and expected returns to see your projection.
             </div>
           )}
         </div>
