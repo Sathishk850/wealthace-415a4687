@@ -48,8 +48,9 @@ import {
   formatAxisTick,
   filterSeriesByRange,
   computeTimeAxisTicks,
-  getTimeAxisDomain,
+  getPaddedTimeAxisDomain,
   dateToAxisTime,
+  timeXAxisPadding,
 } from "@/lib/chart-axis";
 import { useAssets, useLiabilities, useInvestments, inr as inrW } from "@/lib/wealth-api";
 import { useTransactions } from "@/lib/money-api";
@@ -746,7 +747,7 @@ function RangeChart({
     [range, labels],
   );
   const domain = useMemo(
-    () => getTimeAxisDomain(range, labels),
+    () => getPaddedTimeAxisDomain(range, labels),
     [range, labels],
   );
   return (
@@ -761,7 +762,7 @@ function RangeChart({
           </div>
         ) : (
         <ResponsiveContainer>
-          <AreaChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <AreaChart data={series} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
             <defs>
               <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#14d8cf" stopOpacity={0.45} />
@@ -777,6 +778,7 @@ function RangeChart({
               tickLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
               tickFormatter={(value: number) => formatAxisTick(value, range)}
+              padding={timeXAxisPadding}
               {...smartXAxisProps}
               ticks={ticks.length ? ticks : undefined}
               interval={ticks.length ? 0 : smartXAxisProps.interval}
