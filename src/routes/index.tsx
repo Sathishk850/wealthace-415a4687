@@ -254,7 +254,7 @@ function Landing() {
       </div>
 
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-[#050505]/70 backdrop-blur-xl load-nav">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-black/70 backdrop-blur-xl load-nav">
 
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
