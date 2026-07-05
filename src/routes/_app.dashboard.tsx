@@ -48,7 +48,7 @@ import {
   formatAxisTick,
   filterSeriesByRange,
   computeTimeAxisTicks,
-  getTimeAxisDomain,
+  getPaddedTimeAxisDomain,
   dateToAxisTime,
   timeXAxisPadding,
 } from "@/lib/chart-axis";
@@ -747,7 +747,7 @@ function RangeChart({
     [range, labels],
   );
   const domain = useMemo(
-    () => getTimeAxisDomain(range, labels),
+    () => getPaddedTimeAxisDomain(range, labels),
     [range, labels],
   );
   return (
