@@ -180,12 +180,14 @@ function Kpi({
   value,
   delta,
   tone = "mint",
+  tooltip,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   delta?: string;
   tone?: "mint" | "positive" | "negative" | "warn";
+  tooltip?: string;
 }) {
   const map = {
     mint: "bg-mint/10 text-mint",
@@ -196,7 +198,19 @@ function Kpi({
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <div className="flex items-start justify-between">
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {label}
+          {tooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="text-muted-foreground/70 hover:text-foreground">
+                  <Info className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">{tooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         <div className={`grid h-9 w-9 place-items-center rounded-xl ${map[tone]}`}>
           <Icon className="h-4 w-4" />
         </div>
