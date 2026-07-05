@@ -47,16 +47,6 @@ function AuthPage() {
     installSessionOnlyGuard();
   }, []);
   const { mode: initialMode, redirect: redirectParam } = useSearch({ from: "/auth" });
-  // Only accept same-origin absolute paths — never external URLs.
-  const safeRedirect =
-    redirectParam && /^\/[^/]/.test(redirectParam) ? redirectParam : undefined;
-  const goHome = () => {
-    if (safeRedirect) {
-      navigate({ to: safeRedirect });
-    } else {
-      navigate({ to: "/dashboard" });
-    }
-  };
   const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "pin">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -65,6 +55,16 @@ function AuthPage() {
   const [pinAvailable, setPinAvailable] = useState(false);
   const [pinValue, setPinValue] = useState("");
   const navigate = useNavigate();
+  // Only accept same-origin absolute paths — never external URLs.
+  const safeRedirect =
+    redirectParam && /^\/[^/]/.test(redirectParam) ? redirectParam : undefined;
+  const goHome = () => {
+    if (safeRedirect) {
+      navigate({ to: safeRedirect as never });
+    } else {
+      navigate({ to: "/dashboard" });
+    }
+  };
   const verifyPinFn = useServerFn(verifyPin);
   const getPinStatusFn = useServerFn(getPinStatus);
 
