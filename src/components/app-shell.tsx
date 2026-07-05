@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
 import { usePrivacy } from "@/lib/privacy";
+import { SessionExpiredDialog, markIntentionalSignOut } from "@/lib/session-expired";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -144,6 +145,7 @@ function TopBar() {
   }, [theme]);
 
   const handleSignOut = async () => {
+    markIntentionalSignOut();
     await supabase.auth.signOut();
     navigate({ to: "/", replace: true });
   };
@@ -263,6 +265,7 @@ export function AppShell() {
       </main>
       <MobileBottomTabs />
       <Toaster />
+      <SessionExpiredDialog />
     </div>
   );
 }
