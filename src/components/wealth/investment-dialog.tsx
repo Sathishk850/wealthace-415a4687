@@ -18,6 +18,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -27,6 +38,137 @@ import {
   type InvestmentInput,
   useUpsertInvestment,
 } from "@/lib/wealth-api";
+
+const SUB_CATEGORY_GROUPS: { group: string; items: string[] }[] = [
+  {
+    group: "Equity",
+    items: [
+      "Large Cap", "Mid Cap", "Small Cap", "Flexi Cap", "Multi Cap",
+      "ELSS (Tax Saver)", "Value Fund", "Contra Fund", "Focused Fund", "Sectoral / Thematic",
+    ],
+  },
+  {
+    group: "Debt",
+    items: [
+      "Liquid Fund", "Overnight Fund", "Ultra Short Duration", "Low Duration",
+      "Short Duration", "Corporate Bond", "Banking & PSU Debt", "Gilt Fund",
+      "Dynamic Bond", "Credit Risk",
+    ],
+  },
+  {
+    group: "Hybrid",
+    items: [
+      "Aggressive Hybrid", "Balanced Hybrid", "Conservative Hybrid", "Multi Asset",
+      "Dynamic Asset Allocation (Balanced Advantage)", "Arbitrage Fund",
+    ],
+  },
+  {
+    group: "Index & ETF",
+    items: [
+      "Nifty 50 Index", "Nifty Next 50", "Nifty 100", "Nifty 500", "Sensex Index",
+      "LargeMidcap 250", "Nasdaq 100", "S&P 500", "Gold ETF", "Silver ETF",
+    ],
+  },
+  {
+    group: "International",
+    items: ["US Equity", "Global Equity", "Emerging Markets", "Developed Markets"],
+  },
+  {
+    group: "Other",
+    items: [
+      "Gold Fund", "Silver Fund", "REIT", "InvIT", "Fixed Deposit (FD)",
+      "Recurring Deposit (RD)", "PPF", "EPF", "NPS", "Sovereign Gold Bond (SGB)",
+      "Crypto", "Cash",
+    ],
+  },
+].map((g) => ({ group: g.group, items: [...g.items].sort((a, b) => a.localeCompare(b)) }));
+
+const ALL_SUB_CATEGORIES = SUB_CATEGORY_GROUPS.flatMap((g) => g.items);
+
+function SubCategoryCombobox({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const trimmed = search.trim();
+  const canAddCustom =
+    trimmed.length > 0 &&
+    !ALL_SUB_CATEGORIES.some((s) => s.toLowerCase() === trimmed.toLowerCase());
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          role="combobox"
+          aria-expanded={open}
+          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span className={cn("truncate", !value && "text-muted-foreground")}>
+            {value || "Select a sub-category…"}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput
+            placeholder="Search sub-category…"
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList className="max-h-72">
+            <CommandEmpty>
+              {canAddCustom ? "Press add to create a custom sub-category." : "No results."}
+            </CommandEmpty>
+            {SUB_CATEGORY_GROUPS.map((g) => (
+              <CommandGroup key={g.group} heading={g.group}>
+                {g.items.map((item) => (
+                  <CommandItem
+                    key={item}
+                    value={`${g.group} ${item}`}
+                    onSelect={() => {
+                      onChange(item);
+                      setSearch("");
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === item ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {item}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
+            {canAddCustom && (
+              <CommandGroup heading="Custom">
+                <CommandItem
+                  value={`__add__ ${trimmed}`}
+                  onSelect={() => {
+                    onChange(trimmed);
+                    setSearch("");
+                    setOpen(false);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add &ldquo;{trimmed}&rdquo;
+                </CommandItem>
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 type Props = {
   open: boolean;
@@ -127,10 +269,9 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             </Select>
           </Field>
           <Field label="Sub-category / Plan">
-            <Input
+            <SubCategoryCombobox
               value={form.sub_category ?? ""}
-              onChange={(e) => setForm({ ...form, sub_category: e.target.value })}
-              placeholder="e.g. Direct Growth"
+              onChange={(v) => setForm({ ...form, sub_category: v })}
             />
           </Field>
           <Field label="Symbol / Ticker">
