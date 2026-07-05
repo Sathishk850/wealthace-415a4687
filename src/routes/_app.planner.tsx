@@ -70,7 +70,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DEFAULT_SETTINGS,
   GOAL_TYPES,
   GOAL_TYPE_LABEL,
   fireNumber,
@@ -257,21 +256,35 @@ function fmtDate(iso: string | null) {
   if (!iso) return "No deadline";
   return new Date(iso).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
-function useSettingsOrDefaults() {
+/** Blank first-time state — no assumptions or defaults. */
+const BLANK_SETTINGS: Omit<PlannerSettings, "user_id" | "created_at" | "updated_at"> = {
+  current_age: 0,
+  retirement_age: 0,
+  life_expectancy: 0,
+  monthly_expense: 0,
+  inflation_pct: 0,
+  pre_return_pct: 0,
+  post_return_pct: 0,
+  current_corpus: 0,
+  monthly_sip: 0,
+  withdrawal_rate_pct: 0,
+};
+
+function useSettingsOrBlank() {
   const q = usePlannerSettings();
   const settings: PlannerSettings = (q.data ?? {
     user_id: "",
-    ...DEFAULT_SETTINGS,
+    ...BLANK_SETTINGS,
     created_at: "",
     updated_at: "",
   }) as PlannerSettings;
-  return { ...q, settings };
+  return { ...q, settings, hasSaved: !!q.data };
 }
 
 /* ---------- OVERVIEW ---------- */
 function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
   const goalsQ = useGoals();
-  const { settings, isLoading: sLoad, error: sErr, refetch: sRefetch } = useSettingsOrDefaults();
+  const { settings, hasSaved, isLoading: sLoad, error: sErr, refetch: sRefetch } = useSettingsOrBlank();
 
   if (goalsQ.isLoading || sLoad) return <LoadingBlock label="Loading planner…" />;
   if (goalsQ.error) return <ErrorBlock error={goalsQ.error as Error} onRetry={() => goalsQ.refetch()} />;
@@ -282,18 +295,18 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
   const totalTarget = goals.reduce((s, g) => s + g.target_amount, 0);
   const onTrack = goals.filter((g) => goalProgressPct(g) >= 50).length;
 
-  const retirementTarget = retirementCorpusNeeded(settings);
-  const yearsToRet = Math.max(0, settings.retirement_age - settings.current_age);
-  const retirementProjected = projectCorpus(
-    settings.current_corpus,
-    settings.monthly_sip,
-    settings.pre_return_pct,
-    yearsToRet
-  );
+  const canCompute = hasSaved && settings.current_age > 0 && settings.retirement_age > settings.current_age && settings.monthly_expense > 0;
+  const retirementTarget = canCompute ? retirementCorpusNeeded(settings) : 0;
+  const yearsToRet = canCompute ? Math.max(0, settings.retirement_age - settings.current_age) : 0;
+  const retirementProjected = canCompute
+    ? projectCorpus(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, yearsToRet)
+    : 0;
   const retPct = retirementTarget > 0 ? Math.min(100, (retirementProjected / retirementTarget) * 100) : 0;
 
-  const fireTarget = fireNumber(settings);
-  const yrsToFire = yearsToReach(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, fireTarget);
+  const fireTarget = canCompute ? fireNumber(settings) : 0;
+  const yrsToFire = canCompute
+    ? yearsToReach(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, fireTarget)
+    : Infinity;
   const firePct = fireTarget > 0 ? Math.min(100, (settings.current_corpus / fireTarget) * 100) : 0;
 
   const milestones = [...goals]
@@ -306,8 +319,8 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi icon={Target} label="Active Goals" value={String(goals.length)} delta={`${onTrack} on track`} tone="mint" />
         <Kpi icon={PiggyBank} label="Total Saved" value={inr(totalSaved)} delta={`of ${inr(totalTarget)} target`} tone="positive" />
-        <Kpi icon={Wallet} label="Retirement" value={`${retPct.toFixed(1)}%`} delta={`${yearsToRet} yrs to go`} tone="mint" />
-        <Kpi icon={Flame} label="FIRE Progress" value={`${firePct.toFixed(1)}%`} delta={Number.isFinite(yrsToFire) ? `${yrsToFire.toFixed(1)} yrs to go` : "Set a SIP"} tone="warn" />
+        <Kpi icon={Wallet} label="Retirement" value={canCompute ? `${retPct.toFixed(1)}%` : "—"} delta={canCompute ? `${yearsToRet} yrs to go` : "Set up your plan"} tone="mint" />
+        <Kpi icon={Flame} label="FIRE Progress" value={canCompute ? `${firePct.toFixed(1)}%` : "—"} delta={canCompute ? (Number.isFinite(yrsToFire) ? `${yrsToFire.toFixed(1)} yrs to go` : "Add a SIP") : "Set up your plan"} tone="warn" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -315,14 +328,22 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <div className="font-display text-base font-semibold">Wealth Projection</div>
-              <div className="text-xs text-muted-foreground">Corpus growth at {settings.pre_return_pct}% CAGR · in ₹ Lakhs</div>
+              <div className="text-xs text-muted-foreground">
+                {canCompute ? `Corpus growth at ${settings.pre_return_pct}% CAGR · in ₹ Lakhs` : "Add your retirement plan to see a projection."}
+              </div>
             </div>
             <div className="text-right">
               <div className="text-xs text-muted-foreground">FIRE Number</div>
-              <div className="font-display text-lg font-bold text-mint">{inr(fireTarget)}</div>
+              <div className="font-display text-lg font-bold text-mint">{canCompute ? inr(fireTarget) : "—"}</div>
             </div>
           </div>
-          <ProjectionChart settings={settings} yearsSpan={Math.max(8, yearsToRet)} />
+          {canCompute ? (
+            <ProjectionChart settings={settings} yearsSpan={Math.max(8, yearsToRet)} />
+          ) : (
+            <div className="grid h-[260px] place-items-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+              No projection yet — head to the Retirement tab to enter your assumptions.
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
@@ -729,125 +750,183 @@ function ProjectionChart({ settings, yearsSpan }: { settings: PlannerSettings; y
 }
 
 /* ---------- RETIREMENT ---------- */
+type RetInputs = {
+  current_age: number;
+  retirement_age: number;
+  life_expectancy: number;
+  monthly_expense: number;
+  inflation_pct: number;
+  pre_return_pct: number;
+  post_return_pct: number;
+  current_corpus: number;
+  monthly_sip: number;
+};
+const BLANK_RET: RetInputs = {
+  current_age: 0,
+  retirement_age: 0,
+  life_expectancy: 0,
+  monthly_expense: 0,
+  inflation_pct: 0,
+  pre_return_pct: 0,
+  post_return_pct: 0,
+  current_corpus: 0,
+  monthly_sip: 0,
+};
+
 function RetirementView() {
-  const { settings, isLoading, error, refetch, data } = useSettingsOrDefaults();
+  const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
   const save = useSavePlannerSettings();
-  const [local, setLocal] = useState<PlannerSettings | null>(null);
-  const s = local ?? settings;
+  const [inputs, setInputs] = useState<RetInputs | null>(null);
+  const [cleared, setCleared] = useState(false);
+
+  // Hydrate from saved settings (only when user hasn't cleared)
+  const effective: RetInputs = inputs ?? (hasSaved && !cleared
+    ? {
+        current_age: settings.current_age,
+        retirement_age: settings.retirement_age,
+        life_expectancy: settings.life_expectancy,
+        monthly_expense: settings.monthly_expense,
+        inflation_pct: settings.inflation_pct,
+        pre_return_pct: settings.pre_return_pct,
+        post_return_pct: settings.post_return_pct,
+        current_corpus: settings.current_corpus,
+        monthly_sip: settings.monthly_sip,
+      }
+    : BLANK_RET);
+
+  const canCompute =
+    effective.current_age > 0 &&
+    effective.retirement_age > effective.current_age &&
+    effective.monthly_expense > 0 &&
+    effective.life_expectancy > effective.retirement_age;
+
+  const s: PlannerSettings = { ...settings, ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct || 4 };
+  const yearsToRet = Math.max(0, effective.retirement_age - effective.current_age);
+  const target = canCompute ? retirementCorpusNeeded(s) : 0;
+  const projected = canCompute ? projectCorpus(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, yearsToRet) : 0;
+  const readiness = target > 0 ? Math.min(100, (projected / target) * 100) : 0;
+
+  const chartData = useMemo(() => {
+    if (!canCompute) return [];
+    const arr: { age: number; corpus: number; target: number }[] = [];
+    const span = Math.max(5, effective.life_expectancy - effective.current_age);
+    const step = Math.max(1, Math.round(span / 8));
+    for (let y = 0; y <= span; y += step) {
+      const age = effective.current_age + y;
+      const corpus = projectCorpus(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, Math.min(y, yearsToRet));
+      const tgt = target * Math.pow(1 + effective.inflation_pct / 100, Math.max(0, y - yearsToRet)) * (y >= yearsToRet ? 1 : y / Math.max(1, yearsToRet));
+      arr.push({ age, corpus: Number((corpus / 100000).toFixed(2)), target: Number((tgt / 100000).toFixed(2)) });
+    }
+    return arr;
+  }, [effective, yearsToRet, target, canCompute]);
+
+  const recommendedSip = useMemo(() => {
+    if (!canCompute) return 0;
+    const r = effective.pre_return_pct / 100 / 12;
+    const n = yearsToRet * 12;
+    if (n <= 0) return 0;
+    const remaining = target - effective.current_corpus * Math.pow(1 + r, n);
+    if (remaining <= 0) return 0;
+    if (r === 0) return remaining / n;
+    return remaining / (((Math.pow(1 + r, n) - 1) / r) * (1 + r));
+  }, [effective, yearsToRet, target, canCompute]);
 
   if (isLoading) return <LoadingBlock label="Loading plan…" />;
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
 
-  const yearsToRet = Math.max(0, s.retirement_age - s.current_age);
-  const target = retirementCorpusNeeded(s);
-  const projected = projectCorpus(s.current_corpus, s.monthly_sip, s.pre_return_pct, yearsToRet);
-  const readiness = target > 0 ? Math.min(100, (projected / target) * 100) : 0;
-
-  const chartData = useMemo(() => {
-    const arr: { age: number; corpus: number; target: number }[] = [];
-    const span = Math.max(5, s.life_expectancy - s.current_age);
-    const step = Math.max(1, Math.round(span / 8));
-    for (let y = 0; y <= span; y += step) {
-      const age = s.current_age + y;
-      const corpus = projectCorpus(s.current_corpus, s.monthly_sip, s.pre_return_pct, Math.min(y, yearsToRet));
-      // simple inflated target trajectory
-      const tgt = target * Math.pow(1 + s.inflation_pct / 100, Math.max(0, y - yearsToRet)) * (y >= yearsToRet ? 1 : y / Math.max(1, yearsToRet));
-      arr.push({
-        age,
-        corpus: Number((corpus / 100000).toFixed(2)),
-        target: Number((tgt / 100000).toFixed(2)),
-      });
-    }
-    return arr;
-  }, [s, yearsToRet, target]);
-
-  function patch<K extends keyof PlannerSettings>(k: K, v: PlannerSettings[K]) {
-    setLocal({ ...s, [k]: v });
+  function patch<K extends keyof RetInputs>(k: K, v: RetInputs[K]) {
+    setCleared(false);
+    setInputs({ ...effective, [k]: v });
+  }
+  function clearAll() {
+    setInputs(BLANK_RET);
+    setCleared(true);
   }
   function persist() {
-    if (!local) return;
-    const { user_id: _u, created_at: _c, updated_at: _up, ...rest } = local;
-    void _u; void _c; void _up;
-    save.mutate(rest, { onSuccess: () => setLocal(null) });
+    save.mutate(
+      { ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct || 4 },
+      { onSuccess: () => { setInputs(null); setCleared(false); } }
+    );
   }
 
-  const recommendedSip = useMemo(() => {
-    // approximate SIP needed to reach target in yearsToRet
-    const r = s.pre_return_pct / 100 / 12;
-    const n = yearsToRet * 12;
-    if (n <= 0) return 0;
-    const remaining = target - s.current_corpus * Math.pow(1 + r, n);
-    if (remaining <= 0) return 0;
-    if (r === 0) return remaining / n;
-    return remaining / (((Math.pow(1 + r, n) - 1) / r) * (1 + r));
-  }, [s, yearsToRet, target]);
-
-  const dirty = local !== null;
-  void data;
+  const hasAnyInput = Object.values(effective).some((v) => v > 0);
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Kpi icon={Calendar} label="Retirement Age" value={String(s.retirement_age)} delta={`${yearsToRet} yrs to go`} tone="mint" />
-        <Kpi icon={Target} label="Target Corpus" value={inr(target)} delta={`Monthly need ${inr(s.monthly_expense)}`} tone="warn" />
-        <Kpi icon={PiggyBank} label="Projected Corpus" value={inr(projected)} delta={`${readiness.toFixed(1)}% of target`} tone={readiness >= 80 ? "positive" : "warn"} />
-        <Kpi
-          icon={TrendingUp}
-          label="Monthly SIP"
-          value={inr(s.monthly_sip)}
-          delta={`Recommended ${inr(recommendedSip)}`}
-          tone={s.monthly_sip >= recommendedSip ? "positive" : "negative"}
-        />
-      </div>
-
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="font-display text-base font-semibold">Readiness Score</div>
-          <div className="text-sm font-semibold text-mint">{readiness.toFixed(1)}%</div>
-        </div>
-        <div className="h-3 overflow-hidden rounded-full bg-surface-2">
-          <div className="h-full bg-gradient-to-r from-mint to-emerald-400" style={{ width: `${readiness}%` }} />
-        </div>
-        <div className="mt-2 text-xs text-muted-foreground">Projected corpus at retirement vs inflation-adjusted target.</div>
-      </div>
+      {canCompute ? (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Kpi icon={Calendar} label="Retirement Age" value={String(effective.retirement_age)} delta={`${yearsToRet} yrs to go`} tone="mint" />
+            <Kpi icon={Target} label="Target Corpus" value={inr(target)} delta={`Monthly need ${inr(effective.monthly_expense)}`} tone="warn" />
+            <Kpi icon={PiggyBank} label="Projected Corpus" value={inr(projected)} delta={`${readiness.toFixed(1)}% of target`} tone={readiness >= 80 ? "positive" : "warn"} />
+            <Kpi icon={TrendingUp} label="Monthly SIP" value={inr(effective.monthly_sip)} delta={`Recommended ${inr(recommendedSip)}`} tone={effective.monthly_sip >= recommendedSip ? "positive" : "negative"} />
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="font-display text-base font-semibold">Readiness Score</div>
+              <div className="text-sm font-semibold text-mint">{readiness.toFixed(1)}%</div>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-surface-2">
+              <div className="h-full bg-gradient-to-r from-mint to-emerald-400" style={{ width: `${readiness}%` }} />
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">Projected corpus at retirement vs inflation-adjusted target.</div>
+          </div>
+        </>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
           <div className="mb-4 font-display text-base font-semibold">Retirement Projection (₹ Lakhs)</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1B3249" />
-              <XAxis dataKey="age" stroke="#6E8294" fontSize={11} tickFormatter={(v) => `Age ${v}`} {...smartXAxisProps} />
-              <YAxis stroke="#6E8294" fontSize={11} tickFormatter={(v) => `${v}L`} />
-              <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }} formatter={(v: number) => `₹${v}L`} />
-              <Legend />
-              <Line type="monotone" dataKey="corpus" stroke="#14D8CF" strokeWidth={2.5} name="Projected" dot={false} />
-              <Line type="monotone" dataKey="target" stroke="#f59e0b" strokeWidth={2.5} strokeDasharray="5 5" name="Target" dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+          {canCompute ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1B3249" />
+                <XAxis dataKey="age" stroke="#6E8294" fontSize={11} tickFormatter={(v) => `Age ${v}`} {...smartXAxisProps} />
+                <YAxis stroke="#6E8294" fontSize={11} tickFormatter={(v) => `${v}L`} />
+                <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }} formatter={(v: number) => `₹${v}L`} />
+                <Legend />
+                <Line type="monotone" dataKey="corpus" stroke="#14D8CF" strokeWidth={2.5} name="Projected" dot={false} />
+                <Line type="monotone" dataKey="target" stroke="#f59e0b" strokeWidth={2.5} strokeDasharray="5 5" name="Target" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="grid h-[280px] place-items-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+              Enter your current age, retirement age, life expectancy and monthly expense to see your projection.
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="mb-4 font-display text-base font-semibold">Assumptions</div>
           <div className="space-y-3">
-            <FieldNum label="Current Age" value={s.current_age} onChange={(v) => patch("current_age", v)} />
-            <FieldNum label="Retirement Age" value={s.retirement_age} onChange={(v) => patch("retirement_age", v)} />
-            <FieldNum label="Life Expectancy" value={s.life_expectancy} onChange={(v) => patch("life_expectancy", v)} />
-            <FieldNum label="Monthly Expense (today, ₹)" value={s.monthly_expense} step={1000} onChange={(v) => patch("monthly_expense", v)} />
-            <FieldNum label="Inflation (%)" value={s.inflation_pct} step={0.1} onChange={(v) => patch("inflation_pct", v)} />
-            <FieldNum label="Pre-Ret Return (%)" value={s.pre_return_pct} step={0.1} onChange={(v) => patch("pre_return_pct", v)} />
-            <FieldNum label="Post-Ret Return (%)" value={s.post_return_pct} step={0.1} onChange={(v) => patch("post_return_pct", v)} />
-            <FieldNum label="Current Corpus (₹)" value={s.current_corpus} step={10000} onChange={(v) => patch("current_corpus", v)} />
-            <FieldNum label="Monthly SIP (₹)" value={s.monthly_sip} step={1000} onChange={(v) => patch("monthly_sip", v)} />
+            <FieldNum label="Current Age" value={effective.current_age} onChange={(v) => patch("current_age", v)} />
+            <FieldNum label="Retirement Age" value={effective.retirement_age} onChange={(v) => patch("retirement_age", v)} />
+            <FieldNum label="Life Expectancy" value={effective.life_expectancy} onChange={(v) => patch("life_expectancy", v)} />
+            <FieldNum label="Monthly Expense (today, ₹)" value={effective.monthly_expense} step={1000} onChange={(v) => patch("monthly_expense", v)} />
+            <FieldNum label="Inflation (%)" value={effective.inflation_pct} step={0.1} onChange={(v) => patch("inflation_pct", v)} />
+            <FieldNum label="Pre-Ret Return (%)" value={effective.pre_return_pct} step={0.1} onChange={(v) => patch("pre_return_pct", v)} />
+            <FieldNum label="Post-Ret Return (%)" value={effective.post_return_pct} step={0.1} onChange={(v) => patch("post_return_pct", v)} />
+            <FieldNum label="Current Corpus (₹)" value={effective.current_corpus} step={10000} onChange={(v) => patch("current_corpus", v)} />
+            <FieldNum label="Monthly SIP (₹)" value={effective.monthly_sip} step={1000} onChange={(v) => patch("monthly_sip", v)} />
           </div>
-          <Button
-            className="mt-4 w-full bg-mint text-mint-foreground hover:bg-mint/90"
-            disabled={!dirty || save.isPending}
-            onClick={persist}
-          >
-            {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-            {dirty ? "Save Plan" : "Saved"}
-          </Button>
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={!hasAnyInput || save.isPending}
+              onClick={clearAll}
+            >
+              Clear
+            </Button>
+            <Button
+              className="flex-1 bg-mint text-mint-foreground hover:bg-mint/90"
+              disabled={!canCompute || save.isPending}
+              onClick={persist}
+            >
+              {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+              Save Plan
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -871,8 +950,9 @@ function FieldNum({
       <Input
         type="number"
         step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        value={value === 0 ? "" : value}
+        placeholder="0"
+        onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
         className="h-7 w-28 text-right text-xs"
       />
     </div>
@@ -880,119 +960,151 @@ function FieldNum({
 }
 
 /* ---------- FIRE ---------- */
+type FireInputs = {
+  current_age: number;
+  monthly_expense: number;
+  current_corpus: number;
+  monthly_sip: number;
+  pre_return_pct: number;
+  withdrawal_rate_pct: number;
+};
+const BLANK_FIRE: FireInputs = {
+  current_age: 0,
+  monthly_expense: 0,
+  current_corpus: 0,
+  monthly_sip: 0,
+  pre_return_pct: 0,
+  withdrawal_rate_pct: 0,
+};
+
 function FireView() {
-  const { settings, isLoading, error, refetch } = useSettingsOrDefaults();
+  const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
   const save = useSavePlannerSettings();
-  const [sipLocal, setSipLocal] = useState<number | null>(null);
-  const [wrLocal, setWrLocal] = useState<number | null>(null);
+  const [inputs, setInputs] = useState<FireInputs | null>(null);
+  const [cleared, setCleared] = useState(false);
+
+  const effective: FireInputs = inputs ?? (hasSaved && !cleared
+    ? {
+        current_age: settings.current_age,
+        monthly_expense: settings.monthly_expense,
+        current_corpus: settings.current_corpus,
+        monthly_sip: settings.monthly_sip,
+        pre_return_pct: settings.pre_return_pct,
+        withdrawal_rate_pct: settings.withdrawal_rate_pct,
+      }
+    : BLANK_FIRE);
+
+  const canCompute =
+    effective.current_age > 0 &&
+    effective.monthly_expense > 0 &&
+    effective.withdrawal_rate_pct > 0 &&
+    effective.pre_return_pct > 0;
+
+  const fireTarget = canCompute ? (effective.monthly_expense * 12) / (effective.withdrawal_rate_pct / 100) : 0;
+  const yrs = canCompute ? yearsToReach(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, fireTarget) : Infinity;
+  const pct = fireTarget > 0 ? Math.min(100, (effective.current_corpus / fireTarget) * 100) : 0;
 
   if (isLoading) return <LoadingBlock label="Loading plan…" />;
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
 
-  const sip = sipLocal ?? settings.monthly_sip;
-  const wr = wrLocal ?? settings.withdrawal_rate_pct;
-  const fireTarget = (settings.monthly_expense * 12) / (wr / 100);
-  const yrs = yearsToReach(settings.current_corpus, sip, settings.pre_return_pct, fireTarget);
-  const pct = fireTarget > 0 ? Math.min(100, (settings.current_corpus / fireTarget) * 100) : 0;
+  function patch<K extends keyof FireInputs>(k: K, v: FireInputs[K]) {
+    setCleared(false);
+    setInputs({ ...effective, [k]: v });
+  }
+  function clearAll() {
+    setInputs(BLANK_FIRE);
+    setCleared(true);
+  }
+  function persist() {
+    save.mutate(effective, { onSuccess: () => { setInputs(null); setCleared(false); } });
+  }
 
-  const dirty = sipLocal !== null || wrLocal !== null;
+  const hasAnyInput = Object.values(effective).some((v) => v > 0);
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-mint/30 bg-gradient-to-br from-card via-card to-mint/10 p-6">
-        <div className="flex items-center gap-2 text-mint">
-          <Flame className="h-4 w-4" />
-          <span className="text-xs font-semibold uppercase tracking-widest">FIRE Number</span>
-        </div>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{inr(fireTarget)}</div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              25× annual expense at {wr}% safe withdrawal · projected age {Number.isFinite(yrs) ? Math.round(settings.current_age + yrs) : "—"}
-            </p>
+      {canCompute && (
+        <>
+          <div className="rounded-3xl border border-mint/30 bg-gradient-to-br from-card via-card to-mint/10 p-6">
+            <div className="flex items-center gap-2 text-mint">
+              <Flame className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase tracking-widest">FIRE Number</span>
+            </div>
+            <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <div className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{inr(fireTarget)}</div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  25× annual expense at {effective.withdrawal_rate_pct}% safe withdrawal · projected age {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-muted-foreground">Progress</div>
+                <div className="font-display text-2xl font-bold text-mint">{pct.toFixed(1)}%</div>
+              </div>
+            </div>
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-surface-2">
+              <div className="h-full bg-gradient-to-r from-mint to-emerald-400" style={{ width: `${pct}%` }} />
+            </div>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">Progress</div>
-            <div className="font-display text-2xl font-bold text-mint">{pct.toFixed(1)}%</div>
-          </div>
-        </div>
-        <div className="mt-4 h-3 overflow-hidden rounded-full bg-surface-2">
-          <div className="h-full bg-gradient-to-r from-mint to-emerald-400" style={{ width: `${pct}%` }} />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Kpi icon={PiggyBank} label="Current Corpus" value={inr(settings.current_corpus)} tone="mint" />
-        <Kpi icon={Calendar} label="Years to FIRE" value={Number.isFinite(yrs) ? yrs.toFixed(1) : "—"} tone="warn" />
-        <Kpi icon={TrendingUp} label="Monthly SIP" value={inr(sip)} tone="positive" />
-        <Kpi icon={Target} label="Annual Expense" value={inrFull(settings.monthly_expense * 12)} tone="mint" />
-      </div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Kpi icon={PiggyBank} label="Current Corpus" value={inr(effective.current_corpus)} tone="mint" />
+            <Kpi icon={Calendar} label="Years to FIRE" value={Number.isFinite(yrs) ? yrs.toFixed(1) : "—"} tone="warn" />
+            <Kpi icon={TrendingUp} label="Monthly SIP" value={inr(effective.monthly_sip)} tone="positive" />
+            <Kpi icon={Target} label="Annual Expense" value={inrFull(effective.monthly_expense * 12)} tone="mint" />
+          </div>
+        </>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
           <div className="mb-4 font-display text-base font-semibold">FIRE Trajectory</div>
-          <ProjectionChart
-            settings={{ ...settings, monthly_sip: sip }}
-            yearsSpan={Math.max(8, Number.isFinite(yrs) ? Math.ceil(yrs) + 2 : 25)}
-          />
+          {canCompute ? (
+            <ProjectionChart
+              settings={{ ...settings, ...effective } as PlannerSettings}
+              yearsSpan={Math.max(8, Number.isFinite(yrs) ? Math.ceil(yrs) + 2 : 25)}
+            />
+          ) : (
+            <div className="grid h-[260px] place-items-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+              Enter your age, expenses, expected return and withdrawal rate to see your FIRE trajectory.
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="mb-4 font-display text-base font-semibold">FIRE Calculator</div>
-          <div className="space-y-4">
-            <div>
-              <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Monthly SIP</span>
-                <span className="font-medium text-mint">{inr(sip)}</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={500000}
-                step={5000}
-                value={sip}
-                onChange={(e) => setSipLocal(Number(e.target.value))}
-                className="w-full accent-mint"
-              />
-            </div>
-            <div>
-              <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Withdrawal Rate</span>
-                <span className="font-medium text-mint">{wr}%</span>
-              </div>
-              <input
-                type="range"
-                min={2}
-                max={6}
-                step={0.1}
-                value={wr}
-                onChange={(e) => setWrLocal(Number(e.target.value))}
-                className="w-full accent-mint"
-              />
-            </div>
-            <div className="rounded-xl border border-border/60 bg-surface-2/40 p-3">
+          <div className="space-y-3">
+            <FieldNum label="Current Age" value={effective.current_age} onChange={(v) => patch("current_age", v)} />
+            <FieldNum label="Monthly Expense (₹)" value={effective.monthly_expense} step={1000} onChange={(v) => patch("monthly_expense", v)} />
+            <FieldNum label="Current Corpus (₹)" value={effective.current_corpus} step={10000} onChange={(v) => patch("current_corpus", v)} />
+            <FieldNum label="Monthly SIP (₹)" value={effective.monthly_sip} step={1000} onChange={(v) => patch("monthly_sip", v)} />
+            <FieldNum label="Expected Return (%)" value={effective.pre_return_pct} step={0.1} onChange={(v) => patch("pre_return_pct", v)} />
+            <FieldNum label="Withdrawal Rate (%)" value={effective.withdrawal_rate_pct} step={0.1} onChange={(v) => patch("withdrawal_rate_pct", v)} />
+          </div>
+          {canCompute && (
+            <div className="mt-3 rounded-xl border border-border/60 bg-surface-2/40 p-3">
               <div className="text-xs text-muted-foreground">Estimated FIRE Age</div>
               <div className="mt-1 font-display text-2xl font-bold text-mint">
-                {Number.isFinite(yrs) ? Math.round(settings.current_age + yrs) : "—"}
+                {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
               </div>
             </div>
+          )}
+          <div className="mt-4 flex gap-2">
             <Button
-              className="w-full bg-mint text-mint-foreground hover:bg-mint/90"
-              disabled={!dirty || save.isPending}
-              onClick={() =>
-                save.mutate(
-                  { monthly_sip: sip, withdrawal_rate_pct: wr },
-                  {
-                    onSuccess: () => {
-                      setSipLocal(null);
-                      setWrLocal(null);
-                    },
-                  }
-                )
-              }
+              variant="outline"
+              className="flex-1"
+              disabled={!hasAnyInput || save.isPending}
+              onClick={clearAll}
+            >
+              Clear
+            </Button>
+            <Button
+              className="flex-1 bg-mint text-mint-foreground hover:bg-mint/90"
+              disabled={!canCompute || save.isPending}
+              onClick={persist}
             >
               {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              {dirty ? "Apply Plan" : "Saved"}
+              Save Plan
             </Button>
           </div>
         </div>
