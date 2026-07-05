@@ -56,9 +56,20 @@ function uniqSorted(values: number[]): number[] {
   return Array.from(new Set(values.map((v) => Math.round(v)))).sort((a, b) => a - b);
 }
 
+function parseDate(value: string | number | Date): Date {
+  if (value instanceof Date) return value;
+  if (typeof value === "string") {
+    const isoDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (isoDate) {
+      return new Date(Number(isoDate[1]), Number(isoDate[2]) - 1, Number(isoDate[3]));
+    }
+  }
+  return new Date(value);
+}
+
 export function dateToAxisTime(value: string | number | Date | null | undefined): number | null {
   if (value == null) return null;
-  const d = value instanceof Date ? value : new Date(value);
+  const d = parseDate(value);
   const t = d.getTime();
   return Number.isFinite(t) ? t : null;
 }
@@ -75,7 +86,7 @@ export function getTimeAxisDomain(range: ChartRangeValue, labels: (string | null
 
 /** Format an ISO date, timestamp, or Date as an axis tick for the given range. */
 export function formatAxisTick(value: string | number | Date, range: ChartRangeValue): string {
-  const d = value instanceof Date ? value : new Date(value);
+  const d = parseDate(value);
   if (isNaN(d.getTime())) return String(value);
   const spanMs = range.start ? range.end.getTime() - range.start.getTime() : Infinity;
   const days = spanMs / 86400000;
