@@ -1022,6 +1022,7 @@ type FireInputs = {
   monthly_sip: number;
   pre_return_pct: number;
   withdrawal_rate_pct: number;
+  inflation_pct: number;
 };
 const BLANK_FIRE: FireInputs = {
   current_age: 0,
@@ -1030,6 +1031,7 @@ const BLANK_FIRE: FireInputs = {
   monthly_sip: 0,
   pre_return_pct: 0,
   withdrawal_rate_pct: 0,
+  inflation_pct: 0,
 };
 
 function FireView() {
