@@ -100,6 +100,7 @@ import {
   type GoalType,
   type PlannerSettings,
 } from "@/lib/planner-api";
+import { useInvestments } from "@/lib/wealth-api";
 
 export const Route = createFileRoute("/_app/planner")({
   head: () => ({
