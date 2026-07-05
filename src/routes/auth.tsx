@@ -255,7 +255,7 @@ function AuthPage() {
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
-                    className="h-4 w-4 rounded border-border bg-background/60 text-mint accent-mint focus:ring-mint/30"
+                    className="h-4 w-4 rounded border-border bg-surface/60 text-mint accent-mint focus:ring-mint/30"
                   />
                   Remember this device
                 </label>
