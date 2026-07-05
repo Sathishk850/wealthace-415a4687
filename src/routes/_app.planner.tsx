@@ -124,7 +124,7 @@ function Planner() {
   const [tab, setTab] = useState<"overview" | "goals" | "retirement" | "fire">("overview");
 
   return (
-    <>
+    <TooltipProvider>
       <PageHeader
         title="Planner"
         description="Goals, retirement and your FIRE roadmap."
@@ -165,7 +165,7 @@ function Planner() {
         onOpenChange={(open) => setGoalDialog({ open, goal: open ? goalDialog.goal : undefined })}
         goal={goalDialog.goal}
       />
-    </>
+    </TooltipProvider>
   );
 }
 
