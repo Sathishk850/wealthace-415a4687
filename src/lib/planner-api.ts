@@ -296,6 +296,7 @@ export function useFirePlan() {
         "monthly_sip",
         "pre_return_pct",
         "withdrawal_rate_pct",
+        "inflation_pct",
       ]) as FirePlan;
     },
   });
