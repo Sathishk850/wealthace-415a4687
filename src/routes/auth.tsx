@@ -4,6 +4,8 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { useServerFn } from "@tanstack/react-start";
+import { verifyPin, getPinStatus } from "@/lib/pin.functions";
 
 const SUPABASE_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
 
