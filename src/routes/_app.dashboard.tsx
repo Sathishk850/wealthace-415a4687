@@ -730,11 +730,15 @@ function RangeChart({
   const id = `g-${Math.random().toString(36).slice(2, 8)}`;
   const labels = useMemo(() => data.map((s) => s.label ?? null), [data]);
   const series = useMemo(
-    () =>
-      filterSeriesByRange(data, range)
-        .map((s) => ({ ...s, t: dateToAxisTime(s.label) }))
-        .filter((s): s is { i: number; v: number; label?: string; t: number } => s.t != null)
-        .sort((a, b) => a.t - b.t),
+    () => {
+      const byDay = new Map<number, { i: number; v: number; label?: string; t: number }>();
+      for (const point of filterSeriesByRange(data, range)) {
+        const t = dateToAxisTime(point.label);
+        if (t == null) continue;
+        byDay.set(t, { ...point, t });
+      }
+      return Array.from(byDay.values()).sort((a, b) => a.t - b.t);
+    },
     [data, range],
   );
   const ticks = useMemo(
