@@ -148,9 +148,16 @@ function SubCategoryCombobox({
             onValueChange={setSearch}
           />
           <CommandList className="max-h-72 overflow-y-auto">
-            <CommandEmpty>
-              {canAddCustom ? "Press add to create a custom sub-category." : "No results."}
-            </CommandEmpty>
+            {search && filteredGroups.length === 0 && !canAddCustom && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No results.
+              </div>
+            )}
+            {canAddCustom && search && filteredGroups.length === 0 && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Press add to create a custom sub-category.
+              </div>
+            )}
             <div className="py-1">
               {filteredGroups.map((g) => {
                 const expanded = openGroups.has(g.group);
