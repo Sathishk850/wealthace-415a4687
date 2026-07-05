@@ -816,11 +816,11 @@ type RetInputs = {
 const BLANK_RET: RetInputs = {
   current_age: 0,
   retirement_age: 0,
-  life_expectancy: 0,
+  life_expectancy: 85,
   monthly_expense: 0,
-  inflation_pct: 0,
-  pre_return_pct: 0,
-  post_return_pct: 0,
+  inflation_pct: 6,
+  pre_return_pct: 12,
+  post_return_pct: 7,
   current_corpus: 0,
   monthly_sip: 0,
 };
