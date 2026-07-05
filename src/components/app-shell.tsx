@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
+import { usePrivacy } from "@/lib/privacy";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +73,7 @@ function TopBar() {
     const saved = window.localStorage.getItem("fv-theme");
     return saved === "light" ? "light" : "dark";
   });
-  const [privacy, setPrivacy] = useState(true);
+  const { enabled: privacy, toggle: togglePrivacy } = usePrivacy();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (u: string) => pathname === u || pathname.startsWith(u + "/");
@@ -122,7 +123,7 @@ function TopBar() {
       <div className="ml-auto flex items-center gap-2 lg:ml-0">
         <button
           type="button"
-          onClick={() => setPrivacy((v) => !v)}
+          onClick={togglePrivacy}
           className={privacy ? iconBtnActive : iconBtn}
           aria-label={privacy ? "Privacy on" : "Privacy off"}
           title={privacy ? "Privacy on" : "Privacy off"}
