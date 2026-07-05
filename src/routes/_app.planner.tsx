@@ -1256,6 +1256,11 @@ function RetirementView() {
 }
 
 function FieldNum({
+  ...args
+}: any) {
+  return _FieldNum(args);
+}
+function _FieldNum({
   label,
   value,
   onChange,
