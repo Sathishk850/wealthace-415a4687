@@ -67,6 +67,29 @@ function useProfileAvatar() {
   return { url: signed, letter };
 }
 
+const ProfileMenuTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>((props, ref) => {
+  const { url, letter } = useProfileAvatar();
+  return (
+    <button
+      ref={ref}
+      type="button"
+      aria-label="Profile menu"
+      {...props}
+      className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-[#21DBD2]/40 bg-[rgba(33,219,210,0.10)] text-[#21DBD2] transition hover:bg-[rgba(33,219,210,0.18)]"
+    >
+      {url ? (
+        <img src={url} alt="Account" className="h-full w-full object-cover" />
+      ) : (
+        <span className="text-sm font-semibold">{letter}</span>
+      )}
+    </button>
+  );
+});
+ProfileMenuTrigger.displayName = "ProfileMenuTrigger";
+
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
 
