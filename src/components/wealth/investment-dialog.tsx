@@ -21,13 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
-  CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { Switch } from "@/components/ui/switch";
@@ -94,10 +92,36 @@ function SubCategoryCombobox({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const trimmed = search.trim();
   const canAddCustom =
     trimmed.length > 0 &&
     !ALL_SUB_CATEGORIES.some((s) => s.toLowerCase() === trimmed.toLowerCase());
+
+  const filteredGroups = SUB_CATEGORY_GROUPS.map((g) => ({
+    ...g,
+    items: search
+      ? g.items.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+      : g.items,
+  })).filter((g) => g.items.length > 0);
+
+  // Auto-expand groups that match the search; collapse all when search is cleared.
+  useEffect(() => {
+    if (search) {
+      setOpenGroups(new Set(filteredGroups.map((g) => g.group)));
+    } else {
+      setOpenGroups(new Set());
+    }
+  }, [search]);
+
+  const toggleGroup = (group: string) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -121,48 +145,77 @@ function SubCategoryCombobox({
             value={search}
             onValueChange={setSearch}
           />
-          <CommandList className="max-h-72">
-            <CommandEmpty>
-              {canAddCustom ? "Press add to create a custom sub-category." : "No results."}
-            </CommandEmpty>
-            {SUB_CATEGORY_GROUPS.map((g) => (
-              <CommandGroup key={g.group} heading={g.group}>
-                {g.items.map((item) => (
+          <CommandList className="max-h-72 overflow-y-auto">
+            {search && filteredGroups.length === 0 && !canAddCustom && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No results.
+              </div>
+            )}
+            {canAddCustom && search && filteredGroups.length === 0 && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Press add to create a custom sub-category.
+              </div>
+            )}
+            <div className="py-1">
+              {filteredGroups.map((g) => {
+                const expanded = openGroups.has(g.group);
+                return (
+                  <div key={g.group} className="border-b border-border last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(g.group)}
+                      className="flex w-full items-center justify-between px-2 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                    >
+                      <span>{g.group}</span>
+                      {expanded ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {expanded && (
+                      <div className="pb-1">
+                        {g.items.map((item) => (
+                          <CommandItem
+                            key={item}
+                            value={`${g.group} ${item}`}
+                            onSelect={() => {
+                              onChange(item);
+                              setSearch("");
+                              setOpen(false);
+                            }}
+                            className="px-5"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                value === item ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            {item}
+                          </CommandItem>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {canAddCustom && (
+                <div className="px-1 py-1">
                   <CommandItem
-                    key={item}
-                    value={`${g.group} ${item}`}
+                    value={`__add__ ${trimmed}`}
                     onSelect={() => {
-                      onChange(item);
+                      onChange(trimmed);
                       setSearch("");
                       setOpen(false);
                     }}
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === item ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {item}
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add &ldquo;{trimmed}&rdquo;
                   </CommandItem>
-                ))}
-              </CommandGroup>
-            ))}
-            {canAddCustom && (
-              <CommandGroup heading="Custom">
-                <CommandItem
-                  value={`__add__ ${trimmed}`}
-                  onSelect={() => {
-                    onChange(trimmed);
-                    setSearch("");
-                    setOpen(false);
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add &ldquo;{trimmed}&rdquo;
-                </CommandItem>
-              </CommandGroup>
-            )}
+                </div>
+              )}
+            </div>
           </CommandList>
         </Command>
       </PopoverContent>
