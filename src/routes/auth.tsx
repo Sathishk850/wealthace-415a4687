@@ -31,6 +31,7 @@ function installSessionOnlyGuard() {
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     mode: (s.mode === "signup" ? "signup" : "signin") as "signin" | "signup",
+    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
   }),
   head: () => ({
     meta: [
@@ -45,7 +46,17 @@ function AuthPage() {
   useEffect(() => {
     installSessionOnlyGuard();
   }, []);
-  const { mode: initialMode } = useSearch({ from: "/auth" });
+  const { mode: initialMode, redirect: redirectParam } = useSearch({ from: "/auth" });
+  // Only accept same-origin absolute paths — never external URLs.
+  const safeRedirect =
+    redirectParam && /^\/[^/]/.test(redirectParam) ? redirectParam : undefined;
+  const goHome = () => {
+    if (safeRedirect) {
+      navigate({ to: safeRedirect });
+    } else {
+      navigate({ to: "/dashboard" });
+    }
+  };
   const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "pin">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
