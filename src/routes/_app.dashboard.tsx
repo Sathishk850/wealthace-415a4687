@@ -11,6 +11,8 @@ import {
   TrendingUp,
   PiggyBank,
   ArrowLeftRight,
+  Percent,
+  Scale,
   ArrowRight,
   Target,
   Sparkles,
