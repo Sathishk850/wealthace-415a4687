@@ -1383,10 +1383,13 @@ const SWR_OPTIONS = ["3", "3.5", "4", "5"] as const;
 function FireView() {
   const { data: savedPlan, isLoading, error, refetch } = useFirePlan();
   const save = useSaveFirePlan();
+  const investmentsQ = useInvestments();
   const [inputs, setInputs] = useState<FireInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(FIRE_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [desiredFireAge, setDesiredFireAge] = useState<number>(0);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const savedPlanToLoad = !cleared ? savedPlan : null;
 
   const effective: FireInputs = inputs ?? (savedPlanToLoad
@@ -1416,6 +1419,61 @@ function FireView() {
   const fireTarget = canCompute ? fireNumber(s) : 0;
   const yrs = canCompute ? yearsToReach(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, fireTarget) : Infinity;
   const pct = fireTarget > 0 ? Math.min(100, (effective.current_corpus / fireTarget) * 100) : 0;
+
+  const estimatedFireAge = Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : 0;
+  const yearsRemaining = Number.isFinite(yrs) ? Math.floor(yrs) : 0;
+  const monthsRemaining = Number.isFinite(yrs) ? Math.round((yrs - yearsRemaining) * 12) : 0;
+  const remainingCorpus = Math.max(0, fireTarget - effective.current_corpus);
+
+  // Required monthly SIP to reach FIRE by desired age (or estimated age if no desired age).
+  const targetYears = desiredFireAge > effective.current_age
+    ? desiredFireAge - effective.current_age
+    : (Number.isFinite(yrs) ? yrs : 0);
+  const recommendedSip = useMemo(() => {
+    if (!canCompute || targetYears <= 0) return 0;
+    const r = effective.pre_return_pct / 100 / 12;
+    const n = targetYears * 12;
+    const fvExisting = effective.current_corpus * Math.pow(1 + r, n);
+    const remaining = fireTarget - fvExisting;
+    if (remaining <= 0) return 0;
+    if (r === 0) return remaining / n;
+    return remaining / (((Math.pow(1 + r, n) - 1) / r) * (1 + r));
+  }, [canCompute, targetYears, effective.pre_return_pct, effective.current_corpus, fireTarget]);
+
+  // Projected corpus by desired FIRE age (for status vs desired age).
+  const projectedByTarget = canCompute && targetYears > 0
+    ? projectCorpus(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, targetYears)
+    : 0;
+  const readinessRatio = fireTarget > 0 ? projectedByTarget / fireTarget : 0;
+  const status: { label: string; tone: "positive" | "warn" | "negative" } =
+    readinessRatio >= 1.1 ? { label: "Ahead of Target", tone: "positive" }
+    : readinessRatio >= 0.9 ? { label: "On Track", tone: "positive" }
+    : readinessRatio >= 0.6 ? { label: "Behind Target", tone: "warn" }
+    : { label: "Behind Target", tone: "negative" };
+
+  // Time progress: elapsed since plan start relative to total planning horizon.
+  const planStart = savedPlanToLoad?.created_at ? new Date(savedPlanToLoad.created_at) : null;
+  const elapsedYears = planStart ? Math.max(0, (Date.now() - planStart.getTime()) / (365.25 * 86400000)) : 0;
+  const totalHorizon = elapsedYears + (Number.isFinite(yrs) ? yrs : targetYears);
+  const timeProgress = totalHorizon > 0 ? Math.min(100, (elapsedYears / totalHorizon) * 100) : 0;
+
+  // Linked investable assets: equity, mutual funds, ETFs, EPF, NPS, index/global funds etc.
+  const linkedAssets = useMemo(() => {
+    const items = investmentsQ.data ?? [];
+    const re = /equity|mutual|mf|etf|index|epf|nps|ppf|large cap|mid cap|small cap|flexi|multi cap|elss|contra|value|dividend|focused|hybrid|balanced|global|international|us equity|emerging|developed|sgb|sovereign gold/i;
+    return items
+      .filter((i) => {
+        const hay = `${i.name ?? ""} ${i.sub_category ?? ""} ${i.category ?? ""}`;
+        return re.test(hay);
+      })
+      .map((i) => ({
+        id: i.id,
+        name: i.name,
+        sub_category: i.sub_category ?? i.category,
+        value: i.current_value ?? 0,
+      }));
+  }, [investmentsQ.data]);
+  const linkedTotal = useMemo(() => linkedAssets.reduce((s, a) => s + a.value, 0), [linkedAssets]);
 
   if (isLoading) return <LoadingBlock label="Loading plan…" />;
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
@@ -1456,33 +1514,132 @@ function FireView() {
     <div className="space-y-6">
       {canCompute && (
         <>
-          <div className="rounded-3xl border border-mint/30 bg-gradient-to-br from-card via-card to-mint/10 p-6">
-            <div className="flex items-center gap-2 text-mint">
-              <Flame className="h-4 w-4" />
-              <span className="text-xs font-semibold uppercase tracking-widest">FIRE Number</span>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Kpi
+              icon={Flame}
+              label="FIRE Number"
+              value={inr(fireTarget)}
+              delta={`Inflation-adj @ ${effective.withdrawal_rate_pct}% SWR`}
+              tone="warn"
+              tooltip="Required FIRE corpus = inflation-adjusted annual expenses ÷ Safe Withdrawal Rate."
+            />
+            <Kpi
+              icon={PiggyBank}
+              label="Current Investable Corpus"
+              value={inr(effective.current_corpus)}
+              delta={`${pct.toFixed(1)}% of FIRE number`}
+              tone="mint"
+              tooltip="Money you have today across investable assets used to reach FIRE."
+            />
+            <Kpi
+              icon={Calendar}
+              label="Years to FIRE"
+              value={Number.isFinite(yrs) ? yrs.toFixed(1) : "—"}
+              delta={Number.isFinite(yrs) ? `Est. age ${estimatedFireAge}` : "Add a SIP to project"}
+              tone="mint"
+            />
+            <Kpi
+              icon={TrendingUp}
+              label="Required Monthly SIP"
+              value={inr(recommendedSip)}
+              delta={`Currently investing ${inr(effective.monthly_sip)}`}
+              tone={effective.monthly_sip >= recommendedSip ? "positive" : "negative"}
+              tooltip="Monthly SIP needed from today to hit your FIRE number by the desired (or estimated) FIRE age, accounting for existing corpus growth."
+            />
+          </div>
+
+          {/* Progress Summary */}
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="font-display text-base font-semibold">Progress Summary</div>
+              <span
+                className={cn(
+                  "rounded-full px-3 py-1 text-[11px] font-semibold",
+                  status.tone === "positive" && "bg-success/15 text-success",
+                  status.tone === "warn" && "bg-amber-500/15 text-amber-400",
+                  status.tone === "negative" && "bg-destructive/15 text-destructive",
+                )}
+              >
+                {status.label}
+              </span>
             </div>
-            <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <div className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{inr(fireTarget)}</div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Inflation-adjusted target at {effective.withdrawal_rate_pct}% SWR · projected age {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-muted-foreground">Progress</div>
-                <div className="font-display text-2xl font-bold text-mint">{pct.toFixed(1)}%</div>
-              </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              <SummaryItem label="Current Investable Corpus" value={inr(effective.current_corpus)} />
+              <SummaryItem label="Required FIRE Corpus" value={inr(fireTarget)} />
+              <SummaryItem label="Remaining Corpus" value={inr(remainingCorpus)} />
+              <SummaryItem label="Estimated FIRE Age" value={Number.isFinite(yrs) ? String(estimatedFireAge) : "—"} />
+              <SummaryItem label="Years / Months Remaining" value={Number.isFinite(yrs) ? `${yearsRemaining}y ${monthsRemaining}m` : "—"} />
+              <SummaryItem label="Annual Expense" value={inrFull(effective.monthly_expense * 12)} />
             </div>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-surface-2">
-              <div className="h-full bg-gradient-to-r from-mint to-emerald-400" style={{ width: `${pct}%` }} />
+            <div className="mt-5 space-y-4">
+              <ProgressBar
+                label="FIRE Progress"
+                pct={pct}
+                tooltip="FIRE Progress = Current Investable Corpus ÷ Required FIRE Corpus."
+              />
+              <ProgressBar
+                label="Time Progress"
+                pct={timeProgress}
+                tone="mint"
+                tooltip="Time Progress = Time elapsed since you started this plan ÷ Total FIRE planning duration."
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <Kpi icon={PiggyBank} label="Current Corpus" value={inr(effective.current_corpus)} tone="mint" />
-            <Kpi icon={Calendar} label="Years to FIRE" value={Number.isFinite(yrs) ? yrs.toFixed(1) : "—"} tone="warn" />
-            <Kpi icon={TrendingUp} label="Monthly SIP" value={inr(effective.monthly_sip)} tone="positive" />
-            <Kpi icon={Target} label="Annual Expense" value={inrFull(effective.monthly_expense * 12)} tone="mint" />
+          {/* Linked Assets */}
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-mint" />
+                <div className="font-display text-base font-semibold">Linked Investable Assets</div>
+              </div>
+              <div className="text-sm font-semibold text-mint">{inr(linkedTotal)}</div>
+            </div>
+            {linkedAssets.length === 0 ? (
+              <div className="text-xs text-muted-foreground">
+                No linked investable assets found. Add Equity, Mutual Funds, ETFs, EPF or NPS investments under Wealth to link them here.
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {linkedAssets.map((a) => (
+                  <div key={a.id} className="flex items-center justify-between py-2 text-sm">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{a.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{a.sub_category}</div>
+                    </div>
+                    <div className="font-semibold">{inr(a.value)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Calculation Breakdown */}
+          <div className="rounded-2xl border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setBreakdownOpen((v) => !v)}
+              className="flex w-full items-center justify-between p-5 text-left"
+            >
+              <div className="font-display text-base font-semibold">Calculation Breakdown</div>
+              {breakdownOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            {breakdownOpen && (
+              <div className="grid grid-cols-1 gap-2 border-t border-border px-5 py-4 text-xs sm:grid-cols-2">
+                <BreakRow k="Current Age" v={`${effective.current_age} yrs`} />
+                <BreakRow k="Desired FIRE Age" v={desiredFireAge > 0 ? `${desiredFireAge} yrs` : "—"} />
+                <BreakRow k="Current Monthly Expenses" v={inr(effective.monthly_expense)} />
+                <BreakRow k="Annual Expenses" v={inrFull(effective.monthly_expense * 12)} />
+                <BreakRow k="Inflation Rate" v={`${effective.inflation_pct}% p.a.`} />
+                <BreakRow k="Expected Annual Return" v={`${effective.pre_return_pct}% p.a.`} />
+                <BreakRow k="Safe Withdrawal Rate (SWR)" v={`${effective.withdrawal_rate_pct}%`} />
+                <BreakRow k="Current Investable Corpus" v={inr(effective.current_corpus)} />
+                <BreakRow k="Required FIRE Corpus" v={inr(fireTarget)} />
+                <BreakRow k="Remaining Corpus" v={inr(remainingCorpus)} />
+                <BreakRow k="Required Monthly SIP" v={inr(recommendedSip)} />
+                <BreakRow k="Estimated FIRE Age" v={Number.isFinite(yrs) ? String(estimatedFireAge) : "—"} />
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1515,6 +1672,13 @@ function FireView() {
               required
               error={attempted && !required.current_age}
               tooltip="Your age today. Used to estimate the age at which you can achieve FIRE."
+            />
+            <FieldNum
+              label="Desired FIRE Age"
+              value={desiredFireAge}
+              onChange={(v) => { setCalculated(false); setDesiredFireAge(v); }}
+              optional
+              tooltip="Target age to achieve FIRE. Used to compute the Required Monthly SIP and On-Track status."
             />
             <FieldNum
               label="Monthly Expense (₹)"
@@ -1552,15 +1716,35 @@ function FireView() {
               error={attempted && !required.inflation_pct}
               tooltip="Expected annual inflation. The FIRE target is inflated by the years needed to reach it."
             />
-            <FieldNum
-              label="Withdrawal Rate (%)"
-              value={effective.withdrawal_rate_pct}
-              step={0.1}
-              onChange={(v) => patch("withdrawal_rate_pct", v)}
-              required
-              error={attempted && !required.withdrawal_rate_pct}
-              tooltip="Safe Withdrawal Rate (SWR). The percentage of the corpus you can withdraw annually. 4% is a common benchmark."
-            />
+            <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                Safe Withdrawal Rate (SWR)
+                <span className="text-destructive">*</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="ml-0.5 text-muted-foreground/70 hover:text-foreground">
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs text-xs">
+                    Percentage of your corpus you can safely withdraw annually. 4% is the classic benchmark; 3–3.5% is more conservative.
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <Select
+                value={String(effective.withdrawal_rate_pct || "")}
+                onValueChange={(v) => patch("withdrawal_rate_pct", Number(v))}
+              >
+                <SelectTrigger className={cn("h-7 w-28 text-xs", attempted && !required.withdrawal_rate_pct && "border-destructive ring-1 ring-destructive")}>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SWR_OPTIONS.map((o) => (
+                    <SelectItem key={o} value={o}>{o}%</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <FieldNum
               label="Monthly SIP (₹)"
               value={effective.monthly_sip}
@@ -1574,14 +1758,6 @@ function FireView() {
             <div className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
               <AlertCircle className="h-3.5 w-3.5" />
               Please complete all required fields.
-            </div>
-          )}
-          {canCompute && (
-            <div className="mt-3 rounded-xl border border-border/60 bg-surface-2/40 p-3">
-              <div className="text-xs text-muted-foreground">Estimated FIRE Age</div>
-              <div className="mt-1 font-display text-2xl font-bold text-mint">
-                {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
-              </div>
             </div>
           )}
           <div className="mt-4 flex gap-2">
