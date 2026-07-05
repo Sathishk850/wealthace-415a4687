@@ -1373,10 +1373,12 @@ const BLANK_FIRE: FireInputs = {
   monthly_expense: 0,
   current_corpus: 0,
   monthly_sip: 0,
-  pre_return_pct: 0,
-  withdrawal_rate_pct: 0,
-  inflation_pct: 0,
+  pre_return_pct: 12,
+  withdrawal_rate_pct: 4,
+  inflation_pct: 6,
 };
+
+const SWR_OPTIONS = ["3", "3.5", "4", "5"] as const;
 
 function FireView() {
   const { data: savedPlan, isLoading, error, refetch } = useFirePlan();
