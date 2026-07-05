@@ -15,7 +15,8 @@ import {
   Sparkles,
   LogOut,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import logo from "@/assets/finvista-logo.png";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,64 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+function useProfileAvatar() {
+  const userQ = useQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user,
+  });
+  const profileQ = useQuery({
+    queryKey: ["profile", userQ.data?.id],
+    enabled: !!userQ.data?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("user_id", userQ.data!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const [signed, setSigned] = useState<string | null>(null);
+  const path = profileQ.data?.avatar_url ?? null;
+  useEffect(() => {
+    let off = false;
+    if (!path) { setSigned(null); return; }
+    if (/^https?:\/\//i.test(path)) { setSigned(path); return; }
+    (async () => {
+      const { data } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60);
+      if (!off) setSigned(data?.signedUrl ?? null);
+    })();
+    return () => { off = true; };
+  }, [path]);
+  const name = profileQ.data?.full_name?.trim() || "";
+  const email = userQ.data?.email ?? "";
+  const letter = (name[0] || email[0] || "U").toUpperCase();
+  return { url: signed, letter };
+}
+
+const ProfileMenuTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>((props, ref) => {
+  const { url, letter } = useProfileAvatar();
+  return (
+    <button
+      ref={ref}
+      type="button"
+      aria-label="Profile menu"
+      {...props}
+      className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-[#21DBD2]/40 bg-[rgba(33,219,210,0.10)] text-[#21DBD2] transition hover:bg-[rgba(33,219,210,0.18)]"
+    >
+      {url ? (
+        <img src={url} alt="Account" className="h-full w-full object-cover" />
+      ) : (
+        <span className="text-sm font-semibold">{letter}</span>
+      )}
+    </button>
+  );
+});
+ProfileMenuTrigger.displayName = "ProfileMenuTrigger";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
@@ -140,17 +199,7 @@ function TopBar() {
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label="Profile menu"
-              className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-[#21DBD2]/40 bg-[rgba(33,219,210,0.10)] text-[#21DBD2] transition hover:bg-[rgba(33,219,210,0.18)]"
-            >
-              <img
-                src="https://i.pravatar.cc/64?img=12"
-                alt="Account"
-                className="h-full w-full object-cover"
-              />
-            </button>
+            <ProfileMenuTrigger />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
