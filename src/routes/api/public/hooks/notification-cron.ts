@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
             hasHeader: provided.length > 0,
             ip: request.headers.get("x-forwarded-for") ?? "unknown",
           });
-          return new Response(JSON.stringify({ error: "unauthorized" }), {
+          return new Response(JSON.stringify({ error: "Unauthorized", status: 401 }), {
             status: 401, headers: { "Content-Type": "application/json" },
           });
         }
