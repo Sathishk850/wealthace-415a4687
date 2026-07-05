@@ -13,7 +13,6 @@ import {
   Settings as SettingsIcon,
   MessageSquare,
   Sparkles,
-  LifeBuoy,
   LogOut,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -167,9 +166,6 @@ function TopBar() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate({ to: "/whats-new" })}>
               <Sparkles className="mr-2 h-4 w-4" /> What's New
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: "/help" })}>
-              <LifeBuoy className="mr-2 h-4 w-4" /> Help &amp; Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
