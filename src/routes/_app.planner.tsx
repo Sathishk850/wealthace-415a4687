@@ -1273,15 +1273,79 @@ function FireView() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="mb-4 font-display text-base font-semibold">FIRE Calculator</div>
+          <div className="mb-2 font-display text-base font-semibold">FIRE Calculator</div>
+          <p className="mb-4 text-[11px] text-muted-foreground">
+            <span className="text-destructive">*</span> Required fields
+          </p>
           <div className="space-y-3">
-            <FieldNum label="Current Age" value={effective.current_age} onChange={(v) => patch("current_age", v)} />
-            <FieldNum label="Monthly Expense (₹)" value={effective.monthly_expense} step={1000} onChange={(v) => patch("monthly_expense", v)} />
-            <FieldNum label="Current Corpus (₹)" value={effective.current_corpus} step={10000} onChange={(v) => patch("current_corpus", v)} />
-            <FieldNum label="Monthly SIP (₹)" value={effective.monthly_sip} step={1000} onChange={(v) => patch("monthly_sip", v)} />
-            <FieldNum label="Expected Return (%)" value={effective.pre_return_pct} step={0.1} onChange={(v) => patch("pre_return_pct", v)} />
-            <FieldNum label="Withdrawal Rate (%)" value={effective.withdrawal_rate_pct} step={0.1} onChange={(v) => patch("withdrawal_rate_pct", v)} />
+            <FieldNum
+              label="Current Age"
+              value={effective.current_age}
+              onChange={(v) => patch("current_age", v)}
+              required
+              error={attempted && !required.current_age}
+              tooltip="Your age today. Used to estimate the age at which you can achieve FIRE."
+            />
+            <FieldNum
+              label="Monthly Expense (₹)"
+              value={effective.monthly_expense}
+              step={1000}
+              onChange={(v) => patch("monthly_expense", v)}
+              required
+              error={attempted && !required.monthly_expense}
+              tooltip="Your current monthly expenses. Annual expenses are divided by the SWR to estimate the FIRE number."
+            />
+            <FieldNum
+              label="Current Corpus (₹)"
+              value={effective.current_corpus}
+              step={10000}
+              onChange={(v) => patch("current_corpus", v)}
+              required
+              error={attempted && !required.current_corpus}
+              tooltip="Investable assets you already have. Can be zero if you are just starting."
+            />
+            <FieldNum
+              label="Expected Return (%)"
+              value={effective.pre_return_pct}
+              step={0.1}
+              onChange={(v) => patch("pre_return_pct", v)}
+              required
+              error={attempted && !required.pre_return_pct}
+              tooltip="Expected annual return on your investments while building the FIRE corpus."
+            />
+            <FieldNum
+              label="Inflation (%)"
+              value={effective.inflation_pct}
+              step={0.1}
+              onChange={(v) => patch("inflation_pct", v)}
+              required
+              error={attempted && !required.inflation_pct}
+              tooltip="Expected annual inflation. The FIRE target is inflated by the years needed to reach it."
+            />
+            <FieldNum
+              label="Withdrawal Rate (%)"
+              value={effective.withdrawal_rate_pct}
+              step={0.1}
+              onChange={(v) => patch("withdrawal_rate_pct", v)}
+              required
+              error={attempted && !required.withdrawal_rate_pct}
+              tooltip="Safe Withdrawal Rate (SWR). The percentage of the corpus you can withdraw annually. 4% is a common benchmark."
+            />
+            <FieldNum
+              label="Monthly SIP (₹)"
+              value={effective.monthly_sip}
+              step={1000}
+              onChange={(v) => patch("monthly_sip", v)}
+              optional
+              tooltip="Monthly contribution to your FIRE corpus. Leave blank if you are not adding regularly."
+            />
           </div>
+          {attempted && !hasRequiredInputs && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
+              <AlertCircle className="h-3.5 w-3.5" />
+              Please complete all required fields.
+            </div>
+          )}
           {canCompute && (
             <div className="mt-3 rounded-xl border border-border/60 bg-surface-2/40 p-3">
               <div className="text-xs text-muted-foreground">Estimated FIRE Age</div>
