@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyPin, getPinStatus } from "@/lib/pin.functions";
+import { triggerSessionExpired, isAuthError } from "@/lib/session-expired";
 
 const SUPABASE_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
 
@@ -71,8 +72,16 @@ function AuthPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session || cancelled) return;
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session || cancelled) return;
+      // Validate the session is still good before revealing the PIN screen.
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (cancelled) return;
+      if (userErr || !userData.user) {
+        // Stale token in storage — clear it silently and stay on password sign-in.
+        await supabase.auth.signOut().catch(() => {});
+        return;
+      }
       try {
         const status = await getPinStatusFn();
         if (cancelled) return;
@@ -97,6 +106,25 @@ function AuthPage() {
     }
     setSubmitting(true);
     try {
+      // Ensure we still have a valid, non-expired session before hitting the
+      // protected server fn — otherwise the bearer attacher has no token to send.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        setPinValue("");
+        setPinAvailable(false);
+        setMode("signin");
+        triggerSessionExpired();
+        return;
+      }
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) {
+        setPinValue("");
+        setPinAvailable(false);
+        setMode("signin");
+        await supabase.auth.signOut().catch(() => {});
+        triggerSessionExpired();
+        return;
+      }
       const res = await verifyPinFn({ data: { pin: pinValue } });
       if (res?.ok) {
         setPinValue("");
@@ -105,7 +133,15 @@ function AuthPage() {
         setMessage({ type: "error", text: "Incorrect PIN. Try again." });
       }
     } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "PIN verification failed." });
+      if (isAuthError(err)) {
+        setPinValue("");
+        setPinAvailable(false);
+        setMode("signin");
+        await supabase.auth.signOut().catch(() => {});
+        triggerSessionExpired();
+      } else {
+        setMessage({ type: "error", text: "PIN verification failed. Please try again." });
+      }
     } finally {
       setSubmitting(false);
     }
