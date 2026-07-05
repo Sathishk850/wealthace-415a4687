@@ -134,6 +134,7 @@ function TopBar() {
   });
   const { enabled: privacy, toggle: togglePrivacy } = usePrivacy();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (u: string) => pathname === u || pathname.startsWith(u + "/");
 
@@ -146,8 +147,12 @@ function TopBar() {
 
   const handleSignOut = async () => {
     markIntentionalSignOut();
+    // Cancel in-flight queries and clear cache BEFORE signOut so we don't
+    // storm the cleared session with 401s or leak protected data on Back.
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/", replace: true });
+    navigate({ to: "/auth", search: { mode: "signin" } as never, replace: true });
   };
 
   const iconBtn =
