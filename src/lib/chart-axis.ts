@@ -31,7 +31,49 @@ export function pickTickStride(rangeKey: ChartRangeKey, points: number): number 
   }
 }
 
-/** Format an ISO date (yyyy-mm-dd) or Date as an axis tick for the given range. */
+const DAY_MS = 86400000;
+
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function addDays(d: Date, days: number): Date {
+  const next = new Date(d);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function addMonths(d: Date, months: number): Date {
+  const next = new Date(d);
+  const day = next.getDate();
+  next.setDate(1);
+  next.setMonth(next.getMonth() + months);
+  next.setDate(Math.min(day, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
+  return next;
+}
+
+function uniqSorted(values: number[]): number[] {
+  return Array.from(new Set(values.map((v) => Math.round(v)))).sort((a, b) => a - b);
+}
+
+export function dateToAxisTime(value: string | number | Date | null | undefined): number | null {
+  if (value == null) return null;
+  const d = value instanceof Date ? value : new Date(value);
+  const t = d.getTime();
+  return Number.isFinite(t) ? t : null;
+}
+
+export function getTimeAxisDomain(range: ChartRangeValue, labels: (string | null | undefined)[] = []): [number, number] {
+  const parsed = labels
+    .map((label) => dateToAxisTime(label))
+    .filter((time): time is number => time != null)
+    .sort((a, b) => a - b);
+  const start = range.start ? startOfDay(range.start).getTime() : (parsed[0] ?? startOfDay(range.end).getTime());
+  const end = startOfDay(range.end).getTime();
+  return start <= end ? [start, end] : [end, start];
+}
+
+/** Format an ISO date, timestamp, or Date as an axis tick for the given range. */
 export function formatAxisTick(value: string | number | Date, range: ChartRangeValue): string {
   const d = value instanceof Date ? value : new Date(value);
   if (isNaN(d.getTime())) return String(value);
@@ -54,6 +96,61 @@ export function formatAxisTick(value: string | number | Date, range: ChartRangeV
     return `Q${q} ${String(d.getFullYear()).slice(-2)}`;
   }
   return d.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+}
+
+/**
+ * Generate real time-axis ticks from the selected range, not from available
+ * data points. This keeps sparse series from collapsing the X-axis to one
+ * date and makes every chart show the full selected timeline.
+ */
+export function computeTimeAxisTicks(range: ChartRangeValue, labels: (string | null | undefined)[] = []): number[] {
+  const [startMs, endMs] = getTimeAxisDomain(range, labels);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs === endMs) return [startMs];
+
+  const start = startOfDay(new Date(startMs));
+  const end = startOfDay(new Date(endMs));
+  const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / DAY_MS));
+
+  if (range.key === "1D" || days <= 2) {
+    const step = Math.max(1, Math.ceil(days / 6));
+    const ticks: number[] = [];
+    for (let d = new Date(start); d <= end; d = addDays(d, step)) ticks.push(d.getTime());
+    ticks.push(end.getTime());
+    return uniqSorted(ticks);
+  }
+
+  if (range.key === "1M" || days <= 45) {
+    const ticks = [0, 7, 14, 21, 28].map((offset) => addDays(start, offset).getTime()).filter((t) => t <= end.getTime());
+    ticks.push(end.getTime());
+    return uniqSorted(ticks);
+  }
+
+  if (range.key === "3M" || days <= 120) {
+    const ticks: number[] = [];
+    for (let d = new Date(start); d <= end; d = addMonths(d, 1)) ticks.push(d.getTime());
+    ticks.push(end.getTime());
+    return uniqSorted(ticks);
+  }
+
+  if (range.key === "6M" || days <= 220) {
+    const ticks: number[] = [];
+    for (let d = new Date(start); d <= end; d = addMonths(d, 1)) ticks.push(d.getTime());
+    ticks.push(end.getTime());
+    return uniqSorted(ticks);
+  }
+
+  if (range.key === "1Y" || days <= 400) {
+    const ticks: number[] = [];
+    for (let d = new Date(start); d <= end; d = addMonths(d, 2)) ticks.push(d.getTime());
+    ticks.push(end.getTime());
+    return uniqSorted(ticks);
+  }
+
+  const stepMonths = days <= 366 * 5 ? 3 : 12;
+  const ticks: number[] = [];
+  for (let d = new Date(start); d <= end; d = addMonths(d, stepMonths)) ticks.push(d.getTime());
+  ticks.push(end.getTime());
+  return uniqSorted(ticks);
 }
 
 /** Filter a time-indexed series down to the selected range. */
