@@ -27,7 +27,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { Switch } from "@/components/ui/switch";
