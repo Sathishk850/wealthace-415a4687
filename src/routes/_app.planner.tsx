@@ -77,10 +77,13 @@ import {
   inrFull,
   projectCorpus,
   retirementCorpusNeeded,
+  useFirePlan,
   useDeleteGoal,
   useGoals,
   usePlannerSettings,
-  useSavePlannerSettings,
+  useRetirementPlan,
+  useSaveFirePlan,
+  useSaveRetirementPlan,
   useUpsertGoal,
   yearsToReach,
   type Goal,
@@ -789,25 +792,25 @@ const BLANK_RET: RetInputs = {
 };
 
 function RetirementView() {
-  const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
-  const save = useSavePlannerSettings();
+  const { data: savedPlan, isLoading, error, refetch } = useRetirementPlan();
+  const save = useSaveRetirementPlan();
   const [inputs, setInputs] = useState<RetInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(RETIREMENT_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
-  const shouldLoadSavedPlan = hasSaved && settings.retirement_plan_saved && !cleared;
+  const shouldLoadSavedPlan = !!savedPlan && !cleared;
 
   // Hydrate only an explicitly saved retirement plan.
   const effective: RetInputs = inputs ?? (shouldLoadSavedPlan
     ? {
-        current_age: settings.current_age,
-        retirement_age: settings.retirement_age,
-        life_expectancy: settings.life_expectancy,
-        monthly_expense: settings.monthly_expense,
-        inflation_pct: settings.inflation_pct,
-        pre_return_pct: settings.pre_return_pct,
-        post_return_pct: settings.post_return_pct,
-        current_corpus: settings.current_corpus,
-        monthly_sip: settings.monthly_sip,
+        current_age: savedPlan.current_age,
+        retirement_age: savedPlan.retirement_age,
+        life_expectancy: savedPlan.life_expectancy,
+        monthly_expense: savedPlan.monthly_expense,
+        inflation_pct: savedPlan.inflation_pct,
+        pre_return_pct: savedPlan.pre_return_pct,
+        post_return_pct: savedPlan.post_return_pct,
+        current_corpus: savedPlan.current_corpus,
+        monthly_sip: savedPlan.monthly_sip,
       }
     : BLANK_RET);
 
@@ -818,7 +821,7 @@ function RetirementView() {
     effective.life_expectancy > effective.retirement_age;
   const canCompute = (calculated || (shouldLoadSavedPlan && inputs === null)) && hasRequiredInputs;
 
-  const s: PlannerSettings = { ...settings, ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct };
+  const s: PlannerSettings = { user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" };
   const yearsToRet = Math.max(0, effective.retirement_age - effective.current_age);
   const target = canCompute ? retirementCorpusNeeded(s) : 0;
   const projected = canCompute ? projectCorpus(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, yearsToRet) : 0;
@@ -867,13 +870,7 @@ function RetirementView() {
   }
   function persist() {
     save.mutate(
-      {
-        ...BLANK_SETTINGS,
-        ...(hasSaved ? settings : {}),
-        ...effective,
-        retirement_plan_saved: true,
-        fire_plan_saved: hasSaved ? settings.fire_plan_saved : false,
-      },
+      effective,
       {
         onSuccess: () => {
           setInputs(null);
@@ -1022,21 +1019,21 @@ const BLANK_FIRE: FireInputs = {
 };
 
 function FireView() {
-  const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
-  const save = useSavePlannerSettings();
+  const { data: savedPlan, isLoading, error, refetch } = useFirePlan();
+  const save = useSaveFirePlan();
   const [inputs, setInputs] = useState<FireInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(FIRE_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
-  const shouldLoadSavedPlan = hasSaved && settings.fire_plan_saved && !cleared;
+  const shouldLoadSavedPlan = !!savedPlan && !cleared;
 
   const effective: FireInputs = inputs ?? (shouldLoadSavedPlan
     ? {
-        current_age: settings.current_age,
-        monthly_expense: settings.monthly_expense,
-        current_corpus: settings.current_corpus,
-        monthly_sip: settings.monthly_sip,
-        pre_return_pct: settings.pre_return_pct,
-        withdrawal_rate_pct: settings.withdrawal_rate_pct,
+        current_age: savedPlan.current_age,
+        monthly_expense: savedPlan.monthly_expense,
+        current_corpus: savedPlan.current_corpus,
+        monthly_sip: savedPlan.monthly_sip,
+        pre_return_pct: savedPlan.pre_return_pct,
+        withdrawal_rate_pct: savedPlan.withdrawal_rate_pct,
       }
     : BLANK_FIRE);
 
@@ -1069,13 +1066,7 @@ function FireView() {
   }
   function persist() {
     save.mutate(
-      {
-        ...BLANK_SETTINGS,
-        ...(hasSaved ? settings : {}),
-        ...effective,
-        retirement_plan_saved: hasSaved ? settings.retirement_plan_saved : false,
-        fire_plan_saved: true,
-      },
+      effective,
       {
         onSuccess: () => {
           setInputs(null);
@@ -1129,7 +1120,7 @@ function FireView() {
           <div className="mb-4 font-display text-base font-semibold">FIRE Trajectory</div>
           {canCompute ? (
             <ProjectionChart
-              settings={{ ...settings, ...effective } as PlannerSettings}
+              settings={{ user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" } as PlannerSettings}
               yearsSpan={Math.max(8, Number.isFinite(yrs) ? Math.ceil(yrs) + 2 : 25)}
             />
           ) : (
