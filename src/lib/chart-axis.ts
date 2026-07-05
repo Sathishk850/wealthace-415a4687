@@ -16,7 +16,7 @@ export const smartXAxisProps = {
  * Gives edge ticks enough room so labels like "Jan" are not clipped and the
  * latest month does not sit directly against a right-side Y-axis.
  */
-export const timeXAxisPadding = { left: 22, right: 34 };
+export const timeXAxisPadding = { left: 8, right: 18 };
 
 /** Guess a sensible tick cadence for a time series given the selected range. */
 export function pickTickStride(rangeKey: ChartRangeKey, points: number): number {
@@ -88,6 +88,13 @@ export function getTimeAxisDomain(range: ChartRangeValue, labels: (string | null
   const start = range.start ? startOfDay(range.start).getTime() : (parsed[0] ?? startOfDay(range.end).getTime());
   const end = startOfDay(range.end).getTime();
   return start <= end ? [start, end] : [end, start];
+}
+
+export function getPaddedTimeAxisDomain(range: ChartRangeValue, labels: (string | null | undefined)[] = []): [number, number] {
+  const [start, end] = getTimeAxisDomain(range, labels);
+  const span = Math.max(DAY_MS, end - start);
+  const pad = Math.max(DAY_MS * 0.75, span * 0.045);
+  return [start - pad, end + pad];
 }
 
 /** Format an ISO date, timestamp, or Date as an axis tick for the given range. */
@@ -179,7 +186,7 @@ export function filterSeriesByRange<T extends { label?: string | null }>(
   const startMs = range.start ? range.start.getTime() : -Infinity;
   return series.filter((row) => {
     if (!row.label) return true;
-    const t = new Date(row.label).getTime();
+    const t = parseDate(row.label).getTime();
     if (isNaN(t)) return true;
     return t >= startMs && t <= endMs;
   });
