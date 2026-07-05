@@ -1235,7 +1235,7 @@ function FireView() {
               <div>
                 <div className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{inr(fireTarget)}</div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  25× annual expense at {effective.withdrawal_rate_pct}% safe withdrawal · projected age {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
+                  Inflation-adjusted target at {effective.withdrawal_rate_pct}% SWR · projected age {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
                 </p>
               </div>
               <div className="text-right">
