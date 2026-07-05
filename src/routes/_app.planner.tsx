@@ -828,10 +828,12 @@ const BLANK_RET: RetInputs = {
 function RetirementView() {
   const { data: savedPlan, isLoading, error, refetch } = useRetirementPlan();
   const save = useSaveRetirementPlan();
+  const investmentsQ = useInvestments();
   const [inputs, setInputs] = useState<RetInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(RETIREMENT_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const savedPlanToLoad = !cleared ? savedPlan : null;
 
   // Hydrate only an explicitly saved retirement plan.
@@ -892,6 +894,50 @@ function RetirementView() {
     return remaining / (((Math.pow(1 + r, n) - 1) / r) * (1 + r));
   }, [effective, yearsToRet, target, canCompute]);
 
+  // Linked retirement assets from the user's Wealth data.
+  const linkedAssets = useMemo(() => {
+    const items = investmentsQ.data ?? [];
+    const re = /epf|nps|ppf|retire|pension|sgb|sovereign gold/i;
+    return items
+      .filter((i) => {
+        const hay = `${i.name ?? ""} ${i.sub_category ?? ""} ${i.category ?? ""}`;
+        return re.test(hay);
+      })
+      .map((i) => ({
+        id: i.id,
+        name: i.name,
+        sub_category: i.sub_category ?? i.category,
+        value: i.current_value ?? 0,
+      }));
+  }, [investmentsQ.data]);
+  const linkedTotal = useMemo(() => linkedAssets.reduce((s, a) => s + a.value, 0), [linkedAssets]);
+
+  // Progress summary metrics.
+  const remainingCorpus = Math.max(0, target - effective.current_corpus);
+  const savingsProgress = target > 0 ? Math.min(100, (effective.current_corpus / target) * 100) : 0;
+  const planStart = savedPlanToLoad?.created_at ? new Date(savedPlanToLoad.created_at) : null;
+  const elapsedYears = planStart ? Math.max(0, (Date.now() - planStart.getTime()) / (365.25 * 86400000)) : 0;
+  const timeProgress = yearsToRet + elapsedYears > 0
+    ? Math.min(100, (elapsedYears / (elapsedYears + yearsToRet)) * 100)
+    : 0;
+  const yearsRemaining = Math.floor(yearsToRet);
+  const monthsRemaining = Math.round((yearsToRet - yearsRemaining) * 12);
+  const targetDate = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + Math.floor(yearsToRet));
+    d.setMonth(d.getMonth() + Math.round((yearsToRet - Math.floor(yearsToRet)) * 12));
+    return d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  }, [yearsToRet]);
+  const readinessRatio = target > 0 ? projected / target : 0;
+  const status: { label: string; tone: "positive" | "warn" | "negative" } =
+    readinessRatio >= 1.1 ? { label: "Ahead of Target", tone: "positive" }
+    : readinessRatio >= 0.9 ? { label: "On Track", tone: "positive" }
+    : readinessRatio >= 0.6 ? { label: "Behind Target", tone: "warn" }
+    : { label: "Behind Target", tone: "negative" };
+  const monthlyRetirementIncome = canCompute
+    ? (projected * (effective.post_return_pct / 100)) / 12
+    : 0;
+
   if (isLoading) return <LoadingBlock label="Loading plan…" />;
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
 
@@ -933,10 +979,126 @@ function RetirementView() {
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <Kpi icon={Calendar} label="Retirement Age" value={String(effective.retirement_age)} delta={`${yearsToRet} yrs to go`} tone="mint" />
-            <Kpi icon={Target} label="Target Corpus" value={inr(target)} delta={`Monthly need ${inr(effective.monthly_expense)}`} tone="warn" />
-            <Kpi icon={PiggyBank} label="Projected Corpus" value={inr(projected)} delta={`${readiness.toFixed(1)}% of target`} tone={readiness >= 80 ? "positive" : "warn"} />
-            <Kpi icon={TrendingUp} label="Monthly SIP" value={inr(effective.monthly_sip)} delta={`Recommended ${inr(recommendedSip)}`} tone={effective.monthly_sip >= recommendedSip ? "positive" : "negative"} />
+            <Kpi
+              icon={Target}
+              label="Required Retirement Corpus"
+              value={inr(target)}
+              delta={`Monthly need ${inr(effective.monthly_expense)}`}
+              tone="warn"
+              tooltip="Inflation-adjusted corpus needed at retirement to sustain your monthly expenses through life expectancy at the post-retirement return."
+            />
+            <Kpi
+              icon={PiggyBank}
+              label="Projected Retirement Corpus"
+              value={inr(projected)}
+              delta={`${readiness.toFixed(1)}% of target`}
+              tone={readiness >= 80 ? "positive" : "warn"}
+              tooltip="Estimated corpus you will have at retirement based on your current corpus, monthly SIP and pre-retirement return."
+            />
+            <Kpi
+              icon={TrendingUp}
+              label="Required Monthly SIP"
+              value={inr(recommendedSip)}
+              delta={`Currently investing ${inr(effective.monthly_sip)}`}
+              tone={effective.monthly_sip >= recommendedSip ? "positive" : "negative"}
+              tooltip="Monthly SIP needed from today to cover the remaining corpus by retirement, accounting for growth of your existing corpus."
+            />
           </div>
+
+          {/* Progress Summary */}
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="font-display text-base font-semibold">Progress Summary</div>
+              <span
+                className={cn(
+                  "rounded-full px-3 py-1 text-[11px] font-semibold",
+                  status.tone === "positive" && "bg-success/15 text-success",
+                  status.tone === "warn" && "bg-amber-500/15 text-amber-400",
+                  status.tone === "negative" && "bg-destructive/15 text-destructive",
+                )}
+              >
+                {status.label}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              <SummaryItem label="Current Retirement Corpus" value={inr(effective.current_corpus)} />
+              <SummaryItem label="Target Retirement Corpus" value={inr(target)} />
+              <SummaryItem label="Remaining Corpus" value={inr(remainingCorpus)} />
+              <SummaryItem label="Years / Months Remaining" value={`${yearsRemaining}y ${monthsRemaining}m`} />
+              <SummaryItem label="Target Retirement Date" value={targetDate} />
+              <SummaryItem label="Est. Monthly Retirement Income" value={inr(monthlyRetirementIncome)} />
+            </div>
+            <div className="mt-5 space-y-4">
+              <ProgressBar
+                label="Savings Progress"
+                pct={savingsProgress}
+                tooltip="Savings Progress = Current Corpus ÷ Required Retirement Corpus."
+              />
+              <ProgressBar
+                label="Time Progress"
+                pct={timeProgress}
+                tone="mint"
+                tooltip="Time Progress = Time elapsed since you started this plan ÷ Total planning duration."
+              />
+            </div>
+          </div>
+
+          {/* Linked Assets */}
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-mint" />
+                <div className="font-display text-base font-semibold">Linked Retirement Assets</div>
+              </div>
+              <div className="text-sm font-semibold text-mint">{inr(linkedTotal)}</div>
+            </div>
+            {linkedAssets.length === 0 ? (
+              <div className="text-xs text-muted-foreground">
+                No linked retirement assets found. Add investments tagged as EPF, NPS, PPF, SGB or Retirement funds under Wealth to link them here.
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {linkedAssets.map((a) => (
+                  <div key={a.id} className="flex items-center justify-between py-2 text-sm">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{a.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{a.sub_category}</div>
+                    </div>
+                    <div className="font-semibold">{inr(a.value)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Calculation Breakdown */}
+          <div className="rounded-2xl border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setBreakdownOpen((v) => !v)}
+              className="flex w-full items-center justify-between p-5 text-left"
+            >
+              <div className="font-display text-base font-semibold">Calculation Breakdown</div>
+              {breakdownOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            {breakdownOpen && (
+              <div className="grid grid-cols-1 gap-2 border-t border-border px-5 py-4 text-xs sm:grid-cols-2">
+                <BreakRow k="Current Age" v={`${effective.current_age} yrs`} />
+                <BreakRow k="Retirement Age" v={`${effective.retirement_age} yrs`} />
+                <BreakRow k="Life Expectancy" v={`${effective.life_expectancy} yrs`} />
+                <BreakRow k="Current Monthly Expenses" v={inr(effective.monthly_expense)} />
+                <BreakRow k="Inflation Rate" v={`${effective.inflation_pct}% p.a.`} />
+                <BreakRow k="Pre-Retirement Return" v={`${effective.pre_return_pct}% p.a.`} />
+                <BreakRow k="Post-Retirement Return" v={`${effective.post_return_pct}% p.a.`} />
+                <BreakRow k="Current Retirement Corpus" v={inr(effective.current_corpus)} />
+                <BreakRow k="Required Retirement Corpus" v={inr(target)} />
+                <BreakRow k="Remaining Corpus" v={inr(remainingCorpus)} />
+                <BreakRow k="Required Monthly SIP" v={inr(recommendedSip)} />
+                <BreakRow k="Est. Monthly Retirement Income" v={inr(monthlyRetirementIncome)} />
+              </div>
+            )}
+          </div>
+
           <div className="rounded-2xl border border-border bg-card p-5">
             <div className="mb-3 flex items-center justify-between">
               <div className="font-display text-base font-semibold">Readiness Score</div>
