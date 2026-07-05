@@ -890,7 +890,7 @@ function RetirementView() {
   }
   function calculate() {
     setAttempted(true);
-    setCalculated(true);
+    setCalculated(hasRequiredInputs);
   }
   function persist() {
     save.mutate(
