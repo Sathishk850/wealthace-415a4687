@@ -994,21 +994,51 @@ function FieldNum({
   value,
   onChange,
   step = 1,
+  required,
+  optional,
+  tooltip,
+  error,
+  min,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
   step?: number;
+  required?: boolean;
+  optional?: boolean;
+  tooltip?: string;
+  error?: boolean;
+  min?: number;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2 last:border-0">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        {label}
+        {required && <span className="text-destructive">*</span>}
+        {optional && <span className="text-[10px] text-muted-foreground/70">(optional)</span>}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="ml-0.5 text-muted-foreground/70 hover:text-foreground">
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {tooltip}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </span>
       <Input
         type="number"
         step={step}
+        min={min}
         value={value === 0 ? "" : value}
         onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-        className="h-7 w-28 text-right text-xs"
+        className={cn(
+          "h-7 w-28 text-right text-xs",
+          error && "border-destructive ring-1 ring-destructive",
+        )}
       />
     </div>
   );
