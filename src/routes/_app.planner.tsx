@@ -1267,7 +1267,7 @@ function FireView() {
             />
           ) : (
             <div className="grid h-[260px] place-items-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
-              Enter your age, expenses, expected return and withdrawal rate to see your FIRE trajectory.
+              Enter your age, expenses, corpus, expected return, inflation and withdrawal rate to see your FIRE trajectory.
             </div>
           )}
         </div>
