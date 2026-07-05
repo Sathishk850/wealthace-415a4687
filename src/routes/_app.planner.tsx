@@ -1203,7 +1203,7 @@ function FireView() {
   }
   function calculate() {
     setAttempted(true);
-    setCalculated(true);
+    setCalculated(hasRequiredInputs);
   }
   function persist() {
     save.mutate(
