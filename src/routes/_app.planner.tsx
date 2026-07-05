@@ -336,7 +336,7 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
     : 0;
   const retPct = retirementTarget > 0 ? Math.min(100, (retirementProjected / retirementTarget) * 100) : 0;
 
-  const canComputeFire = !!firePlan && fireSettings.current_age > 0 && fireSettings.monthly_expense > 0 && fireSettings.withdrawal_rate_pct > 0 && fireSettings.pre_return_pct > 0;
+  const canComputeFire = !!firePlan && fireSettings.current_age > 0 && fireSettings.monthly_expense > 0 && fireSettings.current_corpus > 0 && fireSettings.withdrawal_rate_pct > 0 && fireSettings.pre_return_pct > 0 && fireSettings.inflation_pct > 0;
   const fireTarget = canComputeFire ? fireNumber(fireSettings) : 0;
   const yrsToFire = canComputeFire
     ? yearsToReach(fireSettings.current_corpus, fireSettings.monthly_sip, fireSettings.pre_return_pct, fireTarget)
