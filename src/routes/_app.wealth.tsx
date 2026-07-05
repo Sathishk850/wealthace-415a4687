@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { smartXAxisProps } from "@/lib/chart-axis";
-import { useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useRef, useState } from "react";
 import { TextTabs } from "@/components/text-tabs";
 import { AssetsView } from "@/components/wealth/assets-view";
 import { LiabilitiesView as LiveLiabilitiesView } from "@/components/wealth/liabilities-view";
@@ -9,61 +7,7 @@ import { InvestmentsView as LiveInvestmentsView } from "@/components/wealth/inve
 import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insurance-view";
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { FamilyView as LiveFamilyView } from "@/components/wealth/family-view";
-import {
-  Wallet,
-  TrendingUp,
-  PieChart as PieIcon,
-  BarChart3,
-  Plus,
-  Info,
-  ArrowUpRight,
-  ArrowDownRight,
-  Search,
-  ChevronDown,
-  ArrowUpDown,
-  List,
-  LayoutGrid,
-  MoreVertical,
-  Home,
-  Car,
-  Landmark,
-  Coins,
-  CreditCard,
-  Banknote,
-  ShoppingBag,
-  TrendingDown,
-  Percent,
-  Shield,
-  ShieldCheck,
-  Calendar,
-  FileText,
-  Heart,
-  Bike,
-  HeartPulse,
-  Wallet2,
-  ArrowRight,
-  Building2,
-  Users,
-  User,
-  Cake,
-  GraduationCap,
-  Target,
-  Briefcase,
-} from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  BarChart,
-  Bar,
-} from "recharts";
+import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_app/wealth")({
   head: () => ({
