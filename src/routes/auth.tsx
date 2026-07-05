@@ -31,6 +31,7 @@ function installSessionOnlyGuard() {
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     mode: (s.mode === "signup" ? "signup" : "signin") as "signin" | "signup",
+    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
   }),
   head: () => ({
     meta: [
@@ -45,7 +46,7 @@ function AuthPage() {
   useEffect(() => {
     installSessionOnlyGuard();
   }, []);
-  const { mode: initialMode } = useSearch({ from: "/auth" });
+  const { mode: initialMode, redirect: redirectParam } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "pin">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -54,6 +55,16 @@ function AuthPage() {
   const [pinAvailable, setPinAvailable] = useState(false);
   const [pinValue, setPinValue] = useState("");
   const navigate = useNavigate();
+  // Only accept same-origin absolute paths — never external URLs.
+  const safeRedirect =
+    redirectParam && /^\/[^/]/.test(redirectParam) ? redirectParam : undefined;
+  const goHome = () => {
+    if (safeRedirect) {
+      navigate({ to: safeRedirect as never });
+    } else {
+      goHome();
+    }
+  };
   const verifyPinFn = useServerFn(verifyPin);
   const getPinStatusFn = useServerFn(getPinStatus);
 
@@ -89,7 +100,7 @@ function AuthPage() {
       const res = await verifyPinFn({ data: { pin: pinValue } });
       if (res?.ok) {
         setPinValue("");
-        navigate({ to: "/dashboard" });
+        goHome();
       } else {
         setMessage({ type: "error", text: "Incorrect PIN. Try again." });
       }
@@ -157,7 +168,7 @@ function AuthPage() {
         }
         if (data.session) {
           applyRememberDevice(remember);
-          navigate({ to: "/dashboard" });
+          goHome();
         } else {
           setMessage({
             type: "success",
@@ -180,7 +191,7 @@ function AuthPage() {
           return;
         }
         applyRememberDevice(remember);
-        navigate({ to: "/dashboard" });
+        goHome();
       } else if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
@@ -210,7 +221,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    goHome();
   };
 
   return (
