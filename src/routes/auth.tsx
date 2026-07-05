@@ -157,8 +157,9 @@ function AuthPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(20,216,207,0.10),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(15,183,176,0.08),transparent_55%)]" />
+    <div className="dark relative min-h-screen overflow-hidden bg-black text-foreground">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(20,216,207,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(15,183,176,0.08),transparent_55%)]" />
+
 
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-2 lg:gap-16 lg:px-12">
         {/* Left: brand + tagline */}
@@ -189,20 +190,20 @@ function AuthPage() {
 
         {/* Right: auth card */}
         <div className="flex items-center justify-center">
-          <div className="w-full max-w-md rounded-3xl border border-mint/15 bg-card/60 p-8 backdrop-blur-xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)]">
+          <div className="w-full max-w-md rounded-3xl border border-mint/15 bg-card/80 p-8 backdrop-blur-xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)]">
             <h2 className="font-display text-2xl font-bold tracking-tight">Welcome</h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
               Sign in or create your account to continue.
             </p>
 
             {/* Tabs */}
-            <div className="mt-6 grid grid-cols-2 rounded-xl border border-border bg-background/40 p-1">
+            <div className="mt-6 grid grid-cols-2 rounded-xl border border-border bg-surface/40 p-1">
               <button
                 type="button"
                 onClick={() => { setMode("signin"); setMessage(null); }}
                 className={`rounded-lg py-2 text-sm font-medium transition ${
                   mode === "signin" || mode === "forgot"
-                    ? "bg-background text-foreground shadow"
+                    ? "bg-surface text-foreground shadow"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -213,7 +214,7 @@ function AuthPage() {
                 onClick={() => { setMode("signup"); setMessage(null); }}
                 className={`rounded-lg py-2 text-sm font-medium transition ${
                   mode === "signup"
-                    ? "bg-background text-foreground shadow"
+                    ? "bg-surface text-foreground shadow"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -254,7 +255,7 @@ function AuthPage() {
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
-                    className="h-4 w-4 rounded border-border bg-background/60 text-mint accent-mint focus:ring-mint/30"
+                    className="h-4 w-4 rounded border-border bg-surface/60 text-mint accent-mint focus:ring-mint/30"
                   />
                   Remember this device
                 </label>
@@ -315,7 +316,7 @@ function AuthPage() {
               className={`flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium text-foreground transition ${
                 suggestGoogle
                   ? "border-mint/60 bg-mint/10 shadow-[0_0_0_3px_rgba(20,216,207,0.15)] hover:bg-mint/15"
-                  : "border-border bg-background/40 hover:bg-background/70"
+                  : "border-border bg-surface/40 hover:bg-surface/70"
               }`}
             >
               <GoogleIcon /> Continue with Google
@@ -361,7 +362,7 @@ function Field({
         type={type}
         placeholder={placeholder}
         required
-        className="w-full rounded-xl border border-border bg-background/60 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
+        className="w-full rounded-xl border border-border bg-surface/60 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
       />
     </label>
   );
@@ -391,7 +392,7 @@ function PasswordField({
           type={show ? "text" : "password"}
           placeholder={placeholder}
           required
-          className="w-full rounded-xl border border-border bg-background/60 px-3.5 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
+          className="w-full rounded-xl border border-border bg-surface/60 px-3.5 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
         />
         <button
           type="button"
