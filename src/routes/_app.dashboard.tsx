@@ -43,7 +43,7 @@ import {
   defaultChartRange,
   type ChartRangeValue,
 } from "@/components/chart-range-selector";
-import { smartXAxisProps, formatAxisTick, filterSeriesByRange } from "@/lib/chart-axis";
+import { smartXAxisProps, formatAxisTick, filterSeriesByRange, computeAxisTicks } from "@/lib/chart-axis";
 import { useAssets, useLiabilities, useInvestments, inr as inrW } from "@/lib/wealth-api";
 import { useTransactions } from "@/lib/money-api";
 import { useGoals } from "@/lib/planner-api";
@@ -722,13 +722,22 @@ function RangeChart({
   const [range, setRange] = useState<ChartRangeValue>(() => defaultChartRange("1M"));
   const id = `g-${Math.random().toString(36).slice(2, 8)}`;
   const filtered = useMemo(() => filterSeriesByRange(data, range), [data, range]);
-  const series = filtered.length > 0 ? filtered : data;
+  const series = filtered;
+  const ticks = useMemo(
+    () => computeAxisTicks(series.map((s) => s.label ?? null), range),
+    [series, range],
+  );
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex justify-end">
         <ChartRangeSelector value={range} onChange={setRange} />
       </div>
       <div style={{ height: compact ? height : height }} className="flex-1">
+        {series.length === 0 ? (
+          <div className="grid h-full place-items-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+            No data available for this range
+          </div>
+        ) : (
         <ResponsiveContainer>
           <AreaChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
@@ -744,6 +753,8 @@ function RangeChart({
               tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
               tickFormatter={(label: string) => formatAxisTick(label, range)}
               {...smartXAxisProps}
+              ticks={ticks.length ? ticks : undefined}
+              interval={ticks.length ? 0 : smartXAxisProps.interval}
             />
             <YAxis
               orientation="right"
@@ -765,7 +776,9 @@ function RangeChart({
               }}
               labelStyle={{ color: "var(--muted-foreground)" }}
               formatter={(v: number) => [`₹${fmt(v)}`, "Value"]}
-              labelFormatter={() => ""}
+              labelFormatter={(label: string) =>
+                label ? new Date(label).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""
+              }
             />
             <Area
               type="monotone"
@@ -777,6 +790,7 @@ function RangeChart({
             />
           </AreaChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
