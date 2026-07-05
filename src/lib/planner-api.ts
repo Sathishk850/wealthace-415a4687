@@ -84,6 +84,7 @@ export type FirePlan = {
   monthly_sip: number;
   pre_return_pct: number;
   withdrawal_rate_pct: number;
+  inflation_pct: number;
   created_at: string;
   updated_at: string;
 };
