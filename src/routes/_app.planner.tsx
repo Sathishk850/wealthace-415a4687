@@ -23,6 +23,7 @@ import {
   Loader2,
   AlertCircle,
   Wallet,
+  Info,
 } from "lucide-react";
 import {
   ResponsiveContainer,
