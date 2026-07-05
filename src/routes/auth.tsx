@@ -46,12 +46,67 @@ function AuthPage() {
     installSessionOnlyGuard();
   }, []);
   const { mode: initialMode } = useSearch({ from: "/auth" });
-  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(initialMode);
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "pin">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [suggestGoogle, setSuggestGoogle] = useState(false);
   const [remember, setRemember] = useState(true);
+  const [pinAvailable, setPinAvailable] = useState(false);
+  const [pinValue, setPinValue] = useState("");
   const navigate = useNavigate();
+  const verifyPinFn = useServerFn(verifyPin);
+  const getPinStatusFn = useServerFn(getPinStatus);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session || cancelled) return;
+      try {
+        const status = await getPinStatusFn();
+        if (cancelled) return;
+        if (status?.enabled) {
+          setPinAvailable(true);
+          setMode((m) => (m === "signup" ? m : "pin"));
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getPinStatusFn]);
+
+  const handlePinSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (submitting) return;
+    setMessage(null);
+    if (!/^\d{4,8}$/.test(pinValue)) {
+      setMessage({ type: "error", text: "Enter your 4–8 digit PIN." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await verifyPinFn({ data: { pin: pinValue } });
+      if (res?.ok) {
+        setPinValue("");
+        navigate({ to: "/dashboard" });
+      } else {
+        setMessage({ type: "error", text: "Incorrect PIN. Try again." });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: err instanceof Error ? err.message : "PIN verification failed." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const switchToPassword = async () => {
+    await supabase.auth.signOut();
+    setPinAvailable(false);
+    setPinValue("");
+    setMessage(null);
+    setMode("signin");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
