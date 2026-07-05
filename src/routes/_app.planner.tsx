@@ -1055,7 +1055,7 @@ function RetirementView() {
             <Button
               variant="outline"
               className="flex-1"
-              disabled={!hasRequiredInputs || save.isPending}
+              disabled={save.isPending}
               onClick={calculate}
             >
               Calculate
