@@ -152,50 +152,50 @@
 }
 
 .dark {
-  --background: #0F2233;
+  --background: #000000;
   --foreground: #EAF2F5;
-  --surface: #061824;
-  --surface-2: #0E2030;
-  --surface-3: #14293C;
-  --card: #12283B;
+  --surface: #050505;
+  --surface-2: #0A0A0A;
+  --surface-3: #0F0F0F;
+  --card: #0A0A0A;
   --card-foreground: #EAF2F5;
-  --card-glass: rgba(18, 40, 59, 0.85);
-  --card-hover: #173049;
-  --popover: #14293C;
+  --card-glass: rgba(10, 10, 10, 0.85);
+  --card-hover: #141414;
+  --popover: #0A0A0A;
   --popover-foreground: #EAF2F5;
   --primary: #21DBD2;
-  --primary-foreground: #0F2233;
+  --primary-foreground: #000000;
   --primary-hover: #18C7BF;
   --mint: #21DBD2;
-  --mint-foreground: #0F2233;
-  --secondary: #14293C;
+  --mint-foreground: #000000;
+  --secondary: #0F0F0F;
   --secondary-foreground: #EAF2F5;
-  --muted: #14293C;
+  --muted: #0F0F0F;
   --muted-foreground: #A7BACD;
   --muted-2: #6E8294;
   --accent: #21DBD2;
-  --accent-foreground: #0F2233;
+  --accent-foreground: #000000;
   --success: #22C55E;
   --warning: #F4C430;
   --danger: #EF4444;
   --destructive: #EF4444;
   --destructive-foreground: #EAF2F5;
   --info: #4D8CFF;
-  --border: #21435A;
-  --input: #21435A;
+  --border: #1F1F1F;
+  --input: #1F1F1F;
   --ring: #21DBD2;
   --chart-1: #21DBD2;
   --chart-2: #18C7BF;
   --chart-3: #22C55E;
   --chart-4: #F4C430;
   --chart-5: #EF4444;
-  --sidebar: #0B1B28;
+  --sidebar: #050505;
   --sidebar-foreground: #A7BACD;
   --sidebar-primary: #21DBD2;
-  --sidebar-primary-foreground: #0F2233;
-  --sidebar-accent: #14293C;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #0F0F0F;
   --sidebar-accent-foreground: #EAF2F5;
-  --sidebar-border: #21435A;
+  --sidebar-border: #1F1F1F;
   --sidebar-ring: #21DBD2;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
   --shadow-md: 0 6px 18px -8px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.25);
@@ -218,9 +218,9 @@
 
   .dark body {
     background-image:
-      radial-gradient(ellipse 90% 60% at 12% -10%, rgba(33, 219, 210, 0.08), transparent 60%),
-      radial-gradient(ellipse 70% 50% at 110% 10%, rgba(33, 219, 210, 0.06), transparent 60%),
-      linear-gradient(180deg, #0F2233 0%, #0B1B28 100%);
+      radial-gradient(ellipse 90% 60% at 12% -10%, rgba(33, 219, 210, 0.05), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 110% 10%, rgba(33, 219, 210, 0.04), transparent 60%),
+      #000000;
   }
 
   h1, h2, h3, h4, h5, h6 {
