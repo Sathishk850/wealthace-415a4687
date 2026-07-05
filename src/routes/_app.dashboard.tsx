@@ -377,25 +377,48 @@ function Dashboard() {
             <LiveSnap label="Assets" value={totals.assetsTotal} snaps={snaps} field="assets_total" icon={Wallet} accent="#14d8cf" />
             <LiveSnap label="Liabilities" value={totals.liabilitiesTotal} snaps={snaps} field="liabilities_total" icon={Banknote} accent="#ff4d4d" goodIsDown />
             <LiveSnap label="Investments" value={totals.investmentsTotal} snaps={snaps} field="investments_total" icon={TrendingUp} accent="#00c896" />
-            <LiveSnap
-              label="Savings"
-              value={totals.savings}
-              delta={totals.savings - totals.lastSavings}
-              deltaBase={totals.lastSavings}
-              icon={PiggyBank}
-              accent="#3b82f6"
-              series={snaps.map((s, i) => ({ i, v: s.savings_total }))}
-            />
-            <LiveSnap
-              label="Net Cash Flow"
-              value={totals.netCashFlow}
-              delta={totals.netCashFlow - totals.lastNetCashFlow}
-              deltaBase={Math.abs(totals.lastNetCashFlow)}
-              icon={ArrowLeftRight}
-              accent="#a855f7"
-              series={snaps.map((s, i) => ({ i, v: s.savings_total }))}
-              tip="Net Cash Flow = Total income received minus total expenses paid during the period. Positive means you're saving; negative means you're spending more than you earn."
-            />
+            {(() => {
+              const savingsRate = totals.income > 0 ? ((totals.income - totals.expense) / totals.income) * 100 : 0;
+              const lastSavingsRate = totals.lastIncome > 0 ? ((totals.lastIncome - totals.lastExpense) / totals.lastIncome) * 100 : 0;
+              const rateDelta = savingsRate - lastSavingsRate;
+              const hasRateHistory = totals.lastIncome > 0;
+              const debtRatio = totals.assetsTotal > 0 ? (totals.liabilitiesTotal / totals.assetsTotal) * 100 : 0;
+              const debtSeries = snaps.map((s, i) => {
+                const a = Number(s.assets_total) || 0;
+                const l = Number(s.liabilities_total) || 0;
+                return { i, v: a > 0 ? (l / a) * 100 : 0 };
+              });
+              const hasDebtHistory = debtSeries.length >= 2;
+              const lastDebt = hasDebtHistory ? debtSeries[debtSeries.length - 2].v : 0;
+              const debtDelta = hasDebtHistory ? debtRatio - lastDebt : 0;
+              return (
+                <>
+                  <SnapCard
+                    label="Savings Rate"
+                    value={`${savingsRate.toFixed(1)}%`}
+                    delta={hasRateHistory ? `${rateDelta >= 0 ? "+" : ""}${rateDelta.toFixed(1)} pts vs last month` : "No history yet"}
+                    up={rateDelta >= 0}
+                    icon={Percent}
+                    accent="#3b82f6"
+                    series={[
+                      { i: 0, v: lastSavingsRate },
+                      { i: 1, v: savingsRate },
+                    ]}
+                    tip="Savings Rate = (Income − Expenses) ÷ Income × 100. Higher is better; aim for 20%+."
+                  />
+                  <SnapCard
+                    label="Debt Ratio"
+                    value={`${debtRatio.toFixed(1)}%`}
+                    delta={hasDebtHistory ? `${debtDelta >= 0 ? "+" : ""}${debtDelta.toFixed(1)} pts vs last snapshot` : "No history yet"}
+                    up={debtDelta <= 0}
+                    icon={Scale}
+                    accent="#a855f7"
+                    series={debtSeries.length ? debtSeries : [{ i: 0, v: debtRatio }, { i: 1, v: debtRatio }]}
+                    tip="Debt Ratio = Total Liabilities ÷ Total Assets × 100. Lower is better; under 40% is healthy."
+                  />
+                </>
+              );
+            })()}
           </div>
         </div>
 
