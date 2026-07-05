@@ -62,6 +62,29 @@ function uniqSorted(values: number[]): number[] {
   return Array.from(new Set(values.map((v) => Math.round(v)))).sort((a, b) => a - b);
 }
 
+/**
+ * Drop ticks that sit too close to their neighbour. Keeps the first tick and
+ * prefers keeping the last (end-of-range) tick when a collision happens near
+ * the right edge, so labels stay evenly spaced.
+ */
+function enforceMinTickGap(ticks: number[], minGapMs: number): number[] {
+  if (ticks.length <= 2) return ticks;
+  const sorted = [...ticks].sort((a, b) => a - b);
+  const last = sorted[sorted.length - 1];
+  const kept: number[] = [sorted[0]];
+  for (let i = 1; i < sorted.length - 1; i++) {
+    const t = sorted[i];
+    if (t - kept[kept.length - 1] < minGapMs) continue;
+    if (last - t < minGapMs) continue; // would crowd the final tick
+    kept.push(t);
+  }
+  if (last - kept[kept.length - 1] < minGapMs && kept.length > 1) {
+    kept.pop();
+  }
+  kept.push(last);
+  return kept;
+}
+
 function parseDate(value: string | number | Date): Date {
   if (value instanceof Date) return value;
   if (typeof value === "string") {
@@ -144,37 +167,39 @@ export function computeTimeAxisTicks(range: ChartRangeValue, labels: (string | n
   }
 
   if (range.key === "1M" || days <= 45) {
-    const ticks = [0, 7, 14, 21, 28].map((offset) => addDays(start, offset).getTime()).filter((t) => t <= end.getTime());
+    const ticks = [0, 7, 14, 21, 28]
+      .map((offset) => addDays(start, offset).getTime())
+      .filter((t) => t <= end.getTime());
     ticks.push(end.getTime());
-    return uniqSorted(ticks);
+    return enforceMinTickGap(uniqSorted(ticks), 4 * DAY_MS);
   }
 
   if (range.key === "3M" || days <= 120) {
     const ticks: number[] = [];
     for (let d = new Date(start); d <= end; d = addMonths(d, 1)) ticks.push(d.getTime());
     ticks.push(end.getTime());
-    return uniqSorted(ticks);
+    return enforceMinTickGap(uniqSorted(ticks), 14 * DAY_MS);
   }
 
   if (range.key === "6M" || days <= 220) {
     const ticks: number[] = [];
     for (let d = new Date(start); d <= end; d = addMonths(d, 1)) ticks.push(d.getTime());
     ticks.push(end.getTime());
-    return uniqSorted(ticks);
+    return enforceMinTickGap(uniqSorted(ticks), 20 * DAY_MS);
   }
 
   if (range.key === "1Y" || days <= 400) {
     const ticks: number[] = [];
     for (let d = new Date(start); d <= end; d = addMonths(d, 2)) ticks.push(d.getTime());
     ticks.push(end.getTime());
-    return uniqSorted(ticks);
+    return enforceMinTickGap(uniqSorted(ticks), 30 * DAY_MS);
   }
 
   const stepMonths = days <= 366 * 5 ? 3 : 12;
   const ticks: number[] = [];
   for (let d = new Date(start); d <= end; d = addMonths(d, stepMonths)) ticks.push(d.getTime());
   ticks.push(end.getTime());
-  return uniqSorted(ticks);
+  return enforceMinTickGap(uniqSorted(ticks), (stepMonths * 30 - 5) * DAY_MS);
 }
 
 /** Filter a time-indexed series down to the selected range. */
