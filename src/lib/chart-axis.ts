@@ -8,9 +8,15 @@ import type { ChartRangeKey, ChartRangeValue } from "@/components/chart-range-se
  */
 export const smartXAxisProps = {
   interval: "preserveStartEnd" as const,
-  minTickGap: 24,
+  minTickGap: 14,
   tickMargin: 6,
 };
+
+/**
+ * Gives edge ticks enough room so labels like "Jan" are not clipped and the
+ * latest month does not sit directly against a right-side Y-axis.
+ */
+export const timeXAxisPadding = { left: 22, right: 34 };
 
 /** Guess a sensible tick cadence for a time series given the selected range. */
 export function pickTickStride(rangeKey: ChartRangeKey, points: number): number {
