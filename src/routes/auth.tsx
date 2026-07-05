@@ -486,3 +486,123 @@ function PasswordField({
     </label>
   );
 }
+
+function PinForm({
+  pinValue,
+  setPinValue,
+  onSubmit,
+  submitting,
+  onUseDifferentAccount,
+  message,
+}: {
+  pinValue: string;
+  setPinValue: (v: string) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  submitting: boolean;
+  onUseDifferentAccount: () => void;
+  message: { type: "success" | "error"; text: string } | null;
+}) {
+  const SLOTS = 6;
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [focused, setFocused] = useState(false);
+  const [reveal, setReveal] = useState(false);
+
+  const focusInput = () => inputRef.current?.focus();
+
+  return (
+    <form className="mt-6 space-y-5" onSubmit={onSubmit}>
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-foreground">Unlock with PIN</h3>
+        <p className="text-xs text-muted-foreground">
+          Enter your 4–8 digit PIN to continue on this device.
+        </p>
+      </div>
+
+      {/* Slot display */}
+      <button
+        type="button"
+        onClick={focusInput}
+        className="relative block w-full cursor-text rounded-2xl border border-border bg-surface/40 p-3 focus-within:border-mint focus-within:ring-2 focus-within:ring-mint/30 transition"
+        aria-label="PIN entry"
+      >
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
+          {Array.from({ length: SLOTS }).map((_, i) => {
+            const char = pinValue[i];
+            const isActive = focused && i === Math.min(pinValue.length, SLOTS - 1);
+            const filled = char !== undefined;
+            return (
+              <div
+                key={i}
+                className={[
+                  "flex h-12 w-9 sm:h-14 sm:w-11 items-center justify-center rounded-xl border text-lg sm:text-xl font-semibold tabular-nums transition",
+                  filled
+                    ? "border-mint/60 bg-mint/10 text-foreground"
+                    : "border-border bg-background/40 text-muted-foreground",
+                  isActive ? "ring-2 ring-mint/40 border-mint" : "",
+                ].join(" ")}
+              >
+                {filled ? (reveal ? char : "•") : ""}
+              </div>
+            );
+          })}
+        </div>
+        {/* Hidden actual input */}
+        <input
+          ref={inputRef}
+          autoFocus
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="one-time-code"
+          maxLength={SLOTS}
+          value={pinValue}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onChange={(e) => setPinValue(e.target.value.replace(/\D/g, "").slice(0, SLOTS))}
+          className="absolute inset-0 h-full w-full cursor-text opacity-0 outline-none"
+          aria-label="PIN"
+        />
+      </button>
+
+      <div className="flex items-center justify-between text-xs">
+        <button
+          type="button"
+          onClick={() => setReveal((r) => !r)}
+          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-muted-foreground transition hover:text-foreground"
+        >
+          {reveal ? <EyeOff size={14} /> : <Eye size={14} />}
+          {reveal ? "Hide" : "Show"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setPinValue("")}
+          disabled={pinValue.length === 0}
+          className="rounded-lg px-2 py-1 text-muted-foreground transition hover:text-foreground disabled:opacity-40"
+        >
+          Clear
+        </button>
+      </div>
+
+      {message && message.type === "error" && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">
+          {message.text}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={submitting || pinValue.length < 4}
+        className="w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90 disabled:opacity-60"
+      >
+        {submitting ? "Verifying…" : "Unlock"}
+      </button>
+
+      <button
+        type="button"
+        onClick={onUseDifferentAccount}
+        className="block w-full text-center text-xs text-muted-foreground transition hover:text-foreground"
+      >
+        Use a different account
+      </button>
+    </form>
+  );
+}
