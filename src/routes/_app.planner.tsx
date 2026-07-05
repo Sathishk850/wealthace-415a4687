@@ -1050,14 +1050,17 @@ function FireView() {
         monthly_sip: savedPlanToLoad.monthly_sip,
         pre_return_pct: savedPlanToLoad.pre_return_pct,
         withdrawal_rate_pct: savedPlanToLoad.withdrawal_rate_pct,
+        inflation_pct: savedPlanToLoad.inflation_pct,
       }
     : BLANK_FIRE);
 
   const hasRequiredInputs =
     effective.current_age > 0 &&
     effective.monthly_expense > 0 &&
-    effective.withdrawal_rate_pct > 0 &&
-    effective.pre_return_pct > 0;
+    effective.current_corpus > 0 &&
+    effective.pre_return_pct > 0 &&
+    effective.inflation_pct > 0 &&
+    effective.withdrawal_rate_pct > 0;
   const canCompute = (calculated || (!!savedPlanToLoad && inputs === null)) && hasRequiredInputs;
 
   const fireTarget = canCompute ? (effective.monthly_expense * 12) / (effective.withdrawal_rate_pct / 100) : 0;
