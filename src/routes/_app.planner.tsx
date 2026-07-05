@@ -955,18 +955,94 @@ function RetirementView() {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="mb-4 font-display text-base font-semibold">Assumptions</div>
+          <div className="mb-2 font-display text-base font-semibold">Assumptions</div>
+          <p className="mb-4 text-[11px] text-muted-foreground">
+            <span className="text-destructive">*</span> Required fields
+          </p>
           <div className="space-y-3">
-            <FieldNum label="Current Age" value={effective.current_age} onChange={(v) => patch("current_age", v)} />
-            <FieldNum label="Retirement Age" value={effective.retirement_age} onChange={(v) => patch("retirement_age", v)} />
-            <FieldNum label="Life Expectancy" value={effective.life_expectancy} onChange={(v) => patch("life_expectancy", v)} />
-            <FieldNum label="Monthly Expense (today, ₹)" value={effective.monthly_expense} step={1000} onChange={(v) => patch("monthly_expense", v)} />
-            <FieldNum label="Inflation (%)" value={effective.inflation_pct} step={0.1} onChange={(v) => patch("inflation_pct", v)} />
-            <FieldNum label="Pre-Ret Return (%)" value={effective.pre_return_pct} step={0.1} onChange={(v) => patch("pre_return_pct", v)} />
-            <FieldNum label="Post-Ret Return (%)" value={effective.post_return_pct} step={0.1} onChange={(v) => patch("post_return_pct", v)} />
-            <FieldNum label="Current Corpus (₹)" value={effective.current_corpus} step={10000} onChange={(v) => patch("current_corpus", v)} />
-            <FieldNum label="Monthly SIP (₹)" value={effective.monthly_sip} step={1000} onChange={(v) => patch("monthly_sip", v)} />
+            <FieldNum
+              label="Current Age"
+              value={effective.current_age}
+              onChange={(v) => patch("current_age", v)}
+              required
+              error={attempted && !required.current_age}
+              tooltip="Your age today. Used to calculate years left to build the retirement corpus."
+            />
+            <FieldNum
+              label="Retirement Age"
+              value={effective.retirement_age}
+              onChange={(v) => patch("retirement_age", v)}
+              required
+              error={attempted && !required.retirement_age}
+              tooltip="The age when you plan to stop working and start using the retirement corpus."
+            />
+            <FieldNum
+              label="Life Expectancy"
+              value={effective.life_expectancy}
+              onChange={(v) => patch("life_expectancy", v)}
+              required
+              error={attempted && !required.life_expectancy}
+              tooltip="Estimated age until when the corpus needs to support you."
+            />
+            <FieldNum
+              label="Monthly Expense (today, ₹)"
+              value={effective.monthly_expense}
+              step={1000}
+              onChange={(v) => patch("monthly_expense", v)}
+              required
+              error={attempted && !required.monthly_expense}
+              tooltip="Your current monthly living expenses. Future expenses are inflated at the assumed inflation rate."
+            />
+            <FieldNum
+              label="Inflation (%)"
+              value={effective.inflation_pct}
+              step={0.1}
+              onChange={(v) => patch("inflation_pct", v)}
+              required
+              error={attempted && !required.inflation_pct}
+              tooltip="Expected annual inflation. Used to inflate future expenses and reduce the real post-retirement return."
+            />
+            <FieldNum
+              label="Pre-Ret Return (%)"
+              value={effective.pre_return_pct}
+              step={0.1}
+              onChange={(v) => patch("pre_return_pct", v)}
+              required
+              error={attempted && !required.pre_return_pct}
+              tooltip="Expected annual return on investments while you are still accumulating the corpus."
+            />
+            <FieldNum
+              label="Post-Ret Return (%)"
+              value={effective.post_return_pct}
+              step={0.1}
+              onChange={(v) => patch("post_return_pct", v)}
+              required
+              error={attempted && !required.post_return_pct}
+              tooltip="Expected annual return on the corpus after retirement. Usually lower than pre-retirement returns."
+            />
+            <FieldNum
+              label="Current Corpus (₹)"
+              value={effective.current_corpus}
+              step={10000}
+              onChange={(v) => patch("current_corpus", v)}
+              optional
+              tooltip="Money already saved for retirement. Leave blank if you are starting from zero."
+            />
+            <FieldNum
+              label="Monthly SIP (₹)"
+              value={effective.monthly_sip}
+              step={1000}
+              onChange={(v) => patch("monthly_sip", v)}
+              optional
+              tooltip="Regular monthly contribution you plan to make until retirement."
+            />
           </div>
+          {attempted && !hasRequiredInputs && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
+              <AlertCircle className="h-3.5 w-3.5" />
+              Please complete all required fields.
+            </div>
+          )}
           <div className="mt-4 flex gap-2">
             <Button
               variant="outline"
