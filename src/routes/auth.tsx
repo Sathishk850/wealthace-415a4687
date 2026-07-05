@@ -254,6 +254,7 @@ function AuthPage() {
             </p>
 
             {/* Tabs */}
+            {mode !== "pin" && (
             <div className="mt-6 grid grid-cols-2 rounded-xl border border-border bg-surface/40 p-1">
               <button
                 type="button"
@@ -278,7 +279,42 @@ function AuthPage() {
                 Create account
               </button>
             </div>
+            )}
 
+            {mode === "pin" ? (
+              <form className="mt-6 space-y-4" onSubmit={handlePinSubmit}>
+                <p className="text-sm text-muted-foreground">
+                  Enter your PIN to unlock this device.
+                </p>
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">PIN</span>
+                  <input
+                    autoFocus
+                    inputMode="numeric"
+                    maxLength={8}
+                    type="password"
+                    value={pinValue}
+                    onChange={(e) => setPinValue(e.target.value.replace(/\D/g, ""))}
+                    placeholder="••••"
+                    className="w-full rounded-xl border border-border bg-surface/60 px-3.5 py-2.5 text-center text-lg tracking-[0.5em] text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={submitting || pinValue.length < 4}
+                  className="w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90 disabled:opacity-60"
+                >
+                  {submitting ? "Verifying…" : "Unlock"}
+                </button>
+                <button
+                  type="button"
+                  onClick={switchToPassword}
+                  className="block w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Use a different account
+                </button>
+              </form>
+            ) : (
             <form
               className="mt-6 space-y-4"
               onSubmit={handleSubmit}
@@ -348,6 +384,17 @@ function AuthPage() {
                 </button>
               )}
             </form>
+            )}
+
+            {mode !== "pin" && pinAvailable && (
+              <button
+                type="button"
+                onClick={() => { setMode("pin"); setMessage(null); }}
+                className="mt-3 block w-full text-center text-xs font-medium text-mint hover:underline"
+              >
+                Unlock with PIN instead
+              </button>
+            )}
 
             {message && (
               <div
