@@ -1311,6 +1311,54 @@ function FieldNum({
 }
 
 /* ---------- FIRE ---------- */
+
+function SummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-surface-2/40 p-3">
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-1 font-display text-sm font-semibold text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function ProgressBar({
+  label, pct, tone = "positive", tooltip,
+}: { label: string; pct: number; tone?: "positive" | "mint"; tooltip?: string }) {
+  const bar = tone === "mint" ? "bg-mint" : "bg-gradient-to-r from-success to-emerald-400";
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="inline-flex items-center gap-1 text-muted-foreground">
+          {label}
+          {tooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="text-muted-foreground/70 hover:text-foreground">
+                  <Info className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">{tooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </span>
+        <span className="font-semibold text-foreground">{pct.toFixed(1)}%</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+        <div className={cn("h-full transition-all", bar)} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function BreakRow({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg bg-surface-2/30 px-3 py-2">
+      <span className="text-muted-foreground">{k}</span>
+      <span className="font-medium text-foreground">{v}</span>
+    </div>
+  );
+}
+
 type FireInputs = {
   current_age: number;
   monthly_expense: number;
