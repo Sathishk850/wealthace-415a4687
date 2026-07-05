@@ -284,7 +284,7 @@ function useSettingsOrBlank() {
 /* ---------- OVERVIEW ---------- */
 function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
   const goalsQ = useGoals();
-  const { settings, isLoading: sLoad, error: sErr, refetch: sRefetch } = useSettingsOrDefaults();
+  const { settings, hasSaved, isLoading: sLoad, error: sErr, refetch: sRefetch } = useSettingsOrBlank();
 
   if (goalsQ.isLoading || sLoad) return <LoadingBlock label="Loading planner…" />;
   if (goalsQ.error) return <ErrorBlock error={goalsQ.error as Error} onRetry={() => goalsQ.refetch()} />;
@@ -295,18 +295,18 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
   const totalTarget = goals.reduce((s, g) => s + g.target_amount, 0);
   const onTrack = goals.filter((g) => goalProgressPct(g) >= 50).length;
 
-  const retirementTarget = retirementCorpusNeeded(settings);
-  const yearsToRet = Math.max(0, settings.retirement_age - settings.current_age);
-  const retirementProjected = projectCorpus(
-    settings.current_corpus,
-    settings.monthly_sip,
-    settings.pre_return_pct,
-    yearsToRet
-  );
+  const canCompute = hasSaved && settings.current_age > 0 && settings.retirement_age > settings.current_age && settings.monthly_expense > 0;
+  const retirementTarget = canCompute ? retirementCorpusNeeded(settings) : 0;
+  const yearsToRet = canCompute ? Math.max(0, settings.retirement_age - settings.current_age) : 0;
+  const retirementProjected = canCompute
+    ? projectCorpus(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, yearsToRet)
+    : 0;
   const retPct = retirementTarget > 0 ? Math.min(100, (retirementProjected / retirementTarget) * 100) : 0;
 
-  const fireTarget = fireNumber(settings);
-  const yrsToFire = yearsToReach(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, fireTarget);
+  const fireTarget = canCompute ? fireNumber(settings) : 0;
+  const yrsToFire = canCompute
+    ? yearsToReach(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, fireTarget)
+    : Infinity;
   const firePct = fireTarget > 0 ? Math.min(100, (settings.current_corpus / fireTarget) * 100) : 0;
 
   const milestones = [...goals]
@@ -319,8 +319,8 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi icon={Target} label="Active Goals" value={String(goals.length)} delta={`${onTrack} on track`} tone="mint" />
         <Kpi icon={PiggyBank} label="Total Saved" value={inr(totalSaved)} delta={`of ${inr(totalTarget)} target`} tone="positive" />
-        <Kpi icon={Wallet} label="Retirement" value={`${retPct.toFixed(1)}%`} delta={`${yearsToRet} yrs to go`} tone="mint" />
-        <Kpi icon={Flame} label="FIRE Progress" value={`${firePct.toFixed(1)}%`} delta={Number.isFinite(yrsToFire) ? `${yrsToFire.toFixed(1)} yrs to go` : "Set a SIP"} tone="warn" />
+        <Kpi icon={Wallet} label="Retirement" value={canCompute ? `${retPct.toFixed(1)}%` : "—"} delta={canCompute ? `${yearsToRet} yrs to go` : "Set up your plan"} tone="mint" />
+        <Kpi icon={Flame} label="FIRE Progress" value={canCompute ? `${firePct.toFixed(1)}%` : "—"} delta={canCompute ? (Number.isFinite(yrsToFire) ? `${yrsToFire.toFixed(1)} yrs to go` : "Add a SIP") : "Set up your plan"} tone="warn" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -328,14 +328,22 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <div className="font-display text-base font-semibold">Wealth Projection</div>
-              <div className="text-xs text-muted-foreground">Corpus growth at {settings.pre_return_pct}% CAGR · in ₹ Lakhs</div>
+              <div className="text-xs text-muted-foreground">
+                {canCompute ? `Corpus growth at ${settings.pre_return_pct}% CAGR · in ₹ Lakhs` : "Add your retirement plan to see a projection."}
+              </div>
             </div>
             <div className="text-right">
               <div className="text-xs text-muted-foreground">FIRE Number</div>
-              <div className="font-display text-lg font-bold text-mint">{inr(fireTarget)}</div>
+              <div className="font-display text-lg font-bold text-mint">{canCompute ? inr(fireTarget) : "—"}</div>
             </div>
           </div>
-          <ProjectionChart settings={settings} yearsSpan={Math.max(8, yearsToRet)} />
+          {canCompute ? (
+            <ProjectionChart settings={settings} yearsSpan={Math.max(8, yearsToRet)} />
+          ) : (
+            <div className="grid h-[260px] place-items-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+              No projection yet — head to the Retirement tab to enter your assumptions.
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
