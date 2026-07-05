@@ -25,9 +25,9 @@ export const usePrivacy = () => useContext(Ctx);
 const STORAGE_KEY = "fv-privacy";
 const DIGIT_RE = /\d/;
 
-/** Replace every digit with • while preserving currency symbols, +/-, %, punctuation, letters, whitespace. */
+/** Replace every digit with * while preserving currency symbols, +/-, %, punctuation, letters, whitespace. */
 export function maskNumbers(input: string): string {
-  return input.replace(/\d/g, "•");
+  return input.replace(/\d/g, "*");
 }
 
 /** Skip nodes inside inputs/textareas and editor-like fields. */
