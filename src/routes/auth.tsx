@@ -392,7 +392,7 @@ function PasswordField({
           type={show ? "text" : "password"}
           placeholder={placeholder}
           required
-          className="w-full rounded-xl border border-border bg-background/60 px-3.5 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
+          className="w-full rounded-xl border border-border bg-surface/60 px-3.5 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
         />
         <button
           type="button"
