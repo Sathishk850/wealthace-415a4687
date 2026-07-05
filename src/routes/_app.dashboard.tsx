@@ -43,7 +43,14 @@ import {
   defaultChartRange,
   type ChartRangeValue,
 } from "@/components/chart-range-selector";
-import { smartXAxisProps, formatAxisTick, filterSeriesByRange, computeAxisTicks } from "@/lib/chart-axis";
+import {
+  smartXAxisProps,
+  formatAxisTick,
+  filterSeriesByRange,
+  computeTimeAxisTicks,
+  getTimeAxisDomain,
+  dateToAxisTime,
+} from "@/lib/chart-axis";
 import { useAssets, useLiabilities, useInvestments, inr as inrW } from "@/lib/wealth-api";
 import { useTransactions } from "@/lib/money-api";
 import { useGoals } from "@/lib/planner-api";
@@ -721,11 +728,26 @@ function RangeChart({
 }) {
   const [range, setRange] = useState<ChartRangeValue>(() => defaultChartRange("1M"));
   const id = `g-${Math.random().toString(36).slice(2, 8)}`;
-  const filtered = useMemo(() => filterSeriesByRange(data, range), [data, range]);
-  const series = filtered;
+  const labels = useMemo(() => data.map((s) => s.label ?? null), [data]);
+  const series = useMemo(
+    () => {
+      const byDay = new Map<number, { i: number; v: number; label?: string; t: number }>();
+      for (const point of filterSeriesByRange(data, range)) {
+        const t = dateToAxisTime(point.label);
+        if (t == null) continue;
+        byDay.set(t, { ...point, t });
+      }
+      return Array.from(byDay.values()).sort((a, b) => a.t - b.t);
+    },
+    [data, range],
+  );
   const ticks = useMemo(
-    () => computeAxisTicks(series.map((s) => s.label ?? null), range),
-    [series, range],
+    () => computeTimeAxisTicks(range, labels),
+    [range, labels],
+  );
+  const domain = useMemo(
+    () => getTimeAxisDomain(range, labels),
+    [range, labels],
   );
   return (
     <div className="flex h-full flex-col">
@@ -747,11 +769,14 @@ function RangeChart({
               </linearGradient>
             </defs>
             <XAxis
-              dataKey="label"
+              dataKey="t"
+              type="number"
+              scale="time"
+              domain={domain}
               axisLine={false}
               tickLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
-              tickFormatter={(label: string) => formatAxisTick(label, range)}
+              tickFormatter={(value: number) => formatAxisTick(value, range)}
               {...smartXAxisProps}
               ticks={ticks.length ? ticks : undefined}
               interval={ticks.length ? 0 : smartXAxisProps.interval}
