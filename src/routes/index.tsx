@@ -244,7 +244,7 @@ function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-foreground">
+    <div className="min-h-screen bg-black text-foreground">
       {/* Ambient animated background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.22),transparent_65%)] blur-3xl" />
