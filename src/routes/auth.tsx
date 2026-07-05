@@ -62,7 +62,7 @@ function AuthPage() {
     if (safeRedirect) {
       navigate({ to: safeRedirect as never });
     } else {
-      navigate({ to: "/dashboard" });
+      goHome();
     }
   };
   const verifyPinFn = useServerFn(verifyPin);
@@ -100,7 +100,7 @@ function AuthPage() {
       const res = await verifyPinFn({ data: { pin: pinValue } });
       if (res?.ok) {
         setPinValue("");
-        navigate({ to: "/dashboard" });
+        goHome();
       } else {
         setMessage({ type: "error", text: "Incorrect PIN. Try again." });
       }
@@ -168,7 +168,7 @@ function AuthPage() {
         }
         if (data.session) {
           applyRememberDevice(remember);
-          navigate({ to: "/dashboard" });
+          goHome();
         } else {
           setMessage({
             type: "success",
@@ -191,7 +191,7 @@ function AuthPage() {
           return;
         }
         applyRememberDevice(remember);
-        navigate({ to: "/dashboard" });
+        goHome();
       } else if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
@@ -221,7 +221,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    goHome();
   };
 
   return (
