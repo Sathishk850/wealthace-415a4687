@@ -70,7 +70,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DEFAULT_SETTINGS,
   GOAL_TYPES,
   GOAL_TYPE_LABEL,
   fireNumber,
@@ -257,15 +256,29 @@ function fmtDate(iso: string | null) {
   if (!iso) return "No deadline";
   return new Date(iso).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 }
-function useSettingsOrDefaults() {
+/** Blank first-time state — no assumptions or defaults. */
+const BLANK_SETTINGS: Omit<PlannerSettings, "user_id" | "created_at" | "updated_at"> = {
+  current_age: 0,
+  retirement_age: 0,
+  life_expectancy: 0,
+  monthly_expense: 0,
+  inflation_pct: 0,
+  pre_return_pct: 0,
+  post_return_pct: 0,
+  current_corpus: 0,
+  monthly_sip: 0,
+  withdrawal_rate_pct: 0,
+};
+
+function useSettingsOrBlank() {
   const q = usePlannerSettings();
   const settings: PlannerSettings = (q.data ?? {
     user_id: "",
-    ...DEFAULT_SETTINGS,
+    ...BLANK_SETTINGS,
     created_at: "",
     updated_at: "",
   }) as PlannerSettings;
-  return { ...q, settings };
+  return { ...q, settings, hasSaved: !!q.data };
 }
 
 /* ---------- OVERVIEW ---------- */
