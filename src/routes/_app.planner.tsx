@@ -687,11 +687,11 @@ function GoalDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Target Amount (₹)</Label>
-              <Input type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} placeholder="500000" />
+              <Input type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label>Saved Amount (₹)</Label>
-              <Input type="number" min={0} value={saved} onChange={(e) => setSaved(e.target.value)} placeholder="0" />
+              <Input type="number" min={0} value={saved} onChange={(e) => setSaved(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -701,7 +701,7 @@ function GoalDialog({
             </div>
             <div className="grid gap-1.5">
               <Label>Monthly Contribution (₹)</Label>
-              <Input type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder="0" />
+              <Input type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
             </div>
           </div>
           <div className="grid gap-1.5">
@@ -1000,7 +1000,6 @@ function FieldNum({
         type="number"
         step={step}
         value={value === 0 ? "" : value}
-        placeholder="0"
         onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
         className="h-7 w-28 text-right text-xs"
       />
