@@ -1,20 +1,19 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowLeft, ArrowUpRight, ArrowDownRight, Save, Trash2, Info } from "lucide-react";
-import { HOLDINGS, findHolding } from "./_app.wealth";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, Save, Trash2 } from "lucide-react";
+import { useInvestments, useUpsertInvestment, useDeleteInvestment, formatDate } from "@/lib/wealth-api";
 
 export const Route = createFileRoute("/_app/holdings/$slug")({
-  head: ({ params }) => {
-    const h = findHolding(params.slug);
-    return {
-      meta: [
-        { title: `${h?.name ?? "Holding"} · FinVista` },
-        { name: "description", content: "View and edit holding details." },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: "Holding · FinVista" },
+      { name: "description", content: "View and edit holding details." },
+    ],
+  }),
   component: HoldingDetail,
-  notFoundComponent: () => <div className="p-8 text-sm text-muted-foreground">Holding not found.</div>,
+  notFoundComponent: () => (
+    <div className="p-8 text-sm text-muted-foreground">Holding not found.</div>
+  ),
   errorComponent: ({ error }) => (
     <div className="p-8 text-sm text-rose-400">{error.message}</div>
   ),
@@ -27,16 +26,36 @@ function fmtINR(n: number) {
 function HoldingDetail() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
-  const initial = HOLDINGS.find((h) => h.slug === slug);
+  const { data: investments = [], isLoading } = useInvestments();
+  const upsert = useUpsertInvestment();
+  const del = useDeleteInvestment();
+
+  const initial = useMemo(() => investments.find((h) => h.id === slug), [investments, slug]);
 
   const [edit, setEdit] = useState(false);
-  const [form, setForm] = useState(() => ({
-    name: initial?.name ?? "",
-    type: initial?.type ?? "",
-    qty: initial?.qty ?? 0,
-    avgPrice: initial?.avgPrice ?? 0,
-    currentPrice: initial?.currentPrice ?? 0,
-  }));
+  const [form, setForm] = useState({
+    name: "",
+    category: "",
+    quantity: 0,
+    avg_price: 0,
+    current_price: 0,
+  });
+
+  useEffect(() => {
+    if (initial) {
+      setForm({
+        name: initial.name,
+        category: initial.category,
+        quantity: initial.quantity,
+        avg_price: initial.avg_price,
+        current_price: initial.current_price,
+      });
+    }
+  }, [initial]);
+
+  if (isLoading) {
+    return <div className="p-8 text-sm text-muted-foreground">Loading…</div>;
+  }
 
   if (!initial) {
     return (
@@ -49,11 +68,29 @@ function HoldingDetail() {
     );
   }
 
-  const invested = form.qty * form.avgPrice;
-  const current = form.qty * form.currentPrice;
+  const invested = form.quantity * form.avg_price;
+  const current = form.quantity * form.current_price;
   const pnl = current - invested;
   const ret = invested > 0 ? (pnl / invested) * 100 : 0;
   const up = pnl >= 0;
+
+  const save = async () => {
+    await upsert.mutateAsync({
+      id: initial.id,
+      name: form.name,
+      category: form.category,
+      quantity: form.quantity,
+      avg_price: form.avg_price,
+      current_price: form.current_price,
+    });
+    setEdit(false);
+  };
+
+  const remove = async () => {
+    if (!confirm("Delete this holding?")) return;
+    await del.mutateAsync(initial.id);
+    navigate({ to: "/wealth" });
+  };
 
   return (
     <div className="space-y-5">
@@ -66,27 +103,49 @@ function HoldingDetail() {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-sm font-bold text-white" style={{ background: initial.color }}>
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-mint/15 text-sm font-bold text-mint">
               {initial.name.slice(0, 1)}
             </span>
             <div>
               <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">{initial.name}</h1>
-              <div className="text-xs text-muted-foreground">{initial.type} · {initial.sub}</div>
+              <div className="text-xs text-muted-foreground">
+                {initial.category}
+                {initial.sub_category ? ` · ${initial.sub_category}` : ""}
+              </div>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {edit ? (
             <>
-              <button onClick={() => setEdit(false)} className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">Cancel</button>
-              <button onClick={() => setEdit(false)} className="inline-flex items-center gap-2 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] hover:brightness-110">
-                <Save className="h-3.5 w-3.5" /> Save
+              <button
+                onClick={() => setEdit(false)}
+                disabled={upsert.isPending}
+                className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={save}
+                disabled={upsert.isPending}
+                className="inline-flex items-center gap-2 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] hover:brightness-110"
+              >
+                <Save className="h-3.5 w-3.5" /> {upsert.isPending ? "Saving…" : "Save"}
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => setEdit(true)} className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-surface-2">Edit</button>
-              <button className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/20">
+              <button
+                onClick={() => setEdit(true)}
+                className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-surface-2"
+              >
+                Edit
+              </button>
+              <button
+                onClick={remove}
+                disabled={del.isPending}
+                className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/20"
+              >
                 <Trash2 className="h-3.5 w-3.5" /> Delete
               </button>
             </>
@@ -103,45 +162,23 @@ function HoldingDetail() {
           tone={up ? "text-emerald-400" : "text-rose-400"}
           icon={up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
         />
-        <Stat label="Returns %" value={(up ? "+" : "") + ret.toFixed(2) + "%"} tone={up ? "text-emerald-400" : "text-rose-400"} />
+        <Stat
+          label="Returns %"
+          value={(up ? "+" : "") + ret.toFixed(2) + "%"}
+          tone={up ? "text-emerald-400" : "text-rose-400"}
+        />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="text-sm font-semibold text-foreground">Holding Details</h3>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Name" value={form.name} edit={edit} onChange={(v) => setForm({ ...form, name: v })} />
-            <Field label="Type" value={form.type} edit={edit} onChange={(v) => setForm({ ...form, type: v })} />
-            <Field label="Quantity" value={String(form.qty)} edit={edit} onChange={(v) => setForm({ ...form, qty: Number(v) || 0 })} numeric />
-            <Field label="Avg Price" value={String(form.avgPrice)} edit={edit} onChange={(v) => setForm({ ...form, avgPrice: Number(v) || 0 })} numeric />
-            <Field label="Current Price" value={String(form.currentPrice)} edit={edit} onChange={(v) => setForm({ ...form, currentPrice: Number(v) || 0 })} numeric />
-            <Field label="Last Updated" value={initial.date} edit={false} onChange={() => {}} />
-          </div>
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <h3 className="text-sm font-semibold text-foreground">Holding Details</h3>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Name" value={form.name} edit={edit} onChange={(v) => setForm({ ...form, name: v })} />
+          <Field label="Category" value={form.category} edit={edit} onChange={(v) => setForm({ ...form, category: v })} />
+          <Field label="Quantity" value={String(form.quantity)} edit={edit} onChange={(v) => setForm({ ...form, quantity: Number(v) || 0 })} numeric />
+          <Field label="Avg Price" value={String(form.avg_price)} edit={edit} onChange={(v) => setForm({ ...form, avg_price: Number(v) || 0 })} numeric />
+          <Field label="Current Price" value={String(form.current_price)} edit={edit} onChange={(v) => setForm({ ...form, current_price: Number(v) || 0 })} numeric />
+          <Field label="Last Updated" value={formatDate(initial.last_updated)} edit={false} onChange={() => {}} />
         </div>
-
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="text-sm font-semibold text-foreground">Activity</h3>
-          <div className="mt-4 space-y-3 text-xs">
-            {[
-              { d: "11 Jun 2025", a: "Price updated", v: fmtINR(initial.currentPrice) },
-              { d: "01 Jun 2025", a: "Buy", v: `${initial.qty} units @ ${fmtINR(initial.avgPrice)}` },
-              { d: "15 May 2025", a: "Created", v: initial.name },
-            ].map((r) => (
-              <div key={r.d + r.a} className="flex items-start justify-between border-b border-border/40 pb-2 last:border-0">
-                <div>
-                  <div className="font-medium text-foreground">{r.a}</div>
-                  <div className="text-[11px] text-muted-foreground">{r.d}</div>
-                </div>
-                <div className="text-right text-foreground">{r.v}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs text-muted-foreground">
-        <Info className="h-3.5 w-3.5 text-mint" />
-        Edits are local to this session and will not persist.
       </div>
     </div>
   );
