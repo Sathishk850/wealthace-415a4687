@@ -62,7 +62,7 @@ function AuthPage() {
     if (safeRedirect) {
       navigate({ to: safeRedirect as never });
     } else {
-      goHome();
+      navigate({ to: "/dashboard" });
     }
   };
   const verifyPinFn = useServerFn(verifyPin);
