@@ -77,10 +77,12 @@ import {
   inrFull,
   projectCorpus,
   retirementCorpusNeeded,
+  useFirePlan,
   useDeleteGoal,
   useGoals,
-  usePlannerSettings,
-  useSavePlannerSettings,
+  useRetirementPlan,
+  useSaveFirePlan,
+  useSaveRetirementPlan,
   useUpsertGoal,
   yearsToReach,
   type Goal,
@@ -268,46 +270,70 @@ const BLANK_SETTINGS: Omit<PlannerSettings, "user_id" | "created_at" | "updated_
   current_corpus: 0,
   monthly_sip: 0,
   withdrawal_rate_pct: 0,
+  retirement_plan_saved: false,
+  fire_plan_saved: false,
 };
+const RETIREMENT_CLEAR_KEY = "finvista.planner.retirement.cleared";
+const FIRE_CLEAR_KEY = "finvista.planner.fire.cleared";
 
-function useSettingsOrBlank() {
-  const q = usePlannerSettings();
-  const settings: PlannerSettings = (q.data ?? {
-    user_id: "",
-    ...BLANK_SETTINGS,
-    created_at: "",
-    updated_at: "",
-  }) as PlannerSettings;
-  return { ...q, settings, hasSaved: !!q.data };
+function readClearMarker(key: string) {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(key) === "1";
+}
+function writeClearMarker(key: string, value: boolean) {
+  if (typeof window === "undefined") return;
+  if (value) window.localStorage.setItem(key, "1");
+  else window.localStorage.removeItem(key);
+  window.sessionStorage.removeItem(key);
 }
 
 /* ---------- OVERVIEW ---------- */
 function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
   const goalsQ = useGoals();
-  const { settings, hasSaved, isLoading: sLoad, error: sErr, refetch: sRefetch } = useSettingsOrBlank();
+  const retQ = useRetirementPlan();
+  const fireQ = useFirePlan();
 
-  if (goalsQ.isLoading || sLoad) return <LoadingBlock label="Loading planner…" />;
+  if (goalsQ.isLoading || retQ.isLoading || fireQ.isLoading) return <LoadingBlock label="Loading planner…" />;
   if (goalsQ.error) return <ErrorBlock error={goalsQ.error as Error} onRetry={() => goalsQ.refetch()} />;
-  if (sErr) return <ErrorBlock error={sErr as Error} onRetry={() => sRefetch()} />;
+  if (retQ.error) return <ErrorBlock error={retQ.error as Error} onRetry={() => retQ.refetch()} />;
+  if (fireQ.error) return <ErrorBlock error={fireQ.error as Error} onRetry={() => fireQ.refetch()} />;
 
   const goals = goalsQ.data ?? [];
+  const retirementPlan = retQ.data ?? null;
+  const firePlan = fireQ.data ?? null;
   const totalSaved = goals.reduce((s, g) => s + g.saved_amount, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target_amount, 0);
   const onTrack = goals.filter((g) => goalProgressPct(g) >= 50).length;
 
-  const canCompute = hasSaved && settings.current_age > 0 && settings.retirement_age > settings.current_age && settings.monthly_expense > 0;
-  const retirementTarget = canCompute ? retirementCorpusNeeded(settings) : 0;
-  const yearsToRet = canCompute ? Math.max(0, settings.retirement_age - settings.current_age) : 0;
-  const retirementProjected = canCompute
-    ? projectCorpus(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, yearsToRet)
+  const retirementSettings: PlannerSettings = {
+    user_id: "",
+    ...BLANK_SETTINGS,
+    ...(retirementPlan ?? {}),
+    created_at: "",
+    updated_at: "",
+  };
+  const fireSettings: PlannerSettings = {
+    user_id: "",
+    ...BLANK_SETTINGS,
+    ...(firePlan ?? {}),
+    created_at: "",
+    updated_at: "",
+  };
+
+  const canComputeRet = !!retirementPlan && retirementSettings.current_age > 0 && retirementSettings.retirement_age > retirementSettings.current_age && retirementSettings.monthly_expense > 0;
+  const retirementTarget = canComputeRet ? retirementCorpusNeeded(retirementSettings) : 0;
+  const yearsToRet = canComputeRet ? Math.max(0, retirementSettings.retirement_age - retirementSettings.current_age) : 0;
+  const retirementProjected = canComputeRet
+    ? projectCorpus(retirementSettings.current_corpus, retirementSettings.monthly_sip, retirementSettings.pre_return_pct, yearsToRet)
     : 0;
   const retPct = retirementTarget > 0 ? Math.min(100, (retirementProjected / retirementTarget) * 100) : 0;
 
-  const fireTarget = canCompute ? fireNumber(settings) : 0;
-  const yrsToFire = canCompute
-    ? yearsToReach(settings.current_corpus, settings.monthly_sip, settings.pre_return_pct, fireTarget)
+  const canComputeFire = !!firePlan && fireSettings.current_age > 0 && fireSettings.monthly_expense > 0 && fireSettings.withdrawal_rate_pct > 0 && fireSettings.pre_return_pct > 0;
+  const fireTarget = canComputeFire ? fireNumber(fireSettings) : 0;
+  const yrsToFire = canComputeFire
+    ? yearsToReach(fireSettings.current_corpus, fireSettings.monthly_sip, fireSettings.pre_return_pct, fireTarget)
     : Infinity;
-  const firePct = fireTarget > 0 ? Math.min(100, (settings.current_corpus / fireTarget) * 100) : 0;
+  const firePct = fireTarget > 0 ? Math.min(100, (fireSettings.current_corpus / fireTarget) * 100) : 0;
 
   const milestones = [...goals]
     .filter((g) => g.target_date)
@@ -319,8 +345,8 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi icon={Target} label="Active Goals" value={String(goals.length)} delta={`${onTrack} on track`} tone="mint" />
         <Kpi icon={PiggyBank} label="Total Saved" value={inr(totalSaved)} delta={`of ${inr(totalTarget)} target`} tone="positive" />
-        <Kpi icon={Wallet} label="Retirement" value={canCompute ? `${retPct.toFixed(1)}%` : "—"} delta={canCompute ? `${yearsToRet} yrs to go` : "Set up your plan"} tone="mint" />
-        <Kpi icon={Flame} label="FIRE Progress" value={canCompute ? `${firePct.toFixed(1)}%` : "—"} delta={canCompute ? (Number.isFinite(yrsToFire) ? `${yrsToFire.toFixed(1)} yrs to go` : "Add a SIP") : "Set up your plan"} tone="warn" />
+        <Kpi icon={Wallet} label="Retirement" value={canComputeRet ? `${retPct.toFixed(1)}%` : "—"} delta={canComputeRet ? `${yearsToRet} yrs to go` : "Set up your plan"} tone="mint" />
+        <Kpi icon={Flame} label="FIRE Progress" value={canComputeFire ? `${firePct.toFixed(1)}%` : "—"} delta={canComputeFire ? (Number.isFinite(yrsToFire) ? `${yrsToFire.toFixed(1)} yrs to go` : "Add a SIP") : "Set up your plan"} tone="warn" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -329,16 +355,16 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
             <div>
               <div className="font-display text-base font-semibold">Wealth Projection</div>
               <div className="text-xs text-muted-foreground">
-                {canCompute ? `Corpus growth at ${settings.pre_return_pct}% CAGR · in ₹ Lakhs` : "Add your retirement plan to see a projection."}
+                {canComputeRet ? `Corpus growth at ${retirementSettings.pre_return_pct}% CAGR · in ₹ Lakhs` : "Add your retirement plan to see a projection."}
               </div>
             </div>
             <div className="text-right">
               <div className="text-xs text-muted-foreground">FIRE Number</div>
-              <div className="font-display text-lg font-bold text-mint">{canCompute ? inr(fireTarget) : "—"}</div>
+              <div className="font-display text-lg font-bold text-mint">{canComputeFire ? inr(fireTarget) : "—"}</div>
             </div>
           </div>
-          {canCompute ? (
-            <ProjectionChart settings={settings} yearsSpan={Math.max(8, yearsToRet)} />
+          {canComputeRet ? (
+            <ProjectionChart settings={retirementSettings} yearsSpan={Math.max(8, yearsToRet)} />
           ) : (
             <div className="grid h-[260px] place-items-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
               No projection yet — head to the Retirement tab to enter your assumptions.
@@ -661,11 +687,11 @@ function GoalDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Target Amount (₹)</Label>
-              <Input type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} placeholder="500000" />
+              <Input type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label>Saved Amount (₹)</Label>
-              <Input type="number" min={0} value={saved} onChange={(e) => setSaved(e.target.value)} placeholder="0" />
+              <Input type="number" min={0} value={saved} onChange={(e) => setSaved(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -675,7 +701,7 @@ function GoalDialog({
             </div>
             <div className="grid gap-1.5">
               <Label>Monthly Contribution (₹)</Label>
-              <Input type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder="0" />
+              <Input type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
             </div>
           </div>
           <div className="grid gap-1.5">
@@ -774,33 +800,36 @@ const BLANK_RET: RetInputs = {
 };
 
 function RetirementView() {
-  const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
-  const save = useSavePlannerSettings();
+  const { data: savedPlan, isLoading, error, refetch } = useRetirementPlan();
+  const save = useSaveRetirementPlan();
   const [inputs, setInputs] = useState<RetInputs | null>(null);
-  const [cleared, setCleared] = useState(false);
+  const [cleared, setCleared] = useState(() => readClearMarker(RETIREMENT_CLEAR_KEY));
+  const [calculated, setCalculated] = useState(false);
+  const savedPlanToLoad = !cleared ? savedPlan : null;
 
-  // Hydrate from saved settings (only when user hasn't cleared)
-  const effective: RetInputs = inputs ?? (hasSaved && !cleared
+  // Hydrate only an explicitly saved retirement plan.
+  const effective: RetInputs = inputs ?? (savedPlanToLoad
     ? {
-        current_age: settings.current_age,
-        retirement_age: settings.retirement_age,
-        life_expectancy: settings.life_expectancy,
-        monthly_expense: settings.monthly_expense,
-        inflation_pct: settings.inflation_pct,
-        pre_return_pct: settings.pre_return_pct,
-        post_return_pct: settings.post_return_pct,
-        current_corpus: settings.current_corpus,
-        monthly_sip: settings.monthly_sip,
+        current_age: savedPlanToLoad.current_age,
+        retirement_age: savedPlanToLoad.retirement_age,
+        life_expectancy: savedPlanToLoad.life_expectancy,
+        monthly_expense: savedPlanToLoad.monthly_expense,
+        inflation_pct: savedPlanToLoad.inflation_pct,
+        pre_return_pct: savedPlanToLoad.pre_return_pct,
+        post_return_pct: savedPlanToLoad.post_return_pct,
+        current_corpus: savedPlanToLoad.current_corpus,
+        monthly_sip: savedPlanToLoad.monthly_sip,
       }
     : BLANK_RET);
 
-  const canCompute =
+  const hasRequiredInputs =
     effective.current_age > 0 &&
     effective.retirement_age > effective.current_age &&
     effective.monthly_expense > 0 &&
     effective.life_expectancy > effective.retirement_age;
+  const canCompute = (calculated || (!!savedPlanToLoad && inputs === null)) && hasRequiredInputs;
 
-  const s: PlannerSettings = { ...settings, ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct || 4 };
+  const s: PlannerSettings = { user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" };
   const yearsToRet = Math.max(0, effective.retirement_age - effective.current_age);
   const target = canCompute ? retirementCorpusNeeded(s) : 0;
   const projected = canCompute ? projectCorpus(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, yearsToRet) : 0;
@@ -835,17 +864,29 @@ function RetirementView() {
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
 
   function patch<K extends keyof RetInputs>(k: K, v: RetInputs[K]) {
-    setCleared(false);
+    setCalculated(false);
     setInputs({ ...effective, [k]: v });
   }
   function clearAll() {
     setInputs(BLANK_RET);
     setCleared(true);
+    setCalculated(false);
+    writeClearMarker(RETIREMENT_CLEAR_KEY, true);
+  }
+  function calculate() {
+    setCalculated(true);
   }
   function persist() {
     save.mutate(
-      { ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct || 4 },
-      { onSuccess: () => { setInputs(null); setCleared(false); } }
+      effective,
+      {
+        onSuccess: () => {
+          setInputs(null);
+          setCleared(false);
+          setCalculated(true);
+          writeClearMarker(RETIREMENT_CLEAR_KEY, false);
+        },
+      }
     );
   }
 
@@ -919,8 +960,16 @@ function RetirementView() {
               Clear
             </Button>
             <Button
+              variant="outline"
+              className="flex-1"
+              disabled={!hasRequiredInputs || save.isPending}
+              onClick={calculate}
+            >
+              Calculate
+            </Button>
+            <Button
               className="flex-1 bg-mint text-mint-foreground hover:bg-mint/90"
-              disabled={!canCompute || save.isPending}
+              disabled={!hasRequiredInputs || save.isPending}
               onClick={persist}
             >
               {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
@@ -951,7 +1000,6 @@ function FieldNum({
         type="number"
         step={step}
         value={value === 0 ? "" : value}
-        placeholder="0"
         onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
         className="h-7 w-28 text-right text-xs"
       />
@@ -978,27 +1026,30 @@ const BLANK_FIRE: FireInputs = {
 };
 
 function FireView() {
-  const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
-  const save = useSavePlannerSettings();
+  const { data: savedPlan, isLoading, error, refetch } = useFirePlan();
+  const save = useSaveFirePlan();
   const [inputs, setInputs] = useState<FireInputs | null>(null);
-  const [cleared, setCleared] = useState(false);
+  const [cleared, setCleared] = useState(() => readClearMarker(FIRE_CLEAR_KEY));
+  const [calculated, setCalculated] = useState(false);
+  const savedPlanToLoad = !cleared ? savedPlan : null;
 
-  const effective: FireInputs = inputs ?? (hasSaved && !cleared
+  const effective: FireInputs = inputs ?? (savedPlanToLoad
     ? {
-        current_age: settings.current_age,
-        monthly_expense: settings.monthly_expense,
-        current_corpus: settings.current_corpus,
-        monthly_sip: settings.monthly_sip,
-        pre_return_pct: settings.pre_return_pct,
-        withdrawal_rate_pct: settings.withdrawal_rate_pct,
+        current_age: savedPlanToLoad.current_age,
+        monthly_expense: savedPlanToLoad.monthly_expense,
+        current_corpus: savedPlanToLoad.current_corpus,
+        monthly_sip: savedPlanToLoad.monthly_sip,
+        pre_return_pct: savedPlanToLoad.pre_return_pct,
+        withdrawal_rate_pct: savedPlanToLoad.withdrawal_rate_pct,
       }
     : BLANK_FIRE);
 
-  const canCompute =
+  const hasRequiredInputs =
     effective.current_age > 0 &&
     effective.monthly_expense > 0 &&
     effective.withdrawal_rate_pct > 0 &&
     effective.pre_return_pct > 0;
+  const canCompute = (calculated || (!!savedPlanToLoad && inputs === null)) && hasRequiredInputs;
 
   const fireTarget = canCompute ? (effective.monthly_expense * 12) / (effective.withdrawal_rate_pct / 100) : 0;
   const yrs = canCompute ? yearsToReach(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, fireTarget) : Infinity;
@@ -1008,15 +1059,30 @@ function FireView() {
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
 
   function patch<K extends keyof FireInputs>(k: K, v: FireInputs[K]) {
-    setCleared(false);
+    setCalculated(false);
     setInputs({ ...effective, [k]: v });
   }
   function clearAll() {
     setInputs(BLANK_FIRE);
     setCleared(true);
+    setCalculated(false);
+    writeClearMarker(FIRE_CLEAR_KEY, true);
+  }
+  function calculate() {
+    setCalculated(true);
   }
   function persist() {
-    save.mutate(effective, { onSuccess: () => { setInputs(null); setCleared(false); } });
+    save.mutate(
+      effective,
+      {
+        onSuccess: () => {
+          setInputs(null);
+          setCleared(false);
+          setCalculated(true);
+          writeClearMarker(FIRE_CLEAR_KEY, false);
+        },
+      }
+    );
   }
 
   const hasAnyInput = Object.values(effective).some((v) => v > 0);
@@ -1061,7 +1127,7 @@ function FireView() {
           <div className="mb-4 font-display text-base font-semibold">FIRE Trajectory</div>
           {canCompute ? (
             <ProjectionChart
-              settings={{ ...settings, ...effective } as PlannerSettings}
+              settings={{ user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" } as PlannerSettings}
               yearsSpan={Math.max(8, Number.isFinite(yrs) ? Math.ceil(yrs) + 2 : 25)}
             />
           ) : (
@@ -1099,8 +1165,16 @@ function FireView() {
               Clear
             </Button>
             <Button
+              variant="outline"
+              className="flex-1"
+              disabled={!hasRequiredInputs || save.isPending}
+              onClick={calculate}
+            >
+              Calculate
+            </Button>
+            <Button
               className="flex-1 bg-mint text-mint-foreground hover:bg-mint/90"
-              disabled={!canCompute || save.isPending}
+              disabled={!hasRequiredInputs || save.isPending}
               onClick={persist}
             >
               {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}

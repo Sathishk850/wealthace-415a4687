@@ -55,6 +55,35 @@ export type PlannerSettings = {
   current_corpus: number;
   monthly_sip: number;
   withdrawal_rate_pct: number;
+  retirement_plan_saved: boolean;
+  fire_plan_saved: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RetirementPlan = {
+  user_id: string;
+  current_age: number;
+  retirement_age: number;
+  life_expectancy: number;
+  monthly_expense: number;
+  inflation_pct: number;
+  pre_return_pct: number;
+  post_return_pct: number;
+  current_corpus: number;
+  monthly_sip: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FirePlan = {
+  user_id: string;
+  current_age: number;
+  monthly_expense: number;
+  current_corpus: number;
+  monthly_sip: number;
+  pre_return_pct: number;
+  withdrawal_rate_pct: number;
   created_at: string;
   updated_at: string;
 };
@@ -62,6 +91,8 @@ export type PlannerSettings = {
 export const plannerKeys = {
   goals: ["planner", "goals"] as const,
   settings: ["planner", "settings"] as const,
+  retirementPlan: ["planner", "retirement-plan"] as const,
+  firePlan: ["planner", "fire-plan"] as const,
 };
 
 async function uid() {
@@ -185,7 +216,7 @@ export function usePlannerSettings() {
 export function useSavePlannerSettings() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: Partial<Omit<PlannerSettings, "user_id" | "created_at" | "updated_at">>) => {
+    mutationFn: async (input: Omit<PlannerSettings, "user_id" | "created_at" | "updated_at">) => {
       const user_id = await uid();
       const { error } = await supabase
         .from("planner_settings")
@@ -200,20 +231,94 @@ export function useSavePlannerSettings() {
   });
 }
 
-/* ---------- helpers ---------- */
-export const DEFAULT_SETTINGS: Omit<PlannerSettings, "user_id" | "created_at" | "updated_at"> = {
-  current_age: 30,
-  retirement_age: 60,
-  life_expectancy: 85,
-  monthly_expense: 50000,
-  inflation_pct: 6.5,
-  pre_return_pct: 12,
-  post_return_pct: 7,
-  current_corpus: 0,
-  monthly_sip: 0,
-  withdrawal_rate_pct: 4,
-};
+export function useRetirementPlan() {
+  return useQuery({
+    queryKey: plannerKeys.retirementPlan,
+    queryFn: async (): Promise<RetirementPlan | null> => {
+      const user_id = await uid();
+      const { data, error } = await supabase
+        .from("planner_retirement_plans")
+        .select("*")
+        .eq("user_id", user_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return num(data, [
+        "current_age",
+        "retirement_age",
+        "life_expectancy",
+        "monthly_expense",
+        "inflation_pct",
+        "pre_return_pct",
+        "post_return_pct",
+        "current_corpus",
+        "monthly_sip",
+      ]) as RetirementPlan;
+    },
+  });
+}
 
+export function useSaveRetirementPlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Omit<RetirementPlan, "user_id" | "created_at" | "updated_at">) => {
+      const user_id = await uid();
+      const { error } = await supabase
+        .from("planner_retirement_plans")
+        .upsert({ user_id, ...input }, { onConflict: "user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Retirement plan saved");
+      qc.invalidateQueries({ queryKey: plannerKeys.retirementPlan });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save"),
+  });
+}
+
+export function useFirePlan() {
+  return useQuery({
+    queryKey: plannerKeys.firePlan,
+    queryFn: async (): Promise<FirePlan | null> => {
+      const user_id = await uid();
+      const { data, error } = await supabase
+        .from("planner_fire_plans")
+        .select("*")
+        .eq("user_id", user_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return num(data, [
+        "current_age",
+        "monthly_expense",
+        "current_corpus",
+        "monthly_sip",
+        "pre_return_pct",
+        "withdrawal_rate_pct",
+      ]) as FirePlan;
+    },
+  });
+}
+
+export function useSaveFirePlan() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: Omit<FirePlan, "user_id" | "created_at" | "updated_at">) => {
+      const user_id = await uid();
+      const { error } = await supabase
+        .from("planner_fire_plans")
+        .upsert({ user_id, ...input }, { onConflict: "user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("FIRE plan saved");
+      qc.invalidateQueries({ queryKey: plannerKeys.firePlan });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save"),
+  });
+}
+
+/* ---------- helpers ---------- */
 export const inr = (n: number) =>
   n >= 10000000
     ? `₹${(n / 10000000).toFixed(2)}Cr`
