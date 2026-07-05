@@ -797,7 +797,7 @@ function RetirementView() {
   const [inputs, setInputs] = useState<RetInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(RETIREMENT_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
-  const shouldLoadSavedPlan = !!savedPlan && !cleared;
+  const shouldLoadSavedPlan = savedPlan && !cleared;
 
   // Hydrate only an explicitly saved retirement plan.
   const effective: RetInputs = inputs ?? (shouldLoadSavedPlan
@@ -819,7 +819,7 @@ function RetirementView() {
     effective.retirement_age > effective.current_age &&
     effective.monthly_expense > 0 &&
     effective.life_expectancy > effective.retirement_age;
-  const canCompute = (calculated || (shouldLoadSavedPlan && inputs === null)) && hasRequiredInputs;
+  const canCompute = (calculated || (!!shouldLoadSavedPlan && inputs === null)) && hasRequiredInputs;
 
   const s: PlannerSettings = { user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" };
   const yearsToRet = Math.max(0, effective.retirement_age - effective.current_age);
@@ -1024,7 +1024,7 @@ function FireView() {
   const [inputs, setInputs] = useState<FireInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(FIRE_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
-  const shouldLoadSavedPlan = !!savedPlan && !cleared;
+  const shouldLoadSavedPlan = savedPlan && !cleared;
 
   const effective: FireInputs = inputs ?? (shouldLoadSavedPlan
     ? {
@@ -1042,7 +1042,7 @@ function FireView() {
     effective.monthly_expense > 0 &&
     effective.withdrawal_rate_pct > 0 &&
     effective.pre_return_pct > 0;
-  const canCompute = (calculated || (shouldLoadSavedPlan && inputs === null)) && hasRequiredInputs;
+  const canCompute = (calculated || (!!shouldLoadSavedPlan && inputs === null)) && hasRequiredInputs;
 
   const fireTarget = canCompute ? (effective.monthly_expense * 12) / (effective.withdrawal_rate_pct / 100) : 0;
   const yrs = canCompute ? yearsToReach(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, fireTarget) : Infinity;
