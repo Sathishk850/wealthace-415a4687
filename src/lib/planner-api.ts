@@ -55,6 +55,8 @@ export type PlannerSettings = {
   current_corpus: number;
   monthly_sip: number;
   withdrawal_rate_pct: number;
+  retirement_plan_saved: boolean;
+  fire_plan_saved: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -185,7 +187,7 @@ export function usePlannerSettings() {
 export function useSavePlannerSettings() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: Partial<Omit<PlannerSettings, "user_id" | "created_at" | "updated_at">>) => {
+    mutationFn: async (input: Omit<PlannerSettings, "user_id" | "created_at" | "updated_at">) => {
       const user_id = await uid();
       const { error } = await supabase
         .from("planner_settings")
@@ -201,19 +203,6 @@ export function useSavePlannerSettings() {
 }
 
 /* ---------- helpers ---------- */
-export const DEFAULT_SETTINGS: Omit<PlannerSettings, "user_id" | "created_at" | "updated_at"> = {
-  current_age: 30,
-  retirement_age: 60,
-  life_expectancy: 85,
-  monthly_expense: 50000,
-  inflation_pct: 6.5,
-  pre_return_pct: 12,
-  post_return_pct: 7,
-  current_corpus: 0,
-  monthly_sip: 0,
-  withdrawal_rate_pct: 4,
-};
-
 export const inr = (n: number) =>
   n >= 10000000
     ? `₹${(n / 10000000).toFixed(2)}Cr`

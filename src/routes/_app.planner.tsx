@@ -268,7 +268,22 @@ const BLANK_SETTINGS: Omit<PlannerSettings, "user_id" | "created_at" | "updated_
   current_corpus: 0,
   monthly_sip: 0,
   withdrawal_rate_pct: 0,
+  retirement_plan_saved: false,
+  fire_plan_saved: false,
 };
+const RETIREMENT_CLEAR_KEY = "finvista.planner.retirement.cleared";
+const FIRE_CLEAR_KEY = "finvista.planner.fire.cleared";
+
+function readClearMarker(key: string) {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(key) === "1";
+}
+function writeClearMarker(key: string, value: boolean) {
+  if (typeof window === "undefined") return;
+  if (value) window.localStorage.setItem(key, "1");
+  else window.localStorage.removeItem(key);
+  window.sessionStorage.removeItem(key);
+}
 
 function useSettingsOrBlank() {
   const q = usePlannerSettings();
@@ -777,10 +792,12 @@ function RetirementView() {
   const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
   const save = useSavePlannerSettings();
   const [inputs, setInputs] = useState<RetInputs | null>(null);
-  const [cleared, setCleared] = useState(false);
+  const [cleared, setCleared] = useState(() => readClearMarker(RETIREMENT_CLEAR_KEY));
+  const [calculated, setCalculated] = useState(false);
+  const shouldLoadSavedPlan = hasSaved && settings.retirement_plan_saved && !cleared;
 
-  // Hydrate from saved settings (only when user hasn't cleared)
-  const effective: RetInputs = inputs ?? (hasSaved && !cleared
+  // Hydrate only an explicitly saved retirement plan.
+  const effective: RetInputs = inputs ?? (shouldLoadSavedPlan
     ? {
         current_age: settings.current_age,
         retirement_age: settings.retirement_age,
@@ -794,13 +811,14 @@ function RetirementView() {
       }
     : BLANK_RET);
 
-  const canCompute =
+  const hasRequiredInputs =
     effective.current_age > 0 &&
     effective.retirement_age > effective.current_age &&
     effective.monthly_expense > 0 &&
     effective.life_expectancy > effective.retirement_age;
+  const canCompute = (calculated || (shouldLoadSavedPlan && inputs === null)) && hasRequiredInputs;
 
-  const s: PlannerSettings = { ...settings, ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct || 4 };
+  const s: PlannerSettings = { ...settings, ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct };
   const yearsToRet = Math.max(0, effective.retirement_age - effective.current_age);
   const target = canCompute ? retirementCorpusNeeded(s) : 0;
   const projected = canCompute ? projectCorpus(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, yearsToRet) : 0;
@@ -835,17 +853,35 @@ function RetirementView() {
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
 
   function patch<K extends keyof RetInputs>(k: K, v: RetInputs[K]) {
-    setCleared(false);
+    setCalculated(false);
     setInputs({ ...effective, [k]: v });
   }
   function clearAll() {
     setInputs(BLANK_RET);
     setCleared(true);
+    setCalculated(false);
+    writeClearMarker(RETIREMENT_CLEAR_KEY, true);
+  }
+  function calculate() {
+    setCalculated(true);
   }
   function persist() {
     save.mutate(
-      { ...effective, withdrawal_rate_pct: settings.withdrawal_rate_pct || 4 },
-      { onSuccess: () => { setInputs(null); setCleared(false); } }
+      {
+        ...BLANK_SETTINGS,
+        ...(hasSaved ? settings : {}),
+        ...effective,
+        retirement_plan_saved: true,
+        fire_plan_saved: hasSaved ? settings.fire_plan_saved : false,
+      },
+      {
+        onSuccess: () => {
+          setInputs(null);
+          setCleared(false);
+          setCalculated(true);
+          writeClearMarker(RETIREMENT_CLEAR_KEY, false);
+        },
+      }
     );
   }
 
@@ -919,8 +955,16 @@ function RetirementView() {
               Clear
             </Button>
             <Button
+              variant="outline"
+              className="flex-1"
+              disabled={!hasRequiredInputs || save.isPending}
+              onClick={calculate}
+            >
+              Calculate
+            </Button>
+            <Button
               className="flex-1 bg-mint text-mint-foreground hover:bg-mint/90"
-              disabled={!canCompute || save.isPending}
+              disabled={!hasRequiredInputs || save.isPending}
               onClick={persist}
             >
               {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
@@ -981,9 +1025,11 @@ function FireView() {
   const { settings, hasSaved, isLoading, error, refetch } = useSettingsOrBlank();
   const save = useSavePlannerSettings();
   const [inputs, setInputs] = useState<FireInputs | null>(null);
-  const [cleared, setCleared] = useState(false);
+  const [cleared, setCleared] = useState(() => readClearMarker(FIRE_CLEAR_KEY));
+  const [calculated, setCalculated] = useState(false);
+  const shouldLoadSavedPlan = hasSaved && settings.fire_plan_saved && !cleared;
 
-  const effective: FireInputs = inputs ?? (hasSaved && !cleared
+  const effective: FireInputs = inputs ?? (shouldLoadSavedPlan
     ? {
         current_age: settings.current_age,
         monthly_expense: settings.monthly_expense,
@@ -994,11 +1040,12 @@ function FireView() {
       }
     : BLANK_FIRE);
 
-  const canCompute =
+  const hasRequiredInputs =
     effective.current_age > 0 &&
     effective.monthly_expense > 0 &&
     effective.withdrawal_rate_pct > 0 &&
     effective.pre_return_pct > 0;
+  const canCompute = (calculated || (shouldLoadSavedPlan && inputs === null)) && hasRequiredInputs;
 
   const fireTarget = canCompute ? (effective.monthly_expense * 12) / (effective.withdrawal_rate_pct / 100) : 0;
   const yrs = canCompute ? yearsToReach(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, fireTarget) : Infinity;
@@ -1008,15 +1055,36 @@ function FireView() {
   if (error) return <ErrorBlock error={error as Error} onRetry={() => refetch()} />;
 
   function patch<K extends keyof FireInputs>(k: K, v: FireInputs[K]) {
-    setCleared(false);
+    setCalculated(false);
     setInputs({ ...effective, [k]: v });
   }
   function clearAll() {
     setInputs(BLANK_FIRE);
     setCleared(true);
+    setCalculated(false);
+    writeClearMarker(FIRE_CLEAR_KEY, true);
+  }
+  function calculate() {
+    setCalculated(true);
   }
   function persist() {
-    save.mutate(effective, { onSuccess: () => { setInputs(null); setCleared(false); } });
+    save.mutate(
+      {
+        ...BLANK_SETTINGS,
+        ...(hasSaved ? settings : {}),
+        ...effective,
+        retirement_plan_saved: hasSaved ? settings.retirement_plan_saved : false,
+        fire_plan_saved: true,
+      },
+      {
+        onSuccess: () => {
+          setInputs(null);
+          setCleared(false);
+          setCalculated(true);
+          writeClearMarker(FIRE_CLEAR_KEY, false);
+        },
+      }
+    );
   }
 
   const hasAnyInput = Object.values(effective).some((v) => v > 0);
@@ -1099,8 +1167,16 @@ function FireView() {
               Clear
             </Button>
             <Button
+              variant="outline"
+              className="flex-1"
+              disabled={!hasRequiredInputs || save.isPending}
+              onClick={calculate}
+            >
+              Calculate
+            </Button>
+            <Button
               className="flex-1 bg-mint text-mint-foreground hover:bg-mint/90"
-              disabled={!canCompute || save.isPending}
+              disabled={!hasRequiredInputs || save.isPending}
               onClick={persist}
             >
               {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}

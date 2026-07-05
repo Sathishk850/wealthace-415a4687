@@ -335,6 +335,42 @@ export type Database = {
         }
         Relationships: []
       }
+      planner_fire_plans: {
+        Row: {
+          created_at: string
+          current_age: number
+          current_corpus: number
+          monthly_expense: number
+          monthly_sip: number
+          pre_return_pct: number
+          updated_at: string
+          user_id: string
+          withdrawal_rate_pct: number
+        }
+        Insert: {
+          created_at?: string
+          current_age: number
+          current_corpus: number
+          monthly_expense: number
+          monthly_sip: number
+          pre_return_pct: number
+          updated_at?: string
+          user_id: string
+          withdrawal_rate_pct: number
+        }
+        Update: {
+          created_at?: string
+          current_age?: number
+          current_corpus?: number
+          monthly_expense?: number
+          monthly_sip?: number
+          pre_return_pct?: number
+          updated_at?: string
+          user_id?: string
+          withdrawal_rate_pct?: number
+        }
+        Relationships: []
+      }
       planner_goals: {
         Row: {
           created_at: string
@@ -377,7 +413,7 @@ export type Database = {
         }
         Relationships: []
       }
-      planner_settings: {
+      planner_retirement_plans: {
         Row: {
           created_at: string
           current_age: number
@@ -391,22 +427,20 @@ export type Database = {
           retirement_age: number
           updated_at: string
           user_id: string
-          withdrawal_rate_pct: number
         }
         Insert: {
           created_at?: string
-          current_age?: number
-          current_corpus?: number
-          inflation_pct?: number
-          life_expectancy?: number
-          monthly_expense?: number
-          monthly_sip?: number
-          post_return_pct?: number
-          pre_return_pct?: number
-          retirement_age?: number
+          current_age: number
+          current_corpus: number
+          inflation_pct: number
+          life_expectancy: number
+          monthly_expense: number
+          monthly_sip: number
+          post_return_pct: number
+          pre_return_pct: number
+          retirement_age: number
           updated_at?: string
           user_id: string
-          withdrawal_rate_pct?: number
         }
         Update: {
           created_at?: string
@@ -419,6 +453,59 @@ export type Database = {
           post_return_pct?: number
           pre_return_pct?: number
           retirement_age?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      planner_settings: {
+        Row: {
+          created_at: string
+          current_age: number
+          current_corpus: number
+          fire_plan_saved: boolean
+          inflation_pct: number
+          life_expectancy: number
+          monthly_expense: number
+          monthly_sip: number
+          post_return_pct: number
+          pre_return_pct: number
+          retirement_age: number
+          retirement_plan_saved: boolean
+          updated_at: string
+          user_id: string
+          withdrawal_rate_pct: number
+        }
+        Insert: {
+          created_at?: string
+          current_age: number
+          current_corpus: number
+          fire_plan_saved?: boolean
+          inflation_pct: number
+          life_expectancy: number
+          monthly_expense: number
+          monthly_sip: number
+          post_return_pct: number
+          pre_return_pct: number
+          retirement_age: number
+          retirement_plan_saved?: boolean
+          updated_at?: string
+          user_id: string
+          withdrawal_rate_pct: number
+        }
+        Update: {
+          created_at?: string
+          current_age?: number
+          current_corpus?: number
+          fire_plan_saved?: boolean
+          inflation_pct?: number
+          life_expectancy?: number
+          monthly_expense?: number
+          monthly_sip?: number
+          post_return_pct?: number
+          pre_return_pct?: number
+          retirement_age?: number
+          retirement_plan_saved?: boolean
           updated_at?: string
           user_id?: string
           withdrawal_rate_pct?: number
