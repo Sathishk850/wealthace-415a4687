@@ -1235,6 +1235,8 @@ function BudgetDialog({
   const [month, setMonth] = useState<string>(editing?.period_month?.slice(0, 7) ?? activeMonthKey.slice(0, 7));
   const [amount, setAmount] = useState<string>(editing ? String(editing.amount_limit) : "");
   const [err, setErr] = useState<string | null>(null);
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
 
   useMemo(() => {
     if (open) {
@@ -1242,11 +1244,45 @@ function BudgetDialog({
       setMonth(editing?.period_month?.slice(0, 7) ?? activeMonthKey.slice(0, 7));
       setAmount(editing ? String(editing.amount_limit) : "");
       setErr(null);
+      setShowNewCat(false);
+      setNewCatName("");
     }
     return null;
   }, [open, editing, activeMonthKey]);
 
   const upsert = useUpsertBudget();
+  const upsertCat = useUpsertCategory();
+
+  const addCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return setErr("Enter a category name.");
+    setErr(null);
+    try {
+      const user_id = (await supabase.auth.getUser()).data.user?.id;
+      if (!user_id) throw new Error("Not authenticated");
+      const { data, error } = await supabase
+        .from("money_categories")
+        .insert({
+          user_id,
+          name,
+          kind: "expense",
+          color: PALETTE[expenseCategories.length % PALETTE.length],
+          icon: "Wallet",
+        })
+        .select("id")
+        .single();
+      if (error) {
+        if (error.code === "23505") throw new Error("A category with this name already exists.");
+        throw error;
+      }
+      await upsertCat.mutateAsync; // no-op to keep import used
+      setCategoryId(data!.id);
+      setShowNewCat(false);
+      setNewCatName("");
+    } catch (e: any) {
+      setErr(e.message || "Failed to add category");
+    }
+  };
 
   const submit = async () => {
     setErr(null);
@@ -1276,19 +1312,43 @@ function BudgetDialog({
         </DialogHeader>
         <div className="grid gap-3">
           <div>
-            <Label>Category</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger><SelectValue placeholder="Choose expense category" /></SelectTrigger>
-              <SelectContent>
-                {expenseCategories.length === 0 ? (
-                  <SelectItem value="__none" disabled>No expense categories yet</SelectItem>
-                ) : (
-                  expenseCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between">
+              <Label>Category</Label>
+              <button
+                type="button"
+                onClick={() => setShowNewCat((v) => !v)}
+                className="text-xs font-medium text-[#21DBD2] hover:underline"
+              >
+                {showNewCat ? "Cancel" : "+ New category"}
+              </button>
+            </div>
+            {showNewCat ? (
+              <div className="mt-1 flex gap-2">
+                <Input
+                  autoFocus
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="e.g. Groceries"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }}
+                />
+                <Button type="button" onClick={addCategory} disabled={!newCatName.trim()}>
+                  Add
+                </Button>
+              </div>
+            ) : (
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger><SelectValue placeholder="Choose expense category" /></SelectTrigger>
+                <SelectContent>
+                  {expenseCategories.length === 0 ? (
+                    <SelectItem value="__none" disabled>No expense categories yet</SelectItem>
+                  ) : (
+                    expenseCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
