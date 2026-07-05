@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
 
 /**
  * Hourly cron worker for the notification & report delivery system.
@@ -17,9 +18,22 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        const publishable = process.env.SUPABASE_PUBLISHABLE_KEY;
-        if (!publishable || apikey !== publishable) {
+        // Require a shared secret in the x-webhook-secret header.
+        // Configured via the NOTIFICATION_CRON_SECRET env var.
+        const provided = request.headers.get("x-webhook-secret") ?? "";
+        const expected = process.env.NOTIFICATION_CRON_SECRET ?? "";
+        const providedBuf = Buffer.from(provided);
+        const expectedBuf = Buffer.from(expected);
+        const authorized =
+          expected.length > 0 &&
+          providedBuf.length === expectedBuf.length &&
+          timingSafeEqual(providedBuf, expectedBuf);
+        if (!authorized) {
+          // Log without exposing the secret value.
+          console.warn("[notification-cron] unauthorized request", {
+            hasHeader: provided.length > 0,
+            ip: request.headers.get("x-forwarded-for") ?? "unknown",
+          });
           return new Response(JSON.stringify({ error: "unauthorized" }), {
             status: 401, headers: { "Content-Type": "application/json" },
           });
