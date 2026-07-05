@@ -316,7 +316,7 @@ function AuthPage() {
               className={`flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium text-foreground transition ${
                 suggestGoogle
                   ? "border-mint/60 bg-mint/10 shadow-[0_0_0_3px_rgba(20,216,207,0.15)] hover:bg-mint/15"
-                  : "border-border bg-background/40 hover:bg-background/70"
+                  : "border-border bg-surface/40 hover:bg-surface/70"
               }`}
             >
               <GoogleIcon /> Continue with Google
