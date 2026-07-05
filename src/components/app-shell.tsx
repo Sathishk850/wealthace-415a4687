@@ -15,7 +15,7 @@ import {
   Sparkles,
   LogOut,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import logo from "@/assets/finvista-logo.png";
 import { cn } from "@/lib/utils";
