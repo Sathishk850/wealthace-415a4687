@@ -4,6 +4,8 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/finvista-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { useServerFn } from "@tanstack/react-start";
+import { verifyPin, getPinStatus } from "@/lib/pin.functions";
 
 const SUPABASE_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
 
@@ -44,12 +46,67 @@ function AuthPage() {
     installSessionOnlyGuard();
   }, []);
   const { mode: initialMode } = useSearch({ from: "/auth" });
-  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(initialMode);
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "pin">(initialMode);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [suggestGoogle, setSuggestGoogle] = useState(false);
   const [remember, setRemember] = useState(true);
+  const [pinAvailable, setPinAvailable] = useState(false);
+  const [pinValue, setPinValue] = useState("");
   const navigate = useNavigate();
+  const verifyPinFn = useServerFn(verifyPin);
+  const getPinStatusFn = useServerFn(getPinStatus);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session || cancelled) return;
+      try {
+        const status = await getPinStatusFn();
+        if (cancelled) return;
+        if (status?.enabled) {
+          setPinAvailable(true);
+          setMode((m) => (m === "signup" ? m : "pin"));
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getPinStatusFn]);
+
+  const handlePinSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (submitting) return;
+    setMessage(null);
+    if (!/^\d{4,8}$/.test(pinValue)) {
+      setMessage({ type: "error", text: "Enter your 4–8 digit PIN." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await verifyPinFn({ data: { pin: pinValue } });
+      if (res?.ok) {
+        setPinValue("");
+        navigate({ to: "/dashboard" });
+      } else {
+        setMessage({ type: "error", text: "Incorrect PIN. Try again." });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: err instanceof Error ? err.message : "PIN verification failed." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const switchToPassword = async () => {
+    await supabase.auth.signOut();
+    setPinAvailable(false);
+    setPinValue("");
+    setMessage(null);
+    setMode("signin");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -197,6 +254,7 @@ function AuthPage() {
             </p>
 
             {/* Tabs */}
+            {mode !== "pin" && (
             <div className="mt-6 grid grid-cols-2 rounded-xl border border-border bg-surface/40 p-1">
               <button
                 type="button"
@@ -221,7 +279,42 @@ function AuthPage() {
                 Create account
               </button>
             </div>
+            )}
 
+            {mode === "pin" ? (
+              <form className="mt-6 space-y-4" onSubmit={handlePinSubmit}>
+                <p className="text-sm text-muted-foreground">
+                  Enter your PIN to unlock this device.
+                </p>
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">PIN</span>
+                  <input
+                    autoFocus
+                    inputMode="numeric"
+                    maxLength={8}
+                    type="password"
+                    value={pinValue}
+                    onChange={(e) => setPinValue(e.target.value.replace(/\D/g, ""))}
+                    placeholder="••••"
+                    className="w-full rounded-xl border border-border bg-surface/60 px-3.5 py-2.5 text-center text-lg tracking-[0.5em] text-foreground placeholder:text-muted-foreground/60 focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/30"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={submitting || pinValue.length < 4}
+                  className="w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90 disabled:opacity-60"
+                >
+                  {submitting ? "Verifying…" : "Unlock"}
+                </button>
+                <button
+                  type="button"
+                  onClick={switchToPassword}
+                  className="block w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Use a different account
+                </button>
+              </form>
+            ) : (
             <form
               className="mt-6 space-y-4"
               onSubmit={handleSubmit}
@@ -291,6 +384,17 @@ function AuthPage() {
                 </button>
               )}
             </form>
+            )}
+
+            {mode !== "pin" && pinAvailable && (
+              <button
+                type="button"
+                onClick={() => { setMode("pin"); setMessage(null); }}
+                className="mt-3 block w-full text-center text-xs font-medium text-mint hover:underline"
+              >
+                Unlock with PIN instead
+              </button>
+            )}
 
             {message && (
               <div
