@@ -810,15 +810,15 @@ function RetirementView() {
   // Hydrate only an explicitly saved retirement plan.
   const effective: RetInputs = inputs ?? (shouldLoadSavedPlan
     ? {
-        current_age: savedPlan.current_age,
-        retirement_age: savedPlan.retirement_age,
-        life_expectancy: savedPlan.life_expectancy,
-        monthly_expense: savedPlan.monthly_expense,
-        inflation_pct: savedPlan.inflation_pct,
-        pre_return_pct: savedPlan.pre_return_pct,
-        post_return_pct: savedPlan.post_return_pct,
-        current_corpus: savedPlan.current_corpus,
-        monthly_sip: savedPlan.monthly_sip,
+        current_age: shouldLoadSavedPlan.current_age,
+        retirement_age: shouldLoadSavedPlan.retirement_age,
+        life_expectancy: shouldLoadSavedPlan.life_expectancy,
+        monthly_expense: shouldLoadSavedPlan.monthly_expense,
+        inflation_pct: shouldLoadSavedPlan.inflation_pct,
+        pre_return_pct: shouldLoadSavedPlan.pre_return_pct,
+        post_return_pct: shouldLoadSavedPlan.post_return_pct,
+        current_corpus: shouldLoadSavedPlan.current_corpus,
+        monthly_sip: shouldLoadSavedPlan.monthly_sip,
       }
     : BLANK_RET);
 
@@ -1036,12 +1036,12 @@ function FireView() {
 
   const effective: FireInputs = inputs ?? (shouldLoadSavedPlan
     ? {
-        current_age: savedPlan.current_age,
-        monthly_expense: savedPlan.monthly_expense,
-        current_corpus: savedPlan.current_corpus,
-        monthly_sip: savedPlan.monthly_sip,
-        pre_return_pct: savedPlan.pre_return_pct,
-        withdrawal_rate_pct: savedPlan.withdrawal_rate_pct,
+        current_age: shouldLoadSavedPlan.current_age,
+        monthly_expense: shouldLoadSavedPlan.monthly_expense,
+        current_corpus: shouldLoadSavedPlan.current_corpus,
+        monthly_sip: shouldLoadSavedPlan.monthly_sip,
+        pre_return_pct: shouldLoadSavedPlan.pre_return_pct,
+        withdrawal_rate_pct: shouldLoadSavedPlan.withdrawal_rate_pct,
       }
     : BLANK_FIRE);
 

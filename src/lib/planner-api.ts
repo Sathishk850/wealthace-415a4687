@@ -235,9 +235,11 @@ export function useRetirementPlan() {
   return useQuery({
     queryKey: plannerKeys.retirementPlan,
     queryFn: async (): Promise<RetirementPlan | null> => {
+      const user_id = await uid();
       const { data, error } = await supabase
         .from("planner_retirement_plans")
         .select("*")
+        .eq("user_id", user_id)
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
@@ -278,9 +280,11 @@ export function useFirePlan() {
   return useQuery({
     queryKey: plannerKeys.firePlan,
     queryFn: async (): Promise<FirePlan | null> => {
+      const user_id = await uid();
       const { data, error } = await supabase
         .from("planner_fire_plans")
         .select("*")
+        .eq("user_id", user_id)
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
