@@ -364,3 +364,9 @@
   color: #22E6D8;
 }
 
+
+/* Privacy Mode — smooth fade on body content when toggling. */
+html.privacy-on body,
+html:not(.privacy-on) body {
+  transition: filter 180ms ease, opacity 180ms ease;
+}
