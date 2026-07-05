@@ -813,6 +813,7 @@ function RetirementView() {
   const [inputs, setInputs] = useState<RetInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(RETIREMENT_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const savedPlanToLoad = !cleared ? savedPlan : null;
 
   // Hydrate only an explicitly saved retirement plan.
@@ -830,11 +831,16 @@ function RetirementView() {
       }
     : BLANK_RET);
 
-  const hasRequiredInputs =
-    effective.current_age > 0 &&
-    effective.retirement_age > effective.current_age &&
-    effective.monthly_expense > 0 &&
-    effective.life_expectancy > effective.retirement_age;
+  const required = {
+    current_age: effective.current_age > 0,
+    retirement_age: effective.retirement_age > effective.current_age,
+    life_expectancy: effective.life_expectancy > effective.retirement_age,
+    monthly_expense: effective.monthly_expense > 0,
+    inflation_pct: effective.inflation_pct > 0,
+    pre_return_pct: effective.pre_return_pct > 0,
+    post_return_pct: effective.post_return_pct > 0,
+  };
+  const hasRequiredInputs = Object.values(required).every(Boolean);
   const canCompute = (calculated || (!!savedPlanToLoad && inputs === null)) && hasRequiredInputs;
 
   const s: PlannerSettings = { user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" };
@@ -879,9 +885,11 @@ function RetirementView() {
     setInputs(BLANK_RET);
     setCleared(true);
     setCalculated(false);
+    setAttempted(false);
     writeClearMarker(RETIREMENT_CLEAR_KEY, true);
   }
   function calculate() {
+    setAttempted(true);
     setCalculated(true);
   }
   function persist() {
@@ -892,6 +900,7 @@ function RetirementView() {
           setInputs(null);
           setCleared(false);
           setCalculated(true);
+          setAttempted(false);
           writeClearMarker(RETIREMENT_CLEAR_KEY, false);
         },
       }
