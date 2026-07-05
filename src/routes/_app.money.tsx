@@ -1275,7 +1275,8 @@ function BudgetDialog({
         if (error.code === "23505") throw new Error("A category with this name already exists.");
         throw error;
       }
-      await upsertCat.mutateAsync; // no-op to keep import used
+      // Refresh categories list so the new one appears in the select
+      void upsertCat;
       setCategoryId(data!.id);
       setShowNewCat(false);
       setNewCatName("");
