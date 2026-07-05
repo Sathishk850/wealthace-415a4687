@@ -1156,6 +1156,7 @@ function FireView() {
   const [inputs, setInputs] = useState<FireInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(FIRE_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const savedPlanToLoad = !cleared ? savedPlan : null;
 
   const effective: FireInputs = inputs ?? (savedPlanToLoad
@@ -1170,16 +1171,19 @@ function FireView() {
       }
     : BLANK_FIRE);
 
-  const hasRequiredInputs =
-    effective.current_age > 0 &&
-    effective.monthly_expense > 0 &&
-    effective.current_corpus > 0 &&
-    effective.pre_return_pct > 0 &&
-    effective.inflation_pct > 0 &&
-    effective.withdrawal_rate_pct > 0;
+  const required = {
+    current_age: effective.current_age > 0,
+    monthly_expense: effective.monthly_expense > 0,
+    current_corpus: effective.current_corpus > 0,
+    pre_return_pct: effective.pre_return_pct > 0,
+    inflation_pct: effective.inflation_pct > 0,
+    withdrawal_rate_pct: effective.withdrawal_rate_pct > 0,
+  };
+  const hasRequiredInputs = Object.values(required).every(Boolean);
   const canCompute = (calculated || (!!savedPlanToLoad && inputs === null)) && hasRequiredInputs;
 
-  const fireTarget = canCompute ? (effective.monthly_expense * 12) / (effective.withdrawal_rate_pct / 100) : 0;
+  const s: PlannerSettings = { user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" };
+  const fireTarget = canCompute ? fireNumber(s) : 0;
   const yrs = canCompute ? yearsToReach(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, fireTarget) : Infinity;
   const pct = fireTarget > 0 ? Math.min(100, (effective.current_corpus / fireTarget) * 100) : 0;
 
@@ -1194,9 +1198,11 @@ function FireView() {
     setInputs(BLANK_FIRE);
     setCleared(true);
     setCalculated(false);
+    setAttempted(false);
     writeClearMarker(FIRE_CLEAR_KEY, true);
   }
   function calculate() {
+    setAttempted(true);
     setCalculated(true);
   }
   function persist() {
@@ -1207,6 +1213,7 @@ function FireView() {
           setInputs(null);
           setCleared(false);
           setCalculated(true);
+          setAttempted(false);
           writeClearMarker(FIRE_CLEAR_KEY, false);
         },
       }
