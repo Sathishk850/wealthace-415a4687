@@ -190,7 +190,7 @@ function AuthPage() {
 
         {/* Right: auth card */}
         <div className="flex items-center justify-center">
-          <div className="w-full max-w-md rounded-3xl border border-mint/15 bg-card/60 p-8 backdrop-blur-xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)]">
+          <div className="w-full max-w-md rounded-3xl border border-mint/15 bg-card/80 p-8 backdrop-blur-xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)]">
             <h2 className="font-display text-2xl font-bold tracking-tight">Welcome</h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
               Sign in or create your account to continue.
