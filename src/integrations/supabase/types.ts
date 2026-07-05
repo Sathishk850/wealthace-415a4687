@@ -340,6 +340,7 @@ export type Database = {
           created_at: string
           current_age: number
           current_corpus: number
+          inflation_pct: number
           monthly_expense: number
           monthly_sip: number
           pre_return_pct: number
@@ -351,6 +352,7 @@ export type Database = {
           created_at?: string
           current_age: number
           current_corpus: number
+          inflation_pct?: number
           monthly_expense: number
           monthly_sip: number
           pre_return_pct: number
@@ -362,6 +364,7 @@ export type Database = {
           created_at?: string
           current_age?: number
           current_corpus?: number
+          inflation_pct?: number
           monthly_expense?: number
           monthly_sip?: number
           pre_return_pct?: number

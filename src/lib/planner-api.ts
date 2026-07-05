@@ -84,6 +84,7 @@ export type FirePlan = {
   monthly_sip: number;
   pre_return_pct: number;
   withdrawal_rate_pct: number;
+  inflation_pct: number;
   created_at: string;
   updated_at: string;
 };
@@ -295,6 +296,7 @@ export function useFirePlan() {
         "monthly_sip",
         "pre_return_pct",
         "withdrawal_rate_pct",
+        "inflation_pct",
       ]) as FirePlan;
     },
   });
@@ -384,5 +386,15 @@ export function retirementCorpusNeeded(s: PlannerSettings) {
 export function fireNumber(s: PlannerSettings) {
   const wr = s.withdrawal_rate_pct / 100;
   if (wr <= 0) return Infinity;
-  return (s.monthly_expense * 12) / wr;
+  const annualExpense = s.monthly_expense * 12;
+  const inflation = s.inflation_pct / 100;
+  let target = annualExpense / wr;
+  // Iterate to inflate the target by the years needed to reach it.
+  for (let i = 0; i < 20; i++) {
+    const yrs = yearsToReach(s.current_corpus, s.monthly_sip, s.pre_return_pct, target);
+    const newTarget = (annualExpense * Math.pow(1 + inflation, yrs)) / wr;
+    if (Math.abs(newTarget - target) < 1) return newTarget;
+    target = newTarget;
+  }
+  return target;
 }

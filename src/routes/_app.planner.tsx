@@ -23,6 +23,7 @@ import {
   Loader2,
   AlertCircle,
   Wallet,
+  Info,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -31,7 +32,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   LineChart,
   Line,
   Legend,
@@ -62,6 +63,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -116,7 +124,7 @@ function Planner() {
   const [tab, setTab] = useState<"overview" | "goals" | "retirement" | "fire">("overview");
 
   return (
-    <>
+    <TooltipProvider>
       <PageHeader
         title="Planner"
         description="Goals, retirement and your FIRE roadmap."
@@ -157,7 +165,7 @@ function Planner() {
         onOpenChange={(open) => setGoalDialog({ open, goal: open ? goalDialog.goal : undefined })}
         goal={goalDialog.goal}
       />
-    </>
+    </TooltipProvider>
   );
 }
 
@@ -328,7 +336,7 @@ function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
     : 0;
   const retPct = retirementTarget > 0 ? Math.min(100, (retirementProjected / retirementTarget) * 100) : 0;
 
-  const canComputeFire = !!firePlan && fireSettings.current_age > 0 && fireSettings.monthly_expense > 0 && fireSettings.withdrawal_rate_pct > 0 && fireSettings.pre_return_pct > 0;
+  const canComputeFire = !!firePlan && fireSettings.current_age > 0 && fireSettings.monthly_expense > 0 && fireSettings.current_corpus > 0 && fireSettings.withdrawal_rate_pct > 0 && fireSettings.pre_return_pct > 0 && fireSettings.inflation_pct > 0;
   const fireTarget = canComputeFire ? fireNumber(fireSettings) : 0;
   const yrsToFire = canComputeFire
     ? yearsToReach(fireSettings.current_corpus, fireSettings.monthly_sip, fireSettings.pre_return_pct, fireTarget)
@@ -765,7 +773,7 @@ function ProjectionChart({ settings, yearsSpan }: { settings: PlannerSettings; y
         <CartesianGrid strokeDasharray="3 3" stroke="#1B3249" />
         <XAxis dataKey="year" stroke="#6E8294" fontSize={11}  {...smartXAxisProps} />
         <YAxis stroke="#6E8294" fontSize={11} tickFormatter={(v) => `${v}L`} />
-        <Tooltip
+        <RechartsTooltip
           contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }}
           formatter={(v: number) => [`₹${v}L`, "Corpus"]}
         />
@@ -805,6 +813,7 @@ function RetirementView() {
   const [inputs, setInputs] = useState<RetInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(RETIREMENT_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const savedPlanToLoad = !cleared ? savedPlan : null;
 
   // Hydrate only an explicitly saved retirement plan.
@@ -822,11 +831,16 @@ function RetirementView() {
       }
     : BLANK_RET);
 
-  const hasRequiredInputs =
-    effective.current_age > 0 &&
-    effective.retirement_age > effective.current_age &&
-    effective.monthly_expense > 0 &&
-    effective.life_expectancy > effective.retirement_age;
+  const required = {
+    current_age: effective.current_age > 0,
+    retirement_age: effective.retirement_age > effective.current_age,
+    life_expectancy: effective.life_expectancy > effective.retirement_age,
+    monthly_expense: effective.monthly_expense > 0,
+    inflation_pct: effective.inflation_pct > 0,
+    pre_return_pct: effective.pre_return_pct > 0,
+    post_return_pct: effective.post_return_pct > 0,
+  };
+  const hasRequiredInputs = Object.values(required).every(Boolean);
   const canCompute = (calculated || (!!savedPlanToLoad && inputs === null)) && hasRequiredInputs;
 
   const s: PlannerSettings = { user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" };
@@ -871,10 +885,12 @@ function RetirementView() {
     setInputs(BLANK_RET);
     setCleared(true);
     setCalculated(false);
+    setAttempted(false);
     writeClearMarker(RETIREMENT_CLEAR_KEY, true);
   }
   function calculate() {
-    setCalculated(true);
+    setAttempted(true);
+    setCalculated(hasRequiredInputs);
   }
   function persist() {
     save.mutate(
@@ -884,6 +900,7 @@ function RetirementView() {
           setInputs(null);
           setCleared(false);
           setCalculated(true);
+          setAttempted(false);
           writeClearMarker(RETIREMENT_CLEAR_KEY, false);
         },
       }
@@ -924,7 +941,7 @@ function RetirementView() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1B3249" />
                 <XAxis dataKey="age" stroke="#6E8294" fontSize={11} tickFormatter={(v) => `Age ${v}`} {...smartXAxisProps} />
                 <YAxis stroke="#6E8294" fontSize={11} tickFormatter={(v) => `${v}L`} />
-                <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }} formatter={(v: number) => `₹${v}L`} />
+                <RechartsTooltip contentStyle={{ background: "#102634", border: "1px solid #1B3249", borderRadius: 8 }} formatter={(v: number) => `₹${v}L`} />
                 <Legend />
                 <Line type="monotone" dataKey="corpus" stroke="#14D8CF" strokeWidth={2.5} name="Projected" dot={false} />
                 <Line type="monotone" dataKey="target" stroke="#f59e0b" strokeWidth={2.5} strokeDasharray="5 5" name="Target" dot={false} />
@@ -932,24 +949,100 @@ function RetirementView() {
             </ResponsiveContainer>
           ) : (
             <div className="grid h-[280px] place-items-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
-              Enter your current age, retirement age, life expectancy and monthly expense to see your projection.
+              Enter your current age, retirement age, life expectancy, monthly expense, inflation and expected returns to see your projection.
             </div>
           )}
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="mb-4 font-display text-base font-semibold">Assumptions</div>
+          <div className="mb-2 font-display text-base font-semibold">Assumptions</div>
+          <p className="mb-4 text-[11px] text-muted-foreground">
+            <span className="text-destructive">*</span> Required fields
+          </p>
           <div className="space-y-3">
-            <FieldNum label="Current Age" value={effective.current_age} onChange={(v) => patch("current_age", v)} />
-            <FieldNum label="Retirement Age" value={effective.retirement_age} onChange={(v) => patch("retirement_age", v)} />
-            <FieldNum label="Life Expectancy" value={effective.life_expectancy} onChange={(v) => patch("life_expectancy", v)} />
-            <FieldNum label="Monthly Expense (today, ₹)" value={effective.monthly_expense} step={1000} onChange={(v) => patch("monthly_expense", v)} />
-            <FieldNum label="Inflation (%)" value={effective.inflation_pct} step={0.1} onChange={(v) => patch("inflation_pct", v)} />
-            <FieldNum label="Pre-Ret Return (%)" value={effective.pre_return_pct} step={0.1} onChange={(v) => patch("pre_return_pct", v)} />
-            <FieldNum label="Post-Ret Return (%)" value={effective.post_return_pct} step={0.1} onChange={(v) => patch("post_return_pct", v)} />
-            <FieldNum label="Current Corpus (₹)" value={effective.current_corpus} step={10000} onChange={(v) => patch("current_corpus", v)} />
-            <FieldNum label="Monthly SIP (₹)" value={effective.monthly_sip} step={1000} onChange={(v) => patch("monthly_sip", v)} />
+            <FieldNum
+              label="Current Age"
+              value={effective.current_age}
+              onChange={(v) => patch("current_age", v)}
+              required
+              error={attempted && !required.current_age}
+              tooltip="Your age today. Used to calculate years left to build the retirement corpus."
+            />
+            <FieldNum
+              label="Retirement Age"
+              value={effective.retirement_age}
+              onChange={(v) => patch("retirement_age", v)}
+              required
+              error={attempted && !required.retirement_age}
+              tooltip="The age when you plan to stop working and start using the retirement corpus."
+            />
+            <FieldNum
+              label="Life Expectancy"
+              value={effective.life_expectancy}
+              onChange={(v) => patch("life_expectancy", v)}
+              required
+              error={attempted && !required.life_expectancy}
+              tooltip="Estimated age until when the corpus needs to support you."
+            />
+            <FieldNum
+              label="Monthly Expense (today, ₹)"
+              value={effective.monthly_expense}
+              step={1000}
+              onChange={(v) => patch("monthly_expense", v)}
+              required
+              error={attempted && !required.monthly_expense}
+              tooltip="Your current monthly living expenses. Future expenses are inflated at the assumed inflation rate."
+            />
+            <FieldNum
+              label="Inflation (%)"
+              value={effective.inflation_pct}
+              step={0.1}
+              onChange={(v) => patch("inflation_pct", v)}
+              required
+              error={attempted && !required.inflation_pct}
+              tooltip="Expected annual inflation. Used to inflate future expenses and reduce the real post-retirement return."
+            />
+            <FieldNum
+              label="Pre-Ret Return (%)"
+              value={effective.pre_return_pct}
+              step={0.1}
+              onChange={(v) => patch("pre_return_pct", v)}
+              required
+              error={attempted && !required.pre_return_pct}
+              tooltip="Expected annual return on investments while you are still accumulating the corpus."
+            />
+            <FieldNum
+              label="Post-Ret Return (%)"
+              value={effective.post_return_pct}
+              step={0.1}
+              onChange={(v) => patch("post_return_pct", v)}
+              required
+              error={attempted && !required.post_return_pct}
+              tooltip="Expected annual return on the corpus after retirement. Usually lower than pre-retirement returns."
+            />
+            <FieldNum
+              label="Current Corpus (₹)"
+              value={effective.current_corpus}
+              step={10000}
+              onChange={(v) => patch("current_corpus", v)}
+              optional
+              tooltip="Money already saved for retirement. Leave blank if you are starting from zero."
+            />
+            <FieldNum
+              label="Monthly SIP (₹)"
+              value={effective.monthly_sip}
+              step={1000}
+              onChange={(v) => patch("monthly_sip", v)}
+              optional
+              tooltip="Regular monthly contribution you plan to make until retirement."
+            />
           </div>
+          {attempted && !hasRequiredInputs && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
+              <AlertCircle className="h-3.5 w-3.5" />
+              Please complete all required fields.
+            </div>
+          )}
           <div className="mt-4 flex gap-2">
             <Button
               variant="outline"
@@ -962,7 +1055,7 @@ function RetirementView() {
             <Button
               variant="outline"
               className="flex-1"
-              disabled={!hasRequiredInputs || save.isPending}
+              disabled={save.isPending}
               onClick={calculate}
             >
               Calculate
@@ -987,21 +1080,51 @@ function FieldNum({
   value,
   onChange,
   step = 1,
+  required,
+  optional,
+  tooltip,
+  error,
+  min,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
   step?: number;
+  required?: boolean;
+  optional?: boolean;
+  tooltip?: string;
+  error?: boolean;
+  min?: number;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2 last:border-0">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        {label}
+        {required && <span className="text-destructive">*</span>}
+        {optional && <span className="text-[10px] text-muted-foreground/70">(optional)</span>}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="ml-0.5 text-muted-foreground/70 hover:text-foreground">
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {tooltip}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </span>
       <Input
         type="number"
         step={step}
+        min={min}
         value={value === 0 ? "" : value}
         onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-        className="h-7 w-28 text-right text-xs"
+        className={cn(
+          "h-7 w-28 text-right text-xs",
+          error && "border-destructive ring-1 ring-destructive",
+        )}
       />
     </div>
   );
@@ -1015,6 +1138,7 @@ type FireInputs = {
   monthly_sip: number;
   pre_return_pct: number;
   withdrawal_rate_pct: number;
+  inflation_pct: number;
 };
 const BLANK_FIRE: FireInputs = {
   current_age: 0,
@@ -1023,6 +1147,7 @@ const BLANK_FIRE: FireInputs = {
   monthly_sip: 0,
   pre_return_pct: 0,
   withdrawal_rate_pct: 0,
+  inflation_pct: 0,
 };
 
 function FireView() {
@@ -1031,6 +1156,7 @@ function FireView() {
   const [inputs, setInputs] = useState<FireInputs | null>(null);
   const [cleared, setCleared] = useState(() => readClearMarker(FIRE_CLEAR_KEY));
   const [calculated, setCalculated] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const savedPlanToLoad = !cleared ? savedPlan : null;
 
   const effective: FireInputs = inputs ?? (savedPlanToLoad
@@ -1041,17 +1167,23 @@ function FireView() {
         monthly_sip: savedPlanToLoad.monthly_sip,
         pre_return_pct: savedPlanToLoad.pre_return_pct,
         withdrawal_rate_pct: savedPlanToLoad.withdrawal_rate_pct,
+        inflation_pct: savedPlanToLoad.inflation_pct,
       }
     : BLANK_FIRE);
 
-  const hasRequiredInputs =
-    effective.current_age > 0 &&
-    effective.monthly_expense > 0 &&
-    effective.withdrawal_rate_pct > 0 &&
-    effective.pre_return_pct > 0;
+  const required = {
+    current_age: effective.current_age > 0,
+    monthly_expense: effective.monthly_expense > 0,
+    current_corpus: effective.current_corpus > 0,
+    pre_return_pct: effective.pre_return_pct > 0,
+    inflation_pct: effective.inflation_pct > 0,
+    withdrawal_rate_pct: effective.withdrawal_rate_pct > 0,
+  };
+  const hasRequiredInputs = Object.values(required).every(Boolean);
   const canCompute = (calculated || (!!savedPlanToLoad && inputs === null)) && hasRequiredInputs;
 
-  const fireTarget = canCompute ? (effective.monthly_expense * 12) / (effective.withdrawal_rate_pct / 100) : 0;
+  const s: PlannerSettings = { user_id: "", ...BLANK_SETTINGS, ...effective, created_at: "", updated_at: "" };
+  const fireTarget = canCompute ? fireNumber(s) : 0;
   const yrs = canCompute ? yearsToReach(effective.current_corpus, effective.monthly_sip, effective.pre_return_pct, fireTarget) : Infinity;
   const pct = fireTarget > 0 ? Math.min(100, (effective.current_corpus / fireTarget) * 100) : 0;
 
@@ -1066,10 +1198,12 @@ function FireView() {
     setInputs(BLANK_FIRE);
     setCleared(true);
     setCalculated(false);
+    setAttempted(false);
     writeClearMarker(FIRE_CLEAR_KEY, true);
   }
   function calculate() {
-    setCalculated(true);
+    setAttempted(true);
+    setCalculated(hasRequiredInputs);
   }
   function persist() {
     save.mutate(
@@ -1079,6 +1213,7 @@ function FireView() {
           setInputs(null);
           setCleared(false);
           setCalculated(true);
+          setAttempted(false);
           writeClearMarker(FIRE_CLEAR_KEY, false);
         },
       }
@@ -1100,7 +1235,7 @@ function FireView() {
               <div>
                 <div className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{inr(fireTarget)}</div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  25× annual expense at {effective.withdrawal_rate_pct}% safe withdrawal · projected age {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
+                  Inflation-adjusted target at {effective.withdrawal_rate_pct}% SWR · projected age {Number.isFinite(yrs) ? Math.round(effective.current_age + yrs) : "—"}
                 </p>
               </div>
               <div className="text-right">
@@ -1132,21 +1267,85 @@ function FireView() {
             />
           ) : (
             <div className="grid h-[260px] place-items-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
-              Enter your age, expenses, expected return and withdrawal rate to see your FIRE trajectory.
+              Enter your age, expenses, corpus, expected return, inflation and withdrawal rate to see your FIRE trajectory.
             </div>
           )}
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="mb-4 font-display text-base font-semibold">FIRE Calculator</div>
+          <div className="mb-2 font-display text-base font-semibold">FIRE Calculator</div>
+          <p className="mb-4 text-[11px] text-muted-foreground">
+            <span className="text-destructive">*</span> Required fields
+          </p>
           <div className="space-y-3">
-            <FieldNum label="Current Age" value={effective.current_age} onChange={(v) => patch("current_age", v)} />
-            <FieldNum label="Monthly Expense (₹)" value={effective.monthly_expense} step={1000} onChange={(v) => patch("monthly_expense", v)} />
-            <FieldNum label="Current Corpus (₹)" value={effective.current_corpus} step={10000} onChange={(v) => patch("current_corpus", v)} />
-            <FieldNum label="Monthly SIP (₹)" value={effective.monthly_sip} step={1000} onChange={(v) => patch("monthly_sip", v)} />
-            <FieldNum label="Expected Return (%)" value={effective.pre_return_pct} step={0.1} onChange={(v) => patch("pre_return_pct", v)} />
-            <FieldNum label="Withdrawal Rate (%)" value={effective.withdrawal_rate_pct} step={0.1} onChange={(v) => patch("withdrawal_rate_pct", v)} />
+            <FieldNum
+              label="Current Age"
+              value={effective.current_age}
+              onChange={(v) => patch("current_age", v)}
+              required
+              error={attempted && !required.current_age}
+              tooltip="Your age today. Used to estimate the age at which you can achieve FIRE."
+            />
+            <FieldNum
+              label="Monthly Expense (₹)"
+              value={effective.monthly_expense}
+              step={1000}
+              onChange={(v) => patch("monthly_expense", v)}
+              required
+              error={attempted && !required.monthly_expense}
+              tooltip="Your current monthly expenses. Annual expenses are divided by the SWR to estimate the FIRE number."
+            />
+            <FieldNum
+              label="Current Corpus (₹)"
+              value={effective.current_corpus}
+              step={10000}
+              onChange={(v) => patch("current_corpus", v)}
+              required
+              error={attempted && !required.current_corpus}
+              tooltip="Investable assets you already have. Can be zero if you are just starting."
+            />
+            <FieldNum
+              label="Expected Return (%)"
+              value={effective.pre_return_pct}
+              step={0.1}
+              onChange={(v) => patch("pre_return_pct", v)}
+              required
+              error={attempted && !required.pre_return_pct}
+              tooltip="Expected annual return on your investments while building the FIRE corpus."
+            />
+            <FieldNum
+              label="Inflation (%)"
+              value={effective.inflation_pct}
+              step={0.1}
+              onChange={(v) => patch("inflation_pct", v)}
+              required
+              error={attempted && !required.inflation_pct}
+              tooltip="Expected annual inflation. The FIRE target is inflated by the years needed to reach it."
+            />
+            <FieldNum
+              label="Withdrawal Rate (%)"
+              value={effective.withdrawal_rate_pct}
+              step={0.1}
+              onChange={(v) => patch("withdrawal_rate_pct", v)}
+              required
+              error={attempted && !required.withdrawal_rate_pct}
+              tooltip="Safe Withdrawal Rate (SWR). The percentage of the corpus you can withdraw annually. 4% is a common benchmark."
+            />
+            <FieldNum
+              label="Monthly SIP (₹)"
+              value={effective.monthly_sip}
+              step={1000}
+              onChange={(v) => patch("monthly_sip", v)}
+              optional
+              tooltip="Monthly contribution to your FIRE corpus. Leave blank if you are not adding regularly."
+            />
           </div>
+          {attempted && !hasRequiredInputs && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-destructive">
+              <AlertCircle className="h-3.5 w-3.5" />
+              Please complete all required fields.
+            </div>
+          )}
           {canCompute && (
             <div className="mt-3 rounded-xl border border-border/60 bg-surface-2/40 p-3">
               <div className="text-xs text-muted-foreground">Estimated FIRE Age</div>
@@ -1167,7 +1366,7 @@ function FireView() {
             <Button
               variant="outline"
               className="flex-1"
-              disabled={!hasRequiredInputs || save.isPending}
+              disabled={save.isPending}
               onClick={calculate}
             >
               Calculate

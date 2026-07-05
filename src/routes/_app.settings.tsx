@@ -544,7 +544,7 @@ function DangerZoneCard() {
       qc.clear();
       await supabase.auth.signOut();
       toast.success("Account deleted");
-      navigate({ to: "/auth", replace: true });
+      navigate({ to: "/auth", search: { mode: "signin" }, replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to delete account");
     } finally {
