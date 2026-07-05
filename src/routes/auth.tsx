@@ -197,13 +197,13 @@ function AuthPage() {
             </p>
 
             {/* Tabs */}
-            <div className="mt-6 grid grid-cols-2 rounded-xl border border-border bg-background/40 p-1">
+            <div className="mt-6 grid grid-cols-2 rounded-xl border border-border bg-surface/40 p-1">
               <button
                 type="button"
                 onClick={() => { setMode("signin"); setMessage(null); }}
                 className={`rounded-lg py-2 text-sm font-medium transition ${
                   mode === "signin" || mode === "forgot"
-                    ? "bg-background text-foreground shadow"
+                    ? "bg-surface text-foreground shadow"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -214,7 +214,7 @@ function AuthPage() {
                 onClick={() => { setMode("signup"); setMessage(null); }}
                 className={`rounded-lg py-2 text-sm font-medium transition ${
                   mode === "signup"
-                    ? "bg-background text-foreground shadow"
+                    ? "bg-surface text-foreground shadow"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
