@@ -60,7 +60,7 @@ type Size = "sm" | "md" | "lg" | "xl";
 
 const SIZE: Record<Size, { logo: string; logoNoTag: string }> = {
   sm: { logo: "max-w-[80px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[130px]", logoNoTag: "max-w-[80px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[130px]" },
-  md: { logo: "max-w-[110px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[170px]", logoNoTag: "max-w-[110px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[170px]" },
+  md: { logo: "max-w-[120px] sm:max-w-[140px] md:max-w-[170px] lg:max-w-[200px]", logoNoTag: "max-w-[120px] sm:max-w-[140px] md:max-w-[170px] lg:max-w-[200px]" },
   lg: { logo: "max-w-[160px] sm:max-w-[190px] md:max-w-[220px] lg:max-w-[260px]", logoNoTag: "max-w-[160px] sm:max-w-[190px] md:max-w-[220px] lg:max-w-[260px]" },
   xl: { logo: "max-w-[300px] sm:max-w-[340px] md:max-w-[400px] lg:max-w-[480px]", logoNoTag: "max-w-[300px] sm:max-w-[340px] md:max-w-[400px] lg:max-w-[480px]" },
 };
