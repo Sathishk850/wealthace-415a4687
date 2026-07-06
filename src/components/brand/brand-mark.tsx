@@ -157,8 +157,8 @@ export function BrandWordmark({
       )}
       {tagline && (
         <span
-          className={`mt-1 block overflow-hidden whitespace-nowrap text-center font-semibold uppercase tracking-[0.22em] text-muted-foreground ${s.tagline}`}
-          style={pinned}
+          className={`mt-1 block text-center font-semibold uppercase tracking-[0.18em] text-muted-foreground ${s.tagline}`}
+          style={pinned ? { ...pinned, letterSpacing: undefined } : undefined}
         >
           {taglineText}
         </span>
