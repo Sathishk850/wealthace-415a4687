@@ -459,7 +459,7 @@ function PinCard() {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!/^\d{4,8}$/.test(newPin)) throw new Error("PIN must be 4–8 digits");
+      if (!/^\d{4}$/.test(newPin)) throw new Error("PIN must be exactly 4 digits");
       if (newPin !== confirmPin) throw new Error("PINs don't match");
       await setPinFn({ data: enabled ? { pin: newPin, currentPin } : { pin: newPin } });
     },
@@ -473,7 +473,7 @@ function PinCard() {
 
   const disable = useMutation({
     mutationFn: async () => {
-      if (!/^\d{4,8}$/.test(currentPin)) throw new Error("Enter your current PIN");
+      if (!/^\d{4}$/.test(currentPin)) throw new Error("Enter your current 4-digit PIN");
       await disablePinFn({ data: { currentPin } });
     },
     onSuccess: () => {
@@ -490,7 +490,7 @@ function PinCard() {
         <div>
           <h3 className="text-sm font-semibold text-foreground">PIN login</h3>
           <p className="text-xs text-muted-foreground">
-            Quick 4–8 digit unlock. Hashed server-side; never stored in plain text.
+            Quick 4-digit unlock. Hashed server-side; never stored in plain text.
           </p>
         </div>
         <span className={`rounded-full px-2 py-0.5 text-xs ${enabled ? "bg-[var(--primary)]/15 text-[var(--primary)]" : "bg-surface/40 text-muted-foreground border border-border"}`}>
@@ -502,16 +502,16 @@ function PinCard() {
         {enabled && (
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-muted-foreground">Current PIN</Label>
-            <Input inputMode="numeric" maxLength={8} type="password" value={currentPin} onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, ""))} />
+            <Input inputMode="numeric" maxLength={4} type="password" autoComplete="off" onPaste={(e) => e.preventDefault()} value={currentPin} onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 4))} />
           </div>
         )}
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">{enabled ? "New PIN" : "Create PIN"}</Label>
-          <Input inputMode="numeric" maxLength={8} type="password" value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))} />
+          <Input inputMode="numeric" maxLength={4} type="password" autoComplete="off" onPaste={(e) => e.preventDefault()} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-muted-foreground">Confirm PIN</Label>
-          <Input inputMode="numeric" maxLength={8} type="password" value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))} />
+          <Input inputMode="numeric" maxLength={4} type="password" autoComplete="off" onPaste={(e) => e.preventDefault()} value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))} />
         </div>
       </div>
 
