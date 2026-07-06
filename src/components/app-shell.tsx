@@ -17,8 +17,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import logoAsset from "@/assets/finvista-logo.png.asset.json";
-const logo = logoAsset.url;
+import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
@@ -117,15 +116,8 @@ const MOBILE_TABS: NavItem[] = [
 function Brand() {
   return (
     <Link to="/dashboard" className="flex items-center gap-2.5">
-      <img src={logo} alt="FinVista" width={36} height={36} className="h-9 w-9 rounded-lg" />
-      <div className="flex flex-col leading-tight">
-        <span className="font-display text-[17px] font-bold tracking-tight text-foreground">
-          FinVista
-        </span>
-        <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
-          Direct Your Wealth
-        </span>
-      </div>
+      <BrandIcon className="h-9 w-9 shrink-0 rounded-[22%]" />
+      <BrandWordmark size="md" tagline taglineText="Direct Your Wealth" />
     </Link>
   );
 }
