@@ -53,9 +53,7 @@ export function BrandIcon({
         <path d="M256 190 C 296 190 314 226 314 258 v 38 c 0 32 -8 60 -20 82" strokeWidth="14" opacity="0.68" />
       </g>
       {/* Rupee glyph — gold gradient */}
-      <g fill="url(#fv-brand-gold)" transform="translate(24 24) scale(0.062) translate(-256 -260)">
-        <path d="M210 232 h 96 a 6 6 0 0 1 0 12 h -30 c -2 14 -10 26 -22 32 h 20 l 44 62 a 6 6 0 0 1 -10 6 l -46 -66 h -34 a 6 6 0 0 1 0 -12 h 22 c 18 0 30 -10 32 -22 h -72 a 6 6 0 0 1 0 -12 z m 0 -28 h 96 a 6 6 0 0 1 0 12 h -96 a 6 6 0 0 1 0 -12 z" />
-      </g>
+      <text x="24" y="30" textAnchor="middle" fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif" fontWeight={800} fontSize="15" fill="url(#fv-brand-gold)">₹</text>
     </svg>
   );
 }
