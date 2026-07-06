@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import logo from "@/assets/finvista-logo.png";
+import logoAsset from "@/assets/finvista-logo.png.asset.json";
+const logo = logoAsset.url;
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
