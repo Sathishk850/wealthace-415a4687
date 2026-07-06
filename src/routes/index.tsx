@@ -23,8 +23,7 @@ import {
   LayoutGrid,
   CreditCard,
 } from "lucide-react";
-import logoAsset from "@/assets/finvista-logo.png.asset.json";
-const logo = logoAsset.url;
+import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
