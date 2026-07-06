@@ -71,7 +71,7 @@ function ResetPasswordPage() {
           <div className="leading-tight">
             <div className="font-display text-lg font-bold">FinVista</div>
             <div className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground">
-              KNOW YOUR WORTH
+              DIRECT YOUR WEALTH
             </div>
           </div>
         </Link>

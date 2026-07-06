@@ -120,7 +120,7 @@ function Brand() {
           FinVista
         </span>
         <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
-          Know Your Worth
+          Direct Your Wealth
         </span>
       </div>
     </Link>
