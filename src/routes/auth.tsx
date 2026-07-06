@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import logoAsset from "@/assets/finvista-logo.png.asset.json";
-const logo = logoAsset.url;
+import premiumLogo from "@/assets/finvista-premium-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useServerFn } from "@tanstack/react-start";
@@ -281,21 +280,20 @@ function AuthPage() {
   };
 
   return (
-    <div className="dark relative min-h-screen overflow-hidden bg-black text-foreground">
+    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(20,216,207,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(15,183,176,0.08),transparent_55%)]" />
 
 
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-2 lg:gap-16 lg:px-12">
         {/* Left: brand + tagline */}
-        <div className="flex flex-col justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="FinVista" className="h-10 w-10 rounded-lg" />
-            <div className="leading-tight">
-              <div className="font-display text-lg font-bold">FinVista</div>
-              <div className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground">
-                DIRECT YOUR WEALTH
-              </div>
-            </div>
+        <div className="flex flex-col justify-between gap-10">
+          <Link to="/" className="block w-full max-w-md">
+            <img
+              src={premiumLogo}
+              alt="FinVista — Direct Your Wealth"
+              className="h-auto w-full select-none dark:invert dark:hue-rotate-180"
+              draggable={false}
+            />
           </Link>
 
           <div className="hidden lg:block">
