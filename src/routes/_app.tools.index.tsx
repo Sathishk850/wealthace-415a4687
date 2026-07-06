@@ -809,13 +809,18 @@ function printReport(report: ReportData) {
 }
 
 function ReportRowItem({ report, onView, onExport }: { report: ReportData; onView: () => void; onExport?: () => void }) {
-  const handle = (fmt: ReportFmt) => {
+  const [busy, setBusy] = React.useState<ReportFmt | null>(null);
+  const handle = async (fmt: ReportFmt) => {
+    if (busy) return;
+    setBusy(fmt);
     try {
-      runExport(report, fmt);
+      await runExport(report, fmt);
       onExport?.();
       toast.success(`${report.title} exported`);
     } catch (e: any) {
-      toast.error(e?.message || "Export failed");
+      toast.error(e?.message || "Export failed. Please try again.");
+    } finally {
+      setBusy(null);
     }
   };
   const empty = report.rows.length === 0;
@@ -841,13 +846,15 @@ function ReportRowItem({ report, onView, onExport }: { report: ReportData; onVie
         <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={onView} disabled={empty}>
           <Eye className="h-3.5 w-3.5" /> View
         </Button>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("pdf")} disabled={empty}>
-          <FileDown className="h-3.5 w-3.5" /> PDF
+        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("pdf")} disabled={empty || !!busy}>
+          {busy === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+          {busy === "pdf" ? "Preparing export..." : "PDF"}
         </Button>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("excel")} disabled={empty}>
-          <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("excel")} disabled={empty || !!busy}>
+          {busy === "excel" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
+          {busy === "excel" ? "Preparing export..." : "Excel"}
         </Button>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("csv")} disabled={empty}>
+        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("csv")} disabled={empty || !!busy}>
           <Download className="h-3.5 w-3.5" /> CSV
         </Button>
         <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => printReport(report)} disabled={empty}>
