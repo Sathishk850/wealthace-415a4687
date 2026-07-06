@@ -61,9 +61,10 @@ type Size = "sm" | "md" | "lg" | "xl";
 const SIZE: Record<Size, { logo: string; logoNoTag: string }> = {
   sm: { logo: "h-8", logoNoTag: "h-6" },
   md: { logo: "h-10", logoNoTag: "h-8" },
-  lg: { logo: "h-14", logoNoTag: "h-10" },
-  xl: { logo: "h-24", logoNoTag: "h-16" },
+  lg: { logo: "h-16", logoNoTag: "h-11" },
+  xl: { logo: "h-28", logoNoTag: "h-20" },
 };
+
 
 /**
  * BrandWordmark — "FinVista" with the "V" rendered in the teal gradient.
