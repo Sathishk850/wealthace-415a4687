@@ -6,6 +6,53 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+/* ===== Shared score helpers (centralized to avoid duplication) ===== */
+export type HealthScoreInputs = {
+  savingsRate: number; // 0-100
+  goalsCount: number;
+  monthlySIP: number;
+  hasEmergencyFund: boolean;
+};
+
+/** Composite personal-finance health score (0-100). Single source of truth. */
+export function computeHealthScore(i: HealthScoreInputs) {
+  const rate = Number.isFinite(i.savingsRate) ? i.savingsRate : 0;
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        rate * 0.5 +
+          (i.goalsCount > 0 ? 20 : 0) +
+          (i.monthlySIP > 0 ? 20 : 0) +
+          (i.hasEmergencyFund ? 10 : 0),
+      ),
+    ),
+  );
+}
+
+export type PortfolioHealthInputs = {
+  goalsCount: number;
+  monthlySIP: number;
+  currentCorpus: number;
+  hasEmergencyFund: boolean;
+};
+
+export function computePortfolioHealth(i: PortfolioHealthInputs) {
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        (i.goalsCount > 0 ? 30 : 0) +
+          (i.monthlySIP > 0 ? 30 : 0) +
+          (i.currentCorpus > 0 ? 25 : 0) +
+          (i.hasEmergencyFund ? 15 : 0),
+      ),
+    ),
+  );
+}
+
 /* ===== Types ===== */
 export const REMINDER_KINDS = [
   "sip",
