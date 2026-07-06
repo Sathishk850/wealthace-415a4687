@@ -81,9 +81,6 @@ import {
 import { RemindersView } from "@/components/reminders-view";
 import { ScheduledReportsPanel } from "@/components/scheduled-reports-panel";
 import { FinCalculators } from "./_app.tools.financial-calculator";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/tools/")({
@@ -749,7 +746,7 @@ function estimateTax(income: number) {
   return tax;
 }
 
-function runExport(report: ReportData, fmt: ReportFmt) {
+async function runExport(report: ReportData, fmt: ReportFmt) {
   const name = report.title.replace(/\s+/g, "_");
   if (fmt === "csv") {
     const csv = [report.columns, ...report.rows]
@@ -757,11 +754,14 @@ function runExport(report: ReportData, fmt: ReportFmt) {
       .join("\n");
     downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${name}.csv`);
   } else if (fmt === "excel") {
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.aoa_to_sheet([report.columns, ...report.rows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
     XLSX.writeFile(wb, `${name}.xlsx`);
   } else {
+    const { jsPDF } = await import("jspdf");
+    const autoTable = (await import("jspdf-autotable")).default;
     const doc = new jsPDF();
     doc.setFontSize(14);
     doc.text(report.title, 14, 16);
@@ -809,13 +809,18 @@ function printReport(report: ReportData) {
 }
 
 function ReportRowItem({ report, onView, onExport }: { report: ReportData; onView: () => void; onExport?: () => void }) {
-  const handle = (fmt: ReportFmt) => {
+  const [busy, setBusy] = React.useState<ReportFmt | null>(null);
+  const handle = async (fmt: ReportFmt) => {
+    if (busy) return;
+    setBusy(fmt);
     try {
-      runExport(report, fmt);
+      await runExport(report, fmt);
       onExport?.();
       toast.success(`${report.title} exported`);
     } catch (e: any) {
-      toast.error(e?.message || "Export failed");
+      toast.error(e?.message || "Export failed. Please try again.");
+    } finally {
+      setBusy(null);
     }
   };
   const empty = report.rows.length === 0;
@@ -841,13 +846,15 @@ function ReportRowItem({ report, onView, onExport }: { report: ReportData; onVie
         <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={onView} disabled={empty}>
           <Eye className="h-3.5 w-3.5" /> View
         </Button>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("pdf")} disabled={empty}>
-          <FileDown className="h-3.5 w-3.5" /> PDF
+        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("pdf")} disabled={empty || !!busy}>
+          {busy === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+          {busy === "pdf" ? "Preparing export..." : "PDF"}
         </Button>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("excel")} disabled={empty}>
-          <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("excel")} disabled={empty || !!busy}>
+          {busy === "excel" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
+          {busy === "excel" ? "Preparing export..." : "Excel"}
         </Button>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("csv")} disabled={empty}>
+        <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => handle("csv")} disabled={empty || !!busy}>
           <Download className="h-3.5 w-3.5" /> CSV
         </Button>
         <Button size="sm" variant="outline" className="h-8 gap-1.5 px-2" onClick={() => printReport(report)} disabled={empty}>
@@ -859,6 +866,18 @@ function ReportRowItem({ report, onView, onExport }: { report: ReportData; onVie
 }
 
 function ReportPreviewDialog({ report, onClose }: { report: ReportData | null; onClose: () => void }) {
+  const [busy, setBusy] = React.useState<ReportFmt | null>(null);
+  const doExport = async (fmt: ReportFmt) => {
+    if (!report || busy) return;
+    setBusy(fmt);
+    try {
+      await runExport(report, fmt);
+    } catch (e: any) {
+      toast.error(e?.message || "Export failed. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
   return (
     <Dialog open={!!report} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl">
@@ -899,13 +918,15 @@ function ReportPreviewDialog({ report, onClose }: { report: ReportData | null; o
               </Table>
             </div>
             <div className="flex flex-wrap justify-end gap-2">
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => runExport(report, "pdf")}>
-                <FileDown className="h-3.5 w-3.5" /> PDF
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => doExport("pdf")} disabled={!!busy}>
+                {busy === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+                {busy === "pdf" ? "Preparing export..." : "PDF"}
               </Button>
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => runExport(report, "excel")}>
-                <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => doExport("excel")} disabled={!!busy}>
+                {busy === "excel" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
+                {busy === "excel" ? "Preparing export..." : "Excel"}
               </Button>
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => runExport(report, "csv")}>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => doExport("csv")} disabled={!!busy}>
                 <Download className="h-3.5 w-3.5" /> CSV
               </Button>
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => printReport(report)}>

@@ -17,6 +17,7 @@ import {
   Save,
   Download,
   Eraser,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
@@ -27,7 +28,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { logToolsActivity, useSaveCalculation } from "@/lib/tools-api";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 
 export const Route = createFileRoute("/_app/tools/financial-calculator")({
   head: () => ({
@@ -86,6 +86,7 @@ export function FinCalculators() {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const saveCalc = useSaveCalculation();
   const [resetCounter, setResetCounter] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
   const current = calcs.find((c) => c.id === active)!;
 
@@ -107,8 +108,11 @@ export function FinCalculators() {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
     try {
+      const { jsPDF } = await import("jspdf");
       const doc = new jsPDF();
       doc.setFontSize(14);
       doc.text(current.title, 14, 16);
@@ -118,7 +122,9 @@ export function FinCalculators() {
       doc.save(`${current.id}-result.pdf`);
       toast.success("Exported PDF");
     } catch (e: any) {
-      toast.error(e?.message || "Export failed");
+      toast.error(e?.message || "Export failed. Please try again.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -168,8 +174,9 @@ export function FinCalculators() {
                   >
                     <Eraser className="h-3.5 w-3.5" /> Clear
                   </Button>
-                  <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleExport}>
-                    <Download className="h-3.5 w-3.5" /> Export
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleExport} disabled={exporting}>
+                    {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    {exporting ? "Preparing export..." : "Export"}
                   </Button>
                 </div>
               )}
