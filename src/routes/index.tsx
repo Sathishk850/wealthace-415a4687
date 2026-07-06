@@ -153,7 +153,7 @@ function Splash({ leaving }: { leaving: boolean }) {
         {/* Brand lockup */}
         <div className="text-center">
           <div className="font-display text-4xl font-bold tracking-tight text-foreground">FinVista</div>
-          <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint">Know your worth</div>
+          <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint">Direct your wealth</div>
         </div>
 
         {/* Wealth view loading state */}
