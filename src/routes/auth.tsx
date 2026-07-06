@@ -101,8 +101,8 @@ function AuthPage() {
     e.preventDefault();
     if (submitting) return;
     setMessage(null);
-    if (!/^\d{4,8}$/.test(pinValue)) {
-      setMessage({ type: "error", text: "Enter your 4–8 digit PIN." });
+    if (!/^\d{4}$/.test(pinValue)) {
+      setMessage({ type: "error", text: "Enter your 4-digit PIN." });
       return;
     }
     setSubmitting(true);
@@ -131,7 +131,26 @@ function AuthPage() {
         setPinValue("");
         goHome();
       } else {
-        setMessage({ type: "error", text: "Incorrect PIN. Try again." });
+        setPinValue("");
+        if (res?.locked) {
+          const mins = Math.ceil((res.retry_after_seconds ?? 300) / 60);
+          setMessage({
+            type: "error",
+            text: `Too many wrong attempts. PIN locked for ${mins} minute${mins === 1 ? "" : "s"}. Sign in with your password.`,
+          });
+          // Force back to password sign-in per spec (clear session on repeated failures).
+          setPinAvailable(false);
+          setMode("signin");
+          await supabase.auth.signOut().catch(() => {});
+        } else {
+          const rem = res?.attempts_remaining;
+          setMessage({
+            type: "error",
+            text: rem !== undefined
+              ? `Incorrect PIN. ${rem} attempt${rem === 1 ? "" : "s"} left.`
+              : "Incorrect PIN. Try again.",
+          });
+        }
       }
     } catch (err) {
       if (isAuthError(err)) {
