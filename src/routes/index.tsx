@@ -30,13 +30,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FinVista — Know Your Worth | Personal Finance Dashboard" },
+      { title: "FinVista — Direct Your Wealth | Personal Finance Dashboard" },
       {
         name: "description",
         content:
           "Track net worth, cashflow, investments and goals in one secure, intelligent dashboard. Start free — no credit card required.",
       },
-      { property: "og:title", content: "FinVista — Know Your Worth | Personal Finance Dashboard" },
+      { property: "og:title", content: "FinVista — Direct Your Wealth | Personal Finance Dashboard" },
       {
         property: "og:description",
         content:
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/")({
       { property: "og:site_name", content: "FinVista" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@FinVista" },
-      { name: "twitter:title", content: "FinVista — Know Your Worth | Personal Finance Dashboard" },
+      { name: "twitter:title", content: "FinVista — Direct Your Wealth | Personal Finance Dashboard" },
       {
         name: "twitter:description",
         content:
@@ -153,7 +153,7 @@ function Splash({ leaving }: { leaving: boolean }) {
         {/* Brand lockup */}
         <div className="text-center">
           <div className="font-display text-4xl font-bold tracking-tight text-foreground">FinVista</div>
-          <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint">Know your worth</div>
+          <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint">Direct your wealth</div>
         </div>
 
         {/* Wealth view loading state */}
@@ -268,7 +268,7 @@ function Landing() {
                 </span>
               </span>
               <span className="block text-[10px] font-medium tracking-wide text-muted-foreground">
-                Know your worth
+                Direct your wealth
               </span>
             </span>
           </Link>
@@ -307,7 +307,7 @@ function Landing() {
             </span>
 
             <h1 className="load-headline mt-5 font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[64px]">
-              Know Your Worth.<br />
+              Direct Your Wealth.<br />
               Grow Your{" "}
               <span className="gradient-shimmer bg-gradient-to-r from-mint via-cyan-300 to-accent bg-clip-text text-transparent">
                 Wealth.
@@ -467,7 +467,7 @@ function Landing() {
 
           <div>
             <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">About FinVista</h2>
-            <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Know Your Worth.</p>
+            <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Direct Your Wealth.</p>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
               FinVista is a modern personal finance platform that helps you track, organize and grow your wealth in one secure, intelligent dashboard. From assets and investments to expenses and financial goals, everything is designed to give you complete financial clarity.
             </p>
@@ -492,7 +492,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} FinVista · Know your worth
+        © {new Date().getFullYear()} FinVista · Direct your wealth
       </footer>
 
       <style>{`
