@@ -569,83 +569,113 @@ function PinForm({
   onUseDifferentAccount: () => void;
   message: { type: "success" | "error"; text: string } | null;
 }) {
-  const SLOTS = 6;
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const [focused, setFocused] = useState(false);
+  const SLOTS = 4;
   const [reveal, setReveal] = useState(false);
 
-  const focusInput = () => inputRef.current?.focus();
+  const append = (d: string) => {
+    if (submitting) return;
+    if (pinValue.length >= SLOTS) return;
+    setPinValue((pinValue + d).slice(0, SLOTS));
+  };
+  const backspace = () => {
+    if (submitting) return;
+    setPinValue(pinValue.slice(0, -1));
+  };
+
+  // Physical keyboard support (digits, backspace, enter). No paste allowed.
+  const rootRef = React.useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key >= "0" && e.key <= "9") { e.preventDefault(); append(e.key); }
+      else if (e.key === "Backspace") { e.preventDefault(); backspace(); }
+    };
+    el.addEventListener("keydown", onKey);
+    return () => el.removeEventListener("keydown", onKey);
+  });
 
   return (
-    <form className="mt-6 space-y-5" onSubmit={onSubmit}>
+    <form
+      ref={rootRef}
+      tabIndex={0}
+      className="mt-6 space-y-5 outline-none"
+      onSubmit={onSubmit}
+      onPaste={(e) => e.preventDefault()}
+    >
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-foreground">Unlock with PIN</h3>
         <p className="text-xs text-muted-foreground">
-          Enter your 4–8 digit PIN to continue on this device.
+          Enter your 4-digit PIN to continue on this device.
         </p>
       </div>
 
       {/* Slot display */}
-      <button
-        type="button"
-        onClick={focusInput}
-        className="relative block w-full cursor-text rounded-2xl border border-border bg-surface/40 p-3 focus-within:border-mint focus-within:ring-2 focus-within:ring-mint/30 transition"
+      <div
+        className="rounded-2xl border border-border bg-surface/40 p-3"
         aria-label="PIN entry"
       >
-        <div className="flex items-center justify-center gap-2 sm:gap-3">
+        <div className="flex items-center justify-center gap-3">
           {Array.from({ length: SLOTS }).map((_, i) => {
             const char = pinValue[i];
-            const isActive = focused && i === Math.min(pinValue.length, SLOTS - 1);
+            const isActive = i === Math.min(pinValue.length, SLOTS - 1);
             const filled = char !== undefined;
             return (
               <div
                 key={i}
                 className={[
-                  "flex h-12 w-9 sm:h-14 sm:w-11 items-center justify-center rounded-xl border text-lg sm:text-xl font-semibold tabular-nums transition",
+                  "flex h-14 w-12 sm:h-16 sm:w-14 items-center justify-center rounded-xl border text-xl sm:text-2xl font-semibold tabular-nums transition",
                   filled
                     ? "border-mint/60 bg-mint/10 text-foreground"
                     : "border-border bg-background/40 text-muted-foreground",
                   isActive ? "ring-2 ring-mint/40 border-mint" : "",
                 ].join(" ")}
+                aria-label={filled ? "digit entered" : "empty"}
               >
                 {filled ? (reveal ? char : "•") : ""}
               </div>
             );
           })}
         </div>
-        {/* Hidden actual input */}
-        <input
-          ref={inputRef}
-          autoFocus
-          inputMode="numeric"
-          pattern="[0-9]*"
-          autoComplete="one-time-code"
-          maxLength={SLOTS}
-          value={pinValue}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onChange={(e) => setPinValue(e.target.value.replace(/\D/g, "").slice(0, SLOTS))}
-          className="absolute inset-0 h-full w-full cursor-text opacity-0 outline-none"
-          aria-label="PIN"
-        />
-      </button>
+      </div>
 
-      <div className="flex items-center justify-between text-xs">
+      {/* Banking-style numeric keypad */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3" role="group" aria-label="PIN keypad">
+        {["1","2","3","4","5","6","7","8","9"].map((d) => (
+          <button
+            key={d}
+            type="button"
+            onClick={() => append(d)}
+            className="rounded-2xl border border-border bg-surface/60 py-4 text-xl font-semibold text-foreground transition hover:bg-surface active:scale-[0.98]"
+            aria-label={`Digit ${d}`}
+          >
+            {d}
+          </button>
+        ))}
         <button
           type="button"
           onClick={() => setReveal((r) => !r)}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-muted-foreground transition hover:text-foreground"
+          className="rounded-2xl border border-border bg-surface/40 py-4 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          aria-label={reveal ? "Hide PIN" : "Show PIN"}
         >
-          {reveal ? <EyeOff size={14} /> : <Eye size={14} />}
-          {reveal ? "Hide" : "Show"}
+          {reveal ? <EyeOff className="mx-auto" size={18} /> : <Eye className="mx-auto" size={18} />}
         </button>
         <button
           type="button"
-          onClick={() => setPinValue("")}
-          disabled={pinValue.length === 0}
-          className="rounded-lg px-2 py-1 text-muted-foreground transition hover:text-foreground disabled:opacity-40"
+          onClick={() => append("0")}
+          className="rounded-2xl border border-border bg-surface/60 py-4 text-xl font-semibold text-foreground transition hover:bg-surface active:scale-[0.98]"
+          aria-label="Digit 0"
         >
-          Clear
+          0
+        </button>
+        <button
+          type="button"
+          onClick={backspace}
+          disabled={pinValue.length === 0}
+          className="rounded-2xl border border-border bg-surface/40 py-4 text-sm font-medium text-muted-foreground transition hover:text-foreground disabled:opacity-40"
+          aria-label="Delete last digit"
+        >
+          ⌫
         </button>
       </div>
 
@@ -657,7 +687,7 @@ function PinForm({
 
       <button
         type="submit"
-        disabled={submitting || pinValue.length < 4}
+        disabled={submitting || pinValue.length !== SLOTS}
         className="w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-foreground transition hover:opacity-90 disabled:opacity-60"
       >
         {submitting ? "Verifying…" : "Unlock"}
