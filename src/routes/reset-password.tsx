@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import logoAsset from "@/assets/finvista-logo.png.asset.json";
-const logo = logoAsset.url;
+import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/reset-password")({
@@ -66,14 +65,9 @@ function ResetPasswordPage() {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(20,216,207,0.10),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(15,183,176,0.08),transparent_55%)]" />
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10">
-        <Link to="/" className="mb-8 flex items-center gap-3">
-          <img src={logo} alt="FinVista" className="h-10 w-10 rounded-lg" />
-          <div className="leading-tight">
-            <div className="font-display text-lg font-bold">FinVista</div>
-            <div className="text-[10px] font-medium tracking-[0.18em] text-muted-foreground">
-              DIRECT YOUR WEALTH
-            </div>
-          </div>
+        <Link to="/" aria-label="FinVista" className="mb-8 flex items-center gap-3">
+          <BrandIcon className="h-10 w-10 shrink-0 rounded-[22%]" />
+          <BrandWordmark size="md" tagline taglineText="Direct Your Wealth" />
         </Link>
 
         <div className="rounded-3xl border border-mint/15 bg-card/60 p-8 backdrop-blur-xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)]">

@@ -20,6 +20,7 @@ export default defineConfig({
       filename: "sw.js",
       devOptions: { enabled: false },
       includeAssets: [
+        "favicon.ico",
         "favicon.png",
         "apple-touch-icon.png",
         "icons/*.png",
@@ -33,7 +34,7 @@ export default defineConfig({
         display: "standalone",
         orientation: "portrait",
         theme_color: "#0BD4C0",
-        background_color: "#081B29",
+        background_color: "#000000",
         icons: [
           { src: "/icons/icon-72.png", sizes: "72x72", type: "image/png" },
           { src: "/icons/icon-96.png", sizes: "96x96", type: "image/png" },

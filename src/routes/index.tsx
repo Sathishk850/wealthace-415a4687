@@ -23,8 +23,7 @@ import {
   LayoutGrid,
   CreditCard,
 } from "lucide-react";
-import logoAsset from "@/assets/finvista-logo.png.asset.json";
-const logo = logoAsset.url;
+import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -143,11 +142,7 @@ function Splash({ leaving }: { leaving: boolean }) {
           <div className="absolute inset-0 -m-7 animate-[spin_10s_linear_infinite] rounded-full border border-dashed border-mint/20" />
           <div className="absolute inset-0 -m-4 rounded-full border border-mint/10" />
           <div className="absolute inset-0 -m-2 animate-pulse rounded-full bg-mint/10 blur-2xl" />
-          <img
-            src={logo}
-            alt="FinVista"
-            className="relative h-24 w-24 rounded-2xl shadow-[0_0_60px_-8px_rgba(20,216,207,0.5)]"
-          />
+          <BrandIcon className="relative h-24 w-24 rounded-[22%] shadow-[0_0_60px_-8px_rgba(20,216,207,0.5)]" />
         </div>
 
         {/* Brand lockup */}
@@ -258,16 +253,9 @@ function Landing() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-black/70 backdrop-blur-xl load-nav">
 
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <img src={logo} alt="FinVista" className="h-10 w-10 shrink-0 rounded-lg" />
-            <span className="leading-tight">
-              <span className="flex items-center gap-2 font-display text-lg font-bold">
-                FinVista
-              </span>
-              <span className="block text-[10px] font-medium tracking-wide text-muted-foreground">
-                Direct your wealth
-              </span>
-            </span>
+          <Link to="/" aria-label="FinVista" className="flex min-w-0 items-center gap-2.5">
+            <BrandIcon className="h-10 w-10 shrink-0 rounded-[22%]" />
+            <BrandWordmark size="md" tagline taglineText="Direct your wealth" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm text-muted-foreground md:flex">
             <a href="#features" onClick={smoothTo("features")} className="nav-link transition-colors hover:text-foreground">Features</a>

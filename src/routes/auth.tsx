@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import premiumLogo from "@/assets/finvista-premium-logo.png";
+import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useServerFn } from "@tanstack/react-start";
@@ -287,13 +287,9 @@ function AuthPage() {
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-2 lg:gap-16 lg:px-12">
         {/* Left: brand + tagline */}
         <div className="flex flex-col justify-between gap-10">
-          <Link to="/" className="block w-full max-w-md">
-            <img
-              src={premiumLogo}
-              alt="FinVista — Direct Your Wealth"
-              className="h-auto w-full select-none dark:invert dark:hue-rotate-180"
-              draggable={false}
-            />
+          <Link to="/" aria-label="FinVista" className="inline-flex items-center gap-4">
+            <BrandIcon className="h-16 w-16 shrink-0 rounded-[22%] shadow-[0_10px_30px_-8px_rgba(20,216,207,0.55)]" />
+            <BrandWordmark size="xl" tagline taglineText="Direct Your Wealth" />
           </Link>
 
           <div className="hidden lg:block">
