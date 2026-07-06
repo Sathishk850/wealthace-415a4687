@@ -101,7 +101,9 @@ export function InvestmentsView({
     const today = new Date();
     const rich = rows.map((r) => {
       const inv = r.invested_value ?? r.quantity * r.avg_price;
-      const cur = r.current_value ?? r.quantity * r.current_price;
+      const rawCur = r.current_value ?? r.quantity * r.current_price;
+      // Graceful fallback: unpriced holdings show at cost basis, not zero.
+      const cur = rawCur > 0 ? rawCur : inv;
       const pnl = cur - inv;
       const ret = inv > 0 ? (pnl / inv) * 100 : 0;
       const years = r.purchase_date

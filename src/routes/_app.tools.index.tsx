@@ -75,6 +75,8 @@ import {
   daysUntil,
   REMINDER_KIND_LABEL,
   inr as inr2,
+  computeHealthScore,
+  computePortfolioHealth,
 } from "@/lib/tools-api";
 import { RemindersView } from "@/components/reminders-view";
 import { ScheduledReportsPanel } from "@/components/scheduled-reports-panel";
@@ -400,9 +402,12 @@ function ReportsView() {
     const slabTax = estimateTax(taxable);
     const savingsRate = totalIncome > 0 ? Math.round((savings / totalIncome) * 100) : 0;
     const emergency = goalsList.find((g) => g.goal_type === "emergency_fund");
-    const healthScore = Math.max(0, Math.min(100, Math.round(
-      savingsRate * 0.5 + (goalsList.length ? 20 : 0) + (monthlySIP > 0 ? 20 : 0) + (emergency ? 10 : 0)
-    )));
+    const healthScore = computeHealthScore({
+      savingsRate,
+      goalsCount: goalsList.length,
+      monthlySIP,
+      hasEmergencyFund: !!emergency,
+    });
 
     const txRows = transactions.map((t) => [
       t.occurred_on,
@@ -1310,30 +1315,18 @@ function buildInsights(d: {
     });
 
   // scores
-  const healthScore = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        savingsRate * 0.5 +
-          (goals.length ? 20 : 0) +
-          (monthlySIP > 0 ? 20 : 0) +
-          (emergency ? 10 : 0)
-      )
-    )
-  );
-  const portfolioHealth = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        (goals.length ? 30 : 0) +
-          (monthlySIP > 0 ? 30 : 0) +
-          (Number(settings?.current_corpus ?? 0) > 0 ? 25 : 0) +
-          (emergency ? 15 : 0)
-      )
-    )
-  );
+  const healthScore = computeHealthScore({
+    savingsRate,
+    goalsCount: goals.length,
+    monthlySIP,
+    hasEmergencyFund: !!emergency,
+  });
+  const portfolioHealth = computePortfolioHealth({
+    goalsCount: goals.length,
+    monthlySIP,
+    currentCorpus: Number(settings?.current_corpus ?? 0),
+    hasEmergencyFund: !!emergency,
+  });
 
   return {
     hasData,
