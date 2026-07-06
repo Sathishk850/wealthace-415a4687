@@ -87,7 +87,7 @@ export const verifyPin = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .maybeSingle();
     if (error) throw error;
-    if (!row) return { ok: false };
+    if (!row) return { ok: false as const, locked: false, retry_after_seconds: 0, attempts_remaining: 0 };
 
     const now = Date.now();
     const lockedUntil = row.locked_until ? new Date(row.locked_until).getTime() : 0;
