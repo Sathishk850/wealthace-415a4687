@@ -26,6 +26,8 @@ import { NotificationBell } from "@/components/notification-bell";
 import { usePrivacy } from "@/lib/privacy";
 import { SessionExpiredDialog, markIntentionalSignOut } from "@/lib/session-expired";
 import { PinReminder } from "@/components/pin-reminder";
+import { InstallAppButton } from "@/components/pwa/install-button";
+import { PwaProvider } from "@/components/pwa/pwa-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,6 +190,7 @@ function TopBar() {
         })}
       </nav>
       <div className="ml-auto flex items-center gap-2 lg:ml-0">
+        <InstallAppButton />
         <button
           type="button"
           onClick={togglePrivacy}
@@ -274,6 +277,7 @@ export function AppShell() {
       <Toaster />
       <SessionExpiredDialog />
       <PinReminder />
+      <PwaProvider />
     </div>
   );
 }
