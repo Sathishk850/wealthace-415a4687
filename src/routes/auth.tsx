@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useServerFn } from "@tanstack/react-start";
