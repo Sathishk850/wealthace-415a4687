@@ -115,10 +115,7 @@ const MOBILE_TABS: NavItem[] = [
 
 function Brand() {
   return (
-    <Link to="/dashboard" className="flex items-center gap-2.5">
-      <BrandIcon className="h-9 w-9 shrink-0 rounded-[22%]" />
-      <BrandWordmark size="md" tagline taglineText="Direct Your Wealth" />
-    </Link>
+    <BrandMark to="/dashboard" size="md" tagline />
   );
 }
 

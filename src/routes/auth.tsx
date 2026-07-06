@@ -287,10 +287,7 @@ function AuthPage() {
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-2 lg:gap-16 lg:px-12">
         {/* Left: brand + tagline */}
         <div className="flex flex-col justify-between gap-10">
-          <Link to="/" aria-label="FinVista" className="inline-flex items-center gap-4">
-            <BrandIcon className="h-16 w-16 shrink-0 rounded-[22%] shadow-[0_10px_30px_-8px_rgba(20,216,207,0.55)]" />
-            <BrandWordmark size="xl" tagline taglineText="Direct Your Wealth" />
-          </Link>
+          <BrandMark to="/" size="xl" tagline />
 
           <div className="hidden lg:block">
             <h1 className="font-display text-4xl font-bold leading-tight tracking-tight xl:text-5xl">
