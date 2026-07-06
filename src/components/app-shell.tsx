@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
@@ -115,10 +115,7 @@ const MOBILE_TABS: NavItem[] = [
 
 function Brand() {
   return (
-    <Link to="/dashboard" className="flex items-center gap-2.5">
-      <BrandIcon className="h-9 w-9 shrink-0 rounded-[22%]" />
-      <BrandWordmark size="md" tagline taglineText="Direct Your Wealth" />
-    </Link>
+    <BrandMark to="/dashboard" size="md" tagline />
   );
 }
 
