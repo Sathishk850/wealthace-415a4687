@@ -794,6 +794,7 @@ export type Database = {
           failed_attempts: number
           locked_until: string | null
           pin_hash: string
+          pin_skipped: boolean
           updated_at: string
           user_id: string
         }
@@ -802,6 +803,7 @@ export type Database = {
           failed_attempts?: number
           locked_until?: string | null
           pin_hash: string
+          pin_skipped?: boolean
           updated_at?: string
           user_id: string
         }
@@ -810,6 +812,7 @@ export type Database = {
           failed_attempts?: number
           locked_until?: string | null
           pin_hash?: string
+          pin_skipped?: boolean
           updated_at?: string
           user_id?: string
         }
