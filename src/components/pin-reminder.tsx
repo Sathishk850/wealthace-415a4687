@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Shield, Lock } from "lucide-react";
-import { getPinStatus } from "@/lib/pin.functions";
+import { getPinStatus, setPinSkipped } from "@/lib/pin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -16,16 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-const SKIP_KEY_PREFIX = "finvista_pin_skipped:";
 const SESSION_SHOWN_KEY = "finvista_pin_reminder_shown";
-
-function skipKey(userId: string) {
-  return `${SKIP_KEY_PREFIX}${userId}`;
-}
 
 export function PinReminder() {
   const navigate = useNavigate();
   const fetchStatus = useServerFn(getPinStatus);
+  const saveSkipped = useServerFn(setPinSkipped);
+  const queryClient = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
@@ -48,12 +45,16 @@ export function PinReminder() {
   });
 
   const enabled = !!status.data?.enabled;
+  const skipped = !!status.data?.pin_skipped;
+
+  const skipMutation = useMutation({
+    mutationFn: () => saveSkipped({ data: { skipped: true } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pin-status"] }),
+  });
 
   useEffect(() => {
     if (!userId || status.isLoading) return;
     if (enabled) return;
-
-    const skipped = typeof window !== "undefined" && window.localStorage.getItem(skipKey(userId)) === "1";
 
     // Mandatory setup on first login (no PIN + never skipped) — full-screen modal
     if (!skipped) {
@@ -78,7 +79,7 @@ export function PinReminder() {
         cancel: { label: "Remind me later", onClick: () => {} },
       },
     );
-  }, [userId, status.isLoading, enabled, navigate]);
+  }, [userId, status.isLoading, enabled, skipped, navigate]);
 
   const handleCreate = () => {
     setModalOpen(false);
@@ -87,10 +88,13 @@ export function PinReminder() {
 
   const handleSkipRequest = () => setConfirmSkip(true);
 
-  const handleSkipConfirm = () => {
-    if (userId && typeof window !== "undefined") {
-      window.localStorage.setItem(skipKey(userId), "1");
-      // Show soft reminder immediately this session too.
+  const handleSkipConfirm = async () => {
+    try {
+      await skipMutation.mutateAsync();
+    } catch {
+      // Non-fatal: user can still continue; reminder will re-appear next login.
+    }
+    if (typeof window !== "undefined") {
       window.sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
       toast(
         "🔒 You can enable a 4-digit PIN anytime in Settings for faster login.",
