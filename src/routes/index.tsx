@@ -263,9 +263,6 @@ function Landing() {
             <span className="leading-tight">
               <span className="flex items-center gap-2 font-display text-lg font-bold">
                 FinVista
-                <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-mint">
-                  Aura
-                </span>
               </span>
               <span className="block text-[10px] font-medium tracking-wide text-muted-foreground">
                 Direct your wealth
