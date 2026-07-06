@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import logo from "@/assets/finvista-logo.png";
+import logoAsset from "@/assets/finvista-logo.png.asset.json";
+const logo = logoAsset.url;
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/reset-password")({
