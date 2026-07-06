@@ -268,7 +268,7 @@ function Landing() {
                 </span>
               </span>
               <span className="block text-[10px] font-medium tracking-wide text-muted-foreground">
-                Know your worth
+                Direct your wealth
               </span>
             </span>
           </Link>
@@ -492,7 +492,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} FinVista · Know your worth
+        © {new Date().getFullYear()} FinVista · Direct your wealth
       </footer>
 
       <style>{`
