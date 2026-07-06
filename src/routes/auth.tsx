@@ -280,8 +280,8 @@ function AuthPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(20,216,207,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(15,183,176,0.08),transparent_55%)]" />
+    <div className="dark relative min-h-screen overflow-hidden bg-background text-foreground">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(33,219,210,0.11),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(15,183,176,0.07),transparent_55%)]" />
 
 
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-2 lg:gap-16 lg:px-12">
