@@ -23,7 +23,7 @@ import {
   LayoutGrid,
   CreditCard,
 } from "lucide-react";
-import { BrandIcon, BrandWordmark } from "@/components/brand/brand-mark";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -137,62 +137,9 @@ function Splash({ leaving }: { leaving: boolean }) {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.025)_1px,transparent_1px)] bg-[size:64px_64px]" />
 
       <div className="relative flex flex-col items-center gap-8">
-        {/* Fingerprint (step 1) with ₹ shine (step 2) built-in */}
-        <div className="relative fv-splash-step" style={{ animationDelay: "0ms" }}>
-          <div className="absolute inset-0 -m-7 animate-[spin_10s_linear_infinite] rounded-full border border-dashed border-mint/20" />
-          <div className="absolute inset-0 -m-4 rounded-full border border-mint/10" />
-          <div className="absolute inset-0 -m-2 animate-pulse rounded-full bg-mint/10 blur-2xl" />
-          <BrandIcon animated className="relative h-24 w-24 rounded-[22%] shadow-[0_0_60px_-8px_rgba(20,216,207,0.5)]" />
-        </div>
-
-        {/* Brand wordmark: Fin (step 4) + V (step 3) + ista (step 4) */}
-        <div className="flex flex-col items-center">
-          <span className="fv-wordmark font-display text-4xl font-bold tracking-tight text-foreground">
-            <span className="fv-splash-step" style={{ animationDelay: "360ms" }}>Fin</span>
-            <span
-              className="fv-splash-step fv-v"
-              style={{
-                animationDelay: "240ms",
-                backgroundImage: "linear-gradient(135deg,#22E6D8,#14D8CF 55%,#0FB7B0)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-              }}
-            >
-              V
-            </span>
-            <span className="fv-splash-step" style={{ animationDelay: "360ms" }}>ista</span>
-          </span>
-
-          {/* Underline grows from center (step 5) */}
-          <span className="mt-2 flex w-56 items-center gap-2" aria-hidden="true">
-            <span
-              className="fv-underline fv-splash-underline h-[2px] flex-1"
-              style={{ animationDelay: "560ms" }}
-            />
-            <svg viewBox="0 0 12 12" className="fv-splash-step h-2.5 w-2.5 shrink-0" style={{ animationDelay: "620ms" }} aria-hidden="true">
-              <defs>
-                <linearGradient id="fv-splash-spark" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F7E39A" />
-                  <stop offset="55%" stopColor="#D4A24A" />
-                  <stop offset="100%" stopColor="#8A5A17" />
-                </linearGradient>
-              </defs>
-              <path d="M6 0 L7 5 L12 6 L7 7 L6 12 L5 7 L0 6 L5 5 Z" fill="url(#fv-splash-spark)" />
-            </svg>
-            <span
-              className="fv-underline fv-splash-underline h-[2px] flex-1"
-              style={{ animationDelay: "560ms" }}
-            />
-          </span>
-
-          {/* Tagline (step 6) */}
-          <div
-            className="fv-splash-step mt-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-mint"
-            style={{ animationDelay: "780ms" }}
-          >
-            Direct your wealth
-          </div>
+        {/* Master logo (icon + wordmark + tagline in one image) */}
+        <div className="fv-splash-step" style={{ animationDelay: "0ms" }}>
+          <BrandMark size="xl" tagline />
         </div>
 
         {/* Wealth view loading state */}
@@ -297,10 +244,7 @@ function Landing() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-black/70 backdrop-blur-xl load-nav">
 
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-          <Link to="/" aria-label="FinVista" className="fv-brandmark group fv-brand-rise flex min-w-0 items-center gap-2.5">
-            <BrandIcon animated className="fv-fingerprint h-10 w-10 shrink-0 rounded-[22%]" />
-            <BrandWordmark size="md" tagline taglineText="Direct your wealth" />
-          </Link>
+          <BrandMark to="/" size="md" tagline className="fv-brand-rise min-w-0" />
           <nav className="hidden items-center gap-9 text-sm text-muted-foreground md:flex">
             <a href="#features" onClick={smoothTo("features")} className="nav-link transition-colors hover:text-foreground">Features</a>
             <a href="#how" onClick={smoothTo("how")} className="nav-link transition-colors hover:text-foreground">How It Works</a>
