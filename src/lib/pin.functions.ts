@@ -37,12 +37,33 @@ export const getPinStatus = createServerFn({ method: "GET" })
     if (error) throw error;
     const lockedUntil = data?.locked_until ? new Date(data.locked_until) : null;
     const locked = lockedUntil ? lockedUntil.getTime() > Date.now() : false;
+    const { data: prof, error: profErr } = await context.supabase
+      .from("profiles")
+      .select("pin_skipped")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (profErr) throw profErr;
     return {
       enabled: !!data,
       updated_at: data?.updated_at ?? null,
       locked,
       locked_until: locked ? lockedUntil!.toISOString() : null,
+      pin_skipped: !!prof?.pin_skipped,
     };
+  });
+
+export const setPinSkipped = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { skipped: boolean }) =>
+    z.object({ skipped: z.boolean() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({ pin_skipped: data.skipped })
+      .eq("user_id", context.userId);
+    if (error) throw error;
+    return { ok: true };
   });
 
 export const setPin = createServerFn({ method: "POST" })
@@ -73,6 +94,10 @@ export const setPin = createServerFn({ method: "POST" })
         locked_until: null,
       });
     if (error) throw error;
+    await context.supabase
+      .from("profiles")
+      .update({ pin_skipped: false })
+      .eq("user_id", context.userId);
     return { ok: true };
   });
 
