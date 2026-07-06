@@ -253,8 +253,8 @@ function Landing() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-black/70 backdrop-blur-xl load-nav">
 
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-          <Link to="/" aria-label="FinVista" className="flex min-w-0 items-center gap-2.5">
-            <BrandIcon className="h-10 w-10 shrink-0 rounded-[22%]" />
+          <Link to="/" aria-label="FinVista" className="fv-brandmark group fv-brand-rise flex min-w-0 items-center gap-2.5">
+            <BrandIcon animated className="fv-fingerprint h-10 w-10 shrink-0 rounded-[22%]" />
             <BrandWordmark size="md" tagline taglineText="Direct your wealth" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm text-muted-foreground md:flex">
