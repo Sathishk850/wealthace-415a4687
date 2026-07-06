@@ -17,6 +17,7 @@ import {
   Save,
   Download,
   Eraser,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
