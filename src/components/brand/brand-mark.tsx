@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { CSSProperties, ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**
  * BrandIcon — theme-adaptive premium FinVista icon.
@@ -119,15 +119,28 @@ export function BrandWordmark({
     backgroundClip: "text",
     color: "transparent",
   };
+  // Pin underline + tagline widths to the wordmark's actual rendered width
+  // so the line starts under "F" and ends under the final "a".
+  const wordRef = useRef<HTMLSpanElement>(null);
+  const [wordWidth, setWordWidth] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const el = wordRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setWordWidth(el.offsetWidth));
+    ro.observe(el);
+    setWordWidth(el.offsetWidth);
+    return () => ro.disconnect();
+  }, []);
+  const pinned: CSSProperties | undefined = wordWidth ? { width: wordWidth } : undefined;
   return (
-    <span className={`inline-flex flex-col leading-tight ${className}`}>
-      <span className={`fv-wordmark font-display font-bold tracking-tight ${s.text}`}>
+    <span className={`inline-flex flex-col items-center leading-tight ${className}`}>
+      <span ref={wordRef} className={`fv-wordmark font-display font-bold tracking-tight ${s.text}`}>
         <span>Fin</span>
         <span className={animated ? "fv-v" : undefined} style={gradientStyle}>V</span>
         <span>ista</span>
       </span>
       {tagline && (
-        <span className="fv-underline-row mt-1 flex w-full items-center gap-1.5" aria-hidden="true">
+        <span className="fv-underline-row mt-1 flex items-center gap-1.5" style={pinned} aria-hidden="true">
           <span className={`fv-underline ${animated ? "fv-underline--animated" : ""} h-[2px] flex-1`} />
           <svg viewBox="0 0 12 12" className="fv-sparkle h-2 w-2 shrink-0" aria-hidden="true">
             <defs>
@@ -143,7 +156,9 @@ export function BrandWordmark({
         </span>
       )}
       {tagline && (
-        <span className={`mt-1 text-center font-semibold uppercase tracking-[0.32em] text-muted-foreground ${s.tagline}`}>
+        <span
+          className={`mt-1 block text-center font-semibold uppercase tracking-[0.16em] text-muted-foreground ${s.tagline}`}
+        >
           {taglineText}
         </span>
       )}
