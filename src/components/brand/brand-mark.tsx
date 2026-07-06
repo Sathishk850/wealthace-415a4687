@@ -22,29 +22,38 @@ export function BrandIcon({
       className={className}
     >
       <defs>
-        <linearGradient id="fv-brand-grad" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id="fv-brand-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#0a1420" />
+          <stop offset="100%" stopColor="#0f2331" />
+        </linearGradient>
+        <linearGradient id="fv-brand-teal" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#22E6D8" />
           <stop offset="55%" stopColor="#14D8CF" />
           <stop offset="100%" stopColor="#0FB7B0" />
         </linearGradient>
+        <linearGradient id="fv-brand-gold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F7E39A" />
+          <stop offset="45%" stopColor="#D4A24A" />
+          <stop offset="100%" stopColor="#8A5A17" />
+        </linearGradient>
         <linearGradient id="fv-brand-sheen" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.22" />
-          <stop offset="60%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
+          <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#fv-brand-grad)" />
-      <rect x="2" y="2" width="44" height="22" rx="12" fill="url(#fv-brand-sheen)" />
-      {/* ascending peak */}
-      <path
-        d="M12 31.5 L21 20.5 L27 27 L36 15.5"
-        fill="none"
-        stroke="#ffffff"
-        strokeWidth="3.25"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* spark accent */}
-      <circle cx="36" cy="15.5" r="2.6" fill="#ffffff" />
+      <rect x="1.5" y="1.5" width="45" height="45" rx="10.5" fill="url(#fv-brand-bg)" />
+      <rect x="1.5" y="1.5" width="45" height="22" rx="10.5" fill="url(#fv-brand-sheen)" />
+      {/* Fingerprint ridges — teal gradient */}
+      <g fill="none" stroke="url(#fv-brand-teal)" strokeLinecap="round" transform="translate(24 24) scale(0.078) translate(-256 -256)">
+        <path d="M256 108 C 176 108 128 176 128 244 v 56 c 0 60 20 108 44 140" strokeWidth="18" opacity="0.95" />
+        <path d="M256 108 C 336 108 384 176 384 244 v 56 c 0 60 -20 108 -44 140" strokeWidth="18" opacity="0.95" />
+        <path d="M256 148 C 196 148 164 200 164 250 v 46 c 0 46 14 82 32 108" strokeWidth="16" opacity="0.82" />
+        <path d="M256 148 C 316 148 348 200 348 250 v 46 c 0 46 -14 82 -32 108" strokeWidth="16" opacity="0.82" />
+        <path d="M256 190 C 216 190 198 226 198 258 v 38 c 0 32 8 60 20 82" strokeWidth="14" opacity="0.68" />
+        <path d="M256 190 C 296 190 314 226 314 258 v 38 c 0 32 -8 60 -20 82" strokeWidth="14" opacity="0.68" />
+      </g>
+      {/* Rupee glyph — gold gradient */}
+      <text x="24" y="30" textAnchor="middle" fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif" fontWeight={800} fontSize="15" fill="url(#fv-brand-gold)">₹</text>
     </svg>
   );
 }
