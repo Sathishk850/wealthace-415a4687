@@ -89,7 +89,8 @@ function NotificationsPage() {
 
       {tab === "delivery" ? (
         <Card className="glass-card border-[var(--border)] p-0 overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="border-b border-border bg-surface/40 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Channel</th>
@@ -122,6 +123,7 @@ function NotificationsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </Card>
       ) : (
         <Card className="glass-card border-[var(--border)] p-0 overflow-hidden">
