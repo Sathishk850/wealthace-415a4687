@@ -746,7 +746,7 @@ function estimateTax(income: number) {
   return tax;
 }
 
-function runExport(report: ReportData, fmt: ReportFmt) {
+async function runExport(report: ReportData, fmt: ReportFmt) {
   const name = report.title.replace(/\s+/g, "_");
   if (fmt === "csv") {
     const csv = [report.columns, ...report.rows]
@@ -754,11 +754,14 @@ function runExport(report: ReportData, fmt: ReportFmt) {
       .join("\n");
     downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${name}.csv`);
   } else if (fmt === "excel") {
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.aoa_to_sheet([report.columns, ...report.rows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
     XLSX.writeFile(wb, `${name}.xlsx`);
   } else {
+    const { jsPDF } = await import("jspdf");
+    const autoTable = (await import("jspdf-autotable")).default;
     const doc = new jsPDF();
     doc.setFontSize(14);
     doc.text(report.title, 14, 16);
