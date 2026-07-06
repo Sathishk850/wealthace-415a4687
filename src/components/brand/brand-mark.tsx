@@ -133,7 +133,7 @@ export function BrandWordmark({
   }, []);
   const pinned: CSSProperties | undefined = wordWidth ? { width: wordWidth } : undefined;
   return (
-    <span className={`inline-flex flex-col items-start leading-tight ${className}`}>
+    <span className={`inline-flex flex-col items-center leading-tight ${className}`}>
       <span ref={wordRef} className={`fv-wordmark font-display font-bold tracking-tight ${s.text}`}>
         <span>Fin</span>
         <span className={animated ? "fv-v" : undefined} style={gradientStyle}>V</span>
@@ -157,8 +157,7 @@ export function BrandWordmark({
       )}
       {tagline && (
         <span
-          className={`mt-1 block text-center font-semibold uppercase tracking-[0.18em] text-muted-foreground ${s.tagline}`}
-          style={pinned ? { ...pinned, letterSpacing: undefined } : undefined}
+          className={`mt-1 block text-center font-semibold uppercase tracking-[0.16em] text-muted-foreground ${s.tagline}`}
         >
           {taglineText}
         </span>
