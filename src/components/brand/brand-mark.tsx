@@ -3,15 +3,17 @@ import type { CSSProperties, ReactNode } from "react";
 
 /**
  * BrandIcon — theme-adaptive premium FinVista icon.
- * Minimal ascending-peak mark on a teal gradient rounded square, with a
- * spark accent. Scales via className; SVG so it's crisp at every size.
+ * Fingerprint ridges in teal + gold ₹ glyph, on a deep gradient tile.
  */
 export function BrandIcon({
   className = "h-9 w-9",
   title = "FinVista",
+  animated = false,
 }: {
   className?: string;
   title?: string;
+  /** When true, plays the periodic ₹ metallic shine sweep. */
+  animated?: boolean;
 }) {
   return (
     <svg
@@ -40,6 +42,14 @@ export function BrandIcon({
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
           <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
+        {/* ₹ metallic sweep mask — a diagonal white band that traverses the glyph */}
+        <linearGradient id="fv-rupee-sweep" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="45%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
       </defs>
       <rect x="1.5" y="1.5" width="45" height="45" rx="10.5" fill="url(#fv-brand-bg)" />
       <rect x="1.5" y="1.5" width="45" height="22" rx="10.5" fill="url(#fv-brand-sheen)" />
@@ -52,8 +62,24 @@ export function BrandIcon({
         <path d="M256 190 C 216 190 198 226 198 258 v 38 c 0 32 8 60 20 82" strokeWidth="14" opacity="0.68" />
         <path d="M256 190 C 296 190 314 226 314 258 v 38 c 0 32 -8 60 -20 82" strokeWidth="14" opacity="0.68" />
       </g>
-      {/* Rupee glyph — gold gradient */}
-      <text x="24" y="30" textAnchor="middle" fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif" fontWeight={800} fontSize="15" fill="url(#fv-brand-gold)">₹</text>
+      {/* Rupee glyph — gold gradient with optional metallic sweep */}
+      <g>
+        <text x="24" y="30" textAnchor="middle" fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif" fontWeight={800} fontSize="15" fill="url(#fv-brand-gold)">₹</text>
+        {animated && (
+          <text
+            x="24"
+            y="30"
+            textAnchor="middle"
+            fontFamily="Inter, 'Helvetica Neue', Arial, sans-serif"
+            fontWeight={800}
+            fontSize="15"
+            fill="url(#fv-rupee-sweep)"
+            className="fv-rupee-shine"
+          >
+            ₹
+          </text>
+        )}
+      </g>
     </svg>
   );
 }
@@ -69,18 +95,22 @@ const SIZE: Record<Size, { icon: string; text: string; tagline: string; gap: str
 
 /**
  * BrandWordmark — "FinVista" with the "V" rendered in the teal gradient.
- * Uses currentColor for Fin/ista so it adapts to light/dark themes.
+ * The wordmark uses currentColor so it inherits the theme's foreground
+ * (dark → light text, light → charcoal). Below it, a precision teal
+ * underline with a centered gold sparkle spans exactly the wordmark width.
  */
 export function BrandWordmark({
   size = "md",
   className = "",
   tagline = false,
   taglineText = "Direct Your Wealth",
+  animated = true,
 }: {
   size?: Size;
   className?: string;
   tagline?: boolean;
   taglineText?: string;
+  animated?: boolean;
 }) {
   const s = SIZE[size];
   const gradientStyle: CSSProperties = {
@@ -91,15 +121,29 @@ export function BrandWordmark({
   };
   return (
     <span className={`inline-flex flex-col leading-tight ${className}`}>
-      <span className={`font-display font-bold tracking-tight ${s.text}`}>
+      <span className={`fv-wordmark font-display font-bold tracking-tight ${s.text}`}>
         <span>Fin</span>
-        <span style={gradientStyle}>V</span>
+        <span className={animated ? "fv-v" : undefined} style={gradientStyle}>V</span>
         <span>ista</span>
       </span>
       {tagline && (
-        <span
-          className={`mt-0.5 font-semibold uppercase tracking-[0.28em] text-muted-foreground ${s.tagline}`}
-        >
+        <span className="fv-underline-row mt-1 flex w-full items-center gap-1.5" aria-hidden="true">
+          <span className={`fv-underline ${animated ? "fv-underline--animated" : ""} h-[2px] flex-1`} />
+          <svg viewBox="0 0 12 12" className="fv-sparkle h-2 w-2 shrink-0" aria-hidden="true">
+            <defs>
+              <linearGradient id="fv-spark-gold" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#F7E39A" />
+                <stop offset="55%" stopColor="#D4A24A" />
+                <stop offset="100%" stopColor="#8A5A17" />
+              </linearGradient>
+            </defs>
+            <path d="M6 0 L7 5 L12 6 L7 7 L6 12 L5 7 L0 6 L5 5 Z" fill="url(#fv-spark-gold)" />
+          </svg>
+          <span className={`fv-underline ${animated ? "fv-underline--animated" : ""} h-[2px] flex-1`} />
+        </span>
+      )}
+      {tagline && (
+        <span className={`mt-1 text-center font-semibold uppercase tracking-[0.32em] text-muted-foreground ${s.tagline}`}>
           {taglineText}
         </span>
       )}
@@ -109,8 +153,7 @@ export function BrandWordmark({
 
 /**
  * BrandMark — full lockup: premium icon on the LEFT, wordmark on the right.
- * Theme-adaptive, responsive via size prop, optional tagline underneath.
- * Wrap in a Link by passing `to`, or render standalone.
+ * Theme-adaptive. Pass `hoverAnimated` to enable the fingerprint tilt on hover.
  */
 export function BrandMark({
   size = "md",
@@ -120,6 +163,8 @@ export function BrandMark({
   className = "",
   iconClassName = "",
   wordmarkClassName = "",
+  hoverAnimated = true,
+  animated = true,
   children,
 }: {
   size?: Size;
@@ -129,13 +174,20 @@ export function BrandMark({
   className?: string;
   iconClassName?: string;
   wordmarkClassName?: string;
+  hoverAnimated?: boolean;
+  animated?: boolean;
   children?: ReactNode;
 }) {
   const s = SIZE[size];
   const content = (
-    <span className={`inline-flex items-center ${s.gap} ${className}`}>
-      <BrandIcon className={`${s.icon} shrink-0 rounded-[22%] shadow-[0_6px_20px_-6px_rgba(20,216,207,0.5)] transition-transform duration-200 hover:scale-[1.03] ${iconClassName}`} />
-      <BrandWordmark size={size} tagline={tagline} taglineText={taglineText} className={wordmarkClassName} />
+    <span className={`fv-brandmark group inline-flex items-center ${s.gap} ${className}`}>
+      <BrandIcon
+        animated={animated}
+        className={`${s.icon} shrink-0 rounded-[22%] shadow-[0_6px_20px_-6px_rgba(20,216,207,0.5)] ${
+          hoverAnimated ? "fv-fingerprint" : ""
+        } ${iconClassName}`}
+      />
+      <BrandWordmark size={size} tagline={tagline} taglineText={taglineText} animated={animated} className={wordmarkClassName} />
       {children}
     </span>
   );
