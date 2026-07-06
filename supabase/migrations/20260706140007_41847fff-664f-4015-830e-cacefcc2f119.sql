@@ -1,0 +1,2 @@
+ALTER TABLE public.user_pins DROP COLUMN IF EXISTS pin_skipped;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS pin_skipped BOOLEAN NOT NULL DEFAULT FALSE;

@@ -561,6 +561,7 @@ export type Database = {
           language: string
           number_format: string
           phone: string | null
+          pin_skipped: boolean
           theme: string
           timezone: string
           updated_at: string
@@ -578,6 +579,7 @@ export type Database = {
           language?: string
           number_format?: string
           phone?: string | null
+          pin_skipped?: boolean
           theme?: string
           timezone?: string
           updated_at?: string
@@ -595,6 +597,7 @@ export type Database = {
           language?: string
           number_format?: string
           phone?: string | null
+          pin_skipped?: boolean
           theme?: string
           timezone?: string
           updated_at?: string
@@ -794,7 +797,6 @@ export type Database = {
           failed_attempts: number
           locked_until: string | null
           pin_hash: string
-          pin_skipped: boolean
           updated_at: string
           user_id: string
         }
@@ -803,7 +805,6 @@ export type Database = {
           failed_attempts?: number
           locked_until?: string | null
           pin_hash: string
-          pin_skipped?: boolean
           updated_at?: string
           user_id: string
         }
@@ -812,7 +813,6 @@ export type Database = {
           failed_attempts?: number
           locked_until?: string | null
           pin_hash?: string
-          pin_skipped?: boolean
           updated_at?: string
           user_id?: string
         }
