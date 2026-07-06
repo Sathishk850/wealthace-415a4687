@@ -36,7 +36,5 @@
     <path d="M256 222 C 280 222 288 246 288 268 v 30 c 0 22 -4 42 -10 58" stroke-width="8" opacity="0.55"/>
   </g>
   <!-- Rupee glyph -->
-  <g fill="url(#fv-gold)">
-    <path d="M210 232 h 96 a 6 6 0 0 1 0 12 h -30 c -2 14 -10 26 -22 32 h 20 l 44 62 a 6 6 0 0 1 -10 6 l -46 -66 h -34 a 6 6 0 0 1 0 -12 h 22 c 18 0 30 -10 32 -22 h -72 a 6 6 0 0 1 0 -12 z m 0 -28 h 96 a 6 6 0 0 1 0 12 h -96 a 6 6 0 0 1 0 -12 z"/>
-  </g>
+  <text x="256" y="320" text-anchor="middle" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="800" font-size="180" fill="url(#fv-gold)">&#8377;</text>
 </svg>
