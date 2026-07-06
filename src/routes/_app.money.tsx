@@ -463,7 +463,9 @@ function Money() {
                     </div>
                     <ul className="space-y-1.5 text-xs">
                       {expenseCats.slice(0, 7).map((c) => {
-                        const pct = ((c.value / totalExpense) * 100).toFixed(1);
+                        const pct = totalExpense > 0
+                          ? ((c.value / totalExpense) * 100).toFixed(1)
+                          : "0.0";
                         return (
                           <li key={c.name} className="flex items-center justify-between gap-2">
                             <div className="flex min-w-0 items-center gap-2">

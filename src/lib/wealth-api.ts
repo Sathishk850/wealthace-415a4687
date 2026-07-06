@@ -836,7 +836,9 @@ export function portfolioXirr(rows: Investment[]) {
   let totalCurrent = 0;
   for (const r of rows) {
     const invested = r.invested_value ?? r.quantity * r.avg_price;
-    const current = r.current_value ?? r.quantity * r.current_price;
+    const rawCurrent = r.current_value ?? r.quantity * r.current_price;
+    // Missing market price → fall back to cost basis so the row still counts.
+    const current = rawCurrent > 0 ? rawCurrent : invested;
     if (invested > 0 && r.purchase_date) {
       flows.push({ date: new Date(r.purchase_date), amount: -invested });
     }
@@ -851,7 +853,8 @@ export function portfolioXirr(rows: Investment[]) {
 /** Per-investment XIRR (single buy → current value). */
 export function singleXirr(inv: Investment) {
   const invested = inv.invested_value ?? inv.quantity * inv.avg_price;
-  const current = inv.current_value ?? inv.quantity * inv.current_price;
+  const rawCurrent = inv.current_value ?? inv.quantity * inv.current_price;
+  const current = rawCurrent > 0 ? rawCurrent : invested;
   if (!inv.purchase_date || invested <= 0 || current <= 0) return 0;
   return xirr([
     { date: new Date(inv.purchase_date), amount: -invested },
