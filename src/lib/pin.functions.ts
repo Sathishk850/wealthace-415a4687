@@ -93,7 +93,7 @@ export const verifyPin = createServerFn({ method: "POST" })
     const lockedUntil = row.locked_until ? new Date(row.locked_until).getTime() : 0;
     if (lockedUntil > now) {
       const secs = Math.ceil((lockedUntil - now) / 1000);
-      return { ok: false, locked: true, retry_after_seconds: secs };
+      return { ok: false as const, locked: true, retry_after_seconds: secs, attempts_remaining: 0 };
     }
 
     const ok = await bcrypt.compare(data.pin, row.pin_hash);
@@ -104,7 +104,7 @@ export const verifyPin = createServerFn({ method: "POST" })
           .update({ failed_attempts: 0, locked_until: null })
           .eq("user_id", context.userId);
       }
-      return { ok: true };
+      return { ok: true as const, locked: false, retry_after_seconds: 0, attempts_remaining: MAX_ATTEMPTS };
     }
 
     const nextAttempts = (row.failed_attempts ?? 0) + 1;
@@ -120,9 +120,9 @@ export const verifyPin = createServerFn({ method: "POST" })
       })
       .eq("user_id", context.userId);
     return {
-      ok: false,
+      ok: false as const,
       locked: shouldLock,
-      retry_after_seconds: shouldLock ? LOCK_MINUTES * 60 : undefined,
+      retry_after_seconds: shouldLock ? LOCK_MINUTES * 60 : 0,
       attempts_remaining: shouldLock ? 0 : MAX_ATTEMPTS - nextAttempts,
     };
   });
