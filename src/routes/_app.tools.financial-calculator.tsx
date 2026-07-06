@@ -27,7 +27,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { logToolsActivity, useSaveCalculation } from "@/lib/tools-api";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 
 export const Route = createFileRoute("/_app/tools/financial-calculator")({
   head: () => ({
