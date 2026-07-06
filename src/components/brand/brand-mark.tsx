@@ -108,19 +108,20 @@ export function BrandMark({
   children?: ReactNode;
 }) {
   const s = SIZE[size];
-  const heightClass = tagline ? s.logo : s.logoNoTag;
-  const content = (
-    <span className={`inline-flex items-center ${className}`}>
-      <LogoImage className={`${heightClass} w-auto select-none`} withTagline={tagline} />
-      {children}
-    </span>
-  );
+  const widthClass = tagline ? s.logo : s.logoNoTag;
+  const classes = `block w-full ${widthClass} ${className}`;
   if (to) {
     return (
-      <Link to={to} aria-label="FinVista" className="inline-flex items-center">
-        {content}
+      <Link to={to} aria-label="FinVista" className={classes}>
+        <LogoImage className="w-full h-auto select-none" withTagline={tagline} />
+        {children}
       </Link>
     );
   }
-  return content;
+  return (
+    <span className={classes}>
+      <LogoImage className="w-full h-auto select-none" withTagline={tagline} />
+      {children}
+    </span>
+  );
 }
