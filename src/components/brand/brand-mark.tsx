@@ -59,10 +59,10 @@ export function BrandIcon({
 type Size = "sm" | "md" | "lg" | "xl";
 
 const SIZE: Record<Size, { logo: string; logoNoTag: string }> = {
-  sm: { logo: "h-10 md:h-10 lg:h-11", logoNoTag: "h-8 md:h-8 lg:h-9" },
-  md: { logo: "h-12 md:h-[3.25rem] lg:h-14", logoNoTag: "h-10 md:h-11 lg:h-11" },
-  lg: { logo: "h-20 md:h-[5.25rem] lg:h-[5.5rem]", logoNoTag: "h-14 md:h-[3.75rem] lg:h-16" },
-  xl: { logo: "h-[8.75rem] md:h-36 lg:h-40", logoNoTag: "h-24 md:h-28 lg:h-28" },
+  sm: { logo: "max-w-[80px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[130px]", logoNoTag: "max-w-[80px] sm:max-w-[100px] md:max-w-[110px] lg:max-w-[130px]" },
+  md: { logo: "max-w-[110px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[170px]", logoNoTag: "max-w-[110px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[170px]" },
+  lg: { logo: "max-w-[160px] sm:max-w-[190px] md:max-w-[220px] lg:max-w-[260px]", logoNoTag: "max-w-[160px] sm:max-w-[190px] md:max-w-[220px] lg:max-w-[260px]" },
+  xl: { logo: "max-w-[300px] sm:max-w-[340px] md:max-w-[400px] lg:max-w-[480px]", logoNoTag: "max-w-[300px] sm:max-w-[340px] md:max-w-[400px] lg:max-w-[480px]" },
 };
 
 
