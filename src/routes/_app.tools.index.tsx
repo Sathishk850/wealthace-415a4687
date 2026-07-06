@@ -81,9 +81,6 @@ import {
 import { RemindersView } from "@/components/reminders-view";
 import { ScheduledReportsPanel } from "@/components/scheduled-reports-panel";
 import { FinCalculators } from "./_app.tools.financial-calculator";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/tools/")({
