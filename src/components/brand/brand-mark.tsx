@@ -59,11 +59,12 @@ export function BrandIcon({
 type Size = "sm" | "md" | "lg" | "xl";
 
 const SIZE: Record<Size, { logo: string; logoNoTag: string }> = {
-  sm: { logo: "h-8", logoNoTag: "h-6" },
-  md: { logo: "h-10", logoNoTag: "h-8" },
-  lg: { logo: "h-16", logoNoTag: "h-11" },
-  xl: { logo: "h-28", logoNoTag: "h-20" },
+  sm: { logo: "h-10 md:h-10 lg:h-11", logoNoTag: "h-8 md:h-8 lg:h-9" },
+  md: { logo: "h-12 md:h-[3.25rem] lg:h-14", logoNoTag: "h-10 md:h-11 lg:h-11" },
+  lg: { logo: "h-20 md:h-[5.25rem] lg:h-[5.5rem]", logoNoTag: "h-14 md:h-[3.75rem] lg:h-16" },
+  xl: { logo: "h-[8.75rem] md:h-36 lg:h-40", logoNoTag: "h-24 md:h-28 lg:h-28" },
 };
+
 
 
 /**
