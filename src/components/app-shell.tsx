@@ -25,6 +25,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
 import { usePrivacy } from "@/lib/privacy";
 import { SessionExpiredDialog, markIntentionalSignOut } from "@/lib/session-expired";
+import { PinReminder } from "@/components/pin-reminder";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -272,6 +273,7 @@ export function AppShell() {
       <MobileBottomTabs />
       <Toaster />
       <SessionExpiredDialog />
+      <PinReminder />
     </div>
   );
 }

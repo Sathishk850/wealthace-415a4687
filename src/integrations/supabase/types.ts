@@ -791,18 +791,24 @@ export type Database = {
       user_pins: {
         Row: {
           created_at: string
+          failed_attempts: number
+          locked_until: string | null
           pin_hash: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          failed_attempts?: number
+          locked_until?: string | null
           pin_hash: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          failed_attempts?: number
+          locked_until?: string | null
           pin_hash?: string
           updated_at?: string
           user_id?: string
