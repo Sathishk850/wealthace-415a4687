@@ -94,6 +94,7 @@ export function LiabilityDialog({ open, onOpenChange, existing }: Props) {
         ...form,
         outstanding: Number(form.outstanding),
       });
+      void commitStagedPaymentPreferences();
       onOpenChange(false);
     } catch {
       /* toast handled */
