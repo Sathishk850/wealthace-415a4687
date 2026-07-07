@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ClearButton, isDirty } from "@/components/clear-button";
+import { PaymentFields } from "@/components/payment/payment-fields";
 import {
   ASSET_CATEGORIES,
   type Asset,
@@ -45,6 +46,8 @@ const empty: AssetInput = {
   location: "",
   notes: "",
   status: "active",
+  payment_mode: null,
+  payment_account_id: null,
 };
 
 export function AssetDialog({ open, onOpenChange, existing }: Props) {
@@ -69,6 +72,8 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
               notes: existing.notes ?? "",
               status: existing.status,
               last_updated: existing.last_updated,
+              payment_mode: existing.payment_mode,
+              payment_account_id: existing.payment_account_id,
             }
           : empty,
       );
