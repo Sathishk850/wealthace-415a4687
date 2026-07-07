@@ -29,7 +29,8 @@ const strongPinSchema = pinSchema.refine((p) => !isWeakPin(p), {
 export const getPinStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("user_pins")
       .select("user_id, updated_at, locked_until, failed_attempts")
       .eq("user_id", context.userId)
@@ -73,7 +74,8 @@ export const setPin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const bcrypt = (await import("bcryptjs")).default;
-    const { data: existing, error: readErr } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing, error: readErr } = await supabaseAdmin
       .from("user_pins")
       .select("pin_hash")
       .eq("user_id", context.userId)
@@ -85,7 +87,7 @@ export const setPin = createServerFn({ method: "POST" })
       if (!ok) throw new Error("Current PIN is incorrect");
     }
     const hash = await bcrypt.hash(data.pin, 10);
-    const { error } = await context.supabase
+    const { error } = await supabaseAdmin
       .from("user_pins")
       .upsert({
         user_id: context.userId,
@@ -106,7 +108,8 @@ export const verifyPin = createServerFn({ method: "POST" })
   .inputValidator((input: { pin: string }) => z.object({ pin: pinSchema }).parse(input))
   .handler(async ({ data, context }) => {
     const bcrypt = (await import("bcryptjs")).default;
-    const { data: row, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
       .from("user_pins")
       .select("pin_hash, failed_attempts, locked_until")
       .eq("user_id", context.userId)
@@ -124,7 +127,7 @@ export const verifyPin = createServerFn({ method: "POST" })
     const ok = await bcrypt.compare(data.pin, row.pin_hash);
     if (ok) {
       if ((row.failed_attempts ?? 0) > 0 || row.locked_until) {
-        await context.supabase
+        await supabaseAdmin
           .from("user_pins")
           .update({ failed_attempts: 0, locked_until: null })
           .eq("user_id", context.userId);
@@ -137,7 +140,7 @@ export const verifyPin = createServerFn({ method: "POST" })
     const newLockedUntil = shouldLock
       ? new Date(now + LOCK_MINUTES * 60_000).toISOString()
       : null;
-    await context.supabase
+    await supabaseAdmin
       .from("user_pins")
       .update({
         failed_attempts: shouldLock ? 0 : nextAttempts,
@@ -159,7 +162,8 @@ export const disablePin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const bcrypt = (await import("bcryptjs")).default;
-    const { data: row, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
       .from("user_pins")
       .select("pin_hash")
       .eq("user_id", context.userId)
@@ -168,7 +172,7 @@ export const disablePin = createServerFn({ method: "POST" })
     if (!row) return { ok: true };
     const ok = await bcrypt.compare(data.currentPin, row.pin_hash);
     if (!ok) throw new Error("Current PIN is incorrect");
-    const { error: delErr } = await context.supabase
+    const { error: delErr } = await supabaseAdmin
       .from("user_pins")
       .delete()
       .eq("user_id", context.userId);
