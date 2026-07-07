@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/page-header";
 import { TextTabs } from "@/components/text-tabs";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
+import { PaymentAccountsPanel } from "@/components/payment/payment-accounts-panel";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -45,6 +46,7 @@ function Settings() {
       <TextTabs
         items={[
           { value: "general", label: "General" },
+          { value: "payments", label: "Payments" },
           { value: "notifications", label: "Notifications" },
           { value: "appearance", label: "Appearance" },
           { value: "security", label: "Security" },
@@ -55,6 +57,7 @@ function Settings() {
       />
       <div className="mt-4">
         {tab === "general" && <GeneralTab />}
+        {tab === "payments" && <PaymentAccountsPanel />}
         {tab === "notifications" && <NotificationPreferencesForm />}
         {tab === "appearance" && <AppearanceTab />}
         {tab === "security" && <SecurityTab />}
