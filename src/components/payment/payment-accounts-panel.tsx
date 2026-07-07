@@ -84,14 +84,18 @@ export function PaymentAccountsPanel() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="truncate text-sm font-medium text-foreground">
-                    {a.name}
-                  </span>
-                  {a.last4 && (
-                    <span className="text-[11px] text-muted-foreground">
-                      •••• {a.last4}
-                    </span>
-                  )}
+                   <span className="truncate text-sm font-medium text-foreground">
+                     {formatAccountLabel({
+                       name: a.name,
+                       institution: a.institution,
+                       last4: null,
+                     })}
+                   </span>
+                   {a.last4 && (
+                     <span className="text-[11px] text-muted-foreground">
+                       •••• {a.last4}
+                     </span>
+                   )}
                   {a.is_default && (
                     <Badge
                       variant="outline"
