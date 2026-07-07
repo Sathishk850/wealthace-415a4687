@@ -405,12 +405,91 @@ export function PaymentAccountDialog({
           {form.account_type !== "wallet" && form.account_type !== "upi" && (
             <div className="sm:col-span-2">
               <Label className="mb-1.5 block text-xs">{fields.nameLabel}</Label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder={fields.namePlaceholder}
-                maxLength={80}
-              />
+              {form.account_type === "cash" ? (
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder={fields.namePlaceholder}
+                  maxLength={80}
+                />
+              ) : (
+                <>
+                  <Select
+                    value={
+                      nameOtherOpen
+                        ? OTHER_VALUE
+                        : form.name
+                          ? (ACCOUNT_NAME_PRESETS as readonly string[]).includes(form.name)
+                            ? form.name
+                            : OTHER_VALUE
+                          : "__none__"
+                    }
+                    onValueChange={(v) => {
+                      if (v === "__none__") {
+                        setNameOtherOpen(false);
+                        setNameOther("");
+                        setForm((f) => ({ ...f, name: "" }));
+                        return;
+                      }
+                      if (v === OTHER_VALUE) {
+                        setNameOtherOpen(true);
+                        setNameOther(form.name ?? "");
+                        return;
+                      }
+                      setNameOtherOpen(false);
+                      setForm((f) => ({ ...f, name: v }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="None — show institution only" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">
+                        None — show institution only
+                      </SelectItem>
+                      {ACCOUNT_NAME_PRESETS.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={OTHER_VALUE}>Other…</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {nameOtherOpen && (
+                    <div className="mt-2 flex gap-2">
+                      <Input
+                        value={nameOther}
+                        onChange={(e) => setNameOther(e.target.value)}
+                        placeholder={fields.namePlaceholder}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = nameOther.trim();
+                            if (v) {
+                              setForm((f) => ({ ...f, name: v }));
+                              setNameOtherOpen(false);
+                            }
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const v = nameOther.trim();
+                          if (v) {
+                            setForm((f) => ({ ...f, name: v }));
+                            setNameOtherOpen(false);
+                          }
+                        }}
+                      >
+                        Set
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
