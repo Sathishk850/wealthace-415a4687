@@ -1068,6 +1068,16 @@ function TransactionDialog({
             <Label htmlFor="account">Account (optional)</Label>
             <Input id="account" value={account} onChange={(e) => setAccount(e.target.value)} placeholder="HDFC •••• 5678" />
           </div>
+          {kind === "expense" && (
+            <PaymentFields
+              compact
+              value={{ payment_mode: paymentMode, payment_account_id: paymentAccountId }}
+              onChange={(v) => {
+                setPaymentMode(v.payment_mode);
+                setPaymentAccountId(v.payment_account_id);
+              }}
+            />
+          )}
           <div>
             <Label htmlFor="note">Note (optional)</Label>
             <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
@@ -1086,6 +1096,8 @@ function TransactionDialog({
               setMerchant("");
               setAccount("");
               setNote("");
+              setPaymentMode(null);
+              setPaymentAccountId(null);
               setErr(null);
             }}
           />
