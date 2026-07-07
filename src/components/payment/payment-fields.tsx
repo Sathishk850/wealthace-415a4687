@@ -15,7 +15,13 @@ import {
   accountTypesForMode,
   ensureCashWallet,
   usePaymentAccounts,
+  channelSourceForMode,
+  channelAccountTypesForMode,
+  CHANNEL_PRESETS,
+  getLastChannelForMode,
+  rememberChannelForMode,
   type PaymentAccount,
+  type PaymentAccountType,
 } from "@/lib/payment-accounts-api";
 import { PaymentAccountDialog } from "@/components/payment/payment-account-dialog";
 
@@ -33,15 +39,23 @@ type Props = {
   className?: string;
 };
 
+const OTHER = "__other__";
+
 /**
- * Shared Payment Mode + Paid From field pair used across all outflow forms.
+ * Shared Payment Mode + Payment Channel + Paid From triple used across all
+ * outflow forms.
  *
  * • Payment Mode is a dropdown of standard modes plus "Other".
- * • Paid From lists only the user's active payment accounts, filtered by the
- *   mode chosen (Smart Filtering).
- * • Selecting "Cash" auto-preselects the user's Cash Wallet (creating one on
- *   first use). The user can still change it.
- * • "+ New" opens the PaymentAccountDialog to add an account on the fly.
+ * • Payment Channel is dynamic per mode: hidden for Cash, a preset app /
+ *   bank list for UPI / Net Banking / Wallet, a filtered account picker
+ *   for Credit Card / Debit Card / Cheque / Auto Debit / SI, and a free
+ *   text input for Other. Card / cheque / auto-debit channels double as
+ *   Paid From, so Paid From auto-selects and hides when unambiguous.
+ * • Paid From lists the user's active payment accounts, filtered by the
+ *   mode chosen (Smart Filtering). Auto-preselects Cash Wallet for Cash.
+ * • "+ New" opens the PaymentAccountDialog to add an account inline.
+ * • Last-used channel per mode is remembered in localStorage (UX only, no
+ *   schema change).
  */
 export function PaymentFields({
   value,
@@ -52,7 +66,10 @@ export function PaymentFields({
 }: Props) {
   const { data: accounts = [] } = usePaymentAccounts();
   const [otherMode, setOtherMode] = useState<string>("");
+  const [channel, setChannel] = useState<string>("");
+  const [channelOtherText, setChannelOtherText] = useState<string>("");
   const [addOpen, setAddOpen] = useState(false);
+  const [addType, setAddType] = useState<PaymentAccountType | undefined>();
 
   const mode = value.payment_mode ?? "";
   const isKnownMode = PAYMENT_MODES.some((m) => m.value === mode);
@@ -72,6 +89,19 @@ export function PaymentFields({
       (a) => a.is_active && eligibleTypes.includes(a.account_type),
     );
   }, [accounts, eligibleTypes]);
+
+  const channelSource = channelSourceForMode(isOther ? "other" : mode);
+  const channelAcctTypes = useMemo(
+    () => channelAccountTypesForMode(mode),
+    [mode],
+  );
+  const channelAccounts: PaymentAccount[] = useMemo(() => {
+    if (channelSource !== "account") return [];
+    return accounts.filter(
+      (a) => a.is_active && channelAcctTypes.includes(a.account_type),
+    );
+  }, [accounts, channelAcctTypes, channelSource]);
+  const presetChannels = channelSource === "preset" ? CHANNEL_PRESETS[mode] ?? [] : [];
 
   // Auto-preselect Cash Wallet when mode = Cash and nothing chosen yet.
   useEffect(() => {
@@ -102,6 +132,38 @@ export function PaymentFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eligibleTypes.join("|")]);
 
+  // When mode changes, restore last-used channel for that mode (if valid).
+  useEffect(() => {
+    if (!mode) {
+      setChannel("");
+      return;
+    }
+    if (channelSource === "none") {
+      setChannel("");
+      return;
+    }
+    const last = getLastChannelForMode(mode);
+    if (channelSource === "preset") {
+      if (last && presetChannels.includes(last)) setChannel(last);
+      else setChannel("");
+    } else if (channelSource === "account") {
+      // If only one candidate account, auto-select.
+      if (channelAccounts.length === 1) {
+        setChannel(channelAccounts[0].id);
+        onChange({ ...value, payment_account_id: channelAccounts[0].id });
+      } else if (last && channelAccounts.some((a) => a.id === last)) {
+        setChannel(last);
+        onChange({ ...value, payment_account_id: last });
+      } else {
+        setChannel("");
+      }
+    } else if (channelSource === "text") {
+      setChannel(last ? OTHER : "");
+      setChannelOtherText(last ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, channelSource, channelAccounts.length]);
+
   const handleModeChange = (v: string) => {
     if (v === "other") {
       onChange({ payment_mode: otherMode.trim() || "other", payment_account_id: null });
@@ -113,6 +175,48 @@ export function PaymentFields({
   const handleOtherModeBlur = () => {
     const trimmed = otherMode.trim();
     if (trimmed) onChange({ ...value, payment_mode: trimmed });
+  };
+
+  const handleChannelChange = (v: string) => {
+    setChannel(v);
+    if (channelSource === "preset") {
+      if (v && v !== OTHER) rememberChannelForMode(mode, v);
+    } else if (channelSource === "account") {
+      if (v) {
+        rememberChannelForMode(mode, v);
+        onChange({ ...value, payment_account_id: v });
+      }
+    }
+  };
+
+  const handleChannelOtherBlur = () => {
+    const t = channelOtherText.trim();
+    if (t) rememberChannelForMode(mode, t);
+  };
+
+  // Paid From is hidden when the channel unambiguously identifies the account.
+  const hidePaidFrom = channelSource === "account";
+
+  const openAddDialog = (type?: PaymentAccountType) => {
+    setAddType(type);
+    setAddOpen(true);
+  };
+
+  const addLabelFor = (t: PaymentAccountType | undefined): string => {
+    switch (t) {
+      case "credit_card":
+        return "Add New Credit Card";
+      case "debit_card":
+        return "Add New Debit Card";
+      case "bank":
+        return "Add New Bank Account";
+      case "wallet":
+        return "Add New Wallet";
+      case "upi":
+        return "Add New UPI Account";
+      default:
+        return "Add New Account";
+    }
   };
 
   return (
@@ -149,6 +253,94 @@ export function PaymentFields({
         )}
       </div>
 
+      {channelSource !== "none" && (
+        <div>
+          <Label className="mb-1.5 block text-xs">
+            Payment Channel
+            {required && <span className="text-destructive"> *</span>}
+          </Label>
+
+          {channelSource === "preset" && (
+            <>
+              <Select value={channel || undefined} onValueChange={handleChannelChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose channel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presetChannels.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={OTHER}>Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {channel === OTHER && (
+                <Input
+                  className="mt-2"
+                  placeholder="Enter channel"
+                  value={channelOtherText}
+                  onChange={(e) => setChannelOtherText(e.target.value)}
+                  onBlur={handleChannelOtherBlur}
+                />
+              )}
+            </>
+          )}
+
+          {channelSource === "account" && (
+            <>
+              {channelAccounts.length === 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-1"
+                  onClick={() => openAddDialog(channelAcctTypes[0])}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {addLabelFor(channelAcctTypes[0])}
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Select value={channel || undefined} onValueChange={handleChannelChange}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Choose" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {channelAccounts.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                          {a.last4 ? ` •••• ${a.last4}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openAddDialog(channelAcctTypes[0])}
+                    className="shrink-0"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+
+          {channelSource === "text" && (
+            <Input
+              placeholder="Enter channel"
+              value={channelOtherText}
+              onChange={(e) => setChannelOtherText(e.target.value)}
+              onBlur={handleChannelOtherBlur}
+            />
+          )}
+        </div>
+      )}
+
+      {!hidePaidFrom && (
       <div>
         <Label className="mb-1.5 block text-xs">
           Paid From{required && <span className="text-destructive"> *</span>}
@@ -186,7 +378,7 @@ export function PaymentFields({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setAddOpen(true)}
+            onClick={() => openAddDialog(eligibleTypes.length === 1 ? eligibleTypes[0] : undefined)}
             className="shrink-0"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -194,14 +386,19 @@ export function PaymentFields({
           </Button>
         </div>
       </div>
+      )}
 
       <PaymentAccountDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        defaultType={
-          eligibleTypes.length === 1 ? eligibleTypes[0] : undefined
-        }
-        onCreated={(id) => onChange({ ...value, payment_account_id: id })}
+        defaultType={addType ?? (eligibleTypes.length === 1 ? eligibleTypes[0] : undefined)}
+        onCreated={(id) => {
+          onChange({ ...value, payment_account_id: id });
+          if (channelSource === "account") {
+            setChannel(id);
+            rememberChannelForMode(mode, id);
+          }
+        }}
       />
     </div>
   );
