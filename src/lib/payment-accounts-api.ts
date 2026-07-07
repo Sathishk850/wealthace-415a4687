@@ -93,65 +93,113 @@ export function accountTypesForMode(
   }
 }
 
-/** Quick-add presets shown in the "Add Account" dialog. */
-export const ACCOUNT_PRESETS: {
-  type: PaymentAccountType;
-  items: { name: string; institution?: string }[];
-}[] = [
-  {
-    type: "cash",
-    items: [{ name: "Cash Wallet" }],
-  },
-  {
-    type: "bank",
-    items: [
-      { name: "SBI Savings", institution: "SBI" },
-      { name: "HDFC Savings", institution: "HDFC Bank" },
-      { name: "ICICI Savings", institution: "ICICI Bank" },
-      { name: "Axis Savings", institution: "Axis Bank" },
-      { name: "Kotak Savings", institution: "Kotak Mahindra Bank" },
-      { name: "Current Account" },
-    ],
-  },
-  {
-    type: "credit_card",
-    items: [
-      { name: "HDFC Credit Card", institution: "HDFC Bank" },
-      { name: "SBI Credit Card", institution: "SBI" },
-      { name: "ICICI Credit Card", institution: "ICICI Bank" },
-      { name: "Axis Credit Card", institution: "Axis Bank" },
-    ],
-  },
-  {
-    type: "debit_card",
-    items: [
-      { name: "SBI Debit", institution: "SBI" },
-      { name: "HDFC Debit", institution: "HDFC Bank" },
-      { name: "ICICI Debit", institution: "ICICI Bank" },
-      { name: "Axis Debit Card", institution: "Axis Bank" },
-    ],
-  },
-  {
-    type: "wallet",
-    items: [
-      { name: "Amazon Pay" },
-      { name: "Paytm Wallet", institution: "Paytm" },
-      { name: "Mobikwik" },
-    ],
-  },
-  {
-    type: "upi",
-    items: [
-      { name: "Google Pay" },
-      { name: "PhonePe" },
-      { name: "IND Money" },
-      { name: "CRED" },
-      { name: "Paytm UPI", institution: "Paytm" },
-      { name: "BHIM" },
-      { name: "Amazon Pay UPI", institution: "Amazon" },
-    ],
-  },
-];
+/**
+ * Generic, product-agnostic quick-add suggestions. Bank / credit / debit
+ * lists are institutions only — the user picks an issuer, then names the
+ * account or card themselves. Wallet / UPI lists are app names. Cash has a
+ * single default label the user can rename.
+ */
+export const INSTITUTION_PRESETS: Record<PaymentAccountType, string[]> = {
+  cash: ["Cash in Hand"],
+  bank: [
+    "SBI",
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "Kotak Mahindra Bank",
+    "Canara Bank",
+    "Indian Bank",
+    "Union Bank",
+    "Bank of Baroda",
+    "Punjab National Bank",
+    "IDFC FIRST Bank",
+    "IndusInd Bank",
+    "Federal Bank",
+    "South Indian Bank",
+    "Yes Bank",
+  ],
+  credit_card: [
+    "HDFC Bank",
+    "SBI Card",
+    "ICICI Bank",
+    "Axis Bank",
+    "Kotak Bank",
+    "HSBC",
+    "American Express",
+    "Standard Chartered",
+    "IndusInd Bank",
+    "Yes Bank",
+  ],
+  debit_card: [
+    "SBI",
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "Kotak Mahindra Bank",
+    "IDFC FIRST Bank",
+    "IndusInd Bank",
+    "Yes Bank",
+  ],
+  wallet: ["Amazon Pay Wallet", "Paytm Wallet", "MobiKwik"],
+  upi: [
+    "Google Pay",
+    "PhonePe",
+    "BHIM",
+    "Paytm",
+    "CRED",
+    "Amazon Pay UPI",
+    "INDmoney",
+  ],
+};
+
+/**
+ * Custom institutions the user has added via "Other". Persisted in
+ * localStorage so they surface as suggestions on the next open. No schema
+ * changes — this is a UX-only cache.
+ */
+const CUSTOM_PRESETS_KEY = "finvista.paymentAccounts.customPresets.v1";
+
+type CustomPresetStore = Partial<Record<PaymentAccountType, string[]>>;
+
+function readCustomPresetStore(): CustomPresetStore {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_PRESETS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as CustomPresetStore;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getCustomInstitutionPresets(
+  type: PaymentAccountType,
+): string[] {
+  return readCustomPresetStore()[type] ?? [];
+}
+
+export function addCustomInstitutionPreset(
+  type: PaymentAccountType,
+  value: string,
+): void {
+  if (typeof window === "undefined") return;
+  const trimmed = value.trim();
+  if (!trimmed) return;
+  const store = readCustomPresetStore();
+  const list = store[type] ?? [];
+  const builtins = INSTITUTION_PRESETS[type] ?? [];
+  const exists = [...builtins, ...list].some(
+    (v) => v.toLowerCase() === trimmed.toLowerCase(),
+  );
+  if (exists) return;
+  store[type] = [...list, trimmed];
+  try {
+    window.localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(store));
+  } catch {
+    /* ignore quota errors */
+  }
+}
 
 export const paymentAccountKeys = {
   all: ["payment_accounts"] as const,
