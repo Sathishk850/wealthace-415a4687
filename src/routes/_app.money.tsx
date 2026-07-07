@@ -39,6 +39,7 @@ import {
 import { useMemo, useState } from "react";
 import { ClearButton } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
+import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import {
   Dialog,
   DialogContent,
