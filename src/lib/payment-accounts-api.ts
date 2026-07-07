@@ -371,3 +371,138 @@ export function accountTypeLabel(type: PaymentAccountType | string): string {
   const found = PAYMENT_ACCOUNT_TYPES.find((t) => t.value === type);
   return found ? found.label : type;
 }
+
+/* ------------------------------------------------------------------ */
+/* Payment Channel helpers                                             */
+/* ------------------------------------------------------------------ */
+/**
+ * Payment Channel is a UI-only concept layered on top of Payment Mode.
+ * It captures the specific app / bank / card / wallet used, and helps
+ * narrow the Paid From list. Channels for app-style modes come from a
+ * static preset list; channels for account-style modes come from the
+ * user's existing Payment Accounts.
+ *
+ * IMPORTANT: we intentionally do NOT persist channel to the database —
+ * this is a UX layer over the existing payment_mode + payment_account_id
+ * columns. Last-used channel per mode is remembered in localStorage.
+ */
+
+export type ChannelSource = "preset" | "account" | "text" | "none";
+
+export function channelSourceForMode(mode: string | null | undefined): ChannelSource {
+  switch (mode) {
+    case "cash":
+      return "none";
+    case "upi":
+    case "net_banking":
+    case "bank_transfer":
+    case "wallet":
+      return "preset";
+    case "credit_card":
+    case "debit_card":
+    case "cheque":
+    case "auto_debit":
+    case "standing_instruction":
+      return "account";
+    case "other":
+      return "text";
+    default:
+      return "text";
+  }
+}
+
+/** Static channel presets for app/institution-style modes. */
+export const CHANNEL_PRESETS: Record<string, string[]> = {
+  upi: [
+    "Google Pay",
+    "PhonePe",
+    "BHIM",
+    "Paytm",
+    "Amazon Pay UPI",
+    "CRED",
+    "WhatsApp Pay",
+    "INDmoney",
+  ],
+  net_banking: [
+    "HDFC Bank",
+    "SBI",
+    "ICICI Bank",
+    "Axis Bank",
+    "Kotak Mahindra Bank",
+    "Canara Bank",
+    "Indian Bank",
+    "Union Bank",
+    "Bank of Baroda",
+    "Punjab National Bank",
+    "IDFC FIRST Bank",
+    "IndusInd Bank",
+    "Federal Bank",
+    "Yes Bank",
+  ],
+  bank_transfer: [
+    "HDFC Bank",
+    "SBI",
+    "ICICI Bank",
+    "Axis Bank",
+    "Kotak Mahindra Bank",
+    "Canara Bank",
+    "Indian Bank",
+    "Union Bank",
+    "Bank of Baroda",
+    "Punjab National Bank",
+    "IDFC FIRST Bank",
+    "IndusInd Bank",
+    "Federal Bank",
+    "Yes Bank",
+  ],
+  wallet: ["Amazon Pay Wallet", "Paytm Wallet", "MobiKwik", "Freecharge"],
+};
+
+/** For account-source modes, which account types the channel picks from. */
+export function channelAccountTypesForMode(
+  mode: string | null | undefined,
+): PaymentAccountType[] {
+  switch (mode) {
+    case "credit_card":
+      return ["credit_card"];
+    case "debit_card":
+      return ["debit_card"];
+    case "cheque":
+    case "auto_debit":
+    case "standing_instruction":
+      return ["bank"];
+    default:
+      return [];
+  }
+}
+
+const LAST_CHANNEL_KEY = "finvista.paymentChannel.lastUsed.v1";
+type LastChannelStore = Record<string, string>;
+
+function readLastChannelStore(): LastChannelStore {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(LAST_CHANNEL_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as LastChannelStore;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getLastChannelForMode(mode: string): string | null {
+  return readLastChannelStore()[mode] ?? null;
+}
+
+export function rememberChannelForMode(mode: string, channel: string): void {
+  if (typeof window === "undefined") return;
+  if (!mode || !channel) return;
+  const store = readLastChannelStore();
+  store[mode] = channel;
+  try {
+    window.localStorage.setItem(LAST_CHANNEL_KEY, JSON.stringify(store));
+  } catch {
+    /* ignore */
+  }
+}
