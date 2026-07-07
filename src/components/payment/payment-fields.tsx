@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,12 +18,14 @@ import {
   channelSourceForMode,
   channelAccountTypesForMode,
   CHANNEL_PRESETS,
-  getLastChannelForMode,
-  rememberChannelForMode,
   type PaymentAccount,
   type PaymentAccountType,
 } from "@/lib/payment-accounts-api";
 import { PaymentAccountDialog } from "@/components/payment/payment-account-dialog";
+import {
+  usePaymentPrefs,
+  stagePaymentPreference,
+} from "@/lib/user-payment-prefs-api";
 
 export type PaymentFieldsValue = {
   payment_mode: string | null;
@@ -65,11 +67,13 @@ export function PaymentFields({
   className,
 }: Props) {
   const { data: accounts = [] } = usePaymentAccounts();
+  const { data: prefs } = usePaymentPrefs();
   const [otherMode, setOtherMode] = useState<string>("");
   const [channel, setChannel] = useState<string>("");
   const [channelOtherText, setChannelOtherText] = useState<string>("");
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState<PaymentAccountType | undefined>();
+  const restoredRef = useRef(false);
 
   const mode = value.payment_mode ?? "";
   const isKnownMode = PAYMENT_MODES.some((m) => m.value === mode);
@@ -103,6 +107,42 @@ export function PaymentFields({
   }, [accounts, channelAcctTypes, channelSource]);
   const presetChannels = channelSource === "preset" ? CHANNEL_PRESETS[mode] ?? [] : [];
 
+  // Auto-restore preferences on first open of a NEW outflow form.
+  // Mode → Channel → Paid From (only if the referenced account is active).
+  useEffect(() => {
+    if (restoredRef.current) return;
+    if (!prefs) return;
+    if (accounts.length === 0 && (prefs.last_account_by_mode ?? {})) {
+      // wait until accounts have loaded before validating account id
+    }
+    if (value.payment_mode || value.payment_account_id) {
+      // Editing an existing transaction — do not overwrite.
+      restoredRef.current = true;
+      return;
+    }
+    const restoreMode = prefs.last_payment_mode;
+    if (!restoreMode) {
+      restoredRef.current = true;
+      return;
+    }
+    const restoreAccountId = prefs.last_account_by_mode?.[restoreMode] ?? null;
+    const restoreChannel = prefs.last_channel_by_mode?.[restoreMode] ?? null;
+    // Validate account is still active.
+    let validAccountId: string | null = null;
+    if (restoreAccountId) {
+      const acc = accounts.find((a) => a.id === restoreAccountId);
+      if (acc && acc.is_active) validAccountId = acc.id;
+    }
+    onChange({ payment_mode: restoreMode, payment_account_id: validAccountId });
+    if (restoreChannel) {
+      // Preset / text channels are plain strings; account channels are ids.
+      setChannel(restoreChannel);
+      setChannelOtherText(restoreChannel);
+    }
+    restoredRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs, accounts]);
+
   // Auto-preselect Cash Wallet when mode = Cash and nothing chosen yet.
   useEffect(() => {
     if (mode !== "cash") return;
@@ -132,7 +172,8 @@ export function PaymentFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eligibleTypes.join("|")]);
 
-  // When mode changes, restore last-used channel for that mode (if valid).
+  // When mode changes (after initial restore), reset channel from prefs for
+  // that mode if available.
   useEffect(() => {
     if (!mode) {
       setChannel("");
@@ -142,7 +183,10 @@ export function PaymentFields({
       setChannel("");
       return;
     }
-    const last = getLastChannelForMode(mode);
+    const last =
+      channelSource === "account"
+        ? prefs?.last_account_by_mode?.[mode] ?? null
+        : prefs?.last_channel_by_mode?.[mode] ?? null;
     if (channelSource === "preset") {
       if (last && presetChannels.includes(last)) setChannel(last);
       else setChannel("");
@@ -179,20 +223,35 @@ export function PaymentFields({
 
   const handleChannelChange = (v: string) => {
     setChannel(v);
-    if (channelSource === "preset") {
-      if (v && v !== OTHER) rememberChannelForMode(mode, v);
-    } else if (channelSource === "account") {
-      if (v) {
-        rememberChannelForMode(mode, v);
-        onChange({ ...value, payment_account_id: v });
-      }
+    if (channelSource === "account" && v) {
+      onChange({ ...value, payment_account_id: v });
     }
   };
 
   const handleChannelOtherBlur = () => {
-    const t = channelOtherText.trim();
-    if (t) rememberChannelForMode(mode, t);
+    /* value staged via the effect below */
   };
+
+  // Stage current selection for post-save persistence.
+  useEffect(() => {
+    if (!mode) {
+      stagePaymentPreference({ mode: null, channel: null, accountId: null });
+      return;
+    }
+    let ch: string | null = null;
+    if (channelSource === "preset") {
+      ch = channel === OTHER ? channelOtherText.trim() || null : channel || null;
+    } else if (channelSource === "text") {
+      ch = channelOtherText.trim() || null;
+    } else if (channelSource === "account") {
+      ch = value.payment_account_id || null;
+    }
+    stagePaymentPreference({
+      mode,
+      channel: ch,
+      accountId: value.payment_account_id,
+    });
+  }, [mode, channel, channelOtherText, channelSource, value.payment_account_id]);
 
   // Paid From is hidden when the channel unambiguously identifies the account.
   const hidePaidFrom = channelSource === "account";
@@ -396,7 +455,6 @@ export function PaymentFields({
           onChange({ ...value, payment_account_id: id });
           if (channelSource === "account") {
             setChannel(id);
-            rememberChannelForMode(mode, id);
           }
         }}
       />
