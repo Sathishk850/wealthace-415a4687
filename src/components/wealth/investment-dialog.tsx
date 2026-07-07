@@ -29,6 +29,7 @@ import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown } from "lucide-r
 import { cn } from "@/lib/utils";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
+import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
@@ -291,6 +292,7 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
       return toast.error("Prices cannot be negative");
     try {
       await upsert.mutateAsync(form);
+      void commitStagedPaymentPreferences();
       onOpenChange(false);
     } catch {
       /* hook toast */

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
+import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import {
   ASSET_CATEGORIES,
   type Asset,
@@ -90,6 +91,7 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
         ...form,
         current_value: Number(form.current_value),
       });
+      void commitStagedPaymentPreferences();
       onOpenChange(false);
     } catch {
       /* toast handled in hook */
