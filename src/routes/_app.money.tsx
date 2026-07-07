@@ -992,6 +992,7 @@ function TransactionDialog({
         payment_mode: kind === "expense" ? paymentMode : null,
         payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
+      if (kind === "expense") void commitStagedPaymentPreferences();
       onOpenChange(false);
     } catch (e: any) {
       setErr(e.message || "Failed to save");
