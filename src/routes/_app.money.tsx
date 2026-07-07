@@ -39,6 +39,7 @@ import {
 import { useMemo, useState } from "react";
 import { ClearButton } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
+import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import {
   Dialog,
   DialogContent,
@@ -991,6 +992,7 @@ function TransactionDialog({
         payment_mode: kind === "expense" ? paymentMode : null,
         payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
+      if (kind === "expense") void commitStagedPaymentPreferences();
       onOpenChange(false);
     } catch (e: any) {
       setErr(e.message || "Failed to save");

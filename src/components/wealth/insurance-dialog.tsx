@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
+import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import { toast } from "sonner";
 import {
   INSURANCE_TYPES,
@@ -85,6 +86,7 @@ export function InsuranceDialog({ open, onOpenChange, existing }: Props) {
     if (Number(form.coverage_amount) < 0) return toast.error("Coverage cannot be negative");
     try {
       await upsert.mutateAsync(form);
+      void commitStagedPaymentPreferences();
       onOpenChange(false);
     } catch {
       /* hook toast */

@@ -476,33 +476,10 @@ export function channelAccountTypesForMode(
   }
 }
 
-const LAST_CHANNEL_KEY = "finvista.paymentChannel.lastUsed.v1";
-type LastChannelStore = Record<string, string>;
-
-function readLastChannelStore(): LastChannelStore {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(LAST_CHANNEL_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as LastChannelStore;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-export function getLastChannelForMode(mode: string): string | null {
-  return readLastChannelStore()[mode] ?? null;
-}
-
-export function rememberChannelForMode(mode: string, channel: string): void {
-  if (typeof window === "undefined") return;
-  if (!mode || !channel) return;
-  const store = readLastChannelStore();
-  store[mode] = channel;
-  try {
-    window.localStorage.setItem(LAST_CHANNEL_KEY, JSON.stringify(store));
-  } catch {
-    /* ignore */
-  }
-}
+/**
+ * Last-used Payment Channel per Mode is now stored per-user in the
+ * `user_payment_prefs` table (see `src/lib/user-payment-prefs-api.ts`), so
+ * the value syncs across every device the user signs in on. PaymentFields
+ * reads from `usePaymentPrefs()` and stages updates via
+ * `stagePaymentPreference()` / `commitStagedPaymentPreferences()`.
+ */

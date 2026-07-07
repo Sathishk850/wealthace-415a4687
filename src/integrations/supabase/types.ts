@@ -852,6 +852,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_payment_prefs: {
+        Row: {
+          created_at: string
+          last_account_by_mode: Json
+          last_channel_by_mode: Json
+          last_payment_mode: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_account_by_mode?: Json
+          last_channel_by_mode?: Json
+          last_payment_mode?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_account_by_mode?: Json
+          last_channel_by_mode?: Json
+          last_payment_mode?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_pins: {
         Row: {
           created_at: string
