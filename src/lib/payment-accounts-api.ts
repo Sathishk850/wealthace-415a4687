@@ -75,7 +75,7 @@ export function accountTypesForMode(
     case "cash":
       return ["cash"];
     case "upi":
-      return ["upi", "bank"];
+      return ["bank"];
     case "bank_transfer":
     case "net_banking":
     case "cheque":
@@ -85,7 +85,8 @@ export function accountTypesForMode(
     case "credit_card":
       return ["credit_card"];
     case "debit_card":
-      return ["debit_card"];
+      // Debit Card → Paid From is the linked Bank Account.
+      return ["bank"];
     case "wallet":
       return ["wallet"];
     default:
@@ -370,6 +371,48 @@ export function paymentModeLabel(value: string | null | undefined): string {
 export function accountTypeLabel(type: PaymentAccountType | string): string {
   const found = PAYMENT_ACCOUNT_TYPES.find((t) => t.value === type);
   return found ? found.label : type;
+}
+
+/**
+ * Preset account-name suggestions used inside PaymentAccountDialog for
+ * bank / credit-card / debit-card accounts. Account Name is optional — if
+ * empty, the app displays the institution alone.
+ */
+export const ACCOUNT_NAME_PRESETS = [
+  "Salary",
+  "Savings",
+  "Current",
+  "Primary",
+  "Personal",
+  "Business",
+  "Joint",
+  "Family",
+  "Investment",
+  "Emergency Fund",
+  "Loan",
+] as const;
+
+/**
+ * Canonical display label for a Payment Account across dropdowns and
+ * summaries. Rule: never show account name alone.
+ *   • Institution + Name → "Institution • Name"
+ *   • Institution only   → "Institution"
+ *   • Name only          → "Name"          (legacy rows w/o institution)
+ */
+export function formatAccountLabel(
+  a: Pick<PaymentAccount, "name" | "institution" | "last4">,
+): string {
+  const institution = a.institution?.trim() || "";
+  const name = a.name?.trim() || "";
+  let base: string;
+  if (institution && name && name.toLowerCase() !== institution.toLowerCase()) {
+    base = `${institution} • ${name}`;
+  } else if (institution) {
+    base = institution;
+  } else {
+    base = name || "Account";
+  }
+  return a.last4 ? `${base} •••• ${a.last4}` : base;
 }
 
 /* ------------------------------------------------------------------ */

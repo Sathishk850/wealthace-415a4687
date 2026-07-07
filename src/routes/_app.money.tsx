@@ -1066,10 +1066,12 @@ function TransactionDialog({
             )}
           </div>
 
-          <div>
-            <Label htmlFor="account">Account (optional)</Label>
-            <Input id="account" value={account} onChange={(e) => setAccount(e.target.value)} placeholder="HDFC •••• 5678" />
-          </div>
+          {kind === "income" && (
+            <div>
+              <Label htmlFor="account">Account (optional)</Label>
+              <Input id="account" value={account} onChange={(e) => setAccount(e.target.value)} placeholder="HDFC •••• 5678" />
+            </div>
+          )}
           {kind === "expense" && (
             <PaymentFields
               compact

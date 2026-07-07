@@ -18,6 +18,7 @@ import {
   channelSourceForMode,
   channelAccountTypesForMode,
   CHANNEL_PRESETS,
+  formatAccountLabel,
   type PaymentAccount,
   type PaymentAccountType,
 } from "@/lib/payment-accounts-api";
@@ -107,6 +108,15 @@ export function PaymentFields({
   }, [accounts, channelAcctTypes, channelSource]);
   const presetChannels = channelSource === "preset" ? CHANNEL_PRESETS[mode] ?? [] : [];
 
+  /**
+   * When true, the selected Channel unambiguously identifies the Paid From
+   * account (credit card, cheque bank, ECS bank, SI bank). Debit Card
+   * chooses the card as channel but Paid From is the linked Bank Account,
+   * so we keep the Paid From picker visible.
+   */
+  const channelSetsAccount =
+    channelSource === "account" && mode !== "debit_card";
+
   // Auto-restore preferences on first open of a NEW outflow form.
   // Mode → Channel → Paid From (only if the referenced account is active).
   useEffect(() => {
@@ -194,10 +204,14 @@ export function PaymentFields({
       // If only one candidate account, auto-select.
       if (channelAccounts.length === 1) {
         setChannel(channelAccounts[0].id);
-        onChange({ ...value, payment_account_id: channelAccounts[0].id });
+        if (channelSetsAccount) {
+          onChange({ ...value, payment_account_id: channelAccounts[0].id });
+        }
       } else if (last && channelAccounts.some((a) => a.id === last)) {
         setChannel(last);
-        onChange({ ...value, payment_account_id: last });
+        if (channelSetsAccount) {
+          onChange({ ...value, payment_account_id: last });
+        }
       } else {
         setChannel("");
       }
@@ -223,7 +237,7 @@ export function PaymentFields({
 
   const handleChannelChange = (v: string) => {
     setChannel(v);
-    if (channelSource === "account" && v) {
+    if (channelSetsAccount && v) {
       onChange({ ...value, payment_account_id: v });
     }
   };
@@ -244,17 +258,17 @@ export function PaymentFields({
     } else if (channelSource === "text") {
       ch = channelOtherText.trim() || null;
     } else if (channelSource === "account") {
-      ch = value.payment_account_id || null;
+      ch = channelSetsAccount ? value.payment_account_id || null : channel || null;
     }
     stagePaymentPreference({
       mode,
       channel: ch,
       accountId: value.payment_account_id,
     });
-  }, [mode, channel, channelOtherText, channelSource, value.payment_account_id]);
+  }, [mode, channel, channelOtherText, channelSource, channelSetsAccount, value.payment_account_id]);
 
   // Paid From is hidden when the channel unambiguously identifies the account.
-  const hidePaidFrom = channelSource === "account";
+  const hidePaidFrom = channelSetsAccount;
 
   const openAddDialog = (type?: PaymentAccountType) => {
     setAddType(type);
@@ -368,8 +382,7 @@ export function PaymentFields({
                     <SelectContent>
                       {channelAccounts.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
-                          {a.name}
-                          {a.last4 ? ` •••• ${a.last4}` : ""}
+                          {formatAccountLabel(a)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -426,8 +439,7 @@ export function PaymentFields({
             <SelectContent>
               {eligibleAccounts.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  {a.name}
-                  {a.last4 ? ` •••• ${a.last4}` : ""}
+                  {formatAccountLabel(a)}
                   {a.is_default ? " · Default" : ""}
                 </SelectItem>
               ))}
