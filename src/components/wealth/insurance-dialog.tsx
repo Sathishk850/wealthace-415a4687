@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ClearButton, isDirty } from "@/components/clear-button";
+import { PaymentFields } from "@/components/payment/payment-fields";
 import { toast } from "sonner";
 import {
   INSURANCE_TYPES,
@@ -46,6 +47,8 @@ const empty: InsuranceInput = {
   end_date: null,
   status: "active",
   notes: "",
+  payment_mode: null,
+  payment_account_id: null,
 };
 
 export function InsuranceDialog({ open, onOpenChange, existing }: Props) {
@@ -70,6 +73,8 @@ export function InsuranceDialog({ open, onOpenChange, existing }: Props) {
             end_date: existing.end_date,
             status: existing.status,
             notes: existing.notes ?? "",
+            payment_mode: existing.payment_mode,
+            payment_account_id: existing.payment_account_id,
           }
         : empty,
     );
@@ -198,6 +203,27 @@ export function InsuranceDialog({ open, onOpenChange, existing }: Props) {
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </Field>
+        </div>
+
+        <div className="mt-3 border-t border-border pt-3">
+          <div className="mb-2 text-xs font-medium text-muted-foreground">
+            Premium payment source
+          </div>
+          <PaymentFields
+            compact
+            required={false}
+            value={{
+              payment_mode: form.payment_mode ?? null,
+              payment_account_id: form.payment_account_id ?? null,
+            }}
+            onChange={(v) =>
+              setForm({
+                ...form,
+                payment_mode: v.payment_mode,
+                payment_account_id: v.payment_account_id,
+              })
+            }
+          />
         </div>
 
         <DialogFooter>

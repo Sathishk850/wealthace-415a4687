@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ClearButton, isDirty } from "@/components/clear-button";
+import { PaymentFields } from "@/components/payment/payment-fields";
 import {
   ASSET_CATEGORIES,
   type Asset,
@@ -45,6 +46,8 @@ const empty: AssetInput = {
   location: "",
   notes: "",
   status: "active",
+  payment_mode: null,
+  payment_account_id: null,
 };
 
 export function AssetDialog({ open, onOpenChange, existing }: Props) {
@@ -69,6 +72,8 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
               notes: existing.notes ?? "",
               status: existing.status,
               last_updated: existing.last_updated,
+              payment_mode: existing.payment_mode,
+              payment_account_id: existing.payment_account_id,
             }
           : empty,
       );
@@ -210,6 +215,27 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </Field>
+        </div>
+
+        <div className="mt-3 border-t border-border pt-3">
+          <div className="mb-2 text-xs font-medium text-muted-foreground">
+            Purchase payment (optional for existing assets)
+          </div>
+          <PaymentFields
+            compact
+            required={false}
+            value={{
+              payment_mode: form.payment_mode ?? null,
+              payment_account_id: form.payment_account_id ?? null,
+            }}
+            onChange={(v) =>
+              setForm({
+                ...form,
+                payment_mode: v.payment_mode,
+                payment_account_id: v.payment_account_id,
+              })
+            }
+          />
         </div>
 
         <DialogFooter>

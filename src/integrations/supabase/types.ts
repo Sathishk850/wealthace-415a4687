@@ -197,6 +197,8 @@ export type Database = {
           merchant: string
           note: string | null
           occurred_on: string
+          payment_account_id: string | null
+          payment_mode: string | null
           updated_at: string
           user_id: string
         }
@@ -210,6 +212,8 @@ export type Database = {
           merchant: string
           note?: string | null
           occurred_on?: string
+          payment_account_id?: string | null
+          payment_mode?: string | null
           updated_at?: string
           user_id: string
         }
@@ -223,6 +227,8 @@ export type Database = {
           merchant?: string
           note?: string | null
           occurred_on?: string
+          payment_account_id?: string | null
+          payment_mode?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -232,6 +238,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "money_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "money_transactions_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "payment_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -363,6 +376,54 @@ export type Database = {
           priority?: string
           read_at?: string | null
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_accounts: {
+        Row: {
+          account_type: string
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          institution: string | null
+          is_active: boolean
+          is_default: boolean
+          last4: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type: string
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          institution?: string | null
+          is_active?: boolean
+          is_default?: boolean
+          last4?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          institution?: string | null
+          is_active?: boolean
+          is_default?: boolean
+          last4?: string | null
+          name?: string
+          notes?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -880,6 +941,8 @@ export type Database = {
           name: string
           notes: string | null
           owner_member_id: string | null
+          payment_account_id: string | null
+          payment_mode: string | null
           purchase_date: string | null
           purchase_value: number | null
           quantity: number | null
@@ -899,6 +962,8 @@ export type Database = {
           name: string
           notes?: string | null
           owner_member_id?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           purchase_date?: string | null
           purchase_value?: number | null
           quantity?: number | null
@@ -918,6 +983,8 @@ export type Database = {
           name?: string
           notes?: string | null
           owner_member_id?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           purchase_date?: string | null
           purchase_value?: number | null
           quantity?: number | null
@@ -927,7 +994,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wealth_assets_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "payment_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wealth_family_members: {
         Row: {
@@ -993,6 +1068,8 @@ export type Database = {
           insured_member_id: string | null
           nominee_member_id: string | null
           notes: string | null
+          payment_account_id: string | null
+          payment_mode: string | null
           policy_name: string
           policy_number: string | null
           policy_type: string
@@ -1014,6 +1091,8 @@ export type Database = {
           insured_member_id?: string | null
           nominee_member_id?: string | null
           notes?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           policy_name: string
           policy_number?: string | null
           policy_type: string
@@ -1035,6 +1114,8 @@ export type Database = {
           insured_member_id?: string | null
           nominee_member_id?: string | null
           notes?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           policy_name?: string
           policy_number?: string | null
           policy_type?: string
@@ -1047,7 +1128,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wealth_insurance_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "payment_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wealth_investment_txns: {
         Row: {
@@ -1057,6 +1146,8 @@ export type Database = {
           investment_id: string
           notes: string | null
           occurred_on: string
+          payment_account_id: string | null
+          payment_mode: string | null
           price: number
           quantity: number
           txn_type: string
@@ -1070,6 +1161,8 @@ export type Database = {
           investment_id: string
           notes?: string | null
           occurred_on?: string
+          payment_account_id?: string | null
+          payment_mode?: string | null
           price: number
           quantity: number
           txn_type: string
@@ -1083,6 +1176,8 @@ export type Database = {
           investment_id?: string
           notes?: string | null
           occurred_on?: string
+          payment_account_id?: string | null
+          payment_mode?: string | null
           price?: number
           quantity?: number
           txn_type?: string
@@ -1095,6 +1190,13 @@ export type Database = {
             columns: ["investment_id"]
             isOneToOne: false
             referencedRelation: "wealth_investments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_investment_txns_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "payment_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1114,6 +1216,8 @@ export type Database = {
           name: string
           notes: string | null
           owner_member_id: string | null
+          payment_account_id: string | null
+          payment_mode: string | null
           purchase_date: string | null
           quantity: number
           sip_active: boolean | null
@@ -1141,6 +1245,8 @@ export type Database = {
           name: string
           notes?: string | null
           owner_member_id?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           purchase_date?: string | null
           quantity?: number
           sip_active?: boolean | null
@@ -1168,6 +1274,8 @@ export type Database = {
           name?: string
           notes?: string | null
           owner_member_id?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           purchase_date?: string | null
           quantity?: number
           sip_active?: boolean | null
@@ -1181,7 +1289,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wealth_investments_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "payment_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wealth_liabilities: {
         Row: {
@@ -1197,6 +1313,8 @@ export type Database = {
           notes: string | null
           outstanding: number
           owner_member_id: string | null
+          payment_account_id: string | null
+          payment_mode: string | null
           principal: number | null
           start_date: string | null
           status: string
@@ -1217,6 +1335,8 @@ export type Database = {
           notes?: string | null
           outstanding?: number
           owner_member_id?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           principal?: number | null
           start_date?: string | null
           status?: string
@@ -1237,6 +1357,8 @@ export type Database = {
           notes?: string | null
           outstanding?: number
           owner_member_id?: string | null
+          payment_account_id?: string | null
+          payment_mode?: string | null
           principal?: number | null
           start_date?: string | null
           status?: string
@@ -1244,7 +1366,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wealth_liabilities_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "payment_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wealth_snapshots: {
         Row: {
