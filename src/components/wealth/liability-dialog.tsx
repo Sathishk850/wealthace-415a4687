@@ -253,6 +253,27 @@ export function LiabilityDialog({ open, onOpenChange, existing }: Props) {
           </Field>
         </div>
 
+        <div className="mt-3 border-t border-border pt-3">
+          <div className="mb-2 text-xs font-medium text-muted-foreground">
+            EMI / Payment source
+          </div>
+          <PaymentFields
+            compact
+            required={false}
+            value={{
+              payment_mode: form.payment_mode ?? null,
+              payment_account_id: form.payment_account_id ?? null,
+            }}
+            onChange={(v) =>
+              setForm({
+                ...form,
+                payment_mode: v.payment_mode,
+                payment_account_id: v.payment_account_id,
+              })
+            }
+          />
+        </div>
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>
             Cancel
