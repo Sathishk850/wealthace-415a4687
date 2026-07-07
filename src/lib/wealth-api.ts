@@ -59,6 +59,8 @@ export type Asset = {
   notes: string | null;
   status: string;
   last_updated: string;
+  payment_mode: string | null;
+  payment_account_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -80,6 +82,8 @@ export type Liability = {
   status: string;
   owner_member_id: string | null;
   notes: string | null;
+  payment_mode: string | null;
+  payment_account_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -140,6 +144,8 @@ export type AssetInput = {
   notes?: string | null;
   status?: string;
   last_updated?: string;
+  payment_mode?: string | null;
+  payment_account_id?: string | null;
 };
 
 export function useUpsertAsset() {
@@ -161,17 +167,19 @@ export function useUpsertAsset() {
         notes: input.notes?.trim() || null,
         status: input.status || "active",
         last_updated: input.last_updated || new Date().toISOString().slice(0, 10),
+        payment_mode: input.payment_mode?.trim() || null,
+        payment_account_id: input.payment_account_id || null,
       };
       if (input.id) {
         const { error } = await supabase
           .from("wealth_assets")
-          .update(payload)
+          .update(payload as never)
           .eq("id", input.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("wealth_assets")
-          .insert({ ...payload, user_id });
+          .insert({ ...payload, user_id } as never);
         if (error) throw error;
       }
     },
@@ -269,6 +277,8 @@ export type LiabilityInput = {
   status?: string;
   owner_member_id?: string | null;
   notes?: string | null;
+  payment_mode?: string | null;
+  payment_account_id?: string | null;
 };
 
 export function useUpsertLiability() {
@@ -294,17 +304,19 @@ export function useUpsertLiability() {
         status: input.status || "active",
         owner_member_id: input.owner_member_id || null,
         notes: input.notes?.trim() || null,
+        payment_mode: input.payment_mode?.trim() || null,
+        payment_account_id: input.payment_account_id || null,
       };
       if (input.id) {
         const { error } = await supabase
           .from("wealth_liabilities")
-          .update(payload)
+          .update(payload as never)
           .eq("id", input.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("wealth_liabilities")
-          .insert({ ...payload, user_id });
+          .insert({ ...payload, user_id } as never);
         if (error) throw error;
       }
     },
@@ -480,6 +492,8 @@ export type Investment = {
   notes: string | null;
   status: string;
   last_updated: string;
+  payment_mode: string | null;
+  payment_account_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -503,6 +517,8 @@ export type InvestmentInput = {
   notes?: string | null;
   status?: string;
   last_updated?: string;
+  payment_mode?: string | null;
+  payment_account_id?: string | null;
 };
 
 export function useInvestments() {
@@ -552,6 +568,8 @@ function investmentPayload(i: InvestmentInput) {
     notes: i.notes?.trim() || null,
     status: i.status || "active",
     last_updated: i.last_updated || new Date().toISOString().slice(0, 10),
+    payment_mode: i.payment_mode?.trim() || null,
+    payment_account_id: i.payment_account_id || null,
   };
 }
 
@@ -654,6 +672,8 @@ export type Insurance = {
   claim_status: string | null;
   status: string;
   notes: string | null;
+  payment_mode: string | null;
+  payment_account_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -672,6 +692,8 @@ export type InsuranceInput = {
   end_date?: string | null;
   status?: string;
   notes?: string | null;
+  payment_mode?: string | null;
+  payment_account_id?: string | null;
 };
 
 export function useInsurance() {
@@ -707,6 +729,8 @@ function insurancePayload(i: InsuranceInput) {
     end_date: i.end_date || null,
     status: i.status || "active",
     notes: i.notes?.trim() || null,
+    payment_mode: i.payment_mode?.trim() || null,
+    payment_account_id: i.payment_account_id || null,
   };
 }
 

@@ -38,6 +38,7 @@ import {
 } from "recharts";
 import { useMemo, useState } from "react";
 import { ClearButton } from "@/components/clear-button";
+import { PaymentFields } from "@/components/payment/payment-fields";
 import {
   Dialog,
   DialogContent,
@@ -892,6 +893,8 @@ function TransactionDialog({
   const [merchant, setMerchant] = useState<string>(editing?.merchant ?? "");
   const [account, setAccount] = useState<string>(editing?.account ?? "");
   const [note, setNote] = useState<string>(editing?.note ?? "");
+  const [paymentMode, setPaymentMode] = useState<string | null>(editing?.payment_mode ?? null);
+  const [paymentAccountId, setPaymentAccountId] = useState<string | null>(editing?.payment_account_id ?? null);
   const [err, setErr] = useState<string | null>(null);
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
@@ -918,6 +921,8 @@ function TransactionDialog({
       setMerchant(editing?.merchant ?? "");
       setAccount(editing?.account ?? "");
       setNote(editing?.note ?? "");
+      setPaymentMode(editing?.payment_mode ?? null);
+      setPaymentAccountId(editing?.payment_account_id ?? null);
       setErr(null);
       setShowNewCat(false);
       setNewCatName("");
@@ -936,6 +941,10 @@ function TransactionDialog({
     if (!merchant.trim()) return setErr("Merchant / source is required.");
     if (!Number.isFinite(n) || n <= 0) return setErr("Enter a valid positive amount.");
     if (!date) return setErr("Pick a date.");
+    if (kind === "expense") {
+      if (!paymentMode) return setErr("Payment mode is required.");
+      if (!paymentAccountId) return setErr("Paid from account is required.");
+    }
     let cat = categoryId || null;
     if (cat && cat.startsWith("preset:")) {
       const name = cat.slice("preset:".length);
@@ -979,6 +988,8 @@ function TransactionDialog({
         merchant,
         account,
         note,
+        payment_mode: kind === "expense" ? paymentMode : null,
+        payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
       onOpenChange(false);
     } catch (e: any) {

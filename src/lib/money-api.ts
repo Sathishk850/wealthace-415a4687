@@ -29,6 +29,8 @@ export type Transaction = {
   merchant: string;
   account: string | null;
   note: string | null;
+  payment_mode: string | null;
+  payment_account_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -166,6 +168,8 @@ export function useUpsertTransaction() {
       merchant: string;
       account?: string | null;
       note?: string | null;
+      payment_mode?: string | null;
+      payment_account_id?: string | null;
     }) => {
       const user_id = await uid();
       const payload = {
@@ -176,17 +180,19 @@ export function useUpsertTransaction() {
         merchant: input.merchant.trim(),
         account: input.account?.trim() || null,
         note: input.note?.trim() || null,
+        payment_mode: input.payment_mode?.trim() || null,
+        payment_account_id: input.payment_account_id || null,
       };
       if (input.id) {
         const { error } = await supabase
           .from("money_transactions")
-          .update(payload)
+          .update(payload as never)
           .eq("id", input.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("money_transactions")
-          .insert({ ...payload, user_id });
+          .insert({ ...payload, user_id } as never);
         if (error) throw error;
       }
     },
