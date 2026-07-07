@@ -22,7 +22,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ACCOUNT_PRESETS,
+  INSTITUTION_PRESETS,
+  addCustomInstitutionPreset,
+  getCustomInstitutionPresets,
   PAYMENT_ACCOUNT_TYPES,
   paymentAccountKeys,
   useUpsertPaymentAccount,
@@ -41,7 +43,7 @@ type Props = {
 };
 
 const emptyFor = (t: PaymentAccountType = "bank"): PaymentAccountInput => ({
-  name: "",
+  name: t === "cash" ? "Cash in Hand" : "",
   account_type: t,
   institution: "",
   last4: "",
@@ -52,6 +54,58 @@ const emptyFor = (t: PaymentAccountType = "bank"): PaymentAccountInput => ({
   notes: "",
 });
 
+const OTHER_VALUE = "__other__";
+
+/** Fields that appear per account type — keeps the dialog generic. */
+function fieldsFor(type: PaymentAccountType) {
+  switch (type) {
+    case "cash":
+      return {
+        showInstitution: false,
+        showLast4: false,
+        nameLabel: "Name",
+        namePlaceholder: "Cash in Hand",
+        nameRequired: true,
+      };
+    case "wallet":
+    case "upi":
+      return {
+        showInstitution: false,
+        showLast4: false,
+        nameLabel: type === "upi" ? "UPI App *" : "Wallet *",
+        namePlaceholder: type === "upi" ? "Google Pay" : "Amazon Pay Wallet",
+        nameRequired: true,
+      };
+    case "bank":
+      return {
+        showInstitution: true,
+        showLast4: true,
+        institutionLabel: "Bank *",
+        nameLabel: "Account Name *",
+        namePlaceholder: "Savings / Salary / Current",
+        nameRequired: true,
+      };
+    case "credit_card":
+      return {
+        showInstitution: true,
+        showLast4: true,
+        institutionLabel: "Issuer *",
+        nameLabel: "Card Name *",
+        namePlaceholder: "Millennia / Regalia / Cashback+",
+        nameRequired: true,
+      };
+    case "debit_card":
+      return {
+        showInstitution: true,
+        showLast4: true,
+        institutionLabel: "Bank *",
+        nameLabel: "Card Name",
+        namePlaceholder: "Optional",
+        nameRequired: false,
+      };
+  }
+}
+
 export function PaymentAccountDialog({
   open,
   onOpenChange,
@@ -60,6 +114,12 @@ export function PaymentAccountDialog({
   onCreated,
 }: Props) {
   const [form, setForm] = useState<PaymentAccountInput>(emptyFor(defaultType));
+  const [nickname, setNickname] = useState<string>("");
+  const [customPresets, setCustomPresets] = useState<string[]>([]);
+  const [otherOpen, setOtherOpen] = useState(false);
+  const [otherValue, setOtherValue] = useState("");
+  const [nameOtherOpen, setNameOtherOpen] = useState(false);
+  const [nameOther, setNameOther] = useState("");
   const upsert = useUpsertPaymentAccount();
   const qc = useQueryClient();
 
@@ -78,22 +138,41 @@ export function PaymentAccountDialog({
         is_default: existing.is_default,
         notes: existing.notes ?? "",
       });
+      // notes stores the optional nickname (no schema change).
+      setNickname(existing.notes ?? "");
     } else {
       setForm(emptyFor(defaultType));
+      setNickname("");
     }
+    setOtherOpen(false);
+    setOtherValue("");
+    setNameOtherOpen(false);
+    setNameOther("");
   }, [open, existing, defaultType]);
 
-  const presets = useMemo(
-    () =>
-      ACCOUNT_PRESETS.find((p) => p.type === form.account_type)?.items ?? [],
-    [form.account_type],
-  );
+  // Refresh custom presets whenever the dialog opens or the type changes so
+  // freshly-added "Other" values appear on the next select.
+  useEffect(() => {
+    if (!open) return;
+    setCustomPresets(getCustomInstitutionPresets(form.account_type));
+  }, [open, form.account_type]);
+
+  const fields = useMemo(() => fieldsFor(form.account_type), [form.account_type]);
+  const presetOptions = useMemo(() => {
+    const builtins = INSTITUTION_PRESETS[form.account_type] ?? [];
+    return [...builtins, ...customPresets];
+  }, [form.account_type, customPresets]);
 
   const submit = async () => {
-    if (!form.name.trim()) return toast.error("Account name is required");
+    if (fields.nameRequired && !form.name.trim())
+      return toast.error(`${fields.nameLabel.replace(" *", "")} is required`);
+    if (fields.showInstitution && !form.institution?.trim())
+      return toast.error("Please select an institution");
+    const finalName = form.name.trim() || form.institution?.trim() || "Account";
+    const finalNotes = nickname.trim() || null;
     try {
       if (form.id) {
-        await upsert.mutateAsync(form);
+        await upsert.mutateAsync({ ...form, name: finalName, notes: finalNotes });
         onOpenChange(false);
         return;
       }
@@ -113,7 +192,7 @@ export function PaymentAccountDialog({
         .from("payment_accounts" as never)
         .insert({
           user_id: user.id,
-          name: form.name.trim(),
+          name: finalName,
           account_type: form.account_type,
           institution: form.institution?.trim() || null,
           last4: form.last4?.trim() || null,
@@ -121,7 +200,7 @@ export function PaymentAccountDialog({
           icon: form.icon || null,
           is_active: form.is_active ?? true,
           is_default: form.is_default ?? false,
-          notes: form.notes?.trim() || null,
+          notes: finalNotes,
         } as never)
         .select("id")
         .single();
@@ -133,6 +212,26 @@ export function PaymentAccountDialog({
     } catch (e) {
       toast.error((e as Error).message || "Failed to save account");
     }
+  };
+
+  const commitOtherPreset = () => {
+    const v = otherValue.trim();
+    if (!v) return;
+    addCustomInstitutionPreset(form.account_type, v);
+    setCustomPresets(getCustomInstitutionPresets(form.account_type));
+    setForm((f) => ({ ...f, institution: v }));
+    setOtherOpen(false);
+    setOtherValue("");
+  };
+
+  const commitNameOtherPreset = () => {
+    const v = nameOther.trim();
+    if (!v) return;
+    addCustomInstitutionPreset(form.account_type, v);
+    setCustomPresets(getCustomInstitutionPresets(form.account_type));
+    setForm((f) => ({ ...f, name: v }));
+    setNameOtherOpen(false);
+    setNameOther("");
   };
 
   return (
@@ -157,7 +256,11 @@ export function PaymentAccountDialog({
                 setForm((f) => ({
                   ...f,
                   account_type: v as PaymentAccountType,
-                  name: existing ? f.name : "",
+                  name: existing
+                    ? f.name
+                    : v === "cash"
+                      ? "Cash in Hand"
+                      : "",
                   institution: existing ? f.institution : "",
                 }))
               }
@@ -175,62 +278,160 @@ export function PaymentAccountDialog({
             </Select>
           </div>
 
-          {!existing && presets.length > 0 && (
+          {fields.showInstitution && (
             <div className="sm:col-span-2">
               <Label className="mb-1.5 block text-xs">
-                Quick-add suggestions
+                {fields.institutionLabel}
               </Label>
-              <div className="flex flex-wrap gap-1.5">
-                {presets.map((p) => (
-                  <button
-                    key={p.name}
-                    type="button"
-                    onClick={() =>
-                      setForm((f) => ({
-                        ...f,
-                        name: p.name,
-                        institution: p.institution ?? f.institution ?? "",
-                      }))
-                    }
-                    className="rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground hover:border-mint/40 hover:text-mint"
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
+              <Select
+                value={
+                  otherOpen
+                    ? OTHER_VALUE
+                    : form.institution && presetOptions.includes(form.institution)
+                      ? form.institution
+                      : form.institution
+                        ? OTHER_VALUE
+                        : undefined
+                }
+                onValueChange={(v) => {
+                  if (v === OTHER_VALUE) {
+                    setOtherOpen(true);
+                    setOtherValue(form.institution ?? "");
+                    return;
+                  }
+                  setOtherOpen(false);
+                  setForm((f) => ({ ...f, institution: v }));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presetOptions.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={OTHER_VALUE}>Other…</SelectItem>
+                </SelectContent>
+              </Select>
+              {otherOpen && (
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    value={otherValue}
+                    onChange={(e) => setOtherValue(e.target.value)}
+                    placeholder="Enter name"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitOtherPreset();
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button type="button" variant="outline" onClick={commitOtherPreset}>
+                    Add
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
-          <div className="sm:col-span-2">
-            <Label className="mb-1.5 block text-xs">Account name *</Label>
-            <Input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. HDFC Savings"
-              maxLength={80}
-            />
-          </div>
+          {(form.account_type === "wallet" || form.account_type === "upi") && (
+            <div className="sm:col-span-2">
+              <Label className="mb-1.5 block text-xs">{fields.nameLabel}</Label>
+              <Select
+                value={
+                  nameOtherOpen
+                    ? OTHER_VALUE
+                    : form.name && presetOptions.includes(form.name)
+                      ? form.name
+                      : form.name
+                        ? OTHER_VALUE
+                        : undefined
+                }
+                onValueChange={(v) => {
+                  if (v === OTHER_VALUE) {
+                    setNameOtherOpen(true);
+                    setNameOther(form.name ?? "");
+                    return;
+                  }
+                  setNameOtherOpen(false);
+                  setForm((f) => ({ ...f, name: v }));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presetOptions.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={OTHER_VALUE}>Other…</SelectItem>
+                </SelectContent>
+              </Select>
+              {nameOtherOpen && (
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    value={nameOther}
+                    onChange={(e) => setNameOther(e.target.value)}
+                    placeholder={fields.namePlaceholder}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitNameOtherPreset();
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button type="button" variant="outline" onClick={commitNameOtherPreset}>
+                    Add
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
-          <div>
-            <Label className="mb-1.5 block text-xs">Institution</Label>
-            <Input
-              value={form.institution ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, institution: e.target.value })
-              }
-              placeholder="e.g. HDFC Bank"
-            />
-          </div>
-          <div>
-            <Label className="mb-1.5 block text-xs">Last 4 digits</Label>
-            <Input
-              value={form.last4 ?? ""}
-              onChange={(e) => setForm({ ...form, last4: e.target.value })}
-              maxLength={4}
-              inputMode="numeric"
-              placeholder="1234"
-            />
-          </div>
+          {form.account_type !== "wallet" && form.account_type !== "upi" && (
+            <div className="sm:col-span-2">
+              <Label className="mb-1.5 block text-xs">{fields.nameLabel}</Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder={fields.namePlaceholder}
+                maxLength={80}
+              />
+            </div>
+          )}
+
+          {form.account_type !== "cash" && (
+            <div className={fields.showLast4 ? "" : "sm:col-span-2"}>
+              <Label className="mb-1.5 block text-xs">
+                Nickname (optional)
+              </Label>
+              <Input
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="e.g. Primary, Joint, Rewards"
+                maxLength={60}
+              />
+            </div>
+          )}
+
+          {fields.showLast4 && (
+            <div>
+              <Label className="mb-1.5 block text-xs">Last 4 digits</Label>
+              <Input
+                value={form.last4 ?? ""}
+                onChange={(e) => setForm({ ...form, last4: e.target.value })}
+                maxLength={4}
+                inputMode="numeric"
+                placeholder="1234"
+              />
+            </div>
+          )}
 
           <div>
             <Label className="mb-1.5 block text-xs">Colour</Label>
