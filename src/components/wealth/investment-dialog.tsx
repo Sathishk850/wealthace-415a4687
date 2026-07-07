@@ -28,6 +28,7 @@ import {
 import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClearButton, isDirty } from "@/components/clear-button";
+import { PaymentFields } from "@/components/payment/payment-fields";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
@@ -246,6 +247,8 @@ const empty: InvestmentInput = {
   sip_active: true,
   notes: "",
   status: "active",
+  payment_mode: null,
+  payment_account_id: null,
 };
 
 export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
@@ -274,6 +277,8 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             sip_active: existing.sip_active ?? true,
             notes: existing.notes ?? "",
             status: existing.status,
+            payment_mode: existing.payment_mode,
+            payment_account_id: existing.payment_account_id,
           }
         : empty,
     );
