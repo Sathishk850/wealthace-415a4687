@@ -19,6 +19,7 @@ import {
   useSetDefaultPaymentAccount,
   useTogglePaymentAccountActive,
   accountTypeLabel,
+  formatAccountLabel,
   type PaymentAccount,
 } from "@/lib/payment-accounts-api";
 import { PaymentAccountDialog } from "@/components/payment/payment-account-dialog";
