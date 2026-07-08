@@ -268,6 +268,10 @@ function AuthPage() {
   const handleGoogle = async () => {
     setMessage(null);
     setSuggestGoogle(false);
+    // Match the password path: honour the current "Remember this device" choice
+    // so the pagehide guard doesn't wipe the freshly-minted OAuth session on
+    // the redirect out to Google (or on the navigation to /dashboard).
+    applyRememberDevice(remember);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
