@@ -19,6 +19,7 @@ import {
   drawReportHeader,
   drawReportInfo,
   loadBrandMark,
+  pdfSafeText,
 } from "@/lib/report-theme";
 
 /* ============ Types ============ */
@@ -250,15 +251,15 @@ export async function renderReportPdf(doc: ReportDoc, opts: ExportOptions) {
       pdf.setFont(REPORT_THEME.font.family, "bold");
       pdf.setFontSize(11);
       pdf.setTextColor(...REPORT_THEME.color.heading);
-      pdf.text(table.title, layout.marginX, y + 4);
+      pdf.text(pdfSafeText(table.title), layout.marginX, y + 4);
       y += 14;
     }
-    const head = [table.columns.map((c) => c.label)];
+    const head = [table.columns.map((c) => pdfSafeText(c.label))];
     const body = table.rows.length
-      ? table.rows.map((r) => r.map((c) => (c == null ? "" : String(c))))
+      ? table.rows.map((r) => r.map((c) => pdfSafeText(c)))
       : [table.columns.map(() => "—")];
     const foot = table.totals
-      ? [table.totals.map((c) => (c == null ? "" : String(c)))]
+      ? [table.totals.map((c) => pdfSafeText(c))]
       : undefined;
     const columnStyles: Record<number, { halign: "left" | "right" | "center" }> = {};
     table.columns.forEach((c, i) => {

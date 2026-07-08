@@ -56,6 +56,21 @@ export const REPORT_THEME = {
 
 type JsPDFLike = any;
 
+/**
+ * jsPDF's built-in Helvetica uses WinAnsi encoding, which does not include
+ * U+20B9 (₹). Rendering it produces "¹". Every text drawn into a PDF goes
+ * through this sanitizer so amounts stay readable. We keep "Rs." rather
+ * than swapping fonts to avoid shipping a ~200KB font base64.
+ */
+export function pdfSafeText(input: string | number | null | undefined): string {
+  if (input == null) return "";
+  return String(input)
+    .replace(/₹\s?/g, "Rs. ")
+    .replace(/[\u2013\u2014]/g, "-") // en/em dash → hyphen
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"');
+}
+
 export function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
   return [
@@ -153,26 +168,24 @@ export function drawReportHeader(
     charSpace: 1.4,
   });
 
-  // Right meta
+  // Right meta — two stacked rows, both right-aligned. Label sits directly
+  // to the left of the value with its own right-align so long timestamps
+  // don't collide with the label.
   const rightX = pageW - layout.marginX;
-  doc.setFont(font.family, "normal");
+  const gen = pdfSafeText(opts.generatedOn ?? new Date().toLocaleString());
+  const rows: [string, string][] = [["Generated On", gen]];
+  if (opts.reportId) rows.push(["Report ID", pdfSafeText(opts.reportId)]);
   doc.setFontSize(8);
-  const gen = opts.generatedOn ?? new Date().toLocaleString();
-  doc.setTextColor(...color.muted);
-  doc.text("Generated On", rightX - 128, top + 10);
-  doc.text(":", rightX - 80, top + 10);
-  doc.setFont(font.family, "bold");
-  doc.setTextColor(...color.heading);
-  doc.text(gen, rightX, top + 10, { align: "right" });
-  if (opts.reportId) {
-    doc.setFont(font.family, "normal");
-    doc.setTextColor(...color.muted);
-    doc.text("Report ID", rightX - 128, top + 22);
-    doc.text(":", rightX - 80, top + 22);
+  rows.forEach(([label, value], i) => {
+    const yy = top + 10 + i * 12;
     doc.setFont(font.family, "bold");
     doc.setTextColor(...color.heading);
-    doc.text(opts.reportId, rightX, top + 22, { align: "right" });
-  }
+    doc.text(value, rightX, yy, { align: "right" });
+    const valueW = doc.getTextWidth(value);
+    doc.setFont(font.family, "normal");
+    doc.setTextColor(...color.muted);
+    doc.text(`${label} :`, rightX - valueW - 8, yy, { align: "right" });
+  });
 
   // Divider
   const dividerY = top + markSize + 8;
@@ -187,13 +200,13 @@ export function drawReportHeader(
     doc.setFont(font.family, "bold");
     doc.setFontSize(16);
     doc.setTextColor(...color.heading);
-    doc.text(opts.title, x, cursor + 4);
+    doc.text(pdfSafeText(opts.title), x, cursor + 4);
     cursor += 18;
     if (opts.subtitle) {
       doc.setFont(font.family, "normal");
       doc.setFontSize(9);
       doc.setTextColor(...color.muted);
-      doc.text(opts.subtitle, x, cursor);
+      doc.text(pdfSafeText(opts.subtitle), x, cursor);
       cursor += 12;
     }
     cursor += 4;
@@ -250,27 +263,29 @@ export function drawReportInfo(
   doc.setFont(font.family, "bold");
   doc.setFontSize(22);
   doc.setTextColor(...color.heading);
-  doc.text(opts.title, layout.marginX, y + 6);
+  doc.text(pdfSafeText(opts.title), layout.marginX, y + 6);
   let cursor = y + 26;
   const rows: { label: string; value: string }[] = [];
   if (opts.period) {
     const label = opts.period.label
       ? opts.period.label
       : opts.period.start && opts.period.end
-        ? `${opts.period.start} – ${opts.period.end}`
+        ? `${opts.period.start} - ${opts.period.end}`
         : "All time";
     rows.push({ label: "Report Period", value: label });
   }
   if (opts.currency) {
     rows.push({
       label: "Currency",
-      value: `${opts.currency.code} (${opts.currency.symbol})`,
+      value: `${opts.currency.code} (${pdfSafeText(opts.currency.symbol)})`,
     });
   }
   if (opts.filters && opts.filters.length) {
     rows.push({
       label: "Filters",
-      value: opts.filters.map((f) => `${f.label}: ${f.value}`).join("  |  "),
+      value: pdfSafeText(
+        opts.filters.map((f) => `${f.label}: ${f.value}`).join("  |  "),
+      ),
     });
   }
   doc.setFontSize(9);
@@ -280,7 +295,7 @@ export function drawReportInfo(
     doc.text(r.label, layout.marginX, cursor);
     doc.setFont(font.family, "bold");
     doc.setTextColor(...color.heading);
-    doc.text(`:  ${r.value}`, layout.marginX + 78, cursor);
+    doc.text(`:  ${pdfSafeText(r.value)}`, layout.marginX + 78, cursor);
     cursor += 13;
   }
   return cursor + 4;
@@ -321,16 +336,16 @@ export function drawKpiCards(
     doc.setFont(font.family, "normal");
     doc.setFontSize(8);
     doc.setTextColor(...color.muted);
-    doc.text(kpis[i].label, cx + 40, cursor + 20);
+    doc.text(pdfSafeText(kpis[i].label), cx + 40, cursor + 20);
     doc.setFont(font.family, "bold");
     doc.setFontSize(13);
     doc.setTextColor(...color.primaryDeep);
-    doc.text(kpis[i].value, cx + 40, cursor + 37);
+    doc.text(pdfSafeText(kpis[i].value), cx + 40, cursor + 37);
     if (kpis[i].sub) {
       doc.setFont(font.family, "normal");
       doc.setFontSize(7.5);
       doc.setTextColor(...color.muted);
-      doc.text(kpis[i].sub!, cx + 40, cursor + 48);
+      doc.text(pdfSafeText(kpis[i].sub!), cx + 40, cursor + 48);
     }
   }
   return cursor + cardH + 14;
@@ -357,7 +372,7 @@ export function drawNotes(doc: JsPDFLike, y: number, notes: string[]) {
     doc.setTextColor(...color.primaryDeep);
     doc.text("\u2713", layout.marginX + 10, y + 28 + i * 12);
     doc.setTextColor(...color.body);
-    doc.text(n, layout.marginX + 22, y + 28 + i * 12);
+    doc.text(pdfSafeText(n), layout.marginX + 22, y + 28 + i * 12);
   });
   return y + h + 12;
 }
@@ -374,7 +389,7 @@ export function drawDisclaimer(doc: JsPDFLike, y: number, text: string) {
   doc.setFont(font.family, "normal");
   doc.setFontSize(8);
   doc.setTextColor(...color.muted);
-  const lines = doc.splitTextToSize(text, w) as string[];
+  const lines = doc.splitTextToSize(pdfSafeText(text), w) as string[];
   doc.text(lines, layout.marginX, y + 12);
   return y + 12 + lines.length * 10;
 }
@@ -421,7 +436,7 @@ export function drawDonut(
   doc.setFont(font.family, "bold");
   doc.setFontSize(10);
   doc.setTextColor(...color.heading);
-  doc.text(opts.title, layout.marginX + 12, y + 16);
+  doc.text(pdfSafeText(opts.title), layout.marginX + 12, y + 16);
 
   const cx = layout.marginX + 80;
   const cy = y + 90;
@@ -467,7 +482,7 @@ export function drawDonut(
     doc.setFontSize(8.5);
     doc.setTextColor(...color.body);
     const pct = ((s.value / total) * 100).toFixed(1);
-    doc.text(s.label, lx + 14, ly);
+    doc.text(pdfSafeText(s.label), lx + 14, ly);
     doc.setTextColor(...color.muted);
     doc.text(`${s.value.toLocaleString()}  (${pct}%)`, lx + 130, ly);
     ly += 14;
