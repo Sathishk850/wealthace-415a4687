@@ -830,14 +830,6 @@ function reportToDoc(report: ReportData): ReportDoc {
 async function printReport(report: ReportData) {
   try {
     const doc = reportToDoc(report);
-    // renderReportPdf downloads by default; we need a bloburl. Reproduce it
-    // inline with autoPrint for the print flow.
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-    void jsPDF; void autoTable; // ensure chunk loaded before engine call
-    // Fall back to exporting a PDF and rely on the OS print dialog: opening
-    // the downloaded file already renders correctly; browsers block bloburl
-    // popups without user gesture across sandboxed origins.
     await exportReport(doc, { format: "pdf" });
     toast.info("PDF downloaded — open it to print with the same layout.");
   } catch (e: any) {
