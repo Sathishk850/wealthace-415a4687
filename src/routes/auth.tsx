@@ -64,6 +64,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   useEffect(() => {
     installSessionOnlyGuard();
+    const dispose = installSessionOnlyResetOnSignIn();
+    return dispose;
   }, []);
   const { mode: initialMode, redirect: redirectParam } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "pin">(initialMode);
