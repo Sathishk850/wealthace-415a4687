@@ -213,8 +213,9 @@ export async function renderReportPdf(doc: ReportDoc, opts: ExportOptions) {
   const pageH = pdf.internal.pageSize.getHeight();
   const bodyBottom = pageH - layout.footerHeight - 8;
 
+  const brandMark = await loadBrandMark();
   const drawHeader = () =>
-    drawReportHeader(pdf, { generatedOn, reportId });
+    drawReportHeader(pdf, { generatedOn, reportId, brandMark });
 
   let y = drawHeader();
   y = drawReportInfo(pdf, y, {
