@@ -58,20 +58,8 @@ export const REPORT_THEME = {
   },
 } as const;
 
-type JsPDFLike = {
-  internal: { pageSize: { getWidth: () => number; getHeight: () => number }; getNumberOfPages: () => number };
-  setPage: (n: number) => void;
-  setFont: (family: string, style?: string) => void;
-  setFontSize: (size: number) => void;
-  setTextColor: (r: number, g?: number, b?: number) => void;
-  setDrawColor: (r: number, g?: number, b?: number) => void;
-  setFillColor: (r: number, g?: number, b?: number) => void;
-  setLineWidth: (w: number) => void;
-  rect: (x: number, y: number, w: number, h: number, style?: string) => void;
-  line: (x1: number, y1: number, x2: number, y2: number) => void;
-  text: (text: string | string[], x: number, y: number, opts?: unknown) => void;
-  circle?: (x: number, y: number, r: number, style?: string) => void;
-};
+// Kept loose — jsPDF's method surface is broad and version-dependent.
+type JsPDFLike = any;
 
 /**
  * Draw the FinVista document header on the current page: brand mark + wordmark,
