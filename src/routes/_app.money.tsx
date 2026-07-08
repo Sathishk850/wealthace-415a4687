@@ -947,24 +947,59 @@ function TransactionDialog({
       if (!paymentAccountId) return setErr("Paid from account is required.");
     }
     let cat = categoryId || null;
-    if (cat && cat.startsWith("preset:")) {
+    // Only touch money_categories when the user explicitly picked a preset
+    // pseudo-option that isn't already the current value. If the transaction
+    // is being edited and the category is unchanged, skip entirely — never
+    // insert/upsert on a plain edit save.
+    const unchanged = editing && cat === (editing.category_id ?? null);
+    if (!unchanged && cat && cat.startsWith("preset:")) {
       const name = cat.slice("preset:".length);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Not authenticated");
-        const { data, error } = await supabase
+        // 1) Reuse an existing matching category before attempting insert.
+        //    The unique key is (user_id, kind, lower(name)); do a case-insensitive lookup.
+        const { data: existing, error: lookupErr } = await supabase
           .from("money_categories")
-          .insert({
-            user_id: user.id,
-            name,
-            kind,
-            color: PALETTE[(categories.length) % PALETTE.length],
-            icon: "Wallet",
-          })
           .select("id")
-          .single();
-        if (error) throw error;
-        cat = data!.id;
+          .eq("user_id", user.id)
+          .eq("kind", kind)
+          .ilike("name", name)
+          .maybeSingle();
+        if (lookupErr) throw lookupErr;
+        if (existing?.id) {
+          cat = existing.id;
+        } else {
+          const { data, error } = await supabase
+            .from("money_categories")
+            .insert({
+              user_id: user.id,
+              name,
+              kind,
+              color: PALETTE[(categories.length) % PALETTE.length],
+              icon: "Wallet",
+            })
+            .select("id")
+            .single();
+          if (error) {
+            // 2) Graceful recovery: another tab / race created it in between.
+            if ((error as any).code === "23505") {
+              const { data: race } = await supabase
+                .from("money_categories")
+                .select("id")
+                .eq("user_id", user.id)
+                .eq("kind", kind)
+                .ilike("name", name)
+                .maybeSingle();
+              if (race?.id) cat = race.id;
+              else throw error;
+            } else {
+              throw error;
+            }
+          } else {
+            cat = data!.id;
+          }
+        }
       } catch (e: any) {
         return setErr(e.message || "Failed to create category");
       }
