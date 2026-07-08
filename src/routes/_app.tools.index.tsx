@@ -84,7 +84,6 @@ import { FinCalculators } from "./_app.tools.financial-calculator";
 import { toast } from "sonner";
 import {
   exportReport,
-  renderReportPdf,
   type ReportCategory,
   type ReportColumn,
   type ReportDoc,
@@ -976,15 +975,6 @@ function ReportPreviewDialog({ report, onClose }: { report: ReportData | null; o
       </DialogContent>
     </Dialog>
   );
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 /* ---------------- AI Insights ---------------- */
