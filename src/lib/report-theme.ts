@@ -66,6 +66,35 @@ export function hexToRgb(hex: string): [number, number, number] {
 }
 
 /**
+ * Load the official FinVista fingerprint mark once and cache it as a
+ * PNG data URL so jsPDF can embed it via addImage. Resolves to null when
+ * the network fetch fails so the header falls back to the text tile.
+ */
+import brandMarkAsset from "@/assets/finvista-mark.png.asset.json";
+
+let brandMarkPromise: Promise<string | null> | null = null;
+export function loadBrandMark(): Promise<string | null> {
+  if (brandMarkPromise) return brandMarkPromise;
+  brandMarkPromise = (async () => {
+    try {
+      const res = await fetch(brandMarkAsset.url);
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onloadend = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  })();
+  return brandMarkPromise;
+}
+export const BRAND_MARK_ASPECT = 462 / 582; // width / height of the fingerprint png
+
+/**
  * Premium banking-style header. Left: FV mark + wordmark. Center: FINVISTA
  * / DIRECT YOUR WEALTH. Right: Generated On + Report ID. Thin brand divider.
  * Backwards compatible: `title` / `subtitle` still supported for older callers.
@@ -77,6 +106,7 @@ export function drawReportHeader(
     subtitle?: string;
     generatedOn?: string;
     reportId?: string;
+    brandMark?: string | null;
   },
 ) {
   const { color, layout, brand, font } = REPORT_THEME;
@@ -84,24 +114,31 @@ export function drawReportHeader(
   const x = layout.marginX;
   const top = layout.marginY - 20;
 
-  // Left brand mark
-  const markSize = 30;
-  doc.setFillColor(...color.primary);
-  doc.roundedRect(x, top, markSize, markSize, 5, 5, "F");
-  doc.setFont(font.family, "bold");
-  doc.setFontSize(14);
-  doc.setTextColor(255, 255, 255);
-  doc.text("FV", x + markSize / 2, top + markSize / 2 + 5, { align: "center" });
+  // Left brand mark — official FinVista fingerprint logo when available,
+  // otherwise fall back to the mint "FV" tile.
+  const markSize = 32;
+  if (opts.brandMark) {
+    const w = markSize * BRAND_MARK_ASPECT;
+    doc.addImage(opts.brandMark, "PNG", x, top - 1, w, markSize, undefined, "FAST");
+  } else {
+    doc.setFillColor(...color.primary);
+    doc.roundedRect(x, top, markSize, markSize, 5, 5, "F");
+    doc.setFont(font.family, "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.text("FV", x + markSize / 2, top + markSize / 2 + 5, { align: "center" });
+  }
+  const markW = opts.brandMark ? markSize * BRAND_MARK_ASPECT : markSize;
 
   // Left wordmark
   doc.setFont(font.family, "bold");
   doc.setFontSize(15);
   doc.setTextColor(...color.heading);
-  doc.text(brand.name, x + markSize + 10, top + 12);
+  doc.text(brand.name, x + markW + 10, top + 12);
   doc.setFont(font.family, "normal");
   doc.setFontSize(8);
   doc.setTextColor(...color.muted);
-  doc.text(brand.tagline, x + markSize + 10, top + 23);
+  doc.text(brand.tagline, x + markW + 10, top + 23);
 
   // Center wordmark
   doc.setFont(font.family, "bold");
