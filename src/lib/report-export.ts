@@ -1,4 +1,10 @@
 import type { GeneratedReport, ReportSection } from "@/lib/notifications-api";
+import {
+  REPORT_THEME,
+  REPORT_TABLE_STYLES,
+  drawReportFooter,
+  drawReportHeader,
+} from "@/lib/report-theme";
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -46,6 +52,13 @@ export async function exportReportXLSX(report: GeneratedReport) {
     aoa.push(sec.columns);
     for (const row of sec.rows) aoa.push(row);
     const ws = XLSX.utils.aoa_to_sheet(aoa);
+    // FinVista header row styling (basic — SheetJS community build doesn't
+    // persist rich styles, but we set cell types cleanly for print layout).
+    const headerRowIdx = sec.summary.length ? 2 : 0;
+    for (let c = 0; c < sec.columns.length; c++) {
+      const addr = XLSX.utils.encode_cell({ r: headerRowIdx, c });
+      if (ws[addr]) ws[addr].s = { font: { bold: true, color: { rgb: "0F172A" } }, fill: { fgColor: { rgb: "21DBD2" } } };
+    }
     XLSX.utils.book_append_sheet(wb, ws, sec.title.slice(0, 28) || sec.key);
   }
   const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -57,39 +70,41 @@ export async function exportReportPDF(report: GeneratedReport) {
   const autoTable = (await import("jspdf-autotable")).default;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
-
-  doc.setFontSize(18);
-  doc.text(report.name, 40, 50);
-  doc.setFontSize(10);
-  doc.setTextColor(120);
   const period = report.snapshot.period;
   const periodLabel = period.start && period.end ? `${period.start} → ${period.end}` : "All time";
-  doc.text(`${periodLabel}  ·  Generated ${new Date(report.generated_at).toLocaleString()}`, 40, 68);
+  const subtitle = `${periodLabel}  ·  Generated ${new Date(report.generated_at).toLocaleString()}`;
+  let y = drawReportHeader(doc, { title: report.name, subtitle });
 
-  let y = 90;
   for (const sec of report.snapshot.sections) {
-    if (y > 720) { doc.addPage(); y = 50; }
-    doc.setTextColor(20);
-    doc.setFontSize(13);
-    doc.text(sec.title, 40, y);
-    y += 14;
+    if (y > 720) { doc.addPage(); y = drawReportHeader(doc, { title: report.name, subtitle }); }
+    doc.setFont(REPORT_THEME.font.family, "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...REPORT_THEME.color.heading);
+    doc.text(sec.title, REPORT_THEME.layout.marginX, y);
+    y += 12;
     if (sec.summary.length) {
+      doc.setFont(REPORT_THEME.font.family, "normal");
       doc.setFontSize(9);
-      doc.setTextColor(120);
-      doc.text(sec.summary.map((s) => `${s.label}: ${s.value}`).join("   "), 40, y);
-      y += 12;
+      doc.setTextColor(...REPORT_THEME.color.muted);
+      doc.text(
+        sec.summary.map((s) => `${s.label}: ${s.value}`).join("   "),
+        REPORT_THEME.layout.marginX,
+        y,
+      );
+      y += 10;
     }
     autoTable(doc, {
       startY: y + 4,
       head: [sec.columns],
       body: (sec.rows.length ? sec.rows : [["—"]]).map((r) => r.map((c) => String(c))),
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [13, 34, 50], textColor: 220 },
-      margin: { left: 40, right: 40 },
-      tableWidth: pageW - 80,
+      margin: { left: REPORT_THEME.layout.marginX, right: REPORT_THEME.layout.marginX, bottom: REPORT_THEME.layout.footerHeight + 12 },
+      tableWidth: pageW - REPORT_THEME.layout.marginX * 2,
+      ...REPORT_TABLE_STYLES,
+      styles: { ...REPORT_TABLE_STYLES.styles, fontSize: 8, cellPadding: 4 },
     });
     // @ts-ignore — autotable attaches lastAutoTable to doc
-    y = (doc as any).lastAutoTable.finalY + 24;
+    y = (doc as any).lastAutoTable.finalY + 22;
   }
+  drawReportFooter(doc);
   doc.save(`${safeName(report.name)}.pdf`);
 }
