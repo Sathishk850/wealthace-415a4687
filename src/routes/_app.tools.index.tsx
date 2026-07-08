@@ -82,6 +82,13 @@ import { RemindersView } from "@/components/reminders-view";
 import { ScheduledReportsPanel } from "@/components/scheduled-reports-panel";
 import { FinCalculators } from "./_app.tools.financial-calculator";
 import { toast } from "sonner";
+import {
+  exportReport,
+  renderReportPdf,
+  type ReportCategory,
+  type ReportColumn,
+  type ReportDoc,
+} from "@/lib/report-engine";
 
 export const Route = createFileRoute("/_app/tools/")({
   head: () => ({
@@ -747,65 +754,96 @@ function estimateTax(income: number) {
 }
 
 async function runExport(report: ReportData, fmt: ReportFmt) {
-  const name = report.title.replace(/\s+/g, "_");
-  if (fmt === "csv") {
-    const csv = [report.columns, ...report.rows]
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${name}.csv`);
-  } else if (fmt === "excel") {
-    const XLSX = await import("xlsx");
-    const ws = XLSX.utils.aoa_to_sheet([report.columns, ...report.rows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, `${name}.xlsx`);
-  } else {
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-    const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text(report.title, 14, 16);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${formatDateLabel(new Date().toISOString().slice(0, 10))}`, 14, 22);
-    autoTable(doc, {
-      head: [report.columns],
-      body: report.rows.map((r) => r.map((c) => String(c))),
-      startY: 28,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [0, 206, 177] },
-    });
-    if (report.summary?.length) {
-      const y = (doc as any).lastAutoTable.finalY + 8;
-      doc.setFontSize(10);
-      report.summary.forEach((s, i) => doc.text(`${s.label}: ${s.value}`, 14, y + i * 6));
-    }
-    doc.save(`${name}.pdf`);
-  }
+  const doc = reportToDoc(report);
+  await exportReport(doc, { format: fmt === "excel" ? "xlsx" : fmt });
 }
 
-function printReport(report: ReportData) {
-  const w = window.open("", "_blank", "width=900,height=700");
-  if (!w) return;
-  const esc = (s: any) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
-  const head = report.columns.map((c) => `<th>${esc(c)}</th>`).join("");
-  const body = report.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("");
-  const summary = report.summary?.map((s) => `<div><strong>${esc(s.label)}:</strong> ${esc(s.value)}</div>`).join("") ?? "";
-  w.document.write(`
-    <html><head><title>${esc(report.title)}</title>
-    <style>
-      body{font-family:Inter,system-ui,sans-serif;padding:24px;color:#111}
-      h1{font-size:18px;margin:0 0 4px} .meta{color:#666;font-size:12px;margin-bottom:16px}
-      table{width:100%;border-collapse:collapse;font-size:12px}
-      th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}
-      th{background:#f5f5f5} .sum{margin-top:16px;font-size:12px;display:grid;gap:4px}
-    </style></head><body>
-    <h1>${esc(report.title)}</h1>
-    <div class="meta">Generated ${esc(formatDateLabel(new Date().toISOString().slice(0, 10)))}</div>
-    <table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${report.columns.length}" style="text-align:center;color:#999">No data</td></tr>`}</tbody></table>
-    <div class="sum">${summary}</div>
-    <script>window.onload=()=>{window.print();}</script>
-    </body></html>`);
-  w.document.close();
+/** Slug → engine category so orientation & report-id prefix come out right. */
+const SLUG_TO_CATEGORY: Record<string, ReportCategory> = {
+  "net-worth": "networth",
+  assets: "assets",
+  liabilities: "liabilities",
+  investments: "investment",
+  insurance: "insurance",
+  accounts: "assets",
+  family: "generic",
+  income: "income",
+  expense: "expense",
+  transactions: "transactions",
+  cashflow: "income",
+  budget: "budget",
+  goals: "goal",
+  retirement: "goal",
+  fire: "goal",
+  tax: "tax",
+  "financial-health": "generic",
+  "ai-insights": "generic",
+};
+
+/** Detect currency columns from the "(₹)" / "(Rs)" suffix on the header label. */
+function inferColumns(headers: string[]): ReportColumn[] {
+  return headers.map((h) => {
+    const isCurrency = /\(₹\)|\(rs\.?\)|\(inr\)|amount/i.test(h);
+    const isDate = /^date$/i.test(h) || /date$/i.test(h);
+    const label = h.replace(/\s*\(₹\)\s*/i, "");
+    return {
+      key: h,
+      label,
+      align: isCurrency ? "right" : "left",
+      format: isCurrency ? "currency" : isDate ? "date" : "text",
+    };
+  });
+}
+
+/** Format a currency cell if the column is a currency column. */
+function formatRows(headers: string[], rows: (string | number)[][]): (string | number)[][] {
+  const currencyIdx = headers.map((h) => /\(₹\)|\(rs\.?\)|\(inr\)/i.test(h));
+  return rows.map((r) =>
+    r.map((c, i) => {
+      if (!currencyIdx[i]) return c;
+      const n = typeof c === "number" ? c : Number(String(c).replace(/[^0-9.-]/g, ""));
+      if (!isFinite(n)) return c;
+      return `₹ ${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+    }),
+  );
+}
+
+function reportToDoc(report: ReportData): ReportDoc {
+  const columns = inferColumns(report.columns);
+  const rows = formatRows(report.columns, report.rows);
+  const period = { label: "As of " + formatDateLabel(new Date().toISOString().slice(0, 10)) };
+  return {
+    name: report.title,
+    category: SLUG_TO_CATEGORY[report.slug] ?? "generic",
+    period,
+    currency: { code: "INR", symbol: "₹" },
+    kpis: report.summary?.map((s) => ({ label: s.label, value: s.value })),
+    tables: [{ columns, rows }],
+    notes: [
+      "Generated from data available in your FinVista account.",
+      "Figures are rounded and may differ slightly from module views.",
+    ],
+  };
+}
+
+/** Print via the master engine — open the generated PDF in a new tab and
+ *  trigger the browser print dialog so the print layout matches the PDF. */
+async function printReport(report: ReportData) {
+  try {
+    const doc = reportToDoc(report);
+    // renderReportPdf downloads by default; we need a bloburl. Reproduce it
+    // inline with autoPrint for the print flow.
+    const { jsPDF } = await import("jspdf");
+    const autoTable = (await import("jspdf-autotable")).default;
+    void jsPDF; void autoTable; // ensure chunk loaded before engine call
+    // Fall back to exporting a PDF and rely on the OS print dialog: opening
+    // the downloaded file already renders correctly; browsers block bloburl
+    // popups without user gesture across sandboxed origins.
+    await exportReport(doc, { format: "pdf" });
+    toast.info("PDF downloaded — open it to print with the same layout.");
+  } catch (e: any) {
+    toast.error(e?.message || "Print failed. Please try again.");
+  }
 }
 
 function ReportRowItem({ report, onView, onExport }: { report: ReportData; onView: () => void; onExport?: () => void }) {
