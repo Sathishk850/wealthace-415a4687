@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { logToolsActivity, useSaveCalculation } from "@/lib/tools-api";
 import { toast } from "sonner";
+import { exportReport } from "@/lib/report-engine";
 
 export const Route = createFileRoute("/_app/tools/financial-calculator")({
   head: () => ({
@@ -112,14 +113,31 @@ export function FinCalculators() {
     if (exporting) return;
     setExporting(true);
     try {
-      const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text(current.title, 14, 16);
-      doc.setFontSize(10);
-      const lines = doc.splitTextToSize(panelRef.current?.innerText ?? "—", 180);
-      doc.text(lines, 14, 26);
-      doc.save(`${current.id}-result.pdf`);
+      const raw = (panelRef.current?.innerText ?? "").split(/\n+/).map((l) => l.trim()).filter(Boolean);
+      // Try to render key/value pairs as a proper table; anything else becomes a note line.
+      const rows: [string, string][] = [];
+      const notes: string[] = [];
+      for (const line of raw) {
+        const m = line.match(/^(.+?)[:\s]{1,3}(₹?\s*[-\d.,%\s]+(?:\s*(?:years?|months?|yrs?|mo|%|Lakh|Cr))?.*)$/i);
+        if (m && m[1].length < 40) rows.push([m[1].trim(), m[2].trim()]);
+        else notes.push(line);
+      }
+      await exportReport(
+        {
+          name: current.title,
+          category: "generic",
+          period: { label: new Date().toLocaleDateString() },
+          currency: { code: "INR", symbol: "₹" },
+          tables: rows.length
+            ? [{ columns: [
+                { key: "metric", label: "Metric", align: "left", format: "text" },
+                { key: "value", label: "Value", align: "right", format: "text" },
+              ], rows }]
+            : [{ columns: [{ key: "line", label: "Result", format: "text" }], rows: raw.map((l) => [l]) }],
+          notes: notes.length ? notes : undefined,
+        },
+        { format: "pdf" },
+      );
       toast.success("Exported PDF");
     } catch (e: any) {
       toast.error(e?.message || "Export failed. Please try again.");
