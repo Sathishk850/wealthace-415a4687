@@ -34,6 +34,15 @@ type FeedbackRow = {
 };
 
 const MAX_LEN = 2000;
+const ALLOWED_FEEDBACK_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+  "text/plain",
+];
+const MAX_FEEDBACK_BYTES = 10 * 1024 * 1024;
 const TYPE_OPTIONS: { id: FeedbackType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "bug", label: "Bug Report", icon: Bug },
   { id: "feature", label: "Feature Request", icon: Lightbulb },
@@ -81,6 +90,12 @@ function SubmitForm() {
 
       let attachmentUrl: string | null = null;
       if (file) {
+        if (!ALLOWED_FEEDBACK_TYPES.includes(file.type)) {
+          throw new Error("Unsupported file type. Allowed: JPEG, PNG, GIF, WEBP, PDF, TXT.");
+        }
+        if (file.size > MAX_FEEDBACK_BYTES) {
+          throw new Error("File must be 10 MB or smaller.");
+        }
         const ext = file.name.split(".").pop() ?? "bin";
         const path = `${userId}/${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await supabase.storage
