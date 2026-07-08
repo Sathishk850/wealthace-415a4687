@@ -8,43 +8,22 @@ import { useServerFn } from "@tanstack/react-start";
 import { verifyPin, getPinStatus } from "@/lib/pin.functions";
 import { triggerSessionExpired, isAuthError } from "@/lib/session-expired";
 
-const SUPABASE_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
-
-function applyRememberDevice(remember: boolean) {
-  if (typeof window === "undefined") return;
-  if (remember) {
-    window.sessionStorage.removeItem("finvista_session_only");
-    return;
-  }
-  window.sessionStorage.setItem("finvista_session_only", "1");
-}
-
-function installSessionOnlyGuard() {
-  if (typeof window === "undefined") return;
-  const handler = () => {
-    if (window.sessionStorage.getItem("finvista_session_only") === "1") {
-      window.localStorage.removeItem(SUPABASE_STORAGE_KEY);
-    }
-  };
-  window.addEventListener("pagehide", handler);
-}
-
 /**
- * Clear a lingering "session only" flag whenever a new session is minted.
- * Without this, a past sign-in with "Remember this device" unchecked leaves
- * the flag in sessionStorage; the pagehide guard then wipes the freshly-set
- * Supabase token on the next navigation, and the user is bounced to /auth.
- * Individual sign-in paths re-set the flag via applyRememberDevice() when
- * the user explicitly opts out of remembering.
+ * No-op kept for API compatibility with existing call sites.
+ *
+ * A previous "Remember this device" implementation used a `pagehide`
+ * listener that wiped the Supabase auth token from localStorage when a
+ * session-only flag was set. That mechanism caused a Google OAuth
+ * regression: on the full-page provider redirect, `pagehide` fires while
+ * the browser is navigating to Google, and if the flag was ever set the
+ * freshly hydrated token was wiped — bouncing the user back to /auth.
+ *
+ * Supabase already persists sessions to localStorage; the checkbox is now
+ * purely a UI affordance. Also clear any lingering flag from older builds.
  */
-function installSessionOnlyResetOnSignIn() {
-  if (typeof window === "undefined") return () => {};
-  const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-      window.sessionStorage.removeItem("finvista_session_only");
-    }
-  });
-  return () => sub.subscription.unsubscribe();
+function applyRememberDevice(_remember: boolean) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem("finvista_session_only");
 }
 
 export const Route = createFileRoute("/auth")({
@@ -63,9 +42,10 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   useEffect(() => {
-    installSessionOnlyGuard();
-    const dispose = installSessionOnlyResetOnSignIn();
-    return dispose;
+    if (typeof window !== "undefined") {
+      // One-time cleanup: purge any stale flag left by older builds.
+      window.sessionStorage.removeItem("finvista_session_only");
+    }
   }, []);
   const { mode: initialMode, redirect: redirectParam } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "pin">(initialMode);
