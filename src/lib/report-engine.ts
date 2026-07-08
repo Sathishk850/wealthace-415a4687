@@ -18,6 +18,7 @@ import {
   drawReportFooter,
   drawReportHeader,
   drawReportInfo,
+  loadBrandMark,
 } from "@/lib/report-theme";
 
 /* ============ Types ============ */
