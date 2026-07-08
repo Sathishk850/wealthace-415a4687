@@ -2,6 +2,12 @@
  * Generic CSV / XLSX / JSON / PDF import + export helpers for the Wealth module.
  */
 import { toast } from "sonner";
+import {
+  REPORT_THEME,
+  REPORT_TABLE_STYLES,
+  drawReportFooter,
+  drawReportHeader,
+} from "@/lib/report-theme";
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -76,18 +82,13 @@ export async function exportPdf<T>(
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default;
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text(name, 40, 40);
-  if (meta?.subtitle) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(110);
-    doc.text(meta.subtitle, 40, 58);
-    doc.setTextColor(0);
-  }
+  const generated = new Date().toLocaleString();
+  const startY = drawReportHeader(doc, {
+    title: name,
+    subtitle: meta?.subtitle ?? `Generated ${generated}`,
+  });
   autoTable(doc, {
-    startY: 75,
+    startY,
     head: [cols.map((c) => c.label)],
     body: rows.map((r) =>
       cols.map((c) => {
@@ -95,16 +96,10 @@ export async function exportPdf<T>(
         return v == null ? "" : String(v);
       }),
     ),
-    styles: { fontSize: 9, cellPadding: 5 },
-    headStyles: { fillColor: [33, 219, 210], textColor: 20 },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
+    margin: { left: REPORT_THEME.layout.marginX, right: REPORT_THEME.layout.marginX, bottom: REPORT_THEME.layout.footerHeight + 12 },
+    ...REPORT_TABLE_STYLES,
   });
-  if (meta?.footer) {
-    const ph = doc.internal.pageSize.getHeight();
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(meta.footer, 40, ph - 24);
-  }
+  drawReportFooter(doc, meta?.footer ? { note: meta.footer } : undefined);
   doc.save(`${safeName(name)}.pdf`);
 }
 
