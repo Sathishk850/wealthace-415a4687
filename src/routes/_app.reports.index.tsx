@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,10 @@ import {
   type GeneratedReport,
   type ScheduleFrequency,
 } from "@/lib/notifications-api";
-import { exportReportCSV, exportReportPDF, exportReportXLSX } from "@/lib/report-export";
-import { FileDown, FileSpreadsheet, FileText, Trash2, Inbox, CheckCircle2 } from "lucide-react";
+import { reportToDoc } from "@/lib/report-export";
+import { ExportReportDialog } from "@/components/reports/export-dialog";
+import type { ReportDoc } from "@/lib/report-engine";
+import { FileDown, Trash2, Inbox, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/reports/")({
   head: () => ({
@@ -28,6 +31,7 @@ function ReportCenter() {
   const list = useGeneratedReports();
   const del = useDeleteGeneratedReport();
   const markDl = useMarkReportDownloaded();
+  const [dialogDoc, setDialogDoc] = useState<{ doc: ReportDoc; id: string } | null>(null);
 
   const items = list.data ?? [];
 
@@ -53,23 +57,30 @@ function ReportCenter() {
             <ReportRow
               key={r.id}
               r={r}
-              onDownload={(fn) => { fn(); markDl.mutate(r.id); }}
+              onExport={() => setDialogDoc({ doc: reportToDoc(r), id: r.id })}
               onDelete={() => del.mutate(r.id)}
             />
           ))}
         </div>
       )}
+
+      <ExportReportDialog
+        open={!!dialogDoc}
+        onOpenChange={(o) => !o && setDialogDoc(null)}
+        doc={dialogDoc?.doc ?? null}
+        onExported={() => dialogDoc && markDl.mutate(dialogDoc.id)}
+      />
     </>
   );
 }
 
 function ReportRow({
   r,
-  onDownload,
+  onExport,
   onDelete,
 }: {
   r: GeneratedReport;
-  onDownload: (fn: () => void) => void;
+  onExport: () => void;
   onDelete: () => void;
 }) {
   const period = r.snapshot.period;
@@ -107,17 +118,8 @@ function ReportRow({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs"
-            onClick={() => onDownload(() => exportReportPDF(r))}>
-            <FileText className="h-3.5 w-3.5" /> PDF
-          </Button>
-          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs"
-            onClick={() => onDownload(() => exportReportXLSX(r))}>
-            <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
-          </Button>
-          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs"
-            onClick={() => onDownload(() => exportReportCSV(r))}>
-            <FileDown className="h-3.5 w-3.5" /> CSV
+          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={onExport}>
+            <FileDown className="h-3.5 w-3.5" /> Export
           </Button>
           <Button size="sm" variant="ghost" className="h-7 px-2" onClick={onDelete}>
             <Trash2 className="h-3.5 w-3.5" />

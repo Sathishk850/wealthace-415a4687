@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useGeneratedReport, useMarkReportDownloaded } from "@/lib/notifications-api";
-import { exportReportCSV, exportReportPDF, exportReportXLSX } from "@/lib/report-export";
-import { ArrowLeft, FileDown, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
+import { reportToDoc } from "@/lib/report-export";
+import { ExportReportDialog } from "@/components/reports/export-dialog";
+import { ArrowLeft, FileDown, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/reports/$id")({
   head: () => ({ meta: [{ title: "Report · FinVista" }] }),
@@ -19,6 +21,7 @@ function ReportDetail() {
   const { id } = useParams({ from: "/_app/reports/$id" });
   const q = useGeneratedReport(id);
   const markDl = useMarkReportDownloaded();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   if (q.isLoading) {
     return (
@@ -39,9 +42,7 @@ function ReportDetail() {
   const period = r.snapshot.period;
   const periodLabel = period?.start && period?.end ? `${period.start} → ${period.end}` : "All time";
 
-  const download = (fn: () => void | Promise<void>) => {
-    Promise.resolve(fn()).finally(() => markDl.mutate(r.id));
-  };
+  const doc = reportToDoc(r);
 
   return (
     <>
@@ -58,14 +59,8 @@ function ReportDetail() {
 
       <Card className="glass-card mb-4 border-[var(--border)] p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" onClick={() => download(() => exportReportPDF(r))} className="h-8 gap-1 text-xs">
-            <FileText className="h-3.5 w-3.5" /> Download PDF
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => download(() => exportReportXLSX(r))} className="h-8 gap-1 text-xs">
-            <FileSpreadsheet className="h-3.5 w-3.5" /> Download Excel
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => download(() => exportReportCSV(r))} className="h-8 gap-1 text-xs">
-            <FileDown className="h-3.5 w-3.5" /> Download CSV
+          <Button size="sm" onClick={() => setDialogOpen(true)} className="h-8 gap-1 text-xs">
+            <FileDown className="h-3.5 w-3.5" /> Export Report
           </Button>
           {r.email_status === "pending" && (
             <Badge variant="outline" className="ml-auto border-amber-400/40 text-[10px] text-amber-400">
@@ -74,6 +69,13 @@ function ReportDetail() {
           )}
         </div>
       </Card>
+
+      <ExportReportDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        doc={doc}
+        onExported={() => markDl.mutate(r.id)}
+      />
 
       <div className="space-y-4">
         {r.snapshot.sections.map((sec) => (

@@ -2,12 +2,7 @@
  * Generic CSV / XLSX / JSON / PDF import + export helpers for the Wealth module.
  */
 import { toast } from "sonner";
-import {
-  REPORT_THEME,
-  REPORT_TABLE_STYLES,
-  drawReportFooter,
-  drawReportHeader,
-} from "@/lib/report-theme";
+import { exportReport, type ReportColumn, type ReportDoc } from "@/lib/report-engine";
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -79,28 +74,23 @@ export async function exportPdf<T>(
   rows: T[],
   meta?: { subtitle?: string; footer?: string },
 ) {
-  const { jsPDF } = await import("jspdf");
-  const autoTable = (await import("jspdf-autotable")).default;
-  const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
-  const generated = new Date().toLocaleString();
-  const startY = drawReportHeader(doc, {
-    title: name,
-    subtitle: meta?.subtitle ?? `Generated ${generated}`,
-  });
-  autoTable(doc, {
-    startY,
-    head: [cols.map((c) => c.label)],
-    body: rows.map((r) =>
-      cols.map((c) => {
-        const v = c.get ? c.get(r) : (r as any)[c.key as string];
-        return v == null ? "" : String(v);
-      }),
-    ),
-    margin: { left: REPORT_THEME.layout.marginX, right: REPORT_THEME.layout.marginX, bottom: REPORT_THEME.layout.footerHeight + 12 },
-    ...REPORT_TABLE_STYLES,
-  });
-  drawReportFooter(doc, meta?.footer ? { note: meta.footer } : undefined);
-  doc.save(`${safeName(name)}.pdf`);
+  const columns: ReportColumn[] = cols.map((c) => ({
+    key: String(c.key),
+    label: c.label,
+  }));
+  const bodyRows = rows.map((r) =>
+    cols.map((c) => {
+      const v = c.get ? c.get(r) : (r as any)[c.key as string];
+      return v == null ? "" : String(v);
+    }),
+  );
+  const doc: ReportDoc = {
+    name,
+    category: "generic",
+    tables: [{ columns, rows: bodyRows }],
+    notes: meta?.footer ? [meta.footer] : undefined,
+  };
+  await exportReport(doc, { format: "pdf", orientation: "landscape" });
 }
 
 /** Parse a CSV file into rows of { [header]: string }. */
