@@ -29,6 +29,24 @@ function installSessionOnlyGuard() {
   window.addEventListener("pagehide", handler);
 }
 
+/**
+ * Clear a lingering "session only" flag whenever a new session is minted.
+ * Without this, a past sign-in with "Remember this device" unchecked leaves
+ * the flag in sessionStorage; the pagehide guard then wipes the freshly-set
+ * Supabase token on the next navigation, and the user is bounced to /auth.
+ * Individual sign-in paths re-set the flag via applyRememberDevice() when
+ * the user explicitly opts out of remembering.
+ */
+function installSessionOnlyResetOnSignIn() {
+  if (typeof window === "undefined") return () => {};
+  const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+      window.sessionStorage.removeItem("finvista_session_only");
+    }
+  });
+  return () => sub.subscription.unsubscribe();
+}
+
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     mode: (s.mode === "signup" ? "signup" : "signin") as "signin" | "signup",
