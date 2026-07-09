@@ -556,8 +556,6 @@ function investmentPayload(i: InvestmentInput) {
     quantity: qty,
     avg_price: avg,
     current_price: cur,
-    invested_value: qty * avg,
-    current_value: qty * cur,
     purchase_date: i.purchase_date || null,
     is_sip: !!i.is_sip,
     sip_amount: numOrNull(i.sip_amount),
