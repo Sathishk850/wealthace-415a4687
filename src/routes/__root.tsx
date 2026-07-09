@@ -92,8 +92,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "FinVista" },
       { name: "twitter:title", content: "FinVista — Direct Your Wealth | Personal Finance Dashboard" },
       { name: "twitter:description", content: "Track net worth, cashflow, investments and goals in one secure, intelligent dashboard. Start free — no credit card required." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/062d1870-de15-48e3-8e50-51df145f4e16" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/062d1870-de15-48e3-8e50-51df145f4e16" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/12ad0bb0-421c-488b-b1ee-7ad9054f1424" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/12ad0bb0-421c-488b-b1ee-7ad9054f1424" },
     ],
     links: [
       {
@@ -102,8 +102,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon.png" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/icon-192.png" },
+      { rel: "icon", type: "image/x-icon", sizes: "32x32", href: "/favicon.ico" },
+      { rel: "icon", type: "image/x-icon", sizes: "192x192", href: "/favicon.ico" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
   }),
