@@ -101,6 +101,8 @@ import {
   type PlannerSettings,
 } from "@/lib/planner-api";
 import { useInvestments } from "@/lib/wealth-api";
+import RetirementPlanTab from "@/components/planner/retirement-plan-tab";
+import FIREPlanTab from "@/components/planner/fire-plan-tab";
 
 export const Route = createFileRoute("/_app/planner")({
   head: () => ({
@@ -161,8 +163,8 @@ function Planner() {
           onEditGoal={(g) => setGoalDialog({ open: true, goal: g })}
         />
       )}
-      {tab === "retirement" && <RetirementView />}
-      {tab === "fire" && <FireView />}
+      {tab === "retirement" && <RetirementPlanTab />}
+      {tab === "fire" && <FIREPlanTab />}
 
       <GoalDialog
         open={goalDialog.open}
