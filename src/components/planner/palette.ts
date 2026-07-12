@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type Palette = {
+type Palette = {
   navy: string;
   navyMid: string;
   navyCard: string;
@@ -15,13 +15,17 @@ export type Palette = {
   textPrimary: string;
   textMuted: string;
   textDim: string;
+  // extras for surfaces
   cardBorder: string;
   divider: string;
   inputBg: string;
   inputBorder: string;
   bgGradient: string;
-  chipBg: string;
-  chipBorder: string;
+  bgGradientFire: string;
+  focusBorder: string;
+  focusBorderFire: string;
+  primaryBtnText: string;
+  softBg: string;
 };
 
 const DARK: Palette = {
@@ -45,16 +49,20 @@ const DARK: Palette = {
   inputBorder: "rgba(255,255,255,0.1)",
   bgGradient:
     "radial-gradient(1200px 600px at 20% 0%, rgba(0,212,170,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,180,216,0.05), transparent 60%), #000",
-  chipBg: "rgba(0,212,170,0.08)",
-  chipBorder: "rgba(0,212,170,0.15)",
+  bgGradientFire:
+    "radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,212,170,0.05), transparent 60%), #000",
+  focusBorder: "rgba(0,212,170,0.5)",
+  focusBorderFire: "rgba(249,115,22,0.5)",
+  primaryBtnText: "#0A1628",
+  softBg: "rgba(255,255,255,0.03)",
 };
 
 const LIGHT: Palette = {
   navy: "#F8FAFC",
   navyMid: "#F1F5F9",
-  navyCard: "rgba(255,255,255,0.9)",
+  navyCard: "rgba(255,255,255,0.95)",
   teal: "#0F9E85",
-  blue: "#0891B2",
+  blue: "#0284C7",
   success: "#059669",
   warning: "#D97706",
   danger: "#DC2626",
@@ -64,30 +72,40 @@ const LIGHT: Palette = {
   textPrimary: "#0F172A",
   textMuted: "#475569",
   textDim: "#64748B",
-  cardBorder: "rgba(15,158,133,0.18)",
+  cardBorder: "rgba(15,158,133,0.22)",
   divider: "rgba(15,23,42,0.08)",
-  inputBg: "rgba(15,23,42,0.04)",
-  inputBorder: "rgba(15,23,42,0.12)",
+  inputBg: "#FFFFFF",
+  inputBorder: "rgba(15,23,42,0.14)",
   bgGradient:
-    "radial-gradient(1200px 600px at 20% 0%, rgba(15,158,133,0.08), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(8,145,178,0.06), transparent 60%), #F8FAFC",
-  chipBg: "rgba(15,158,133,0.08)",
-  chipBorder: "rgba(15,158,133,0.2)",
+    "radial-gradient(1200px 600px at 20% 0%, rgba(15,158,133,0.10), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(2,132,199,0.08), transparent 60%), #F8FAFC",
+  bgGradientFire:
+    "radial-gradient(1200px 600px at 20% 0%, rgba(234,88,12,0.10), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(15,158,133,0.08), transparent 60%), #F8FAFC",
+  focusBorder: "rgba(15,158,133,0.55)",
+  focusBorderFire: "rgba(234,88,12,0.55)",
+  primaryBtnText: "#FFFFFF",
+  softBg: "rgba(15,23,42,0.035)",
 };
 
-export function usePalette(): Palette {
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof document === "undefined") return true;
-    return document.documentElement.classList.contains("dark");
-  });
+function isDarkNow() {
+  if (typeof document === "undefined") return true;
+  return document.documentElement.classList.contains("dark");
+}
 
+// Proxy that always resolves to the current theme's palette value.
+export const C: Palette = new Proxy({} as Palette, {
+  get(_t, prop: string) {
+    const p = isDarkNow() ? DARK : LIGHT;
+    return (p as unknown as Record<string, string>)[prop];
+  },
+}) as Palette;
+
+// Hook to trigger re-render when the theme class changes.
+export function useThemeVersion() {
+  const [, setV] = useState(0);
   useEffect(() => {
     const el = document.documentElement;
-    const update = () => setIsDark(el.classList.contains("dark"));
-    update();
-    const mo = new MutationObserver(update);
+    const mo = new MutationObserver(() => setV((v) => v + 1));
     mo.observe(el, { attributes: true, attributeFilter: ["class"] });
     return () => mo.disconnect();
   }, []);
-
-  return isDark ? DARK : LIGHT;
 }
