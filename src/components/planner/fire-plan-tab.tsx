@@ -282,7 +282,7 @@ function TimelineChart({
 
       <circle cx={toX(0)} cy={toY(timeline[0].value)} r="4" fill={C.teal} />
 
-      <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke=C.inputBorder strokeWidth="1" />
+      <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke={C.inputBorder} strokeWidth="1" />
       {xLabels.map((l) => (
         <text key={l.y} x={l.x} y={H - PAD.bottom + 14} textAnchor="middle" fill={C.textDim} fontSize="10">
           {l.age}
