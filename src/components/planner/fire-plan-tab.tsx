@@ -146,7 +146,7 @@ function NumInput({
           type="number" value={value} min={min} max={max} step={step}
           onChange={(e) => onChange(Number(e.target.value))}
           style={{ ...getInputStyle(), paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = C.focusBorder; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
         />
         {suffix && (
@@ -383,7 +383,7 @@ function ScenarioPersister({
         onKeyDown={(e) => e.key === "Enter" && onSave()}
         placeholder={editId ? "Update scenario name…" : 'Name this FIRE plan (e.g. "Lean & Early")'}
         style={{ ...getInputStyle(), flex: 1, minWidth: "200px" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(249,115,22,0.5)"; }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = C.focusBorderFire; }}
         onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
       />
       <Btn variant="primary" onClick={onSave}>
