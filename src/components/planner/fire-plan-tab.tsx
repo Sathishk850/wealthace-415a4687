@@ -133,7 +133,7 @@ function calcFIRE(inp: Inputs): Results {
 
 const inputStyle: CSSProperties = {
   width: "100%", padding: "10px 12px", borderRadius: "10px",
-  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+  background: C.inputBg, border: "1px solid rgba(255,255,255,0.1)",
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
 };
@@ -162,7 +162,7 @@ function NumInput({
           onChange={(e) => onChange(Number(e.target.value))}
           style={{ ...inputStyle, paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
           onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
         />
         {suffix && (
           <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -188,7 +188,7 @@ function ResultTile({ label, value, sub, color = C.teal }: { label: string; valu
 
 function ProgressBar({ pct, gradient, height = "8px" }: { pct: number; gradient: string; height?: string }) {
   return (
-    <div style={{ height, borderRadius: "4px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+    <div style={{ height, borderRadius: "4px", background: C.divider, overflow: "hidden" }}>
       <div style={{ height: "100%", width: `${Math.min(Math.max(pct, 0), 100)}%`, background: gradient, borderRadius: "4px", transition: "width 0.5s ease" }} />
     </div>
   );
@@ -207,11 +207,11 @@ function Btn({
     fontSize: small ? "12px" : "13px",
   };
   const map: Record<string, CSSProperties> = {
-    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: "#0A1628" },
+    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: C.primaryBtnText },
     teal: { ...base, background: "rgba(0,212,170,0.15)", color: C.teal, border: "1px solid rgba(0,212,170,0.3)" },
     fire: { ...base, background: "rgba(249,115,22,0.15)", color: C.fire, border: "1px solid rgba(249,115,22,0.3)" },
     danger: { ...base, background: "rgba(239,68,68,0.12)", color: C.danger, border: "1px solid rgba(239,68,68,0.3)" },
-    ghost: { ...base, background: "rgba(255,255,255,0.06)", color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
+    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
   };
   return <button style={map[variant] || map.ghost} onClick={onClick}>{children}</button>;
 }
@@ -282,7 +282,7 @@ function TimelineChart({
 
       <circle cx={toX(0)} cy={toY(timeline[0].value)} r="4" fill={C.teal} />
 
-      <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke=C.inputBorder strokeWidth="1" />
       {xLabels.map((l) => (
         <text key={l.y} x={l.x} y={H - PAD.bottom + 14} textAnchor="middle" fill={C.textDim} fontSize="10">
           {l.age}
@@ -301,11 +301,11 @@ function FireVariantCard({
 }: { label: string; fireNum: number; currentNW: number; color: string; desc: string }) {
   const pct = fireNum > 0 ? Math.min((currentNW / fireNum) * 100, 100) : 0;
   return (
-    <div style={{ flex: 1, minWidth: "130px", padding: "16px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", border: `1px solid ${color}44`, textAlign: "center" }}>
+    <div style={{ flex: 1, minWidth: "130px", padding: "16px", borderRadius: "14px", background: C.softBg, border: `1px solid ${color}44`, textAlign: "center" }}>
       <div style={{ fontSize: "12px", color: C.textMuted, marginBottom: "6px" }}>{label}</div>
       <div style={{ fontSize: "18px", fontWeight: 700, color }}>{formatINR(fireNum)}</div>
       <div style={{ fontSize: "11px", color: C.textDim, marginTop: "2px", marginBottom: "10px" }}>{desc}</div>
-      <div style={{ height: "5px", borderRadius: "3px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+      <div style={{ height: "5px", borderRadius: "3px", background: C.divider, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg,${color},${color}AA)`, borderRadius: "3px", transition: "width 0.5s ease" }} />
       </div>
       <div style={{ fontSize: "11px", color, marginTop: "5px", fontWeight: 600 }}>{pct.toFixed(0)}% achieved</div>
@@ -321,8 +321,8 @@ function ScenarioCard({
 
   return (
     <div style={{
-      background: "rgba(255,255,255,0.03)", borderRadius: "14px",
-      border: `1px solid ${isEditing ? "rgba(249,115,22,0.4)" : "rgba(255,255,255,0.08)"}`,
+      background: C.softBg, borderRadius: "14px",
+      border: `1px solid ${isEditing ? "rgba(249,115,22,0.4)" : C.divider}`,
       padding: "16px", marginBottom: "10px",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
@@ -399,7 +399,7 @@ function ScenarioPersister({
         placeholder={editId ? "Update scenario name…" : 'Name this FIRE plan (e.g. "Lean & Early")'}
         style={{ ...inputStyle, flex: 1, minWidth: "200px" }}
         onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(249,115,22,0.5)"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
       />
       <Btn variant="primary" onClick={onSave}>
         {editId ? "✏️ Update Scenario" : "💾 Save Scenario"}
@@ -537,7 +537,7 @@ export default function FIREPlanTab() {
           </div>
         </div>
 
-        <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 0 20px" }} />
+        <div style={{ height: "1px", background: C.inputBg, margin: "0 0 20px" }} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(158px,1fr))", gap: "12px" }}>
           <ResultTile label="🔥 FIRE Number" value={formatINR(res.fireNum)} sub={`${inp.swr}% SWR · 25× rule`} color={C.fire} />

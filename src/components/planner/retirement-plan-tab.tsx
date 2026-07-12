@@ -114,7 +114,7 @@ function calcRetirement(inp: Inputs): Results | null {
 
 const inputStyle: CSSProperties = {
   width: "100%", padding: "10px 12px", borderRadius: "10px",
-  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+  background: C.inputBg, border: "1px solid rgba(255,255,255,0.1)",
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
 };
@@ -145,7 +145,7 @@ function NumInput({
           onChange={(e) => onChange(Number(e.target.value))}
           style={{ ...inputStyle, paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
           onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
         />
         {suffix && (
           <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -171,7 +171,7 @@ function ResultTile({ label, value, sub, color = C.teal }: { label: string; valu
 
 function ProgressBar({ pct, gradient }: { pct: number; gradient: string }) {
   return (
-    <div style={{ height: "8px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+    <div style={{ height: "8px", borderRadius: "4px", background: C.divider, overflow: "hidden" }}>
       <div style={{ height: "100%", width: `${Math.min(Math.max(pct, 0), 100)}%`, background: gradient, borderRadius: "4px", transition: "width 0.5s ease" }} />
     </div>
   );
@@ -190,10 +190,10 @@ function Btn({
     fontSize: small ? "12px" : "13px",
   };
   const styles: Record<string, CSSProperties> = {
-    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: "#0A1628" },
+    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: C.primaryBtnText },
     teal: { ...base, background: "rgba(0,212,170,0.15)", color: C.teal, border: "1px solid rgba(0,212,170,0.3)" },
     danger: { ...base, background: "rgba(239,68,68,0.12)", color: C.danger, border: "1px solid rgba(239,68,68,0.3)" },
-    ghost: { ...base, background: "rgba(255,255,255,0.06)", color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
+    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
   };
   return <button style={styles[variant] || styles.ghost} onClick={onClick}>{children}</button>;
 }
@@ -219,8 +219,8 @@ function ScenarioCard({
 
   return (
     <div style={{
-      background: "rgba(255,255,255,0.03)", borderRadius: "14px",
-      border: `1px solid ${isEditing ? "rgba(0,212,170,0.4)" : "rgba(255,255,255,0.08)"}`,
+      background: C.softBg, borderRadius: "14px",
+      border: `1px solid ${isEditing ? "rgba(0,212,170,0.4)" : C.divider}`,
       padding: "16px", marginBottom: "10px",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
@@ -290,7 +290,7 @@ function ScenarioPersister({
         placeholder={editId ? "Update scenario name…" : 'Name this plan (e.g. "Conservative Base")'}
         style={{ ...inputStyle, flex: 1, minWidth: "200px" }}
         onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
       />
       <Btn variant="primary" onClick={onSave}>
         {editId ? "✏️ Update Scenario" : "💾 Save Scenario"}
@@ -423,7 +423,7 @@ export default function RetirementPlanTab() {
           <NumInput label="Safe Withdrawal Rate (SWR)" value={inp.withdrawalRate} onChange={set("withdrawalRate")} min={1} max={10} step={0.25} suffix="%" />
         </div>
 
-        <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 0 20px" }} />
+        <div style={{ height: "1px", background: C.inputBg, margin: "0 0 20px" }} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(158px,1fr))", gap: "12px" }}>
           <ResultTile label="Projected Corpus" value={formatINR(res.projectedCorpus)} sub={`At age ${inp.retirementAge}`} color={C.teal} />
