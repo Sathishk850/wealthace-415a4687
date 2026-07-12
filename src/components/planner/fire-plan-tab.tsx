@@ -1,21 +1,6 @@
 import { useState, useMemo, useCallback, type CSSProperties } from "react";
+import { C, useThemeVersion } from "./palette";
 
-const C = {
-  navy: "#000000",
-  navyMid: "#0A0A0A",
-  navyCard: "rgba(15,15,17,0.85)",
-  teal: "#00D4AA",
-  blue: "#00B4D8",
-  success: "#10B981",
-  warning: "#F59E0B",
-  danger: "#EF4444",
-  fire: "#F97316",
-  purple: "#A78BFA",
-  green: "#10B981",
-  textPrimary: "#E2E8F0",
-  textMuted: "#94A3B8",
-  textDim: "#64748B",
-};
 
 const formatINR = (n: number | undefined | null) => {
   if (n === null || n === undefined || isNaN(n) || !isFinite(n)) return "—";
@@ -131,16 +116,16 @@ function calcFIRE(inp: Inputs): Results {
   };
 }
 
-const inputStyle: CSSProperties = {
+const getInputStyle = (): CSSProperties => ({
   width: "100%", padding: "10px 12px", borderRadius: "10px",
-  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+  background: C.inputBg, border: `1px solid ${C.inputBorder}`,
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
-};
-const labelStyle: CSSProperties = {
+});
+const getLabelStyle = (): CSSProperties => ({
   display: "block", fontSize: "12px", color: C.textMuted,
   marginBottom: "6px", fontWeight: 500,
-};
+});
 
 function NumInput({
   label, value, onChange, min, max, step = 1, prefix, suffix,
@@ -150,7 +135,7 @@ function NumInput({
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label style={getLabelStyle()}>{label}</label>
       <div style={{ position: "relative" }}>
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -160,9 +145,9 @@ function NumInput({
         <input
           type="number" value={value} min={min} max={max} step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          style={{ ...inputStyle, paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+          style={{ ...getInputStyle(), paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = C.focusBorder; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
         />
         {suffix && (
           <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -188,7 +173,7 @@ function ResultTile({ label, value, sub, color = C.teal }: { label: string; valu
 
 function ProgressBar({ pct, gradient, height = "8px" }: { pct: number; gradient: string; height?: string }) {
   return (
-    <div style={{ height, borderRadius: "4px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+    <div style={{ height, borderRadius: "4px", background: C.divider, overflow: "hidden" }}>
       <div style={{ height: "100%", width: `${Math.min(Math.max(pct, 0), 100)}%`, background: gradient, borderRadius: "4px", transition: "width 0.5s ease" }} />
     </div>
   );
@@ -207,11 +192,11 @@ function Btn({
     fontSize: small ? "12px" : "13px",
   };
   const map: Record<string, CSSProperties> = {
-    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: "#0A1628" },
+    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: C.primaryBtnText },
     teal: { ...base, background: "rgba(0,212,170,0.15)", color: C.teal, border: "1px solid rgba(0,212,170,0.3)" },
     fire: { ...base, background: "rgba(249,115,22,0.15)", color: C.fire, border: "1px solid rgba(249,115,22,0.3)" },
     danger: { ...base, background: "rgba(239,68,68,0.12)", color: C.danger, border: "1px solid rgba(239,68,68,0.3)" },
-    ghost: { ...base, background: "rgba(255,255,255,0.06)", color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
+    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: `1px solid ${C.inputBorder}` },
   };
   return <button style={map[variant] || map.ghost} onClick={onClick}>{children}</button>;
 }
@@ -282,7 +267,7 @@ function TimelineChart({
 
       <circle cx={toX(0)} cy={toY(timeline[0].value)} r="4" fill={C.teal} />
 
-      <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke={C.inputBorder} strokeWidth="1" />
       {xLabels.map((l) => (
         <text key={l.y} x={l.x} y={H - PAD.bottom + 14} textAnchor="middle" fill={C.textDim} fontSize="10">
           {l.age}
@@ -301,11 +286,11 @@ function FireVariantCard({
 }: { label: string; fireNum: number; currentNW: number; color: string; desc: string }) {
   const pct = fireNum > 0 ? Math.min((currentNW / fireNum) * 100, 100) : 0;
   return (
-    <div style={{ flex: 1, minWidth: "130px", padding: "16px", borderRadius: "14px", background: "rgba(255,255,255,0.03)", border: `1px solid ${color}44`, textAlign: "center" }}>
+    <div style={{ flex: 1, minWidth: "130px", padding: "16px", borderRadius: "14px", background: C.softBg, border: `1px solid ${color}44`, textAlign: "center" }}>
       <div style={{ fontSize: "12px", color: C.textMuted, marginBottom: "6px" }}>{label}</div>
       <div style={{ fontSize: "18px", fontWeight: 700, color }}>{formatINR(fireNum)}</div>
       <div style={{ fontSize: "11px", color: C.textDim, marginTop: "2px", marginBottom: "10px" }}>{desc}</div>
-      <div style={{ height: "5px", borderRadius: "3px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+      <div style={{ height: "5px", borderRadius: "3px", background: C.divider, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg,${color},${color}AA)`, borderRadius: "3px", transition: "width 0.5s ease" }} />
       </div>
       <div style={{ fontSize: "11px", color, marginTop: "5px", fontWeight: 600 }}>{pct.toFixed(0)}% achieved</div>
@@ -321,8 +306,8 @@ function ScenarioCard({
 
   return (
     <div style={{
-      background: "rgba(255,255,255,0.03)", borderRadius: "14px",
-      border: `1px solid ${isEditing ? "rgba(249,115,22,0.4)" : "rgba(255,255,255,0.08)"}`,
+      background: C.softBg, borderRadius: "14px",
+      border: `1px solid ${isEditing ? "rgba(249,115,22,0.4)" : C.divider}`,
       padding: "16px", marginBottom: "10px",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
@@ -397,9 +382,9 @@ function ScenarioPersister({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSave()}
         placeholder={editId ? "Update scenario name…" : 'Name this FIRE plan (e.g. "Lean & Early")'}
-        style={{ ...inputStyle, flex: 1, minWidth: "200px" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(249,115,22,0.5)"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+        style={{ ...getInputStyle(), flex: 1, minWidth: "200px" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = C.focusBorderFire; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
       />
       <Btn variant="primary" onClick={onSave}>
         {editId ? "✏️ Update Scenario" : "💾 Save Scenario"}
@@ -420,7 +405,9 @@ const DEFAULT_INPUTS: Inputs = {
 };
 
 export default function FIREPlanTab() {
+  useThemeVersion();
   const [inp, setInp] = useState<Inputs>(DEFAULT_INPUTS);
+
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [saving, setSaving] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
@@ -487,7 +474,7 @@ export default function FIREPlanTab() {
     ? res.yearsToFire - res.yearsToTarget : 0;
 
   return (
-    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: "radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,212,170,0.05), transparent 60%), #000", padding: "20px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: C.bgGradientFire, padding: "20px", borderRadius: "16px", border: `1px solid ${C.divider}` }}>
       <div style={card}>
         <div style={sectionTitle}>
           🔥 FIRE Calculator
@@ -504,7 +491,7 @@ export default function FIREPlanTab() {
                 ? `⚠️ FIRE at ${res.fireAge} · ${yearsLate} yr${yearsLate > 1 ? "s" : ""} late`
                 : `FIRE at ${res.fireAge}`}
           </span>
-          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
+          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
             Reset
           </button>
         </div>
@@ -524,7 +511,7 @@ export default function FIREPlanTab() {
           <NumInput label="Expected Annual Return" value={inp.annualReturn} onChange={set("annualReturn")} min={1} max={30} step={0.5} suffix="%" />
           <NumInput label="Safe Withdrawal Rate" value={inp.swr} onChange={set("swr")} min={1} max={10} step={0.25} suffix="%" />
           <div>
-            <label style={labelStyle}>Savings Rate (derived)</label>
+            <label style={getLabelStyle()}>Savings Rate (derived)</label>
             <div style={{
               padding: "10px 12px", borderRadius: "10px",
               background: res.savingsRate >= 50 ? "rgba(16,185,129,0.1)" : res.savingsRate >= 30 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
@@ -537,7 +524,7 @@ export default function FIREPlanTab() {
           </div>
         </div>
 
-        <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 0 20px" }} />
+        <div style={{ height: "1px", background: C.inputBg, margin: "0 0 20px" }} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(158px,1fr))", gap: "12px" }}>
           <ResultTile label="🔥 FIRE Number" value={formatINR(res.fireNum)} sub={`${inp.swr}% SWR · 25× rule`} color={C.fire} />

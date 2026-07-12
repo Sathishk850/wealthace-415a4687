@@ -1,20 +1,6 @@
 import { useState, useMemo, useCallback, type CSSProperties } from "react";
+import { C, useThemeVersion } from "./palette";
 
-// ─── DESIGN TOKENS (FinVista dark theme) ────────────────────────────────────
-const C = {
-  navy: "#000000",
-  navyMid: "#0A0A0A",
-  navyCard: "rgba(15,15,17,0.85)",
-  teal: "#00D4AA",
-  blue: "#00B4D8",
-  success: "#10B981",
-  warning: "#F59E0B",
-  danger: "#EF4444",
-  purple: "#A78BFA",
-  textPrimary: "#E2E8F0",
-  textMuted: "#94A3B8",
-  textDim: "#64748B",
-};
 
 const formatINR = (n: number | undefined | null) => {
   if (n === null || n === undefined || isNaN(n) || !isFinite(n)) return "—";
@@ -112,16 +98,16 @@ function calcRetirement(inp: Inputs): Results | null {
   };
 }
 
-const inputStyle: CSSProperties = {
+const getInputStyle = (): CSSProperties => ({
   width: "100%", padding: "10px 12px", borderRadius: "10px",
-  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+  background: C.inputBg, border: `1px solid ${C.inputBorder}`,
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
-};
-const labelStyle: CSSProperties = {
+});
+const getLabelStyle = (): CSSProperties => ({
   display: "block", fontSize: "12px", color: C.textMuted,
   marginBottom: "6px", fontWeight: 500,
-};
+});
 
 function NumInput({
   label, value, onChange, min, max, step = 1, prefix, suffix,
@@ -131,7 +117,7 @@ function NumInput({
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label style={getLabelStyle()}>{label}</label>
       <div style={{ position: "relative" }}>
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -143,9 +129,9 @@ function NumInput({
           value={value}
           min={min} max={max} step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          style={{ ...inputStyle, paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+          style={{ ...getInputStyle(), paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = C.focusBorder; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
         />
         {suffix && (
           <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -171,7 +157,7 @@ function ResultTile({ label, value, sub, color = C.teal }: { label: string; valu
 
 function ProgressBar({ pct, gradient }: { pct: number; gradient: string }) {
   return (
-    <div style={{ height: "8px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+    <div style={{ height: "8px", borderRadius: "4px", background: C.divider, overflow: "hidden" }}>
       <div style={{ height: "100%", width: `${Math.min(Math.max(pct, 0), 100)}%`, background: gradient, borderRadius: "4px", transition: "width 0.5s ease" }} />
     </div>
   );
@@ -190,10 +176,10 @@ function Btn({
     fontSize: small ? "12px" : "13px",
   };
   const styles: Record<string, CSSProperties> = {
-    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: "#0A1628" },
+    primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: C.primaryBtnText },
     teal: { ...base, background: "rgba(0,212,170,0.15)", color: C.teal, border: "1px solid rgba(0,212,170,0.3)" },
     danger: { ...base, background: "rgba(239,68,68,0.12)", color: C.danger, border: "1px solid rgba(239,68,68,0.3)" },
-    ghost: { ...base, background: "rgba(255,255,255,0.06)", color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
+    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: `1px solid ${C.inputBorder}` },
   };
   return <button style={styles[variant] || styles.ghost} onClick={onClick}>{children}</button>;
 }
@@ -219,8 +205,8 @@ function ScenarioCard({
 
   return (
     <div style={{
-      background: "rgba(255,255,255,0.03)", borderRadius: "14px",
-      border: `1px solid ${isEditing ? "rgba(0,212,170,0.4)" : "rgba(255,255,255,0.08)"}`,
+      background: C.softBg, borderRadius: "14px",
+      border: `1px solid ${isEditing ? "rgba(0,212,170,0.4)" : C.divider}`,
       padding: "16px", marginBottom: "10px",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px" }}>
@@ -288,9 +274,9 @@ function ScenarioPersister({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSave()}
         placeholder={editId ? "Update scenario name…" : 'Name this plan (e.g. "Conservative Base")'}
-        style={{ ...inputStyle, flex: 1, minWidth: "200px" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
+        style={{ ...getInputStyle(), flex: 1, minWidth: "200px" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = C.focusBorder; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
       />
       <Btn variant="primary" onClick={onSave}>
         {editId ? "✏️ Update Scenario" : "💾 Save Scenario"}
@@ -313,7 +299,9 @@ const DEFAULT_INPUTS: Inputs = {
 };
 
 export default function RetirementPlanTab() {
+  useThemeVersion();
   const [inp, setInp] = useState<Inputs>(DEFAULT_INPUTS);
+
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [saving, setSaving] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
@@ -390,14 +378,14 @@ export default function RetirementPlanTab() {
   const isOnTrack = res.surplus >= 0;
 
   return (
-    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: "radial-gradient(1200px 600px at 20% 0%, rgba(0,212,170,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,180,216,0.05), transparent 60%), #000", padding: "20px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: C.bgGradient, padding: "20px", borderRadius: "16px", border: `1px solid ${C.divider}` }}>
       <div style={card}>
         <div style={sectionTitle}>
           🏦 Retirement Calculator
           <span style={{ marginLeft: "auto", fontSize: "12px", fontWeight: 500, color: C.textDim, background: "rgba(0,212,170,0.08)", padding: "4px 12px", borderRadius: "20px", border: "1px solid rgba(0,212,170,0.15)" }}>
             {res.years} yrs to retirement
           </span>
-          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
+          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
             Reset
           </button>
         </div>
@@ -423,7 +411,7 @@ export default function RetirementPlanTab() {
           <NumInput label="Safe Withdrawal Rate (SWR)" value={inp.withdrawalRate} onChange={set("withdrawalRate")} min={1} max={10} step={0.25} suffix="%" />
         </div>
 
-        <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 0 20px" }} />
+        <div style={{ height: "1px", background: C.inputBg, margin: "0 0 20px" }} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(158px,1fr))", gap: "12px" }}>
           <ResultTile label="Projected Corpus" value={formatINR(res.projectedCorpus)} sub={`At age ${inp.retirementAge}`} color={C.teal} />
