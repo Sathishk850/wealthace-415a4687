@@ -114,7 +114,7 @@ function calcRetirement(inp: Inputs): Results | null {
 
 const inputStyle: CSSProperties = {
   width: "100%", padding: "10px 12px", borderRadius: "10px",
-  background: C.inputBg, border: "1px solid rgba(255,255,255,0.1)",
+  background: C.inputBg, border: `1px solid ${C.inputBorder}`,
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
 };
@@ -193,7 +193,7 @@ function Btn({
     primary: { ...base, background: `linear-gradient(135deg,${C.teal},${C.blue})`, color: C.primaryBtnText },
     teal: { ...base, background: "rgba(0,212,170,0.15)", color: C.teal, border: "1px solid rgba(0,212,170,0.3)" },
     danger: { ...base, background: "rgba(239,68,68,0.12)", color: C.danger, border: "1px solid rgba(239,68,68,0.3)" },
-    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
+    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: `1px solid ${C.inputBorder}` },
   };
   return <button style={styles[variant] || styles.ghost} onClick={onClick}>{children}</button>;
 }
@@ -390,14 +390,14 @@ export default function RetirementPlanTab() {
   const isOnTrack = res.surplus >= 0;
 
   return (
-    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: "radial-gradient(1200px 600px at 20% 0%, rgba(0,212,170,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,180,216,0.05), transparent 60%), #000", padding: "20px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: "radial-gradient(1200px 600px at 20% 0%, rgba(0,212,170,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,180,216,0.05), transparent 60%), #000", padding: "20px", borderRadius: "16px", border: `1px solid ${C.divider}` }}>
       <div style={card}>
         <div style={sectionTitle}>
           🏦 Retirement Calculator
           <span style={{ marginLeft: "auto", fontSize: "12px", fontWeight: 500, color: C.textDim, background: "rgba(0,212,170,0.08)", padding: "4px 12px", borderRadius: "20px", border: "1px solid rgba(0,212,170,0.15)" }}>
             {res.years} yrs to retirement
           </span>
-          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
+          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
             Reset
           </button>
         </div>

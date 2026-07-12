@@ -133,7 +133,7 @@ function calcFIRE(inp: Inputs): Results {
 
 const inputStyle: CSSProperties = {
   width: "100%", padding: "10px 12px", borderRadius: "10px",
-  background: C.inputBg, border: "1px solid rgba(255,255,255,0.1)",
+  background: C.inputBg, border: `1px solid ${C.inputBorder}`,
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
 };
@@ -211,7 +211,7 @@ function Btn({
     teal: { ...base, background: "rgba(0,212,170,0.15)", color: C.teal, border: "1px solid rgba(0,212,170,0.3)" },
     fire: { ...base, background: "rgba(249,115,22,0.15)", color: C.fire, border: "1px solid rgba(249,115,22,0.3)" },
     danger: { ...base, background: "rgba(239,68,68,0.12)", color: C.danger, border: "1px solid rgba(239,68,68,0.3)" },
-    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: "1px solid rgba(255,255,255,0.1)" },
+    ghost: { ...base, background: C.inputBg, color: C.textMuted, border: `1px solid ${C.inputBorder}` },
   };
   return <button style={map[variant] || map.ghost} onClick={onClick}>{children}</button>;
 }
@@ -487,7 +487,7 @@ export default function FIREPlanTab() {
     ? res.yearsToFire - res.yearsToTarget : 0;
 
   return (
-    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: "radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,212,170,0.05), transparent 60%), #000", padding: "20px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: "radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,212,170,0.05), transparent 60%), #000", padding: "20px", borderRadius: "16px", border: `1px solid ${C.divider}` }}>
       <div style={card}>
         <div style={sectionTitle}>
           🔥 FIRE Calculator
@@ -504,7 +504,7 @@ export default function FIREPlanTab() {
                 ? `⚠️ FIRE at ${res.fireAge} · ${yearsLate} yr${yearsLate > 1 ? "s" : ""} late`
                 : `FIRE at ${res.fireAge}`}
           </span>
-          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
+          <button onClick={handleReset} style={{ fontSize: "11px", color: C.textDim, background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: "8px", padding: "4px 10px", cursor: "pointer" }}>
             Reset
           </button>
         </div>
