@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback, type CSSProperties } from "react";
 
 const C = {
-  navy: "#0A1628",
-  navyMid: "#0D1F35",
-  navyCard: "rgba(13,31,53,0.85)",
+  navy: "#000000",
+  navyMid: "#0A0A0A",
+  navyCard: "rgba(15,15,17,0.85)",
   teal: "#00D4AA",
   blue: "#00B4D8",
   success: "#10B981",
@@ -487,7 +487,7 @@ export default function FIREPlanTab() {
     ? res.yearsToFire - res.yearsToTarget : 0;
 
   return (
-    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary }}>
+    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: "radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,212,170,0.05), transparent 60%), #000", padding: "20px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={card}>
         <div style={sectionTitle}>
           🔥 FIRE Calculator
