@@ -405,7 +405,9 @@ const DEFAULT_INPUTS: Inputs = {
 };
 
 export default function FIREPlanTab() {
+  useThemeVersion();
   const [inp, setInp] = useState<Inputs>(DEFAULT_INPUTS);
+
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [saving, setSaving] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
