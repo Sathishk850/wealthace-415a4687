@@ -1,20 +1,6 @@
 import { useState, useMemo, useCallback, type CSSProperties } from "react";
+import { C, useThemeVersion } from "./palette";
 
-// ─── DESIGN TOKENS (FinVista dark theme) ────────────────────────────────────
-const C = {
-  navy: "#000000",
-  navyMid: "#0A0A0A",
-  navyCard: "rgba(15,15,17,0.85)",
-  teal: "#00D4AA",
-  blue: "#00B4D8",
-  success: "#10B981",
-  warning: "#F59E0B",
-  danger: "#EF4444",
-  purple: "#A78BFA",
-  textPrimary: "#E2E8F0",
-  textMuted: "#94A3B8",
-  textDim: "#64748B",
-};
 
 const formatINR = (n: number | undefined | null) => {
   if (n === null || n === undefined || isNaN(n) || !isFinite(n)) return "—";
