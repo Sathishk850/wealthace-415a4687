@@ -98,16 +98,16 @@ function calcRetirement(inp: Inputs): Results | null {
   };
 }
 
-const inputStyle: CSSProperties = {
+const getInputStyle = (): CSSProperties => ({
   width: "100%", padding: "10px 12px", borderRadius: "10px",
   background: C.inputBg, border: `1px solid ${C.inputBorder}`,
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
-};
-const labelStyle: CSSProperties = {
+});
+const getLabelStyle = (): CSSProperties => ({
   display: "block", fontSize: "12px", color: C.textMuted,
   marginBottom: "6px", fontWeight: 500,
-};
+});
 
 function NumInput({
   label, value, onChange, min, max, step = 1, prefix, suffix,
@@ -117,7 +117,7 @@ function NumInput({
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label style={getLabelStyle()}>{label}</label>
       <div style={{ position: "relative" }}>
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -129,7 +129,7 @@ function NumInput({
           value={value}
           min={min} max={max} step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          style={{ ...inputStyle, paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
+          style={{ ...getInputStyle(), paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
           onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
         />
@@ -274,7 +274,7 @@ function ScenarioPersister({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSave()}
         placeholder={editId ? "Update scenario name…" : 'Name this plan (e.g. "Conservative Base")'}
-        style={{ ...inputStyle, flex: 1, minWidth: "200px" }}
+        style={{ ...getInputStyle(), flex: 1, minWidth: "200px" }}
         onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
         onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
       />

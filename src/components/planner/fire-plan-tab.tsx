@@ -116,16 +116,16 @@ function calcFIRE(inp: Inputs): Results {
   };
 }
 
-const inputStyle: CSSProperties = {
+const getInputStyle = (): CSSProperties => ({
   width: "100%", padding: "10px 12px", borderRadius: "10px",
   background: C.inputBg, border: `1px solid ${C.inputBorder}`,
   color: C.textPrimary, fontSize: "14px", outline: "none",
   boxSizing: "border-box", transition: "border-color 0.2s",
-};
-const labelStyle: CSSProperties = {
+});
+const getLabelStyle = (): CSSProperties => ({
   display: "block", fontSize: "12px", color: C.textMuted,
   marginBottom: "6px", fontWeight: 500,
-};
+});
 
 function NumInput({
   label, value, onChange, min, max, step = 1, prefix, suffix,
@@ -135,7 +135,7 @@ function NumInput({
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label style={getLabelStyle()}>{label}</label>
       <div style={{ position: "relative" }}>
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -145,7 +145,7 @@ function NumInput({
         <input
           type="number" value={value} min={min} max={max} step={step}
           onChange={(e) => onChange(Number(e.target.value))}
-          style={{ ...inputStyle, paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
+          style={{ ...getInputStyle(), paddingLeft: prefix ? "28px" : "12px", paddingRight: suffix ? "44px" : "12px" }}
           onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(0,212,170,0.5)"; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
         />
@@ -382,7 +382,7 @@ function ScenarioPersister({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSave()}
         placeholder={editId ? "Update scenario name…" : 'Name this FIRE plan (e.g. "Lean & Early")'}
-        style={{ ...inputStyle, flex: 1, minWidth: "200px" }}
+        style={{ ...getInputStyle(), flex: 1, minWidth: "200px" }}
         onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(249,115,22,0.5)"; }}
         onBlur={(e) => { e.currentTarget.style.borderColor = C.inputBorder; }}
       />
@@ -509,7 +509,7 @@ export default function FIREPlanTab() {
           <NumInput label="Expected Annual Return" value={inp.annualReturn} onChange={set("annualReturn")} min={1} max={30} step={0.5} suffix="%" />
           <NumInput label="Safe Withdrawal Rate" value={inp.swr} onChange={set("swr")} min={1} max={10} step={0.25} suffix="%" />
           <div>
-            <label style={labelStyle}>Savings Rate (derived)</label>
+            <label style={getLabelStyle()}>Savings Rate (derived)</label>
             <div style={{
               padding: "10px 12px", borderRadius: "10px",
               background: res.savingsRate >= 50 ? "rgba(16,185,129,0.1)" : res.savingsRate >= 30 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
