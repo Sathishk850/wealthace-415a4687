@@ -158,17 +158,19 @@ function NumInput({
   );
 }
 
-function ResultTile({ label, value, sub, color = C.teal }: { label: string; value: string; sub?: string; color?: string }) {
+function ResultTile({ label, value, sub, color = C.teal, tip }: { label: string; value: string; sub?: string; color?: string; tip?: TooltipEntry }) {
   return (
-    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44` }}>
-      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {label}
+    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44`, position: "relative" }}>
+      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
       </div>
       <div style={{ fontSize: "20px", fontWeight: 700, color }}>{value}</div>
       {sub && <div style={{ fontSize: "11px", color: C.textDim, marginTop: "3px" }}>{sub}</div>}
     </div>
   );
 }
+
 
 function ProgressBar({ pct, gradient }: { pct: number; gradient: string }) {
   return (
