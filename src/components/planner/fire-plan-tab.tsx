@@ -1,5 +1,15 @@
 import { useState, useMemo, useCallback, type CSSProperties } from "react";
 import { C, useThemeVersion } from "./palette";
+import InfoTooltip from "./info-tooltip";
+import { WEALTH_PLANNER_TOOLTIPS, type TooltipEntry } from "./tooltips";
+import fingerprintAsset from "@/assets/finvista-fingerprint.png.asset.json";
+
+const FT = WEALTH_PLANNER_TOOLTIPS.fire;
+
+const BrandIcon = ({ size = 22 }: { size?: number }) => (
+  <img src={fingerprintAsset.url} alt="FinVista" width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", objectFit: "contain" }} />
+);
+
 
 
 const formatINR = (n: number | undefined | null) => {
