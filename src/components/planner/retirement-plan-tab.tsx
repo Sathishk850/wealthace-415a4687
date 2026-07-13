@@ -120,15 +120,20 @@ const getLabelStyle = (): CSSProperties => ({
 });
 
 function NumInput({
-  label, value, onChange, min, max, step = 1, prefix, suffix,
+  label, value, onChange, min, max, step = 1, prefix, suffix, tip,
 }: {
   label: string; value: number; onChange: (v: number) => void;
   min?: number; max?: number; step?: number; prefix?: string; suffix?: string;
+  tip?: TooltipEntry;
 }) {
   return (
     <div>
-      <label style={getLabelStyle()}>{label}</label>
+      <label style={{ ...getLabelStyle(), display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
+      </label>
       <div style={{ position: "relative" }}>
+
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
             {prefix}
