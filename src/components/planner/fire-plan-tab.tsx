@@ -493,7 +493,8 @@ export default function FIREPlanTab() {
     <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: C.bgGradientFire, padding: "20px", borderRadius: "16px", border: `1px solid ${C.divider}` }}>
       <div style={card}>
         <div style={sectionTitle}>
-          🔥 FIRE Calculator
+          <BrandIcon />
+          <span>FIRE Calculator</span>
           <span style={{
             marginLeft: "auto", fontSize: "12px", fontWeight: 500,
             background: isOnTrack ? "rgba(16,185,129,0.1)" : "rgba(249,115,22,0.1)",
@@ -513,21 +514,24 @@ export default function FIREPlanTab() {
         </div>
 
         <div style={g2}>
-          <NumInput label="Current Age" value={inp.currentAge} onChange={set("currentAge")} min={18} max={60} suffix="yrs" />
-          <NumInput label="Target FIRE Age" value={inp.targetFireAge} onChange={set("targetFireAge")} min={inp.currentAge + 1} max={70} suffix="yrs" />
+          <NumInput label="Current Age" value={inp.currentAge} onChange={set("currentAge")} min={18} max={60} suffix="yrs" tip={FT.inputs.currentAge} />
+          <NumInput label="Target FIRE Age" value={inp.targetFireAge} onChange={set("targetFireAge")} min={inp.currentAge + 1} max={70} suffix="yrs" tip={FT.inputs.targetFireAge} />
         </div>
 
         <div style={g3}>
-          <NumInput label="Current Net Worth" value={inp.currentNetWorth} onChange={set("currentNetWorth")} min={0} step={100000} prefix="₹" />
-          <NumInput label="Annual Expenses" value={inp.annualExpenses} onChange={set("annualExpenses")} min={0} step={50000} prefix="₹" />
-          <NumInput label="Annual Investments" value={inp.annualSavings} onChange={set("annualSavings")} min={0} step={50000} prefix="₹" />
+          <NumInput label="Current Net Worth" value={inp.currentNetWorth} onChange={set("currentNetWorth")} min={0} step={100000} prefix="₹" tip={FT.inputs.currentNetWorth} />
+          <NumInput label="Annual Expenses" value={inp.annualExpenses} onChange={set("annualExpenses")} min={0} step={50000} prefix="₹" tip={FT.inputs.annualExpenses} />
+          <NumInput label="Annual Investments" value={inp.annualSavings} onChange={set("annualSavings")} min={0} step={50000} prefix="₹" tip={FT.inputs.annualSavings} />
         </div>
 
         <div style={g3}>
-          <NumInput label="Expected Annual Return" value={inp.annualReturn} onChange={set("annualReturn")} min={1} max={30} step={0.5} suffix="%" />
-          <NumInput label="Safe Withdrawal Rate" value={inp.swr} onChange={set("swr")} min={1} max={10} step={0.25} suffix="%" />
+          <NumInput label="Expected Annual Return" value={inp.annualReturn} onChange={set("annualReturn")} min={1} max={30} step={0.5} suffix="%" tip={FT.inputs.annualReturn} />
+          <NumInput label="Safe Withdrawal Rate" value={inp.swr} onChange={set("swr")} min={1} max={10} step={0.25} suffix="%" tip={FT.inputs.swr} />
           <div>
-            <label style={getLabelStyle()}>Savings Rate (derived)</label>
+            <label style={{ ...getLabelStyle(), display: "flex", alignItems: "center" }}>
+              <span>Savings Rate (derived)</span>
+              <InfoTooltip tip={FT.results.savingsRate} ariaLabel="About Savings Rate" />
+            </label>
             <div style={{
               padding: "10px 12px", borderRadius: "10px",
               background: res.savingsRate >= 50 ? "rgba(16,185,129,0.1)" : res.savingsRate >= 30 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
@@ -543,25 +547,28 @@ export default function FIREPlanTab() {
         <div style={{ height: "1px", background: C.inputBg, margin: "0 0 20px" }} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(158px,1fr))", gap: "12px" }}>
-          <ResultTile label="🔥 FIRE Number" value={formatINR(res.fireNum)} sub={`${inp.swr}% SWR · 25× rule`} color={C.fire} />
-          <ResultTile label="Current Progress" value={`${res.progress.toFixed(1)}%`} sub={`${formatINR(inp.currentNetWorth)} of ${formatINR(res.fireNum)}`} color={C.teal} />
+          <ResultTile label="🔥 FIRE Number" value={formatINR(res.fireNum)} sub={`${inp.swr}% SWR · 25× rule`} color={C.fire} tip={FT.results.fireNumber} />
+          <ResultTile label="Current Progress" value={`${res.progress.toFixed(1)}%`} sub={`${formatINR(inp.currentNetWorth)} of ${formatINR(res.fireNum)}`} color={C.teal} tip={FT.results.progress} />
           <ResultTile
             label="Projected FIRE Age"
             value={`${res.fireAge}`}
             sub={`${res.yearsToFire} yr${res.yearsToFire !== 1 ? "s" : ""} away`}
             color={isOnTrack ? C.success : C.warning}
+            tip={FT.results.fireAge}
           />
           <ResultTile
             label={`At Target Age (${inp.targetFireAge})`}
             value={formatINR(res.projAtTarget)}
             sub={hasDeficit ? `${formatINR(Math.abs(res.surplus))} short` : `+${formatINR(res.surplus)} surplus`}
             color={hasDeficit ? C.danger : C.success}
+            tip={FT.results.projectedAtTarget}
           />
           <ResultTile
             label="Monthly Invested"
             value={`₹${Math.round(inp.annualSavings / 12).toLocaleString("en-IN")}/mo`}
             sub={`₹${inp.annualSavings.toLocaleString("en-IN")}/yr`}
             color={C.blue}
+            tip={FT.results.monthlyInvested}
           />
           {res.monthlyNeeded > 0 && (
             <ResultTile
@@ -569,9 +576,12 @@ export default function FIREPlanTab() {
               value={`₹${Math.round(res.monthlyNeeded).toLocaleString("en-IN")}/mo`}
               sub={`To FIRE by age ${inp.targetFireAge}`}
               color={C.warning}
+              tip={FT.results.monthlyNeeded}
             />
           )}
         </div>
+
+
 
         <div style={{ marginTop: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
