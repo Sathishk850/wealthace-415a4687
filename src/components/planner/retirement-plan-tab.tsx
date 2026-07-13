@@ -1,5 +1,15 @@
 import { useState, useMemo, useCallback, type CSSProperties } from "react";
 import { C, useThemeVersion } from "./palette";
+import InfoTooltip from "./info-tooltip";
+import { WEALTH_PLANNER_TOOLTIPS, type TooltipEntry } from "./tooltips";
+import fingerprintAsset from "@/assets/finvista-fingerprint.png.asset.json";
+
+const RT = WEALTH_PLANNER_TOOLTIPS.retirement;
+
+const BrandIcon = ({ size = 22 }: { size?: number }) => (
+  <img src={fingerprintAsset.url} alt="FinVista" width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", objectFit: "contain" }} />
+);
+
 
 
 const formatINR = (n: number | undefined | null) => {
@@ -110,15 +120,20 @@ const getLabelStyle = (): CSSProperties => ({
 });
 
 function NumInput({
-  label, value, onChange, min, max, step = 1, prefix, suffix,
+  label, value, onChange, min, max, step = 1, prefix, suffix, tip,
 }: {
   label: string; value: number; onChange: (v: number) => void;
   min?: number; max?: number; step?: number; prefix?: string; suffix?: string;
+  tip?: TooltipEntry;
 }) {
   return (
     <div>
-      <label style={getLabelStyle()}>{label}</label>
+      <label style={{ ...getLabelStyle(), display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
+      </label>
       <div style={{ position: "relative" }}>
+
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
             {prefix}
@@ -143,17 +158,19 @@ function NumInput({
   );
 }
 
-function ResultTile({ label, value, sub, color = C.teal }: { label: string; value: string; sub?: string; color?: string }) {
+function ResultTile({ label, value, sub, color = C.teal, tip }: { label: string; value: string; sub?: string; color?: string; tip?: TooltipEntry }) {
   return (
-    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44` }}>
-      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {label}
+    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44`, position: "relative" }}>
+      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
       </div>
       <div style={{ fontSize: "20px", fontWeight: 700, color }}>{value}</div>
       {sub && <div style={{ fontSize: "11px", color: C.textDim, marginTop: "3px" }}>{sub}</div>}
     </div>
   );
 }
+
 
 function ProgressBar({ pct, gradient }: { pct: number; gradient: string }) {
   return (
@@ -381,7 +398,8 @@ export default function RetirementPlanTab() {
     <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: C.bgGradient, padding: "20px", borderRadius: "16px", border: `1px solid ${C.divider}` }}>
       <div style={card}>
         <div style={sectionTitle}>
-          🏦 Retirement Calculator
+          <BrandIcon />
+          <span>Retirement Calculator</span>
           <span style={{ marginLeft: "auto", fontSize: "12px", fontWeight: 500, color: C.textDim, background: "rgba(0,212,170,0.08)", padding: "4px 12px", borderRadius: "20px", border: "1px solid rgba(0,212,170,0.15)" }}>
             {res.years} yrs to retirement
           </span>
@@ -391,41 +409,43 @@ export default function RetirementPlanTab() {
         </div>
 
         <div style={g2}>
-          <NumInput label="Current Age" value={inp.currentAge} onChange={set("currentAge")} min={18} max={80} suffix="yrs" />
-          <NumInput label="Retirement Age" value={inp.retirementAge} onChange={set("retirementAge")} min={inp.currentAge + 1} max={85} suffix="yrs" />
+          <NumInput label="Current Age" value={inp.currentAge} onChange={set("currentAge")} min={18} max={80} suffix="yrs" tip={RT.inputs.currentAge} />
+          <NumInput label="Retirement Age" value={inp.retirementAge} onChange={set("retirementAge")} min={inp.currentAge + 1} max={85} suffix="yrs" tip={RT.inputs.retirementAge} />
         </div>
 
         <div style={g3}>
-          <NumInput label="Current Savings" value={inp.currentSavings} onChange={set("currentSavings")} min={0} step={50000} prefix="₹" />
-          <NumInput label="Monthly SIP" value={inp.monthlySIP} onChange={set("monthlySIP")} min={0} step={1000} prefix="₹" />
-          <NumInput label="Monthly Expenses Today" value={inp.monthlyExpenses} onChange={set("monthlyExpenses")} min={0} step={5000} prefix="₹" />
+          <NumInput label="Current Savings" value={inp.currentSavings} onChange={set("currentSavings")} min={0} step={50000} prefix="₹" tip={RT.inputs.currentSavings} />
+          <NumInput label="Monthly SIP" value={inp.monthlySIP} onChange={set("monthlySIP")} min={0} step={1000} prefix="₹" tip={RT.inputs.monthlySIP} />
+          <NumInput label="Monthly Expenses Today" value={inp.monthlyExpenses} onChange={set("monthlyExpenses")} min={0} step={5000} prefix="₹" tip={RT.inputs.monthlyExpenses} />
         </div>
 
         <div style={g3}>
-          <NumInput label="Pre-Retirement Return" value={inp.preReturnRate} onChange={set("preReturnRate")} min={1} max={30} step={0.5} suffix="%" />
-          <NumInput label="Post-Retirement Return" value={inp.postReturnRate} onChange={set("postReturnRate")} min={1} max={20} step={0.5} suffix="%" />
-          <NumInput label="Inflation Rate" value={inp.inflationRate} onChange={set("inflationRate")} min={1} max={15} step={0.5} suffix="%" />
+          <NumInput label="Pre-Retirement Return" value={inp.preReturnRate} onChange={set("preReturnRate")} min={1} max={30} step={0.5} suffix="%" tip={RT.inputs.preReturnRate} />
+          <NumInput label="Post-Retirement Return" value={inp.postReturnRate} onChange={set("postReturnRate")} min={1} max={20} step={0.5} suffix="%" tip={RT.inputs.postReturnRate} />
+          <NumInput label="Inflation Rate" value={inp.inflationRate} onChange={set("inflationRate")} min={1} max={15} step={0.5} suffix="%" tip={RT.inputs.inflationRate} />
         </div>
 
         <div style={{ maxWidth: "240px", marginBottom: "20px" }}>
-          <NumInput label="Safe Withdrawal Rate (SWR)" value={inp.withdrawalRate} onChange={set("withdrawalRate")} min={1} max={10} step={0.25} suffix="%" />
+          <NumInput label="Safe Withdrawal Rate (SWR)" value={inp.withdrawalRate} onChange={set("withdrawalRate")} min={1} max={10} step={0.25} suffix="%" tip={RT.inputs.withdrawalRate} />
         </div>
 
         <div style={{ height: "1px", background: C.inputBg, margin: "0 0 20px" }} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(158px,1fr))", gap: "12px" }}>
-          <ResultTile label="Projected Corpus" value={formatINR(res.projectedCorpus)} sub={`At age ${inp.retirementAge}`} color={C.teal} />
-          <ResultTile label="Required Corpus" value={formatINR(res.requiredCorpus)} sub={`${inp.withdrawalRate}% SWR · 25× rule`} color={isOnTrack ? C.success : C.danger} />
+          <ResultTile label="Projected Corpus" value={formatINR(res.projectedCorpus)} sub={`At age ${inp.retirementAge}`} color={C.teal} tip={RT.results.projectedCorpus} />
+          <ResultTile label="Required Corpus" value={formatINR(res.requiredCorpus)} sub={`${inp.withdrawalRate}% SWR · 25× rule`} color={isOnTrack ? C.success : C.danger} tip={RT.results.requiredCorpus} />
           <ResultTile
             label={isOnTrack ? "✅ Surplus" : "⚠️ Shortfall"}
             value={formatINR(Math.abs(res.surplus))}
             sub={!isOnTrack ? `Add ₹${Math.round(res.additionalSIP).toLocaleString("en-IN")}/mo` : "You are on track!"}
             color={isOnTrack ? C.success : C.danger}
+            tip={RT.results.surplus}
           />
-          <ResultTile label="Monthly at Retirement" value={`${formatINR(res.inflatedMonthly)}/mo`} sub={`Inflation-adjusted (${inp.inflationRate}%)`} color={C.warning} />
-          <ResultTile label="SIP Future Value" value={formatINR(res.fvSIP)} sub={`${res.years}-yr SIP corpus`} color={C.teal} />
-          <ResultTile label="Coverage" value={`${res.coverage.toFixed(1)}%`} sub="of required corpus" color={res.coverage >= 100 ? C.success : C.danger} />
+          <ResultTile label="Monthly at Retirement" value={`${formatINR(res.inflatedMonthly)}/mo`} sub={`Inflation-adjusted (${inp.inflationRate}%)`} color={C.warning} tip={RT.results.monthlyAtRetirement} />
+          <ResultTile label="SIP Future Value" value={formatINR(res.fvSIP)} sub={`${res.years}-yr SIP corpus`} color={C.teal} tip={RT.results.sipFutureValue} />
+          <ResultTile label="Coverage" value={`${res.coverage.toFixed(1)}%`} sub="of required corpus" color={res.coverage >= 100 ? C.success : C.danger} tip={RT.results.coverage} />
         </div>
+
 
         <div style={{ marginTop: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>

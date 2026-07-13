@@ -1,5 +1,15 @@
 import { useState, useMemo, useCallback, type CSSProperties } from "react";
 import { C, useThemeVersion } from "./palette";
+import InfoTooltip from "./info-tooltip";
+import { WEALTH_PLANNER_TOOLTIPS, type TooltipEntry } from "./tooltips";
+import fingerprintAsset from "@/assets/finvista-fingerprint.png.asset.json";
+
+const FT = WEALTH_PLANNER_TOOLTIPS.fire;
+
+const BrandIcon = ({ size = 22 }: { size?: number }) => (
+  <img src={fingerprintAsset.url} alt="FinVista" width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", objectFit: "contain" }} />
+);
+
 
 
 const formatINR = (n: number | undefined | null) => {
@@ -128,14 +138,18 @@ const getLabelStyle = (): CSSProperties => ({
 });
 
 function NumInput({
-  label, value, onChange, min, max, step = 1, prefix, suffix,
+  label, value, onChange, min, max, step = 1, prefix, suffix, tip,
 }: {
   label: string; value: number; onChange: (v: number) => void;
   min?: number; max?: number; step?: number; prefix?: string; suffix?: string;
+  tip?: TooltipEntry;
 }) {
   return (
     <div>
-      <label style={getLabelStyle()}>{label}</label>
+      <label style={{ ...getLabelStyle(), display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
+      </label>
       <div style={{ position: "relative" }}>
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -159,17 +173,19 @@ function NumInput({
   );
 }
 
-function ResultTile({ label, value, sub, color = C.teal }: { label: string; value: string; sub?: string; color?: string }) {
+function ResultTile({ label, value, sub, color = C.teal, tip }: { label: string; value: string; sub?: string; color?: string; tip?: TooltipEntry }) {
   return (
-    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44` }}>
-      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {label}
+    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44`, position: "relative" }}>
+      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
       </div>
       <div style={{ fontSize: "20px", fontWeight: 700, color }}>{value}</div>
       {sub && <div style={{ fontSize: "11px", color: C.textDim, marginTop: "3px" }}>{sub}</div>}
     </div>
   );
 }
+
 
 function ProgressBar({ pct, gradient, height = "8px" }: { pct: number; gradient: string; height?: string }) {
   return (
@@ -477,7 +493,8 @@ export default function FIREPlanTab() {
     <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: C.textPrimary, background: C.bgGradientFire, padding: "20px", borderRadius: "16px", border: `1px solid ${C.divider}` }}>
       <div style={card}>
         <div style={sectionTitle}>
-          🔥 FIRE Calculator
+          <BrandIcon />
+          <span>FIRE Calculator</span>
           <span style={{
             marginLeft: "auto", fontSize: "12px", fontWeight: 500,
             background: isOnTrack ? "rgba(16,185,129,0.1)" : "rgba(249,115,22,0.1)",
@@ -497,21 +514,24 @@ export default function FIREPlanTab() {
         </div>
 
         <div style={g2}>
-          <NumInput label="Current Age" value={inp.currentAge} onChange={set("currentAge")} min={18} max={60} suffix="yrs" />
-          <NumInput label="Target FIRE Age" value={inp.targetFireAge} onChange={set("targetFireAge")} min={inp.currentAge + 1} max={70} suffix="yrs" />
+          <NumInput label="Current Age" value={inp.currentAge} onChange={set("currentAge")} min={18} max={60} suffix="yrs" tip={FT.inputs.currentAge} />
+          <NumInput label="Target FIRE Age" value={inp.targetFireAge} onChange={set("targetFireAge")} min={inp.currentAge + 1} max={70} suffix="yrs" tip={FT.inputs.targetFireAge} />
         </div>
 
         <div style={g3}>
-          <NumInput label="Current Net Worth" value={inp.currentNetWorth} onChange={set("currentNetWorth")} min={0} step={100000} prefix="₹" />
-          <NumInput label="Annual Expenses" value={inp.annualExpenses} onChange={set("annualExpenses")} min={0} step={50000} prefix="₹" />
-          <NumInput label="Annual Investments" value={inp.annualSavings} onChange={set("annualSavings")} min={0} step={50000} prefix="₹" />
+          <NumInput label="Current Net Worth" value={inp.currentNetWorth} onChange={set("currentNetWorth")} min={0} step={100000} prefix="₹" tip={FT.inputs.currentNetWorth} />
+          <NumInput label="Annual Expenses" value={inp.annualExpenses} onChange={set("annualExpenses")} min={0} step={50000} prefix="₹" tip={FT.inputs.annualExpenses} />
+          <NumInput label="Annual Investments" value={inp.annualSavings} onChange={set("annualSavings")} min={0} step={50000} prefix="₹" tip={FT.inputs.annualSavings} />
         </div>
 
         <div style={g3}>
-          <NumInput label="Expected Annual Return" value={inp.annualReturn} onChange={set("annualReturn")} min={1} max={30} step={0.5} suffix="%" />
-          <NumInput label="Safe Withdrawal Rate" value={inp.swr} onChange={set("swr")} min={1} max={10} step={0.25} suffix="%" />
+          <NumInput label="Expected Annual Return" value={inp.annualReturn} onChange={set("annualReturn")} min={1} max={30} step={0.5} suffix="%" tip={FT.inputs.annualReturn} />
+          <NumInput label="Safe Withdrawal Rate" value={inp.swr} onChange={set("swr")} min={1} max={10} step={0.25} suffix="%" tip={FT.inputs.swr} />
           <div>
-            <label style={getLabelStyle()}>Savings Rate (derived)</label>
+            <label style={{ ...getLabelStyle(), display: "flex", alignItems: "center" }}>
+              <span>Savings Rate (derived)</span>
+              <InfoTooltip tip={FT.results.savingsRate} ariaLabel="About Savings Rate" />
+            </label>
             <div style={{
               padding: "10px 12px", borderRadius: "10px",
               background: res.savingsRate >= 50 ? "rgba(16,185,129,0.1)" : res.savingsRate >= 30 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
@@ -527,25 +547,28 @@ export default function FIREPlanTab() {
         <div style={{ height: "1px", background: C.inputBg, margin: "0 0 20px" }} />
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(158px,1fr))", gap: "12px" }}>
-          <ResultTile label="🔥 FIRE Number" value={formatINR(res.fireNum)} sub={`${inp.swr}% SWR · 25× rule`} color={C.fire} />
-          <ResultTile label="Current Progress" value={`${res.progress.toFixed(1)}%`} sub={`${formatINR(inp.currentNetWorth)} of ${formatINR(res.fireNum)}`} color={C.teal} />
+          <ResultTile label="🔥 FIRE Number" value={formatINR(res.fireNum)} sub={`${inp.swr}% SWR · 25× rule`} color={C.fire} tip={FT.results.fireNumber} />
+          <ResultTile label="Current Progress" value={`${res.progress.toFixed(1)}%`} sub={`${formatINR(inp.currentNetWorth)} of ${formatINR(res.fireNum)}`} color={C.teal} tip={FT.results.progress} />
           <ResultTile
             label="Projected FIRE Age"
             value={`${res.fireAge}`}
             sub={`${res.yearsToFire} yr${res.yearsToFire !== 1 ? "s" : ""} away`}
             color={isOnTrack ? C.success : C.warning}
+            tip={FT.results.fireAge}
           />
           <ResultTile
             label={`At Target Age (${inp.targetFireAge})`}
             value={formatINR(res.projAtTarget)}
             sub={hasDeficit ? `${formatINR(Math.abs(res.surplus))} short` : `+${formatINR(res.surplus)} surplus`}
             color={hasDeficit ? C.danger : C.success}
+            tip={FT.results.projectedAtTarget}
           />
           <ResultTile
             label="Monthly Invested"
             value={`₹${Math.round(inp.annualSavings / 12).toLocaleString("en-IN")}/mo`}
             sub={`₹${inp.annualSavings.toLocaleString("en-IN")}/yr`}
             color={C.blue}
+            tip={FT.results.monthlyInvested}
           />
           {res.monthlyNeeded > 0 && (
             <ResultTile
@@ -553,9 +576,12 @@ export default function FIREPlanTab() {
               value={`₹${Math.round(res.monthlyNeeded).toLocaleString("en-IN")}/mo`}
               sub={`To FIRE by age ${inp.targetFireAge}`}
               color={C.warning}
+              tip={FT.results.monthlyNeeded}
             />
           )}
         </div>
+
+
 
         <div style={{ marginTop: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
