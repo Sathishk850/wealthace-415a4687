@@ -138,14 +138,18 @@ const getLabelStyle = (): CSSProperties => ({
 });
 
 function NumInput({
-  label, value, onChange, min, max, step = 1, prefix, suffix,
+  label, value, onChange, min, max, step = 1, prefix, suffix, tip,
 }: {
   label: string; value: number; onChange: (v: number) => void;
   min?: number; max?: number; step?: number; prefix?: string; suffix?: string;
+  tip?: TooltipEntry;
 }) {
   return (
     <div>
-      <label style={getLabelStyle()}>{label}</label>
+      <label style={{ ...getLabelStyle(), display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
+      </label>
       <div style={{ position: "relative" }}>
         {prefix && (
           <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: C.textDim, fontSize: "13px", userSelect: "none" }}>
@@ -169,17 +173,19 @@ function NumInput({
   );
 }
 
-function ResultTile({ label, value, sub, color = C.teal }: { label: string; value: string; sub?: string; color?: string }) {
+function ResultTile({ label, value, sub, color = C.teal, tip }: { label: string; value: string; sub?: string; color?: string; tip?: TooltipEntry }) {
   return (
-    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44` }}>
-      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {label}
+    <div style={{ borderRadius: "14px", padding: "16px", background: `${color}18`, border: `1px solid ${color}44`, position: "relative" }}>
+      <div style={{ fontSize: "11px", color: C.textMuted, fontWeight: 500, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center" }}>
+        <span>{label}</span>
+        {tip && <InfoTooltip tip={tip} ariaLabel={`About ${label}`} />}
       </div>
       <div style={{ fontSize: "20px", fontWeight: 700, color }}>{value}</div>
       {sub && <div style={{ fontSize: "11px", color: C.textDim, marginTop: "3px" }}>{sub}</div>}
     </div>
   );
 }
+
 
 function ProgressBar({ pct, gradient, height = "8px" }: { pct: number; gradient: string; height?: string }) {
   return (
