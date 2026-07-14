@@ -10,6 +10,7 @@
 import {
   REPORT_THEME,
   REPORT_TABLE_STYLES,
+  CLOSING_BLOCK_HEIGHT,
   drawClosing,
   drawDisclaimer,
   drawDonut,
@@ -19,6 +20,7 @@ import {
   drawReportHeader,
   drawReportInfo,
   loadBrandMark,
+  measureDisclaimer,
   pdfSafeText,
 } from "@/lib/report-theme";
 
