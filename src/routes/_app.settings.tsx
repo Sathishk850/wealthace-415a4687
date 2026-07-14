@@ -130,7 +130,7 @@ const DEFAULTS: Prefs = {
   currency: "USD",
   language: "en",
   timezone: "UTC",
-  date_format: "MM/DD/YYYY",
+  date_format: "DD/MM/YYYY",
   number_format: "en-US",
 };
 
