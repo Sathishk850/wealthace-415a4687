@@ -11,6 +11,7 @@ import { useGeneratedReport, useMarkReportDownloaded } from "@/lib/notifications
 import { reportToDoc } from "@/lib/report-export";
 import { ExportReportDialog } from "@/components/reports/export-dialog";
 import { ArrowLeft, FileDown, Loader2 } from "lucide-react";
+import { formatDate, formatDateTime } from "@/lib/date-format";
 
 export const Route = createFileRoute("/_app/reports/$id")({
   head: () => ({ meta: [{ title: "Report · FinVista" }] }),
