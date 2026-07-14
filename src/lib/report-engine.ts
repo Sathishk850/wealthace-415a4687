@@ -344,13 +344,13 @@ export async function renderReportXlsx(doc: ReportDoc, opts: ExportOptions) {
     const p = doc.period.label
       ? doc.period.label
       : doc.period.start && doc.period.end
-        ? `${doc.period.start} to ${doc.period.end}`
+        ? `${formatDate(doc.period.start)} to ${formatDate(doc.period.end)}`
         : "All time";
     meta.push(["Report Period", p]);
   }
   if (doc.currency) meta.push(["Currency", `${doc.currency.code} (${doc.currency.symbol})`]);
   if (doc.reportId) meta.push(["Report ID", doc.reportId]);
-  meta.push(["Generated On", new Date().toLocaleString()]);
+  meta.push(["Generated On", formatDateTime(new Date())]);
   if (merged.includeFilters && doc.filters?.length) {
     meta.push([]);
     meta.push(["Applied Filters"]);
