@@ -3,6 +3,7 @@
  * (PDF, XLSX print layout). Reports ALWAYS render in this light theme
  * regardless of the app's runtime theme (light / dark / system).
  */
+import { formatDateTime } from "@/lib/date-format";
 
 export const REPORT_THEME = {
   brand: {
