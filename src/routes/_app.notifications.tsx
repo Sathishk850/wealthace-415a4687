@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { TextTabs } from "@/components/text-tabs";
 import { CheckCheck, Trash2, Bell, FileText, Sparkles, Settings as SettingsIcon } from "lucide-react";
+import { formatDateTime } from "@/lib/date-format";
 import {
   useNotifications,
   useMarkRead,
