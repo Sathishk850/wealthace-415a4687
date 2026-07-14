@@ -15,6 +15,7 @@ import {
 import { reportToDoc } from "@/lib/report-export";
 import { ExportReportDialog } from "@/components/reports/export-dialog";
 import type { ReportDoc } from "@/lib/report-engine";
+import { formatDateTime } from "@/lib/date-format";
 import { FileDown, Trash2, Inbox, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/reports/")({
