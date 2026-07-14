@@ -271,7 +271,7 @@ export function drawReportInfo(
     const label = opts.period.label
       ? opts.period.label
       : opts.period.start && opts.period.end
-        ? `${opts.period.start} - ${opts.period.end}`
+        ? `${formatDate(opts.period.start)} - ${formatDate(opts.period.end)}`
         : "All time";
     rows.push({ label: "Report Period", value: label });
   }
