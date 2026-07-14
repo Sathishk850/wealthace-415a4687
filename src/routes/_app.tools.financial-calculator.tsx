@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { logToolsActivity, useSaveCalculation } from "@/lib/tools-api";
 import { toast } from "sonner";
 import { exportReport } from "@/lib/report-engine";
+import { formatDate } from "@/lib/date-format";
 
 export const Route = createFileRoute("/_app/tools/financial-calculator")({
   head: () => ({
