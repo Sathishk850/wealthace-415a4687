@@ -288,7 +288,7 @@ export async function renderReportPdf(doc: ReportDoc, opts: ExportOptions) {
       },
     });
     // @ts-ignore autotable attaches lastAutoTable
-    y = (pdf as any).lastAutoTable.finalY + 18;
+    y = (pdf as any).lastAutoTable.finalY + 12;
   }
 
   if (merged.includeNotes && doc.notes?.length) {
@@ -297,15 +297,25 @@ export async function renderReportPdf(doc: ReportDoc, opts: ExportOptions) {
     y = drawNotes(pdf, y, doc.notes);
   }
 
-  // Disclaimer + closing on the LAST page only.
+  // Tail (disclaimer + closing) rendered ONLY on the last page. Measure the
+  // block, then anchor it just above the footer so short reports don't have
+  // a floating closing marker in the middle of the page. The gap between
+  // disclaimer and closing is intentionally tight (6pt) per spec.
   const disclaimer = doc.disclaimer ?? DEFAULT_DISCLAIMER;
-  const closingBlock = 60;
-  const disclaimerBlock = 60;
-  ensureSpace(disclaimerBlock + closingBlock);
-  y = drawDisclaimer(pdf, y + 6, disclaimer);
-  y = drawClosing(pdf, y + 10);
+  const disclaimerH = measureDisclaimer(pdf, disclaimer);
+  const tailGap = 6;
+  const tailH = disclaimerH + tailGap + CLOSING_BLOCK_HEIGHT;
+  const minGapAboveTail = 14;
+  if (y + minGapAboveTail + tailH > bodyBottom) {
+    pdf.addPage();
+    y = drawHeader();
+  }
+  const tailY = Math.max(y + minGapAboveTail, bodyBottom - tailH);
+  const afterDisclaimer = drawDisclaimer(pdf, tailY, disclaimer);
+  drawClosing(pdf, afterDisclaimer + tailGap);
 
   drawReportFooter(pdf, { sensitive: doc.sensitive });
+
 
   const filename = buildFilename(doc, { ...opts, format: "pdf" });
   pdf.save(filename);
