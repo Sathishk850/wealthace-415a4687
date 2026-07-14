@@ -41,7 +41,7 @@ function ReportDetail() {
   }
 
   const period = r.snapshot.period;
-  const periodLabel = period?.start && period?.end ? `${period.start} → ${period.end}` : "All time";
+  const periodLabel = period?.start && period?.end ? `${formatDate(period.start)} → ${formatDate(period.end)}` : "All time";
 
   const doc = reportToDoc(r);
 
