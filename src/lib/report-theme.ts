@@ -377,7 +377,7 @@ export function drawNotes(doc: JsPDFLike, y: number, notes: string[]) {
   return y + h + 12;
 }
 
-/** Disclaimer paragraph (wrapped). */
+/** Disclaimer paragraph (wrapped). Returns new y. */
 export function drawDisclaimer(doc: JsPDFLike, y: number, text: string) {
   const { color, layout, font } = REPORT_THEME;
   const pageW = doc.internal.pageSize.getWidth();
@@ -387,11 +387,22 @@ export function drawDisclaimer(doc: JsPDFLike, y: number, text: string) {
   doc.setTextColor(...color.heading);
   doc.text("Disclaimer", layout.marginX, y);
   doc.setFont(font.family, "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(...color.muted);
   const lines = doc.splitTextToSize(pdfSafeText(text), w) as string[];
-  doc.text(lines, layout.marginX, y + 12);
-  return y + 12 + lines.length * 10;
+  doc.text(lines, layout.marginX, y + 10);
+  return y + 10 + lines.length * 9;
+}
+
+/** Measure the height the disclaimer block will occupy. */
+export function measureDisclaimer(doc: JsPDFLike, text: string): number {
+  const { layout, font } = REPORT_THEME;
+  const pageW = doc.internal.pageSize.getWidth();
+  const w = pageW - layout.marginX * 2;
+  doc.setFont(font.family, "normal");
+  doc.setFontSize(7.5);
+  const lines = doc.splitTextToSize(pdfSafeText(text), w) as string[];
+  return 10 + lines.length * 9;
 }
 
 /** Closing block: divider + centered FINVISTA / DIRECT YOUR WEALTH. Tight. */
