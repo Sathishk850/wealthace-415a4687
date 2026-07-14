@@ -377,7 +377,7 @@ export function drawNotes(doc: JsPDFLike, y: number, notes: string[]) {
   return y + h + 12;
 }
 
-/** Disclaimer paragraph (wrapped). */
+/** Disclaimer paragraph (wrapped). Returns new y. */
 export function drawDisclaimer(doc: JsPDFLike, y: number, text: string) {
   const { color, layout, font } = REPORT_THEME;
   const pageW = doc.internal.pageSize.getWidth();
@@ -387,14 +387,26 @@ export function drawDisclaimer(doc: JsPDFLike, y: number, text: string) {
   doc.setTextColor(...color.heading);
   doc.text("Disclaimer", layout.marginX, y);
   doc.setFont(font.family, "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(...color.muted);
   const lines = doc.splitTextToSize(pdfSafeText(text), w) as string[];
-  doc.text(lines, layout.marginX, y + 12);
-  return y + 12 + lines.length * 10;
+  doc.text(lines, layout.marginX, y + 10);
+  return y + 10 + lines.length * 9;
 }
 
-/** Closing block: divider + centered FINVISTA / DIRECT YOUR WEALTH. */
+/** Measure the height the disclaimer block will occupy. */
+export function measureDisclaimer(doc: JsPDFLike, text: string): number {
+  const { layout, font } = REPORT_THEME;
+  const pageW = doc.internal.pageSize.getWidth();
+  const w = pageW - layout.marginX * 2;
+  doc.setFont(font.family, "normal");
+  doc.setFontSize(7.5);
+  const lines = doc.splitTextToSize(pdfSafeText(text), w) as string[];
+  return 10 + lines.length * 9;
+}
+
+/** Closing block: divider + centered FINVISTA / DIRECT YOUR WEALTH. Tight. */
+export const CLOSING_BLOCK_HEIGHT = 30;
 export function drawClosing(doc: JsPDFLike, y: number) {
   const { color, layout, font } = REPORT_THEME;
   const pageW = doc.internal.pageSize.getWidth();
@@ -402,17 +414,17 @@ export function drawClosing(doc: JsPDFLike, y: number) {
   doc.setLineWidth(0.5);
   doc.line(layout.marginX + 60, y, pageW - layout.marginX - 60, y);
   doc.setFont(font.family, "bold");
-  doc.setFontSize(16);
+  doc.setFontSize(13);
   doc.setTextColor(...color.primaryDeep);
-  doc.text("FINVISTA", pageW / 2, y + 22, { align: "center" });
+  doc.text("FINVISTA", pageW / 2, y + 14, { align: "center" });
   doc.setFont(font.family, "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(...color.muted);
-  doc.text("DIRECT  YOUR  WEALTH", pageW / 2, y + 34, {
+  doc.text("DIRECT  YOUR  WEALTH", pageW / 2, y + 23, {
     align: "center",
     charSpace: 1.4,
   });
-  return y + 44;
+  return y + CLOSING_BLOCK_HEIGHT;
 }
 
 /** Donut chart with legend. */
