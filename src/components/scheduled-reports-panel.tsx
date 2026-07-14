@@ -13,6 +13,7 @@ import {
   type ScheduledReport,
 } from "@/lib/notifications-api";
 import { ScheduledReportDialog } from "@/components/scheduled-report-dialog";
+import { formatDateTime } from "@/lib/date-format";
 
 export function ScheduledReportsPanel({
   reportOptions,
@@ -73,7 +74,7 @@ export function ScheduledReportsPanel({
                 </div>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
                   {s.report_keys.length} report{s.report_keys.length === 1 ? "" : "s"} ·
-                  {" "}Next run {new Date(s.next_run_at).toLocaleString()}
+                  {" "}Next run {formatDateTime(s.next_run_at)}
                   {s.recipients.length > 0 && (
                     <> · <Mail className="inline h-3 w-3" /> {s.recipients.join(", ")}</>
                   )}

@@ -15,6 +15,7 @@ import {
 import { reportToDoc } from "@/lib/report-export";
 import { ExportReportDialog } from "@/components/reports/export-dialog";
 import type { ReportDoc } from "@/lib/report-engine";
+import { formatDateTime } from "@/lib/date-format";
 import { FileDown, Trash2, Inbox, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/reports/")({
@@ -114,7 +115,7 @@ function ReportRow({
             )}
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            {periodLabel} · Generated {new Date(r.generated_at).toLocaleString()}
+            {periodLabel} · Generated {formatDateTime(r.generated_at)}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">

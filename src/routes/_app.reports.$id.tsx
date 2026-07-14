@@ -11,6 +11,7 @@ import { useGeneratedReport, useMarkReportDownloaded } from "@/lib/notifications
 import { reportToDoc } from "@/lib/report-export";
 import { ExportReportDialog } from "@/components/reports/export-dialog";
 import { ArrowLeft, FileDown, Loader2 } from "lucide-react";
+import { formatDate, formatDateTime } from "@/lib/date-format";
 
 export const Route = createFileRoute("/_app/reports/$id")({
   head: () => ({ meta: [{ title: "Report · FinVista" }] }),
@@ -40,7 +41,7 @@ function ReportDetail() {
   }
 
   const period = r.snapshot.period;
-  const periodLabel = period?.start && period?.end ? `${period.start} → ${period.end}` : "All time";
+  const periodLabel = period?.start && period?.end ? `${formatDate(period.start)} → ${formatDate(period.end)}` : "All time";
 
   const doc = reportToDoc(r);
 
@@ -54,7 +55,7 @@ function ReportDetail() {
 
       <PageHeader
         title={r.name}
-        description={`${periodLabel} · Generated ${new Date(r.generated_at).toLocaleString()}`}
+        description={`${periodLabel} · Generated ${formatDateTime(r.generated_at)}`}
       />
 
       <Card className="glass-card mb-4 border-[var(--border)] p-3">

@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { logToolsActivity, useSaveCalculation } from "@/lib/tools-api";
 import { toast } from "sonner";
 import { exportReport } from "@/lib/report-engine";
+import { formatDate } from "@/lib/date-format";
 
 export const Route = createFileRoute("/_app/tools/financial-calculator")({
   head: () => ({
@@ -126,7 +127,7 @@ export function FinCalculators() {
         {
           name: current.title,
           category: "generic",
-          period: { label: new Date().toLocaleDateString() },
+          period: { label: formatDate(new Date()) },
           currency: { code: "INR", symbol: "₹" },
           tables: rows.length
             ? [{ columns: [

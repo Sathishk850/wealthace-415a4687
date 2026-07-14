@@ -3,6 +3,7 @@
  * (PDF, XLSX print layout). Reports ALWAYS render in this light theme
  * regardless of the app's runtime theme (light / dark / system).
  */
+import { formatDate, formatDateTime } from "@/lib/date-format";
 
 export const REPORT_THEME = {
   brand: {
@@ -172,7 +173,7 @@ export function drawReportHeader(
   // to the left of the value with its own right-align so long timestamps
   // don't collide with the label.
   const rightX = pageW - layout.marginX;
-  const gen = pdfSafeText(opts.generatedOn ?? new Date().toLocaleString());
+  const gen = pdfSafeText(opts.generatedOn ?? formatDateTime(new Date()));
   const rows: [string, string][] = [["Generated On", gen]];
   if (opts.reportId) rows.push(["Report ID", pdfSafeText(opts.reportId)]);
   doc.setFontSize(8);
@@ -270,7 +271,7 @@ export function drawReportInfo(
     const label = opts.period.label
       ? opts.period.label
       : opts.period.start && opts.period.end
-        ? `${opts.period.start} - ${opts.period.end}`
+        ? `${formatDate(opts.period.start)} - ${formatDate(opts.period.end)}`
         : "All time";
     rows.push({ label: "Report Period", value: label });
   }
