@@ -23,6 +23,7 @@ import {
   measureDisclaimer,
   pdfSafeText,
 } from "@/lib/report-theme";
+import { formatDate, formatDateTime } from "@/lib/date-format";
 
 /* ============ Types ============ */
 
