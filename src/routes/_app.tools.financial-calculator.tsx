@@ -127,7 +127,7 @@ export function FinCalculators() {
         {
           name: current.title,
           category: "generic",
-          period: { label: new Date().toLocaleDateString() },
+          period: { label: formatDate(new Date()) },
           currency: { code: "INR", symbol: "₹" },
           tables: rows.length
             ? [{ columns: [
