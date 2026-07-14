@@ -172,7 +172,7 @@ export function drawReportHeader(
   // to the left of the value with its own right-align so long timestamps
   // don't collide with the label.
   const rightX = pageW - layout.marginX;
-  const gen = pdfSafeText(opts.generatedOn ?? new Date().toLocaleString());
+  const gen = pdfSafeText(opts.generatedOn ?? formatDateTime(new Date()));
   const rows: [string, string][] = [["Generated On", gen]];
   if (opts.reportId) rows.push(["Report ID", pdfSafeText(opts.reportId)]);
   doc.setFontSize(8);
