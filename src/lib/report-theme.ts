@@ -394,7 +394,8 @@ export function drawDisclaimer(doc: JsPDFLike, y: number, text: string) {
   return y + 12 + lines.length * 10;
 }
 
-/** Closing block: divider + centered FINVISTA / DIRECT YOUR WEALTH. */
+/** Closing block: divider + centered FINVISTA / DIRECT YOUR WEALTH. Tight. */
+export const CLOSING_BLOCK_HEIGHT = 30;
 export function drawClosing(doc: JsPDFLike, y: number) {
   const { color, layout, font } = REPORT_THEME;
   const pageW = doc.internal.pageSize.getWidth();
@@ -402,17 +403,17 @@ export function drawClosing(doc: JsPDFLike, y: number) {
   doc.setLineWidth(0.5);
   doc.line(layout.marginX + 60, y, pageW - layout.marginX - 60, y);
   doc.setFont(font.family, "bold");
-  doc.setFontSize(16);
+  doc.setFontSize(13);
   doc.setTextColor(...color.primaryDeep);
-  doc.text("FINVISTA", pageW / 2, y + 22, { align: "center" });
+  doc.text("FINVISTA", pageW / 2, y + 14, { align: "center" });
   doc.setFont(font.family, "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(...color.muted);
-  doc.text("DIRECT  YOUR  WEALTH", pageW / 2, y + 34, {
+  doc.text("DIRECT  YOUR  WEALTH", pageW / 2, y + 23, {
     align: "center",
     charSpace: 1.4,
   });
-  return y + 44;
+  return y + CLOSING_BLOCK_HEIGHT;
 }
 
 /** Donut chart with legend. */
