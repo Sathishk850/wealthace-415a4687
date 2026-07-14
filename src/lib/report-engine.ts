@@ -211,7 +211,7 @@ export async function renderReportPdf(doc: ReportDoc, opts: ExportOptions) {
   });
 
   const reportId = reportIdFor(doc);
-  const generatedOn = new Date().toLocaleString();
+  const generatedOn = formatDateTime(new Date());
   const { layout } = REPORT_THEME;
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
