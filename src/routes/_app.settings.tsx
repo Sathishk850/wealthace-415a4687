@@ -107,7 +107,6 @@ const TIMEZONES = [
   "Asia/Singapore","Asia/Tokyo","Australia/Sydney",
 ];
 const DATE_FORMATS = [
-  { v: "MM/DD/YYYY", l: "MM/DD/YYYY (06/30/2026)" },
   { v: "DD/MM/YYYY", l: "DD/MM/YYYY (30/06/2026)" },
   { v: "YYYY-MM-DD", l: "YYYY-MM-DD (2026-06-30)" },
   { v: "DD MMM YYYY", l: "DD MMM YYYY (30 Jun 2026)" },
