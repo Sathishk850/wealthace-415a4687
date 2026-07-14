@@ -117,7 +117,7 @@ function NotificationsPage() {
                       )}
                     </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
-                      {new Date(d.created_at).toLocaleString()}
+                      {formatDateTime(d.created_at)}
                     </td>
                   </tr>
                 ))
@@ -158,7 +158,7 @@ function NotifRow({ n, onRead, onDelete }: { n: Notification; onRead: () => void
             <Badge variant="outline" className="text-[10px] capitalize">{n.priority}</Badge>
           )}
           <span className="ml-auto text-[11px] text-muted-foreground">
-            {new Date(n.created_at).toLocaleString()}
+            {formatDateTime(n.created_at)}
           </span>
         </div>
         {n.body && <p className="mt-1 text-xs text-muted-foreground">{n.body}</p>}
