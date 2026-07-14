@@ -115,7 +115,7 @@ function ReportRow({
             )}
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            {periodLabel} · Generated {new Date(r.generated_at).toLocaleString()}
+            {periodLabel} · Generated {formatDateTime(r.generated_at)}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
