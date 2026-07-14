@@ -55,7 +55,7 @@ function ReportDetail() {
 
       <PageHeader
         title={r.name}
-        description={`${periodLabel} · Generated ${new Date(r.generated_at).toLocaleString()}`}
+        description={`${periodLabel} · Generated ${formatDateTime(r.generated_at)}`}
       />
 
       <Card className="glass-card mb-4 border-[var(--border)] p-3">
