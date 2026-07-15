@@ -94,7 +94,7 @@ function SubCategoryCombobox({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const trimmed = search.trim();
   const canAddCustom =
     trimmed.length > 0 &&
@@ -107,22 +107,18 @@ function SubCategoryCombobox({
       : g.items,
   })).filter((g) => g.items.length > 0);
 
-  // Auto-expand groups that match the search; collapse all when search is cleared.
+  // Auto-expand the first matching group when searching; collapse when cleared.
   useEffect(() => {
     if (search) {
-      setOpenGroups(new Set(filteredGroups.map((g) => g.group)));
+      setOpenGroup(filteredGroups[0]?.group ?? null);
     } else {
-      setOpenGroups(new Set());
+      setOpenGroup(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const toggleGroup = (group: string) => {
-    setOpenGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
-      return next;
-    });
+    setOpenGroup((prev) => (prev === group ? null : group));
   };
 
   return (
@@ -163,7 +159,7 @@ function SubCategoryCombobox({
             )}
             <div className="py-1">
               {filteredGroups.map((g) => {
-                const expanded = openGroups.has(g.group);
+                const expanded = openGroup === g.group;
                 return (
                   <div key={g.group} className="border-b border-border last:border-b-0">
                     <button
