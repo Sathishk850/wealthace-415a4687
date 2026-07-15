@@ -159,7 +159,7 @@ function SubCategoryCombobox({
             )}
             <div className="py-1">
               {filteredGroups.map((g) => {
-                const expanded = openGroups.has(g.group);
+                const expanded = openGroup === g.group;
                 return (
                   <div key={g.group} className="border-b border-border last:border-b-0">
                     <button
