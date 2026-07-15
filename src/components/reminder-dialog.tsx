@@ -128,7 +128,7 @@ export function ReminderDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label className="text-xs text-[var(--text-muted)]">Amount (₹)</Label>
-              <Input type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} />
+              <Input type="number" value={amount || ""} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} />
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-[var(--text-muted)]">Due Date</Label>
@@ -147,7 +147,7 @@ export function ReminderDialog({
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-[var(--text-muted)]">Notify (days before)</Label>
-              <Input type="number" min={0} value={notifyDays} onChange={(e) => setNotifyDays(parseInt(e.target.value) || 0)} />
+              <Input type="number" min={0} value={notifyDays || ""} onChange={(e) => setNotifyDays(parseInt(e.target.value) || 0)} />
             </div>
           </div>
           <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-primary)]/30 px-3 py-2">

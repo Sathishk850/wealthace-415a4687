@@ -142,7 +142,7 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
               type="number"
               min={0}
               step="0.01"
-              value={form.current_value ?? ""}
+              value={form.current_value || ""}
               onChange={(e) =>
                 setForm({ ...form, current_value: Number(e.target.value) })
               }

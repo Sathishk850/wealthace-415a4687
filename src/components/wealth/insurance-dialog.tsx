@@ -138,7 +138,7 @@ export function InsuranceDialog({ open, onOpenChange, existing }: Props) {
           <Field label="Coverage amount (₹) *">
             <Input
               type="number" min={0} step="0.01"
-              value={form.coverage_amount ?? ""}
+              value={form.coverage_amount || ""}
               onChange={(e) => setForm({ ...form, coverage_amount: Number(e.target.value) })}
             />
           </Field>

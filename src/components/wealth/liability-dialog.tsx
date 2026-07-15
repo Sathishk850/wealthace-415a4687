@@ -145,7 +145,7 @@ export function LiabilityDialog({ open, onOpenChange, existing }: Props) {
               type="number"
               min={0}
               step="0.01"
-              value={form.outstanding ?? ""}
+              value={form.outstanding || ""}
               onChange={(e) =>
                 setForm({ ...form, outstanding: Number(e.target.value) })
               }
