@@ -351,21 +351,21 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
           <Field label="Quantity *">
             <Input
               type="number" min={0} step="0.0001"
-              value={form.quantity ?? ""}
+              value={form.quantity || ""}
               onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
             />
           </Field>
           <Field label="Avg buy price (₹) *">
             <Input
               type="number" min={0} step="0.01"
-              value={form.avg_price ?? ""}
+              value={form.avg_price || ""}
               onChange={(e) => setForm({ ...form, avg_price: Number(e.target.value) })}
             />
           </Field>
           <Field label="Current price (₹) *">
             <Input
               type="number" min={0} step="0.01"
-              value={form.current_price ?? ""}
+              value={form.current_price || ""}
               onChange={(e) => setForm({ ...form, current_price: Number(e.target.value) })}
             />
           </Field>

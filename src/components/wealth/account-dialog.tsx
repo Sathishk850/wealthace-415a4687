@@ -120,7 +120,7 @@ export function AccountDialog({ open, onOpenChange, existing }: Props) {
           <Field label="Balance (₹) *">
             <Input
               type="number" step="0.01"
-              value={form.balance ?? ""}
+              value={form.balance || ""}
               onChange={(e) => setForm({ ...form, balance: Number(e.target.value) })}
             />
           </Field>
