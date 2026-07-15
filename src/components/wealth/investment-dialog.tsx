@@ -126,7 +126,7 @@ function SubCategoryCombobox({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -140,14 +140,17 @@ function SubCategoryCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] max-h-[min(60vh,var(--radix-popover-content-available-height))] p-0"
+        align="start"
+      >
         <Command>
           <CommandInput
             placeholder="Search sub-category…"
             value={search}
             onValueChange={setSearch}
           />
-          <CommandList className="max-h-72 overflow-y-auto">
+          <CommandList className="max-h-[calc(min(60vh,var(--radix-popover-content-available-height))-3rem)] overflow-y-auto">
             {search && filteredGroups.length === 0 && !canAddCustom && (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 No results.
