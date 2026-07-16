@@ -417,17 +417,15 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
                   </Select>
                 </Field>
                 <Field label="Start date">
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={form.sip_start_date ?? ""}
-                    onChange={(e) => setForm({ ...form, sip_start_date: e.target.value || null })}
+                    onChange={(v) => setForm({ ...form, sip_start_date: v || null })}
                   />
                 </Field>
                 <Field label="Next debit date">
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={form.sip_next_date ?? ""}
-                    onChange={(e) => setForm({ ...form, sip_next_date: e.target.value || null })}
+                    onChange={(v) => setForm({ ...form, sip_next_date: v || null })}
                   />
                 </Field>
                 <Field label="SIP active" className="sm:col-span-2">
