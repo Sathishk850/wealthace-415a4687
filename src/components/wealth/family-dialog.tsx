@@ -101,10 +101,9 @@ export function FamilyDialog({ open, onOpenChange, existing }: Props) {
             </Select>
           </Field>
           <Field label="Date of birth">
-            <Input
-              type="date"
+            <DatePicker
               value={form.date_of_birth ?? ""}
-              onChange={(e) => setForm({ ...form, date_of_birth: e.target.value || null })}
+              onChange={(v) => setForm({ ...form, date_of_birth: v || null })}
             />
           </Field>
           <Field label="Gender">
