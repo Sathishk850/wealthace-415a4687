@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export type ChartRangeKey = "1D" | "1M" | "3M" | "6M" | "1Y" | "CUSTOM";
 
