@@ -209,28 +209,21 @@ export function LiabilityDialog({ open, onOpenChange, existing }: Props) {
             />
           </Field>
           <Field label="Start date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.start_date ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, start_date: e.target.value || null })
-              }
+              onChange={(v) => setForm({ ...form, start_date: v || null })}
             />
           </Field>
           <Field label="Next due date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.due_date ?? ""}
-              onChange={(e) => setForm({ ...form, due_date: e.target.value || null })}
+              onChange={(v) => setForm({ ...form, due_date: v || null })}
             />
           </Field>
           <Field label="End date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.end_date ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, end_date: e.target.value || null })
-              }
+              onChange={(v) => setForm({ ...form, end_date: v || null })}
             />
           </Field>
           <Field label="Status">
