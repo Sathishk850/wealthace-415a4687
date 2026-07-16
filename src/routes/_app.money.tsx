@@ -1067,7 +1067,7 @@ function TransactionDialog({
             </div>
             <div>
               <Label htmlFor="date">Date</Label>
-              <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker id="date" value={date} onChange={(v) => setDate(v)} />
             </div>
           </div>
 
