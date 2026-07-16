@@ -6,6 +6,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -100,10 +101,9 @@ export function FamilyDialog({ open, onOpenChange, existing }: Props) {
             </Select>
           </Field>
           <Field label="Date of birth">
-            <Input
-              type="date"
+            <DatePicker
               value={form.date_of_birth ?? ""}
-              onChange={(e) => setForm({ ...form, date_of_birth: e.target.value || null })}
+              onChange={(v) => setForm({ ...form, date_of_birth: v || null })}
             />
           </Field>
           <Field label="Gender">

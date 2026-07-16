@@ -59,6 +59,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -1066,7 +1067,7 @@ function TransactionDialog({
             </div>
             <div>
               <Label htmlFor="date">Date</Label>
-              <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker id="date" value={date} onChange={(v) => setDate(v)} />
             </div>
           </div>
 

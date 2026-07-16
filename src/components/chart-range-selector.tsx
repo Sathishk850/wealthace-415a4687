@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export type ChartRangeKey = "1D" | "1M" | "3M" | "6M" | "1Y" | "CUSTOM";
 
@@ -191,20 +192,16 @@ export function ChartRangeSelector({
                 <div className="flex flex-col gap-2">
                   <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
                     Start date
-                    <input
-                      type="date"
+                    <DatePicker
                       value={startStr}
-                      onChange={(e) => setStartStr(e.target.value)}
-                      className="rounded-md border border-border bg-surface-2 px-2 py-1.5 text-xs text-foreground outline-none [color-scheme:dark]"
+                      onChange={(v) => setStartStr(v)}
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
                     End date
-                    <input
-                      type="date"
+                    <DatePicker
                       value={endStr}
-                      onChange={(e) => setEndStr(e.target.value)}
-                      className="rounded-md border border-border bg-surface-2 px-2 py-1.5 text-xs text-foreground outline-none [color-scheme:dark]"
+                      onChange={(v) => setEndStr(v)}
                     />
                   </label>
                 </div>

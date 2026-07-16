@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -167,24 +168,21 @@ export function InsuranceDialog({ open, onOpenChange, existing }: Props) {
             </Select>
           </Field>
           <Field label="Start date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.start_date ?? ""}
-              onChange={(e) => setForm({ ...form, start_date: e.target.value || null })}
+              onChange={(v) => setForm({ ...form, start_date: v || null })}
             />
           </Field>
           <Field label="Renewal date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.renewal_date ?? ""}
-              onChange={(e) => setForm({ ...form, renewal_date: e.target.value || null })}
+              onChange={(v) => setForm({ ...form, renewal_date: v || null })}
             />
           </Field>
           <Field label="End date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.end_date ?? ""}
-              onChange={(e) => setForm({ ...form, end_date: e.target.value || null })}
+              onChange={(v) => setForm({ ...form, end_date: v || null })}
             />
           </Field>
           <Field label="Status">

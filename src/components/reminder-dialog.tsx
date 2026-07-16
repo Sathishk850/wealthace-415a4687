@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ClearButton } from "@/components/clear-button";
@@ -132,7 +133,7 @@ export function ReminderDialog({
             </div>
             <div className="grid gap-1.5">
               <Label className="text-xs text-[var(--text-muted)]">Due Date</Label>
-              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <DatePicker value={dueDate} onChange={(v) => setDueDate(v)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

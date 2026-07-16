@@ -37,6 +37,7 @@ import { TextTabs } from "@/components/text-tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectTrigger,
@@ -680,11 +681,11 @@ function ReportsView() {
           </div>
           <div className="flex items-center gap-1">
             <span className="text-[11px] text-[var(--text-muted)]">From</span>
-            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-8 w-[140px] bg-[var(--bg-primary)]/40 text-xs" />
+            <DatePicker value={fromDate} onChange={(v) => setFromDate(v)} className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs" />
           </div>
           <div className="flex items-center gap-1">
             <span className="text-[11px] text-[var(--text-muted)]">To</span>
-            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-8 w-[140px] bg-[var(--bg-primary)]/40 text-xs" />
+            <DatePicker value={toDate} onChange={(v) => setToDate(v)} className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs" />
           </div>
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
             <SelectTrigger className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs"><SelectValue /></SelectTrigger>

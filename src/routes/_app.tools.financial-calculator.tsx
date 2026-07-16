@@ -23,6 +23,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -651,12 +652,12 @@ function XIRRCalc() {
           <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
             <div>
               <Label className="text-xs text-[var(--text-muted)]">Date</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={r.date}
-                onChange={(e) => update(i, "date", e.target.value)}
+                onChange={(v) => update(i, "date", v)}
                 className="bg-[var(--bg-primary)]/40"
               />
+
             </div>
             <div>
               <Label className="text-xs text-[var(--text-muted)]">Amount (₹)</Label>

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -341,10 +342,9 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             />
           </Field>
           <Field label="Purchase date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.purchase_date ?? ""}
-              onChange={(e) => setForm({ ...form, purchase_date: e.target.value || null })}
+              onChange={(v) => setForm({ ...form, purchase_date: v || null })}
             />
           </Field>
           <Field label="Quantity *">
@@ -418,17 +418,15 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
                   </Select>
                 </Field>
                 <Field label="Start date">
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={form.sip_start_date ?? ""}
-                    onChange={(e) => setForm({ ...form, sip_start_date: e.target.value || null })}
+                    onChange={(v) => setForm({ ...form, sip_start_date: v || null })}
                   />
                 </Field>
                 <Field label="Next debit date">
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={form.sip_next_date ?? ""}
-                    onChange={(e) => setForm({ ...form, sip_next_date: e.target.value || null })}
+                    onChange={(v) => setForm({ ...form, sip_next_date: v || null })}
                   />
                 </Field>
                 <Field label="SIP active" className="sm:col-span-2">

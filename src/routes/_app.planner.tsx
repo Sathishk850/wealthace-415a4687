@@ -64,6 +64,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -725,7 +726,7 @@ function GoalDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Target Date</Label>
-              <Input type="date" value={date ?? ""} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker value={date ?? ""} onChange={(v) => setDate(v)} />
             </div>
             <div className="grid gap-1.5">
               <Label>Monthly Contribution (₹)</Label>
