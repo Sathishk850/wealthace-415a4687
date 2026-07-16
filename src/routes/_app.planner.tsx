@@ -726,7 +726,7 @@ function GoalDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Target Date</Label>
-              <Input type="date" value={date ?? ""} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker value={date ?? ""} onChange={(v) => setDate(v)} />
             </div>
             <div className="grid gap-1.5">
               <Label>Monthly Contribution (₹)</Label>
