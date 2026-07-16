@@ -164,12 +164,9 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
             />
           </Field>
           <Field label="Purchase date">
-            <Input
-              type="date"
+            <DatePicker
               value={form.purchase_date ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, purchase_date: e.target.value || null })
-              }
+              onChange={(v) => setForm({ ...form, purchase_date: v || null })}
             />
           </Field>
           <Field label="Quantity">
