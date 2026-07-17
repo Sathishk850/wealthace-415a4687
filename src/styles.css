@@ -479,3 +479,28 @@ html:not(.privacy-on) body {
     background-position: 0 0 !important;
   }
 }
+
+/* Data tables inside horizontal scroll containers must not wrap or collide.
+   Applies globally to any <table> whose direct parent is .overflow-x-auto,
+   which is the pattern used by every Wealth / Money / Reports data table. */
+.overflow-x-auto > table {
+  min-width: max-content;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.overflow-x-auto > table th,
+.overflow-x-auto > table td {
+  white-space: nowrap;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  vertical-align: middle;
+}
+.overflow-x-auto > table th:first-child,
+.overflow-x-auto > table td:first-child {
+  padding-left: 0.5rem;
+}
+.overflow-x-auto > table th:last-child,
+.overflow-x-auto > table td:last-child {
+  padding-right: 0.5rem;
+}
+
