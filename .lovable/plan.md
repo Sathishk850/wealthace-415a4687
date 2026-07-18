@@ -1,108 +1,119 @@
+# Market Data Service — Implementation Plan
 
-# FinVista Report Engine — Premium Redesign
+## Defaults I'll use (tell me if you want otherwise)
 
-## Goal
-Ship a single reusable "Report Engine" that renders every export (PDF, Excel print layout, browser print) as a premium banking-style FinVista statement matching the reference image. CSV stays raw.
-
-## Scope
-- Presentation only. Do NOT touch auth, APIs, DB, business logic, calculations, filters, or which fields get exported.
-- Applies to all current PDF/XLSX exporters:
-  - `src/lib/report-export.ts` (scheduled Report Center exports)
-  - `src/lib/wealth-io.ts` (per-view exports: assets, liabilities, insurance, investments, accounts, family, financial calculator, tools)
-- Reuse and extend the existing FinVista Premium Light Theme in `src/lib/report-theme.ts`.
+- **Stocks provider**: Yahoo Finance active by default (no API key needed). Twelve Data provider file scaffolded — set `TWELVE_DATA_API_KEY` secret later and it becomes primary automatically.
+- **Mutual Funds**: MFAPI (keyless).
+- **Refresh model**: Client-side per open tab (matches your spec — pause on background, resume on focus, 5/10/15 min interval, immediate refresh on Dashboard/Wealth/Investments open).
+- **CORS**: Provider calls go through a TanStack server function (`getMarketQuotes`) — never from the browser to Yahoo/Twelve/MFAPI directly. This is what makes it "one centralized service".
 
 ## Deliverables
 
-### 1. New master engine — `src/lib/report-engine.ts`
-Single source of truth. Public surface:
+### 1. Database (one migration)
 
-```ts
-type ReportKPI = { label: string; value: string; sub?: string; accent?: boolean };
-type ReportChart =
-  | { type: "donut" | "pie"; title: string; slices: { label: string; value: number; color?: string }[] }
-  | { type: "line" | "bar"; title: string; xLabels: string[]; series: { name: string; data: number[]; color?: string }[]; yLabel?: string };
-type ReportTable = {
-  title?: string;
-  columns: { key: string; label: string; align?: "left" | "right" | "center"; format?: "currency" | "date" | "text" | "number" }[];
-  rows: (string | number)[][];
-  totals?: (string | number)[];
-};
-type ReportDoc = {
-  name: string;                 // e.g. "Expense Report"
-  reportId: string;             // e.g. "EXP000125" (auto if missing)
-  period?: { start?: string; end?: string; label?: string };
-  currency?: { code: string; symbol: string };
-  filters?: { label: string; value: string }[];
-  kpis?: ReportKPI[];
-  charts?: ReportChart[];
-  tables: ReportTable[];
-  notes?: string[];
-  sensitive?: boolean;          // adds "Confidential" to footer
-  orientation?: "portrait" | "landscape" | "auto";
-  category?: "expense" | "income" | "investment" | "networth" | "tax" | "transactions" | "assets" | "liabilities" | "insurance" | "budget" | "goal" | "generic";
-};
+Add to `wealth_investments` (all nullable, no data touched):
+- `identifier_type` text
+- `identifier` text
+- `exchange` text
+- `price_source` text
+- `price_updated_at` timestamptz
+- `previous_close` numeric
 
-type ExportOptions = {
-  format: "pdf" | "xlsx" | "csv";
-  paper?: "a4" | "letter";
-  orientation?: "auto" | "portrait" | "landscape";
-  includeSummary?: boolean;
-  includeCharts?: boolean;
-  includeNotes?: boolean;
-  includeFilters?: boolean;
-  filename?: string;
-};
+New table `market_price_cache`:
+- `id`, `identifier_type`, `identifier`, `latest_price`, `previous_close`, `currency`, `source`, `fetched_at`, `expires_at`
+- Unique index on (`identifier_type`, `identifier`)
+- RLS: `SELECT` for `authenticated` (shared price data); writes only via service role
+- GRANTs per project rules
 
-export async function exportReport(doc: ReportDoc, opts: ExportOptions): Promise<void>;
-export function buildFilename(doc: ReportDoc, opts: ExportOptions): string;
-export function autoOrientation(category, override): "portrait" | "landscape";
+Cache is user-agnostic (prices are public); server function uses service role to upsert.
+
+### 2. Provider layer — `src/lib/market/`
+
+```
+market/
+├── types.ts              # Provider, Quote, SearchResult interfaces
+├── providers/
+│   ├── yahoo.ts          # Stocks (primary until Twelve Data key added)
+│   ├── twelvedata.ts     # Activates when TWELVE_DATA_API_KEY set
+│   └── mfapi.ts          # Mutual funds (search + NAV)
+├── calendar.ts           # Market calendar (NSE/BSE/US) — extensible
+├── registry.ts           # Provider selection (primary + fallback chain)
+└── service.ts            # Public API: getQuotes(), search(), refreshAll()
 ```
 
-Internally handles:
-- **Header** (every page): FV logo mark + `FinVista / Direct Your Wealth` left, centered wordmark, right-side `Generated On` + `Report ID`, thin divider.
-- **Report info block**: title, period, currency, filters chips.
-- **KPI cards**: white cards with soft shadow, mint icon badge, label + big value + optional sub.
-- **Charts**: donut/pie/line/bar drawn directly on the jsPDF canvas using the FinVista chart palette (`REPORT_THEME.chartPalette`). No random colors, no page splits — measure height and page-break before drawing.
-- **Tables** via `jspdf-autotable`: brand-colored header, white text, zebra rows, right-aligned currency, `didParseCell` for currency/date formatting, `showHead: 'everyPage'`, `rowPageBreak: 'avoid'`, totals row styled with mint-tint background.
-- **Notes** block (bulleted with mint check icons) on relevant pages.
-- **Disclaimer + Closing** (`FINVISTA / DIRECT YOUR WEALTH`, centered) ONLY on the final page.
-- **Footer** every page: `Page X of Y` left, `© <year> FinVista` (or `• Confidential` when `sensitive`) right.
-- **Smart layout**: measure content, expand vertical rhythm when it fits one page, otherwise paginate cleanly.
-- **Auto orientation** by category (expense/income/budget/goal/insurance/financial score → portrait; transactions/investments/portfolio/assets/liabilities/net worth history/tax → landscape). Manual override wins.
-- **Metadata**: `doc.setProperties({ title, author: "FinVista", creator: "FinVista", subject: "Personal Finance Report" })`.
-- **Filename**: `FinVista_<Name>_<ISO>[_to_<ISO>].<ext>`, spaces → underscores.
-- **XLSX print layout**: reuse SheetJS with FinVista header row styling, page setup (orientation, fit-to-width), print title rows so table headers repeat.
-- **CSV**: raw only, no styling.
+New provider = one new file in `providers/`, register in `registry.ts`. No module changes.
 
-### 2. New export dialog — `src/components/reports/export-dialog.tsx`
-Reusable modal used by every export entry point. Fields:
-- Format (PDF / Excel / CSV)
-- Paper Size (A4 default, Letter)
-- Orientation (Auto / Portrait / Landscape) — auto shows the resolved orientation as a hint
-- Toggles: Summary Cards, Charts (PDF-only, disabled otherwise), Notes, Applied Filters
-- Editable filename (pre-filled from `buildFilename`)
-- Remembers last choices per-user via existing `user-payment-prefs`-style pattern → new `src/lib/user-report-prefs-api.ts` (localStorage first, sync later — but out of scope: use `localStorage` keyed by user id for now, matches existing patterns).
+### 3. Server functions — `src/lib/market.functions.ts`
 
-Exposes: `openExportDialog(doc): Promise<ExportOptions | null>` helper or `<ExportReportDialog doc={doc} onConfirm={...} />`.
+- `searchInstrument({ query, kind })` — proxies to Yahoo search or MFAPI search
+- `getMarketQuotes({ items })` — batch fetch; reads cache first, refreshes stale entries, upserts cache, returns quotes
+- `refreshUserHoldings()` — refresh all active holdings for current user (excludes sold/archived/deleted flag if present, else all)
 
-### 3. Rewire existing callers
-- `src/lib/report-export.ts` → adapt `GeneratedReport.snapshot` sections into `ReportDoc` (map summary → kpis, rows → table). Delegate PDF+XLSX to the engine. Keep `exportReportCSV` raw (already fine).
-- `src/lib/wealth-io.ts` → same adaptation for wealth exports; keep CSV/JSON paths untouched, route PDF+XLSX through engine.
-- `src/routes/_app.reports.$id.tsx`, `_app.reports.index.tsx`, and each wealth view button → open the new export dialog instead of triggering an immediate download.
+All authenticated via `requireSupabaseAuth`. Server-only imports (fetch to providers, `supabaseAdmin` for cache upserts) stay inside handlers.
 
-### 4. Extend `src/lib/report-theme.ts`
-Add `drawKpiCards`, `drawDonut`, `drawPieBar` helpers, `drawClosing`, updated `drawReportHeader` to match the reference (left logo mark + wordmark, centered wordmark, right meta), and `drawReportFooter` variant with confidential support. Keep colors as-is (already brand-correct).
+### 4. Client hooks — `src/lib/market/use-market-data.ts`
 
-## Non-Goals
-- No changes to which reports exist, what data they compute, filters, or scheduling.
-- No new "Report ID" persistence — generate deterministically from report key + generated_at (e.g. `EXP` + zero-padded hash), stable per snapshot.
-- No server-side PDF rendering — everything remains client-side jsPDF/SheetJS.
-- No Excel styling beyond what SheetJS community build supports (header fill + bold + print setup + repeat rows).
+- `useMarketQuotes(items)` — TanStack Query, staleTime keyed to market status (5 min open / until NAV update for MFs / until market open for closed stocks)
+- `useMarketStatus(exchange)` — 🟢/🔴 + last updated
+- `useAutoRefresh(interval)` — visibility API pause/resume, focus refresh
+- Never overwrites cached quote with 0/NaN/null
+
+### 5. Investment identification UI
+
+Non-invasive additions to `investment-dialog.tsx`:
+- New "Search instrument" combobox above the existing Name field
+- On select: auto-fills `name`, `identifier`, `identifier_type`, `exchange`, `symbol`
+- Purely additive — existing manual entry still works for offline/custom holdings
+
+New `link-investment-button.tsx` shown on rows/cards where `identifier` is null in `investments-view.tsx` — opens the same search dialog scoped to that holding. Plus one "Link All" action in the view header that walks unlinked holdings.
+
+### 6. Portfolio value derivation
+
+New helper `src/lib/market/derive.ts` — takes investment + latest cache row, returns `{ current_price, current_value, day_change, unrealized_pl, return_pct }`. `investments-view.tsx`, dashboard net-worth panels, and reports read via this helper. Existing DB values remain the fallback when no identifier is linked.
+
+**No writes to `wealth_investments.current_price` from refresh** — spec says cache-only. Values are computed at render time from holding + cached price.
+
+### 7. Settings — Market Data panel
+
+Section in `_app.settings.tsx`:
+- Provider status (Stocks primary/fallback, MF)
+- Refresh interval selector (5/10/15 min)
+- Auto-refresh toggle
+- Last successful refresh timestamp
+- "Refresh Now" button
+
+Preferences stored in existing `user_preferences` JSON store.
+
+### 8. Market status badge
+
+Small `<MarketStatus />` component used on Dashboard/Wealth/Investments headers and Reports meta. Uses `calendar.ts` — no hardcoded timings inline.
+
+### 9. Reports
+
+`report-engine.ts` gets a `marketAsOf` field on `ReportDoc`. When present, renders "Market Price As Of DD/MM/YYYY HH:MM • Source" under the report header. Wealth/Investment reports populated from latest cache timestamp.
+
+## Technical notes
+
+- Yahoo endpoints: `query1.finance.yahoo.com/v8/finance/chart/{symbol}` (quote), `query2.../v1/finance/search` (search). No key.
+- Twelve Data: `api.twelvedata.com/quote?symbol=X&apikey=...`. Scaffolded, inactive until secret exists.
+- MFAPI: `api.mfapi.in/mf/search?q=X` and `/mf/{scheme_code}` — returns latest NAV.
+- All provider fetches server-side (CORS + key protection).
+- Batching: server function accepts up to 50 identifiers per call, dedupes.
+- Cache TTL: stocks 5 min during market hours, until next open when closed. MFs until next NAV publish (~7 PM IST).
+
+## Non-goals (per your "Do NOT modify" list)
+
+- No changes to existing CRUD, calculations, RLS, theme, auth.
+- No overwriting of purchase history, avg_price, quantity, or invested totals.
+- No changes to how existing reports compute totals — they'll just prefer cached market price when a linked identifier exists.
 
 ## Verification
-- `tsgo` clean build.
-- Manually export one report of each category (expense list, transactions, net worth, wealth view) via Playwright, screenshot each page, and visually confirm: header/footer on every page, KPI cards render, chart colors match palette, table zebra + right-aligned currency, closing block only on last page, filename matches convention.
 
-## Risks / Notes
-- jsPDF chart drawing is manual; keep charts small and simple (donut with legend, single-series line, grouped bar) to stay reliable across page sizes.
-- Reference image shows a landscape "Expense Report" — per spec rules, expense is portrait; we honor the spec, not the mock, but keep the visual language identical.
+- `tsgo` clean.
+- Migration runs.
+- Add one Indian stock via search → identifier stored, quote shows.
+- Add one MF via search → scheme code stored, NAV shows.
+- Kill network → cached values persist, "Using cached market data" banner appears.
+- Toggle refresh interval → next refresh honors it.
+
+**Ready to proceed with these defaults?** If you want Twelve Data live at ship, say so and I'll request the key first. Otherwise I'll build against Yahoo + MFAPI and Twelve Data auto-activates when you drop in the key later.

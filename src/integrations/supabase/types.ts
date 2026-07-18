@@ -115,6 +115,48 @@ export type Database = {
           },
         ]
       }
+      market_price_cache: {
+        Row: {
+          created_at: string
+          currency: string | null
+          expires_at: string | null
+          fetched_at: string
+          id: string
+          identifier: string
+          identifier_type: string
+          latest_price: number | null
+          previous_close: number | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          expires_at?: string | null
+          fetched_at?: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          latest_price?: number | null
+          previous_close?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          expires_at?: string | null
+          fetched_at?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          latest_price?: number | null
+          previous_close?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       money_budgets: {
         Row: {
           amount_limit: number
@@ -1236,7 +1278,10 @@ export type Database = {
           created_at: string
           current_price: number
           current_value: number | null
+          exchange: string | null
           id: string
+          identifier: string | null
+          identifier_type: string | null
           invested_value: number | null
           is_sip: boolean
           last_updated: string
@@ -1245,6 +1290,9 @@ export type Database = {
           owner_member_id: string | null
           payment_account_id: string | null
           payment_mode: string | null
+          previous_close: number | null
+          price_source: string | null
+          price_updated_at: string | null
           purchase_date: string | null
           quantity: number
           sip_active: boolean | null
@@ -1265,7 +1313,10 @@ export type Database = {
           created_at?: string
           current_price?: number
           current_value?: number | null
+          exchange?: string | null
           id?: string
+          identifier?: string | null
+          identifier_type?: string | null
           invested_value?: number | null
           is_sip?: boolean
           last_updated?: string
@@ -1274,6 +1325,9 @@ export type Database = {
           owner_member_id?: string | null
           payment_account_id?: string | null
           payment_mode?: string | null
+          previous_close?: number | null
+          price_source?: string | null
+          price_updated_at?: string | null
           purchase_date?: string | null
           quantity?: number
           sip_active?: boolean | null
@@ -1294,7 +1348,10 @@ export type Database = {
           created_at?: string
           current_price?: number
           current_value?: number | null
+          exchange?: string | null
           id?: string
+          identifier?: string | null
+          identifier_type?: string | null
           invested_value?: number | null
           is_sip?: boolean
           last_updated?: string
@@ -1303,6 +1360,9 @@ export type Database = {
           owner_member_id?: string | null
           payment_account_id?: string | null
           payment_mode?: string | null
+          previous_close?: number | null
+          price_source?: string | null
+          price_updated_at?: string | null
           purchase_date?: string | null
           quantity?: number
           sip_active?: boolean | null

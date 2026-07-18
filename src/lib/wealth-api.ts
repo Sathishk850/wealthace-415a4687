@@ -494,6 +494,12 @@ export type Investment = {
   last_updated: string;
   payment_mode: string | null;
   payment_account_id: string | null;
+  identifier_type: string | null;
+  identifier: string | null;
+  exchange: string | null;
+  price_source: string | null;
+  price_updated_at: string | null;
+  previous_close: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -519,6 +525,9 @@ export type InvestmentInput = {
   last_updated?: string;
   payment_mode?: string | null;
   payment_account_id?: string | null;
+  identifier_type?: string | null;
+  identifier?: string | null;
+  exchange?: string | null;
 };
 
 export function useInvestments() {
@@ -568,6 +577,9 @@ function investmentPayload(i: InvestmentInput) {
     last_updated: i.last_updated || new Date().toISOString().slice(0, 10),
     payment_mode: i.payment_mode?.trim() || null,
     payment_account_id: i.payment_account_id || null,
+    identifier_type: i.identifier_type?.trim() || null,
+    identifier: i.identifier?.trim() || null,
+    exchange: i.exchange?.trim() || null,
   };
 }
 
