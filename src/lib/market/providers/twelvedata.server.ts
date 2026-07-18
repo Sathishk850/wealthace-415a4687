@@ -47,11 +47,11 @@ export async function twelveDataQuotes(items: QuoteRequestItem[]): Promise<Marke
     });
   };
   if (Array.isArray(raw)) {
-    for (const r of raw) if (r && typeof r === "object") process(r as Record<string, unknown>, null);
+    for (const r of raw) if (r && typeof r === "object") consume(r as Record<string, unknown>, null);
   } else if (raw && typeof raw === "object") {
     const obj = raw as Record<string, unknown>;
-    if (obj.symbol) process(obj, null);
-    else for (const [k, v] of Object.entries(obj)) if (v && typeof v === "object") process(v as Record<string, unknown>, k);
+    if (obj.symbol) consume(obj, null);
+    else for (const [k, v] of Object.entries(obj)) if (v && typeof v === "object") consume(v as Record<string, unknown>, k);
   }
   return out;
 }
