@@ -577,6 +577,9 @@ function investmentPayload(i: InvestmentInput) {
     last_updated: i.last_updated || new Date().toISOString().slice(0, 10),
     payment_mode: i.payment_mode?.trim() || null,
     payment_account_id: i.payment_account_id || null,
+    identifier_type: i.identifier_type?.trim() || null,
+    identifier: i.identifier?.trim() || null,
+    exchange: i.exchange?.trim() || null,
   };
 }
 
