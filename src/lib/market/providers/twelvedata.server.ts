@@ -27,7 +27,7 @@ export async function twelveDataQuotes(items: QuoteRequestItem[]): Promise<Marke
   const raw = (await res.json()) as unknown;
   const now = new Date().toISOString();
   const out: MarketQuote[] = [];
-  const process = (row: Record<string, unknown>, key: string | null) => {
+  const consume = (row: Record<string, unknown>, key: string | null) => {
     const sym = String(row.symbol ?? key ?? "");
     const req = symbolMap.get(sym);
     if (!req) return;
