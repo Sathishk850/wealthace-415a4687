@@ -335,6 +335,14 @@ export function InvestmentsView({
         existing={editing}
       />
 
+      <LinkInvestmentDialog
+        open={!!linkQueue}
+        onOpenChange={(v) => {
+          if (!v) setLinkQueue(null);
+        }}
+        queue={linkQueue ?? []}
+      />
+
       <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
