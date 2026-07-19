@@ -344,6 +344,47 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {searchKind ? (
+            <div className="sm:col-span-2">
+              <Label className="mb-1.5 block text-xs">
+                {searchKind === "mf_in" ? "Find Mutual Fund" : "Find Stock (NSE / BSE)"}
+              </Label>
+              {isLinked ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-xs">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-mint" />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-foreground">{form.name}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {form.exchange ? `${form.exchange} · ` : ""}
+                        {form.identifier}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUnlink}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] text-foreground hover:bg-surface-2"
+                  >
+                    <Link2Off className="h-3 w-3" /> Unlink
+                  </button>
+                </div>
+              ) : (
+                <InstrumentSearch
+                  kind={searchKind}
+                  onSelect={handleLink}
+                  placeholder={
+                    searchKind === "mf_in"
+                      ? "Search scheme name, AMC, or plan…"
+                      : "Search company name or ticker…"
+                  }
+                />
+              )}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Linking enables live prices. You can still edit the name manually below.
+              </p>
+            </div>
+          ) : null}
           <Field label="Name *" className="sm:col-span-2">
             <Input
               value={form.name}
