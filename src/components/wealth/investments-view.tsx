@@ -602,6 +602,8 @@ function Holdings({
   const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
 
+  const unlinked = useMemo(() => rows.filter(isLinkable), [rows]);
+
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-card p-4">
