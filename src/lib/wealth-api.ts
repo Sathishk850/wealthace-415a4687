@@ -623,7 +623,14 @@ export function useLinkInvestment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: LinkInvestmentInput) => {
-      const patch: Record<string, unknown> = {
+      const patch: {
+        identifier_type: string;
+        identifier: string;
+        exchange: string | null;
+        last_updated: string;
+        name?: string;
+        symbol?: string;
+      } = {
         identifier_type: input.identifier_type,
         identifier: input.identifier,
         exchange: input.exchange?.trim() || null,
