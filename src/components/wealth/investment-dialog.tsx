@@ -26,7 +26,9 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown, Link2, Link2Off } from "lucide-react";
+import { InstrumentSearch } from "@/components/market/instrument-search";
+import type { IdentifierType, SearchResult } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
@@ -250,7 +252,16 @@ const empty: InvestmentInput = {
   status: "active",
   payment_mode: null,
   payment_account_id: null,
+  identifier_type: null,
+  identifier: null,
+  exchange: null,
 };
+
+function searchKindFor(category: string): IdentifierType | null {
+  if (category === "Stocks") return "stock_in";
+  if (category === "Mutual Funds") return "mf_in";
+  return null;
+}
 
 export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
   const [form, setForm] = useState<InvestmentInput>(empty);
@@ -280,10 +291,33 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             status: existing.status,
             payment_mode: existing.payment_mode,
             payment_account_id: existing.payment_account_id,
+            identifier_type: existing.identifier_type,
+            identifier: existing.identifier,
+            exchange: existing.exchange,
           }
         : empty,
     );
   }, [open, existing]);
+
+  const searchKind = searchKindFor(form.category);
+  const isLinked = !!(form.identifier && form.identifier_type);
+
+  const handleLink = (r: SearchResult) => {
+    setForm((f) => ({
+      ...f,
+      name: r.name,
+      symbol: r.identifier_type === "stock_in" ? r.identifier : f.symbol,
+      identifier_type: r.identifier_type,
+      identifier: r.identifier,
+      exchange: r.exchange ?? null,
+    }));
+    toast.success("Instrument linked");
+  };
+
+  const handleUnlink = () => {
+    setForm((f) => ({ ...f, identifier_type: null, identifier: null, exchange: null }));
+  };
+
 
   const submit = async () => {
     if (!form.name.trim()) return toast.error("Name is required");
@@ -310,6 +344,47 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {searchKind ? (
+            <div className="sm:col-span-2">
+              <Label className="mb-1.5 block text-xs">
+                {searchKind === "mf_in" ? "Find Mutual Fund" : "Find Stock (NSE / BSE)"}
+              </Label>
+              {isLinked ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-xs">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-mint" />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-foreground">{form.name}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {form.exchange ? `${form.exchange} · ` : ""}
+                        {form.identifier}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUnlink}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] text-foreground hover:bg-surface-2"
+                  >
+                    <Link2Off className="h-3 w-3" /> Unlink
+                  </button>
+                </div>
+              ) : (
+                <InstrumentSearch
+                  kind={searchKind}
+                  onSelect={handleLink}
+                  placeholder={
+                    searchKind === "mf_in"
+                      ? "Search scheme name, AMC, or plan…"
+                      : "Search company name or ticker…"
+                  }
+                />
+              )}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Linking enables live prices. You can still edit the name manually below.
+              </p>
+            </div>
+          ) : null}
           <Field label="Name *" className="sm:col-span-2">
             <Input
               value={form.name}
