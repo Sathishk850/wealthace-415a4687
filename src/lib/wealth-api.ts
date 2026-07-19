@@ -610,6 +610,48 @@ export function useUpsertInvestment() {
   });
 }
 
+export type LinkInvestmentInput = {
+  id: string;
+  identifier_type: string;
+  identifier: string;
+  exchange?: string | null;
+  name?: string | null;
+  symbol?: string | null;
+};
+
+export function useLinkInvestment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: LinkInvestmentInput) => {
+      const patch: {
+        identifier_type: string;
+        identifier: string;
+        exchange: string | null;
+        last_updated: string;
+        name?: string;
+        symbol?: string;
+      } = {
+        identifier_type: input.identifier_type,
+        identifier: input.identifier,
+        exchange: input.exchange?.trim() || null,
+        last_updated: new Date().toISOString().slice(0, 10),
+      };
+      if (input.name && input.name.trim()) patch.name = input.name.trim();
+      if (input.symbol && input.symbol.trim()) patch.symbol = input.symbol.trim();
+      const { error } = await supabase
+        .from("wealth_investments")
+        .update(patch)
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Investment linked");
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to link investment"),
+  });
+}
+
 export function useDeleteInvestment() {
   const qc = useQueryClient();
   return useMutation({

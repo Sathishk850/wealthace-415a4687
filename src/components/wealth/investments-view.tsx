@@ -28,6 +28,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  Link2,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -52,6 +53,7 @@ import {
 import { TextTabs } from "@/components/text-tabs";
 import { InvestmentDialog } from "@/components/wealth/investment-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
+import { LinkInvestmentDialog, isLinkable } from "@/components/wealth/link-investment-dialog";
 import {
   type Investment,
   type InvestmentInput,
@@ -86,6 +88,7 @@ export function InvestmentsView({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Investment | null>(null);
   const [confirm, setConfirm] = useState<Investment | null>(null);
+  const [linkQueue, setLinkQueue] = useState<Investment[] | null>(null);
 
   if (registerAdd) {
     registerAdd(() => {
@@ -295,6 +298,8 @@ export function InvestmentsView({
               setDialogOpen(true);
             }}
             onDelete={(r) => setConfirm(r)}
+            onLink={(r) => setLinkQueue([r])}
+            onLinkAll={(list) => setLinkQueue(list)}
           />
         )}
         {sub === "Portfolio" && (
@@ -328,6 +333,14 @@ export function InvestmentsView({
           if (!v) setEditing(null);
         }}
         existing={editing}
+      />
+
+      <LinkInvestmentDialog
+        open={!!linkQueue}
+        onOpenChange={(v) => {
+          if (!v) setLinkQueue(null);
+        }}
+        queue={linkQueue ?? []}
       />
 
       <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
@@ -550,6 +563,8 @@ function Holdings({
   onAdd,
   onEdit,
   onDelete,
+  onLink,
+  onLinkAll,
 }: {
   rows: HoldRow[];
   isLoading: boolean;
@@ -557,6 +572,8 @@ function Holdings({
   onAdd: () => void;
   onEdit: (r: Investment) => void;
   onDelete: (r: Investment) => void;
+  onLink: (r: Investment) => void;
+  onLinkAll: (list: Investment[]) => void;
 }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
@@ -593,6 +610,8 @@ function Holdings({
   const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
 
+  const unlinked = useMemo(() => rows.filter(isLinkable), [rows]);
+
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-card p-4">
@@ -626,8 +645,20 @@ function Holdings({
               { value: "ret_desc", label: "Returns %" },
             ]}
           />
+          {unlinked.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => onLinkAll(unlinked)}
+              className="inline-flex items-center gap-1 rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1.5 text-xs font-medium text-mint hover:bg-mint/20"
+              title="Link all unlinked investments to market instruments"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              Link All ({unlinked.length})
+            </button>
+          ) : null}
           {ioMenu}
         </div>
+
 
         {isLoading ? (
           <TableSkeleton />
@@ -668,7 +699,22 @@ function Holdings({
                               {h.name.slice(0, 1)}
                             </span>
                             <div className="min-w-0">
-                              <div className="truncate font-medium text-foreground">{h.name}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="truncate font-medium text-foreground">{h.name}</span>
+                                {isLinkable(h) ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onLink(h);
+                                    }}
+                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/20"
+                                    title="Link to a market instrument"
+                                  >
+                                    <Link2 className="h-3 w-3" /> Link
+                                  </button>
+                                ) : null}
+                              </div>
                               {(h.sub_category || h.symbol) && (
                                 <div className="text-[10px] text-muted-foreground">{h.sub_category || h.symbol}</div>
                               )}
