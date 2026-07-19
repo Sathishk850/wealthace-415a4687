@@ -691,7 +691,22 @@ function Holdings({
                               {h.name.slice(0, 1)}
                             </span>
                             <div className="min-w-0">
-                              <div className="truncate font-medium text-foreground">{h.name}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="truncate font-medium text-foreground">{h.name}</span>
+                                {isLinkable(h) ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onLink(h);
+                                    }}
+                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/20"
+                                    title="Link to a market instrument"
+                                  >
+                                    <Link2 className="h-3 w-3" /> Link
+                                  </button>
+                                ) : null}
+                              </div>
                               {(h.sub_category || h.symbol) && (
                                 <div className="text-[10px] text-muted-foreground">{h.sub_category || h.symbol}</div>
                               )}
