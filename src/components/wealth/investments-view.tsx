@@ -28,6 +28,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  Link2,
 } from "lucide-react";
 import {
   AlertDialog,
