@@ -637,8 +637,20 @@ function Holdings({
               { value: "ret_desc", label: "Returns %" },
             ]}
           />
+          {unlinked.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => onLinkAll(unlinked)}
+              className="inline-flex items-center gap-1 rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1.5 text-xs font-medium text-mint hover:bg-mint/20"
+              title="Link all unlinked investments to market instruments"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              Link All ({unlinked.length})
+            </button>
+          ) : null}
           {ioMenu}
         </div>
+
 
         {isLoading ? (
           <TableSkeleton />
