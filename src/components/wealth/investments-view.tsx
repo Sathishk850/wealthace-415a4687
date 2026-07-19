@@ -555,6 +555,8 @@ function Holdings({
   onAdd,
   onEdit,
   onDelete,
+  onLink,
+  onLinkAll,
 }: {
   rows: HoldRow[];
   isLoading: boolean;
@@ -562,6 +564,8 @@ function Holdings({
   onAdd: () => void;
   onEdit: (r: Investment) => void;
   onDelete: (r: Investment) => void;
+  onLink: (r: Investment) => void;
+  onLinkAll: (list: Investment[]) => void;
 }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
