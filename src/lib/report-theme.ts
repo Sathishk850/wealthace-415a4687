@@ -86,7 +86,9 @@ export function hexToRgb(hex: string): [number, number, number] {
  * PNG data URL so jsPDF can embed it via addImage. Resolves to null when
  * the network fetch fails so the header falls back to the text tile.
  */
-import brandMarkAsset from "@/assets/finvista-mark.png.asset.json";
+// Reports render on a white background regardless of app theme, so we
+// always use the light-theme (charcoal wordmark) master logo variant.
+import brandMarkAsset from "@/assets/finvista-logo-light.png.asset.json";
 
 let brandMarkPromise: Promise<string | null> | null = null;
 export function loadBrandMark(): Promise<string | null> {
