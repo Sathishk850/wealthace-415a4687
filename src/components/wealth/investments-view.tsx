@@ -298,6 +298,8 @@ export function InvestmentsView({
               setDialogOpen(true);
             }}
             onDelete={(r) => setConfirm(r)}
+            onLink={(r) => setLinkQueue([r])}
+            onLinkAll={(list) => setLinkQueue(list)}
           />
         )}
         {sub === "Portfolio" && (
