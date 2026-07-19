@@ -26,7 +26,9 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown, Link2, Link2Off } from "lucide-react";
+import { InstrumentSearch } from "@/components/market/instrument-search";
+import type { IdentifierType, SearchResult } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 import { ClearButton, isDirty } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
