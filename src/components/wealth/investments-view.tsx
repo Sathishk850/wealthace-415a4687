@@ -88,6 +88,7 @@ export function InvestmentsView({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Investment | null>(null);
   const [confirm, setConfirm] = useState<Investment | null>(null);
+  const [linkQueue, setLinkQueue] = useState<Investment[] | null>(null);
 
   if (registerAdd) {
     registerAdd(() => {
