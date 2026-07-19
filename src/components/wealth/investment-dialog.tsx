@@ -252,7 +252,16 @@ const empty: InvestmentInput = {
   status: "active",
   payment_mode: null,
   payment_account_id: null,
+  identifier_type: null,
+  identifier: null,
+  exchange: null,
 };
+
+function searchKindFor(category: string): IdentifierType | null {
+  if (category === "Stocks") return "stock_in";
+  if (category === "Mutual Funds") return "mf_in";
+  return null;
+}
 
 export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
   const [form, setForm] = useState<InvestmentInput>(empty);
@@ -282,10 +291,33 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             status: existing.status,
             payment_mode: existing.payment_mode,
             payment_account_id: existing.payment_account_id,
+            identifier_type: existing.identifier_type,
+            identifier: existing.identifier,
+            exchange: existing.exchange,
           }
         : empty,
     );
   }, [open, existing]);
+
+  const searchKind = searchKindFor(form.category);
+  const isLinked = !!(form.identifier && form.identifier_type);
+
+  const handleLink = (r: SearchResult) => {
+    setForm((f) => ({
+      ...f,
+      name: r.name,
+      symbol: r.identifier_type === "stock_in" ? r.identifier : f.symbol,
+      identifier_type: r.identifier_type,
+      identifier: r.identifier,
+      exchange: r.exchange ?? null,
+    }));
+    toast.success("Instrument linked");
+  };
+
+  const handleUnlink = () => {
+    setForm((f) => ({ ...f, identifier_type: null, identifier: null, exchange: null }));
+  };
+
 
   const submit = async () => {
     if (!form.name.trim()) return toast.error("Name is required");
