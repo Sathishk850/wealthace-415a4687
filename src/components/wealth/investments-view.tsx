@@ -53,6 +53,7 @@ import {
 import { TextTabs } from "@/components/text-tabs";
 import { InvestmentDialog } from "@/components/wealth/investment-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
+import { LinkInvestmentDialog, isLinkable } from "@/components/wealth/link-investment-dialog";
 import {
   type Investment,
   type InvestmentInput,
