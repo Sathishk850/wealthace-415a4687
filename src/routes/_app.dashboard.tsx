@@ -420,10 +420,8 @@ function Dashboard() {
                     up={rateDelta >= 0}
                     icon={Percent}
                     accent={savingsAccent}
-                    series={[
-                      { i: 0, v: lastSavingsRate },
-                      { i: 1, v: savingsRate },
-                    ]}
+                    series={hasRateHistory ? [{ i: 0, v: lastSavingsRate }, { i: 1, v: savingsRate }] : []}
+                    muted={!hasRateHistory}
                     tip="Savings Rate = ((Net Income − Expenses) ÷ Net Income) × 100. Target 30%+ for financial security. 50%+ = FIRE track."
                   />
                   <SnapCard
@@ -434,6 +432,7 @@ function Dashboard() {
                     icon={Scale}
                     accent={debtAccent}
                     series={debtSeries.length ? debtSeries : [{ i: 0, v: debtRatio }, { i: 1, v: debtRatio }]}
+                    muted={!hasDebtHistory}
                     tip="Debt Ratio = (Total Liabilities ÷ Total Assets) × 100. Ideal: < 30%. Acceptable: 30–50%. High Risk: > 50%."
                   />
                 </>
