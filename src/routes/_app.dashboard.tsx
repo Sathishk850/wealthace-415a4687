@@ -386,6 +386,7 @@ function Dashboard() {
             <LiveSnap label="Liabilities" value={totals.liabilitiesTotal} snaps={snaps} field="liabilities_total" icon={Banknote} accent="#ff4d4d" goodIsDown />
             <LiveSnap label="Investments" value={totals.investmentsTotal} snaps={snaps} field="investments_total" icon={TrendingUp} accent="#00c896" />
             {(() => {
+              // Net Income = Gross - Taxes. Transactions represent net cashflow.
               const savingsRate = totals.income > 0 ? ((totals.income - totals.expense) / totals.income) * 100 : 0;
               const lastSavingsRate = totals.lastIncome > 0 ? ((totals.lastIncome - totals.lastExpense) / totals.lastIncome) * 100 : 0;
               const rateDelta = savingsRate - lastSavingsRate;
@@ -399,6 +400,16 @@ function Dashboard() {
               const hasDebtHistory = debtSeries.length >= 2;
               const lastDebt = hasDebtHistory ? debtSeries[debtSeries.length - 2].v : 0;
               const debtDelta = hasDebtHistory ? debtRatio - lastDebt : 0;
+              // Health-zone accents
+              const savingsAccent =
+                savingsRate > 50 ? "#06b6d4"       // FIRE-track (cyan)
+                : savingsRate >= 30 ? "#00c896"     // Healthy (green)
+                : savingsRate >= 20 ? "#d9b800"     // Average (yellow)
+                : "#ff4d4d";                        // Low (red)
+              const debtAccent =
+                debtRatio < 30 ? "#00c896"          // Ideal (green)
+                : debtRatio <= 50 ? "#d9b800"       // Acceptable (yellow)
+                : "#ff4d4d";                        // High Risk (red)
               return (
                 <>
                   <SnapCard
@@ -407,12 +418,12 @@ function Dashboard() {
                     delta={hasRateHistory ? `${rateDelta >= 0 ? "+" : ""}${rateDelta.toFixed(1)} pts vs last month` : "No history yet"}
                     up={rateDelta >= 0}
                     icon={Percent}
-                    accent="#3b82f6"
+                    accent={savingsAccent}
                     series={[
                       { i: 0, v: lastSavingsRate },
                       { i: 1, v: savingsRate },
                     ]}
-                    tip="Savings Rate = (Income − Expenses) ÷ Income × 100. Higher is better; aim for 20%+."
+                    tip="Savings Rate = ((Net Income − Expenses) ÷ Net Income) × 100. Target 30%+ for financial security. 50%+ = FIRE track."
                   />
                   <SnapCard
                     label="Debt Ratio"
@@ -420,9 +431,9 @@ function Dashboard() {
                     delta={hasDebtHistory ? `${debtDelta >= 0 ? "+" : ""}${debtDelta.toFixed(1)} pts vs last snapshot` : "No history yet"}
                     up={debtDelta <= 0}
                     icon={Scale}
-                    accent="#a855f7"
+                    accent={debtAccent}
                     series={debtSeries.length ? debtSeries : [{ i: 0, v: debtRatio }, { i: 1, v: debtRatio }]}
-                    tip="Debt Ratio = Total Liabilities ÷ Total Assets × 100. Lower is better; under 40% is healthy."
+                    tip="Debt Ratio = (Total Liabilities ÷ Total Assets) × 100. Ideal: < 30%. Acceptable: 30–50%. High Risk: > 50%."
                   />
                 </>
               );
