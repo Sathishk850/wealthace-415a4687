@@ -64,10 +64,10 @@ export function KpiSparkline({
     return series;
   }, [series, placeholder]);
 
-  const { path, area, lastX, lastY } = useMemo(() => {
+  const { path, area, points } = useMemo(() => {
     const w = Math.max(width, 1);
     const h = height;
-    const pad = 3;
+    const pad = 4;
     const vals = data.map((p) => p.v);
     const min = Math.min(...vals);
     const max = Math.max(...vals);
@@ -76,25 +76,14 @@ export function KpiSparkline({
     const pts = data.map((p, idx) => {
       const x = n === 1 ? w / 2 : pad + (idx / (n - 1)) * (w - pad * 2);
       const y = pad + (1 - (p.v - min) / span) * (h - pad * 2);
-      return { x, y };
+      return { x, y, v: p.v };
     });
 
-    // Catmull-Rom → cubic Bézier
-    let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] ?? pts[i];
-      const p1 = pts[i];
-      const p2 = pts[i + 1];
-      const p3 = pts[i + 2] ?? p2;
-      const c1x = p1.x + (p2.x - p0.x) / 6;
-      const c1y = p1.y + (p2.y - p0.y) / 6;
-      const c2x = p2.x - (p3.x - p1.x) / 6;
-      const c2y = p2.y - (p3.y - p1.y) / 6;
-      d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
-    }
+    // Connected polyline with visible data points
+    const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
     const last = pts[pts.length - 1];
     const areaD = `${d} L ${last.x.toFixed(2)} ${h} L ${pts[0].x.toFixed(2)} ${h} Z`;
-    return { path: d, area: areaD, lastX: last.x, lastY: last.y };
+    return { path: d, area: areaD, points: pts };
   }, [data, width, height]);
 
   // Draw-in animation on mount and whenever the path changes (only real data)
@@ -123,7 +112,7 @@ export function KpiSparkline({
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={placeholder ? 0.05 : 0.18} />
+            <stop offset="0%" stopColor={color} stopOpacity={placeholder ? 0.05 : 0.35} />
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
           <clipPath id={clipId}>
@@ -143,19 +132,23 @@ export function KpiSparkline({
             opacity={placeholder ? 0.35 : 1}
             strokeDasharray={placeholder ? "3 4" : undefined}
           />
-          {!placeholder && (
-            <>
-              <circle cx={lastX} cy={lastY} r={4.5} fill={color} opacity={0.18} />
-              <circle
-                cx={lastX}
-                cy={lastY}
-                r={2.5}
-                fill={color}
-                stroke="var(--card)"
-                strokeWidth={1.25}
-              />
-            </>
-          )}
+          {!placeholder &&
+            points.map((p, idx) => {
+              const isLast = idx === points.length - 1;
+              return (
+                <g key={idx}>
+                  <circle cx={p.x} cy={p.y} r={isLast ? 4.5 : 3.5} fill={color} opacity={isLast ? 0.2 : 0.12} />
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={isLast ? 2.5 : 2}
+                    fill={color}
+                    stroke="var(--card)"
+                    strokeWidth={1.25}
+                  />
+                </g>
+              );
+            })}
         </g>
       </svg>
     </div>
