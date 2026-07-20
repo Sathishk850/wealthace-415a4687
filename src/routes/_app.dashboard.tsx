@@ -843,6 +843,7 @@ function SnapCard({
   accent,
   series,
   tip,
+  muted,
 }: {
   label: string;
   value: string;
@@ -854,7 +855,13 @@ function SnapCard({
   tip?: string;
   muted?: boolean;
 }) {
-  const id = `s-${label.replace(/\s/g, "")}`;
+  // Sparkline polarity — `up` already encodes "is this movement good?"
+  // (LiveSnap flips it for inverse metrics like Liabilities / Debt Ratio).
+  const hasHistory = !muted && series.length >= 2;
+  const first = hasHistory ? series[0].v : 0;
+  const last = hasHistory ? series[series.length - 1].v : 0;
+  const flat = hasHistory && Math.abs(last - first) < 1e-6;
+  const polarity: boolean | null = !hasHistory ? null : flat ? null : up;
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start justify-between">
@@ -887,18 +894,8 @@ function SnapCard({
         {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
         {delta}
       </div>
-      <div className="mt-2 h-10">
-        <ResponsiveContainer>
-          <AreaChart data={series} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={accent} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={accent} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Area type="monotone" dataKey="v" stroke={accent} strokeWidth={1.5} fill={`url(#${id})`} />
-          </AreaChart>
-        </ResponsiveContainer>
+      <div className="mt-2">
+        <KpiSparkline series={series} positive={polarity} height={36} placeholder={!hasHistory} />
       </div>
     </div>
   );
