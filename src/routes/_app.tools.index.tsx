@@ -1272,20 +1272,26 @@ function buildInsights(d: {
   if (income > 0) {
     if (savingsRate < 20)
       savings.push({
-        title: "Boost your savings rate",
-        detail: `You're saving ${savingsRate}% of income. Aim for at least 20% — try trimming the top expense category.`,
+        title: "Increase savings to 30%+",
+        detail: `You're saving ${savingsRate}% of income. Review spending or boost income to reach a healthy 30%+.`,
         tone: "bad",
       });
-    else if (savingsRate < 40)
+    else if (savingsRate < 30)
       savings.push({
-        title: "Solid savings rate",
-        detail: `${savingsRate}% saved. Push toward 40% to accelerate wealth building.`,
+        title: "Average savings rate",
+        detail: `${savingsRate}% saved. Okay, but push toward 30%+ for stronger financial security.`,
         tone: "warn",
+      });
+    else if (savingsRate <= 50)
+      savings.push({
+        title: "Healthy savings rate",
+        detail: `${savingsRate}% saved — good savings discipline. Aim above 50% to enter FIRE track.`,
+        tone: "good",
       });
     else
       savings.push({
-        title: "Excellent savings rate",
-        detail: `${savingsRate}% saved — keep deploying surplus into investments.`,
+        title: "Exceptional! You're on FIRE track",
+        detail: `${savingsRate}% saved — you're on track to retire early. Maintain this rate.`,
         tone: "good",
       });
   }
