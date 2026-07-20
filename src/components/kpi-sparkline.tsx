@@ -44,16 +44,17 @@ export function KpiSparkline({
     return () => ro.disconnect();
   }, []);
 
-  const color =
-    positive === null
-      ? "var(--muted-foreground)"
-      : positive
-      ? "#00c896"
-      : "#ff4d4d";
+  const color = placeholder
+    ? "var(--muted-foreground)"
+    : positive === null
+    ? "var(--muted-foreground)"
+    : positive
+    ? "#00c896"
+    : "#ff4d4d";
 
   const data = useMemo<Point[]>(() => {
     if (placeholder || !series || series.length === 0) {
-      // subtle decorative wave
+      // subtle decorative wave — never shown with text
       return [0, 1, 2, 3, 4, 5, 6].map((i) => ({
         i,
         v: Math.sin(i * 0.9) * 0.5 + 0.5,
@@ -96,8 +97,9 @@ export function KpiSparkline({
     return { path: d, area: areaD, lastX: last.x, lastY: last.y };
   }, [data, width, height]);
 
-  // Draw-in animation on mount and whenever the path changes
+  // Draw-in animation on mount and whenever the path changes (only real data)
   useEffect(() => {
+    if (placeholder) return;
     const el = pathRef.current;
     if (!el) return;
     const len = el.getTotalLength();
@@ -108,7 +110,7 @@ export function KpiSparkline({
     void el.getBoundingClientRect();
     el.style.transition = "stroke-dashoffset 700ms ease-out";
     el.style.strokeDashoffset = "0";
-  }, [path]);
+  }, [path, placeholder]);
 
   return (
     <div ref={wrapRef} className="relative w-full" style={{ height }}>
@@ -121,7 +123,7 @@ export function KpiSparkline({
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={placeholder ? 0.08 : 0.18} />
+            <stop offset="0%" stopColor={color} stopOpacity={placeholder ? 0.05 : 0.18} />
             <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
           <clipPath id={clipId}>
@@ -138,7 +140,8 @@ export function KpiSparkline({
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
-            opacity={placeholder ? 0.55 : 1}
+            opacity={placeholder ? 0.35 : 1}
+            strokeDasharray={placeholder ? "3 4" : undefined}
           />
           {!placeholder && (
             <>
@@ -155,11 +158,6 @@ export function KpiSparkline({
           )}
         </g>
       </svg>
-      {placeholder && (
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-medium text-muted-foreground/80">
-          No history yet
-        </span>
-      )}
     </div>
   );
 }
