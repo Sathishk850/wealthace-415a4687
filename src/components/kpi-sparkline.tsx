@@ -132,19 +132,23 @@ export function KpiSparkline({
             opacity={placeholder ? 0.35 : 1}
             strokeDasharray={placeholder ? "3 4" : undefined}
           />
-          {!placeholder && (
-            <>
-              <circle cx={lastX} cy={lastY} r={4.5} fill={color} opacity={0.18} />
-              <circle
-                cx={lastX}
-                cy={lastY}
-                r={2.5}
-                fill={color}
-                stroke="var(--card)"
-                strokeWidth={1.25}
-              />
-            </>
-          )}
+          {!placeholder &&
+            points.map((p, idx) => {
+              const isLast = idx === points.length - 1;
+              return (
+                <g key={idx}>
+                  <circle cx={p.x} cy={p.y} r={isLast ? 4.5 : 3.5} fill={color} opacity={isLast ? 0.2 : 0.12} />
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={isLast ? 2.5 : 2}
+                    fill={color}
+                    stroke="var(--card)"
+                    strokeWidth={1.25}
+                  />
+                </g>
+              );
+            })}
         </g>
       </svg>
     </div>
