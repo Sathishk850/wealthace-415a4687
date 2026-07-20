@@ -24,6 +24,11 @@ function useIsDarkTheme() {
   return isDark;
 }
 
+// Both dark and light logo assets share this canvas (660 × 230). Locking the
+// aspect ratio on the <img> guarantees the rendered box is identical across
+// themes so the header height never shifts when the theme toggles.
+const LOGO_ASPECT = "660 / 230";
+
 function LogoImage({
   className,
   withTagline = true,
@@ -33,17 +38,16 @@ function LogoImage({
 }) {
   const isDark = useIsDarkTheme();
   const src = isDark ? logoDark.url : logoLight.url;
+  const style: React.CSSProperties = withTagline
+    ? { aspectRatio: LOGO_ASPECT, objectFit: "contain" }
+    : { aspectRatio: "16 / 9", objectFit: "cover", objectPosition: "center top" };
   return (
     <img
       src={src}
       alt="FinVista — Direct Your Wealth"
       draggable={false}
       className={className}
-      style={
-        withTagline
-          ? undefined
-          : { objectFit: "cover", objectPosition: "center top", aspectRatio: "16 / 9" }
-      }
+      style={style}
     />
   );
 }
