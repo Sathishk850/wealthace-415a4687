@@ -613,7 +613,7 @@ function ReportsView() {
         description: "Personalised observations and tips.",
         columns: ["Area", "Observation"],
         rows: [
-          ["Savings", savingsRate < 20 ? `Saving only ${savingsRate}% — target 20%+` : `Saving ${savingsRate}% — healthy`],
+          ["Savings", savingsRate < 20 ? `Saving only ${savingsRate}% — target 30%+ for security` : savingsRate < 30 ? `Saving ${savingsRate}% — average, push toward 30%+` : savingsRate <= 50 ? `Saving ${savingsRate}% — healthy` : `Saving ${savingsRate}% — FIRE track`],
           ["Spending", totalExpense > 0 ? `Total expense ${inr(totalExpense)} across ${expense.length} txns` : "No expenses logged"],
           ["Investing", monthlySIP > 0 ? `Active SIP of ${inr(monthlySIP)}/mo` : "Start a monthly SIP"],
           ["Goals", goalsList.length ? `${goalsList.length} active goal${goalsList.length > 1 ? "s" : ""}` : "Create your first goal"],
