@@ -29,6 +29,7 @@ import {
   Pencil,
   Trash2,
   Link2,
+  RefreshCw,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -54,6 +55,10 @@ import { TextTabs } from "@/components/text-tabs";
 import { InvestmentDialog } from "@/components/wealth/investment-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
 import { LinkInvestmentDialog, isLinkable } from "@/components/wealth/link-investment-dialog";
+import { MarketStatus } from "@/components/market/market-status";
+import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
+import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
+import type { MarketQuote } from "@/lib/market/types";
 import {
   type Investment,
   type InvestmentInput,
@@ -71,6 +76,7 @@ import {
 } from "@/lib/wealth-api";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
 import { toast } from "sonner";
+
 
 const PIE = ["#3B82F6", "#14D8CF", "#F59E0B", "#8B5CF6", "#10B981", "#F97316", "#EF4444", "#94A3B8"];
 const SUB = ["Overview", "Holdings", "Portfolio", "SIP Tracker", "Performance", "P&L Analysis"] as const;
