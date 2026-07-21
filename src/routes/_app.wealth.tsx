@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { TextTabs } from "@/components/text-tabs";
 import { AssetsView } from "@/components/wealth/assets-view";
 import { LiabilitiesView as LiveLiabilitiesView } from "@/components/wealth/liabilities-view";
-import { InvestmentsView as LiveInvestmentsView } from "@/components/wealth/investments-view";
+import { InvestmentsView as LiveInvestmentsView, type InvestmentsSub } from "@/components/wealth/investments-view";
 import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insurance-view";
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { FamilyView as LiveFamilyView } from "@/components/wealth/family-view";
@@ -19,18 +19,54 @@ export const Route = createFileRoute("/_app/wealth")({
   component: Wealth,
 });
 
-const TABS = ["Assets", "Liabilities", "Investments", "Insurance", "Accounts", "Family"] as const;
+type TabValue =
+  | "investments"
+  | "holdings"
+  | "portfolio"
+  | "sip-tracker"
+  | "performance"
+  | "pl-analysis"
+  | "assets"
+  | "liabilities"
+  | "insurance"
+  | "accounts"
+  | "family";
+
+const TABS: { value: TabValue; label: string }[] = [
+  { value: "investments", label: "Investments" },
+  { value: "holdings", label: "Holdings" },
+  { value: "portfolio", label: "Portfolio" },
+  { value: "sip-tracker", label: "SIP Tracker" },
+  { value: "performance", label: "Performance" },
+  { value: "pl-analysis", label: "P&L Analysis" },
+  { value: "assets", label: "Assets" },
+  { value: "liabilities", label: "Liabilities" },
+  { value: "insurance", label: "Insurance" },
+  { value: "accounts", label: "Accounts" },
+  { value: "family", label: "Family" },
+];
+
+const INVESTMENT_SUB: Record<string, InvestmentsSub> = {
+  investments: "Overview",
+  holdings: "Holdings",
+  portfolio: "Portfolio",
+  "sip-tracker": "SIP Tracker",
+  performance: "Performance",
+  "pl-analysis": "P&L Analysis",
+};
 
 function Wealth() {
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Assets");
+  const [tab, setTab] = useState<TabValue>("investments");
   const addRef = useRef<(() => void) | null>(null);
 
+  const isInvestment = tab in INVESTMENT_SUB;
+
   const addLabel =
-    tab === "Liabilities" ? "Add Liability"
-    : tab === "Investments" ? "Add Investment"
-    : tab === "Insurance" ? "Add Policy"
-    : tab === "Accounts" ? "Add Account"
-    : tab === "Family" ? "Add Member"
+    isInvestment ? "Add Investment"
+    : tab === "liabilities" ? "Add Liability"
+    : tab === "insurance" ? "Add Policy"
+    : tab === "accounts" ? "Add Account"
+    : tab === "family" ? "Add Member"
     : "Add Asset";
 
   return (
@@ -50,21 +86,29 @@ function Wealth() {
         </button>
       </div>
 
-      <TextTabs
-        items={TABS as unknown as readonly string[]}
-        value={tab}
-        onChange={(v) => setTab(v as (typeof TABS)[number])}
-      />
+      <div className="-mx-1 overflow-x-auto">
+        <TextTabs
+          items={TABS}
+          value={tab}
+          onChange={(v) => setTab(v as TabValue)}
+          className="min-w-max px-1"
+        />
+      </div>
 
-      {tab === "Assets" ? (
+      {isInvestment ? (
+        <LiveInvestmentsView
+          key={tab}
+          activeSub={INVESTMENT_SUB[tab]}
+          hideSubTabs
+          registerAdd={(fn) => { addRef.current = fn; }}
+        />
+      ) : tab === "assets" ? (
         <AssetsView registerAdd={(fn) => { addRef.current = fn; }} />
-      ) : tab === "Liabilities" ? (
+      ) : tab === "liabilities" ? (
         <LiveLiabilitiesView registerAdd={(fn) => { addRef.current = fn; }} />
-      ) : tab === "Investments" ? (
-        <LiveInvestmentsView registerAdd={(fn) => { addRef.current = fn; }} />
-      ) : tab === "Insurance" ? (
+      ) : tab === "insurance" ? (
         <LiveInsuranceView registerAdd={(fn) => { addRef.current = fn; }} />
-      ) : tab === "Accounts" ? (
+      ) : tab === "accounts" ? (
         <LiveAccountsView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : (
         <LiveFamilyView registerAdd={(fn) => { addRef.current = fn; }} />
