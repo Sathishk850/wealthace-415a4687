@@ -76,12 +76,19 @@ const PIE = ["#3B82F6", "#14D8CF", "#F59E0B", "#8B5CF6", "#10B981", "#F97316", "
 const SUB = ["Overview", "Holdings", "Portfolio", "SIP Tracker", "Performance", "P&L Analysis"] as const;
 const PAGE = 8;
 
+export type InvestmentsSub = (typeof SUB)[number];
+
 export function InvestmentsView({
   registerAdd,
+  activeSub,
+  hideSubTabs,
 }: {
   registerAdd?: (open: () => void) => void;
+  activeSub?: InvestmentsSub;
+  hideSubTabs?: boolean;
 }) {
-  const [sub, setSub] = useState<(typeof SUB)[number]>("Overview");
+  const [subState, setSub] = useState<InvestmentsSub>("Overview");
+  const sub = activeSub ?? subState;
   const { data: rows = [], isLoading, isError, error, refetch } = useInvestments();
   const bulkInsert = useBulkInsertInvestments();
   const del = useDeleteInvestment();
