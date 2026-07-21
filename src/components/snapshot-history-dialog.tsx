@@ -66,7 +66,13 @@ function useSnapshotHistory() {
 }
 
 function fmt(n: number) {
+  if (!Number.isFinite(n)) return "0";
   return new Intl.NumberFormat("en-IN").format(Math.abs(n));
+}
+function fmtSigned(n: number) {
+  if (!Number.isFinite(n)) return "0";
+  const sign = n < 0 ? "-" : "";
+  return `${sign}${new Intl.NumberFormat("en-IN").format(Math.abs(n))}`;
 }
 
 export function SnapshotHistoryDialog({
@@ -205,8 +211,13 @@ export function SnapshotHistoryDialog({
                     className="grid min-h-[56px] grid-cols-[35%_30%_25%_10%] items-center border-b border-border/30 px-3 py-3 text-[16px] last:border-b-0 hover:bg-surface/40 sm:px-4"
                   >
                     <div className="min-w-0 truncate text-foreground">{r.date}</div>
-                    <div className="truncate text-right font-medium text-foreground">
-                      ₹{fmt(r.net)}
+                    <div
+                      className={cn(
+                        "truncate text-right font-medium",
+                        r.net < 0 ? "text-danger" : "text-foreground",
+                      )}
+                    >
+                      ₹{fmtSigned(r.net)}
                     </div>
                     <div
                       className={cn(
