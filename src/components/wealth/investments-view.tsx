@@ -103,6 +103,15 @@ export function InvestmentsView({
   const [confirm, setConfirm] = useState<Investment | null>(null);
   const [linkQueue, setLinkQueue] = useState<Investment[] | null>(null);
 
+  // Live market data — cache-first, background refresh.
+  const {
+    quoteMap,
+    lastFetchedAt,
+    isFetching: quotesFetching,
+    refetch: refetchQuotes,
+  } = useInvestmentQuotes(rows);
+  const refreshHoldings = useRefreshHoldings();
+
   if (registerAdd) {
     registerAdd(() => {
       setEditing(null);
@@ -116,10 +125,11 @@ export function InvestmentsView({
       current = 0;
     const today = new Date();
     const rich = rows.map((r) => {
-      const inv = r.invested_value ?? r.quantity * r.avg_price;
-      const rawCur = r.current_value ?? r.quantity * r.current_price;
-      // Graceful fallback: unpriced holdings show at cost basis, not zero.
-      const cur = rawCur > 0 ? rawCur : inv;
+      const key = investmentQuoteKey(r);
+      const quote: MarketQuote | null = key ? quoteMap.get(key) ?? null : null;
+      const d = deriveHolding(r, quote);
+      const inv = d.invested;
+      const cur = d.current_value > 0 ? d.current_value : inv; // fallback for unpriced
       const pnl = cur - inv;
       const ret = inv > 0 ? (pnl / inv) * 100 : 0;
       const years = r.purchase_date
@@ -129,16 +139,31 @@ export function InvestmentsView({
           )
         : 0;
       const cagr = cagrPct(inv, cur, years);
-      const xirrPct = singleXirr(r);
+      const xirrPct = singleXirr({ ...r, current_price: d.current_price, current_value: cur });
       invested += inv;
       current += cur;
-      return { ...r, inv, cur, pnl, ret, cagr, xirrPct };
+      return {
+        ...r,
+        inv,
+        cur,
+        pnl,
+        ret,
+        cagr,
+        xirrPct,
+        live_price: d.current_price,
+        day_change: d.day_change,
+        day_change_pct: d.day_change_pct,
+        live_source: d.source,
+        live_as_of: d.as_of,
+        has_live: d.has_live,
+      };
     });
     const pnl = current - invested;
     const overallRet = invested > 0 ? (pnl / invested) * 100 : 0;
     const portXirr = portfolioXirr(rows);
     return { rich, invested, current, pnl, overallRet, portXirr };
-  }, [rows]);
+  }, [rows, quoteMap]);
+
 
   /* ===== Allocation breakdown ===== */
   const alloc = useMemo(
