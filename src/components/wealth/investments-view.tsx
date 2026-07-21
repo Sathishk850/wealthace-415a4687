@@ -263,11 +263,13 @@ export function InvestmentsView({
 
   return (
     <>
-      <TextTabs
-        items={SUB as unknown as readonly string[]}
-        value={sub}
-        onChange={(v) => setSub(v as (typeof SUB)[number])}
-      />
+      {!hideSubTabs && (
+        <TextTabs
+          items={SUB as unknown as readonly string[]}
+          value={sub}
+          onChange={(v) => setSub(v as (typeof SUB)[number])}
+        />
+      )}
 
       <div className="mt-4">
         {sub === "Overview" && (
