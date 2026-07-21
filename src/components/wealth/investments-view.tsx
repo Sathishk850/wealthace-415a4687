@@ -606,13 +606,29 @@ function Overview({
 }
 
 /* =================== HOLDINGS =================== */
-type HoldRow = Investment & { inv: number; cur: number; pnl: number; ret: number; cagr: number; xirrPct: number };
+type HoldRow = Investment & {
+  inv: number;
+  cur: number;
+  pnl: number;
+  ret: number;
+  cagr: number;
+  xirrPct: number;
+  live_price: number;
+  day_change: number | null;
+  day_change_pct: number | null;
+  live_source: string | null;
+  live_as_of: string | null;
+  has_live: boolean;
+};
 type HSort = "latest" | "name_asc" | "value_desc" | "pnl_desc" | "ret_desc";
 
 function Holdings({
   rows,
   isLoading,
   ioMenu,
+  lastFetchedAt,
+  quotesFetching,
+  onRefreshQuotes,
   onAdd,
   onEdit,
   onDelete,
@@ -622,12 +638,16 @@ function Holdings({
   rows: HoldRow[];
   isLoading: boolean;
   ioMenu: React.ReactNode;
+  lastFetchedAt?: string | null;
+  quotesFetching?: boolean;
+  onRefreshQuotes?: () => void;
   onAdd: () => void;
   onEdit: (r: Investment) => void;
   onDelete: (r: Investment) => void;
   onLink: (r: Investment) => void;
   onLinkAll: (list: Investment[]) => void;
 }) {
+
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
   const [sort, setSort] = useState<HSort>("latest");
