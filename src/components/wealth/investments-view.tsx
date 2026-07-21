@@ -410,7 +410,7 @@ function Overview({
         <Stat label="Current Value" value={isLoading ? "…" : inr(current)} delta={`${count} holding${count === 1 ? "" : "s"}`} icon={Wallet} tint="bg-mint/10 text-mint" />
         <Stat label="Total Invested" value={isLoading ? "…" : inr(invested)} delta="Cost basis" icon={PieIcon} tint="bg-violet-400/10 text-violet-300" />
         <Stat label="Overall Gain / Loss" value={isLoading ? "…" : inr(pnl)} delta={`${up ? "+" : ""}${overallRet.toFixed(2)}% (Absolute)`} up={up} icon={BarChart3} tint={up ? "bg-amber-400/10 text-amber-300" : "bg-rose-400/10 text-rose-300"} />
-        <Stat label="XIRR (All Investments)" value={isLoading ? "…" : `${portXirr.toFixed(2)}%`} delta="Money-weighted return" icon={TrendingUp} tint="bg-mint/10 text-mint" />
+        <Stat label="XIRR (All Investments)" value={isLoading ? "…" : (portXirr === 0 ? "—" : `${portXirr.toFixed(2)}%`)} delta={portXirr === 0 ? "Add purchase dates to calculate" : "Money-weighted return"} icon={TrendingUp} tint="bg-mint/10 text-mint" />
       </div>
 
       {empty ? (
