@@ -76,6 +76,7 @@ export const Route = createFileRoute("/_app/dashboard")({
 });
 
 function fmt(n: number) {
+  if (!Number.isFinite(n)) return "0";
   return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n);
 }
 
