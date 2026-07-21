@@ -329,6 +329,18 @@ export function InvestmentsView({
             rows={derived.rich}
             isLoading={isLoading}
             ioMenu={ioMenu}
+            lastFetchedAt={lastFetchedAt}
+            quotesFetching={quotesFetching || refreshHoldings.isPending}
+            onRefreshQuotes={async () => {
+              // Background refresh — never blocks the UI or reloads the page.
+              try {
+                await refreshHoldings.mutateAsync();
+                await refetchQuotes();
+                toast.success("Market prices refreshed");
+              } catch {
+                await refetchQuotes();
+              }
+            }}
             onAdd={() => {
               setEditing(null);
               setDialogOpen(true);
@@ -342,6 +354,7 @@ export function InvestmentsView({
             onLinkAll={(list) => setLinkQueue(list)}
           />
         )}
+
         {sub === "Portfolio" && (
           <Portfolio
             empty={showEmptyOnly}
