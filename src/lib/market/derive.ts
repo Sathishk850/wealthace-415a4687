@@ -27,11 +27,27 @@ export function deriveHolding(inv: Investment, quote?: MarketQuote | null): Deri
   const avg = num(inv.avg_price);
   const invested = num(inv.invested_value, qty * avg);
   const liveOk = quote && quote.latest_price != null && quote.latest_price > 0;
-  const price = liveOk ? Number(quote!.latest_price) : num(inv.current_price, avg);
-  const current_value = qty * price;
+  // Only market-linked investments (with identifier) should ever be repriced.
+  const isLinked = !!(inv.identifier_type && inv.identifier);
+  let price: number;
+  let current_value: number;
+  if (liveOk && isLinked) {
+    price = Number(quote!.latest_price);
+    current_value = qty * price;
+  } else {
+    // Use user-entered/stored current_value as source of truth. Never overwrite.
+    const storedValue = inv.current_value;
+    if (storedValue != null && Number.isFinite(Number(storedValue)) && Number(storedValue) > 0) {
+      current_value = Number(storedValue);
+      price = qty > 0 ? current_value / qty : num(inv.current_price, avg);
+    } else {
+      price = num(inv.current_price, avg);
+      current_value = qty * price;
+    }
+  }
   const unrealized_pl = current_value - invested;
   const return_pct = invested > 0 ? (unrealized_pl / invested) * 100 : 0;
-  const prev = liveOk && quote?.previous_close && quote.previous_close > 0 ? Number(quote.previous_close) : null;
+  const prev = liveOk && isLinked && quote?.previous_close && quote.previous_close > 0 ? Number(quote.previous_close) : null;
   const day_change = prev != null ? (price - prev) * qty : null;
   const day_change_pct = prev != null && prev > 0 ? ((price - prev) / prev) * 100 : null;
   return {
@@ -42,9 +58,9 @@ export function deriveHolding(inv: Investment, quote?: MarketQuote | null): Deri
     return_pct,
     day_change,
     day_change_pct,
-    source: liveOk ? quote!.source : inv.price_source ?? null,
-    as_of: liveOk ? quote!.fetched_at : inv.price_updated_at ?? null,
-    has_live: !!liveOk,
+    source: liveOk && isLinked ? quote!.source : inv.price_source ?? null,
+    as_of: liveOk && isLinked ? quote!.fetched_at : inv.price_updated_at ?? null,
+    has_live: !!(liveOk && isLinked),
   };
 }
 
