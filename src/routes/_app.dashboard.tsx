@@ -225,16 +225,25 @@ function Dashboard() {
 
   // Net worth deltas from snapshot history
   const netDelta = useMemo(() => {
-    if (snaps.length === 0) return { day: 0, dayPct: 0, month: 0, monthPct: 0 };
-    const last = snaps[snaps.length - 1].net_worth;
-    const prev = snaps[snaps.length - 2]?.net_worth ?? last;
+    const safe = (n: unknown) => (Number.isFinite(Number(n)) ? Number(n) : 0);
+    if (snaps.length < 2) return { day: 0, dayPct: 0, month: 0, monthPct: 0, hasDay: false, hasMonth: false };
+    const last = safe(snaps[snaps.length - 1]?.net_worth);
+    const prev = safe(snaps[snaps.length - 2]?.net_worth);
     const monthAgoIso = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-    const monthRef = [...snaps].reverse().find((s) => s.snapshot_date <= monthAgoIso)?.net_worth ?? snaps[0].net_worth;
+    const monthRefSnap = [...snaps].reverse().find((s) => s.snapshot_date <= monthAgoIso);
+    const hasMonth = !!monthRefSnap;
+    const monthRef = safe(monthRefSnap?.net_worth ?? snaps[0]?.net_worth);
+    const day = last - prev;
+    const month = last - monthRef;
+    const dayPct = prev !== 0 ? (day / Math.abs(prev)) * 100 : 0;
+    const monthPct = monthRef !== 0 ? (month / Math.abs(monthRef)) * 100 : 0;
     return {
-      day: last - prev,
-      dayPct: prev ? ((last - prev) / Math.abs(prev)) * 100 : 0,
-      month: last - monthRef,
-      monthPct: monthRef ? ((last - monthRef) / Math.abs(monthRef)) * 100 : 0,
+      day: Number.isFinite(day) ? day : 0,
+      dayPct: Number.isFinite(dayPct) ? dayPct : 0,
+      month: Number.isFinite(month) ? month : 0,
+      monthPct: Number.isFinite(monthPct) ? monthPct : 0,
+      hasDay: true,
+      hasMonth,
     };
   }, [snaps]);
 
