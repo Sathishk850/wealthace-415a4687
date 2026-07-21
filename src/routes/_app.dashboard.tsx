@@ -354,8 +354,8 @@ function Dashboard() {
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm">
                 {snaps.length >= 2 ? (
                   <>
-                    <DeltaPill amount={netDelta.day} pct={netDelta.dayPct} label="Since last snapshot" />
-                    <DeltaPill amount={netDelta.month} pct={netDelta.monthPct} label="Last 30 days" />
+                    <DeltaPill amount={netDelta.day} pct={netDelta.dayPct} label="Since last snapshot" hasData={netDelta.hasDay} />
+                    <DeltaPill amount={netDelta.month} pct={netDelta.monthPct} label="Last 30 days" hasData={netDelta.hasMonth} />
                   </>
                 ) : (
                   <span className="text-xs text-muted-foreground">
