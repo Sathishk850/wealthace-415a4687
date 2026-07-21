@@ -66,7 +66,13 @@ function useSnapshotHistory() {
 }
 
 function fmt(n: number) {
+  if (!Number.isFinite(n)) return "0";
   return new Intl.NumberFormat("en-IN").format(Math.abs(n));
+}
+function fmtSigned(n: number) {
+  if (!Number.isFinite(n)) return "0";
+  const sign = n < 0 ? "-" : "";
+  return `${sign}${new Intl.NumberFormat("en-IN").format(Math.abs(n))}`;
 }
 
 export function SnapshotHistoryDialog({
