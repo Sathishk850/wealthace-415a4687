@@ -614,12 +614,21 @@ function Dashboard() {
   );
 }
 
-function DeltaPill({ amount, pct, label }: { amount: number; pct: number; label: string }) {
-  const up = amount >= 0;
+function DeltaPill({ amount, pct, label, hasData = true }: { amount: number; pct: number; label: string; hasData?: boolean }) {
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const safePct = Number.isFinite(pct) ? pct : 0;
+  if (!hasData) {
+    return (
+      <span className="inline-flex items-center gap-1.5 font-semibold text-muted-foreground">
+        — <span className="text-muted-foreground font-normal">{label}</span>
+      </span>
+    );
+  }
+  const up = safeAmount >= 0;
   const Icon = up ? ArrowUp : ArrowDown;
   return (
     <span className={cn("inline-flex items-center gap-1.5 font-semibold", up ? "text-success" : "text-danger")}>
-      <Icon className="h-3.5 w-3.5" /> ₹{fmt(Math.abs(amount))} ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%)
+      <Icon className="h-3.5 w-3.5" /> ₹{fmt(Math.abs(safeAmount))} ({safePct >= 0 ? "+" : ""}{safePct.toFixed(2)}%)
       <span className="text-muted-foreground font-normal"> {label}</span>
     </span>
   );
