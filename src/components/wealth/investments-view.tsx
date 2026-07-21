@@ -29,6 +29,7 @@ import {
   Pencil,
   Trash2,
   Link2,
+  RefreshCw,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -54,6 +55,10 @@ import { TextTabs } from "@/components/text-tabs";
 import { InvestmentDialog } from "@/components/wealth/investment-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
 import { LinkInvestmentDialog, isLinkable } from "@/components/wealth/link-investment-dialog";
+import { MarketStatus } from "@/components/market/market-status";
+import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
+import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
+import type { MarketQuote } from "@/lib/market/types";
 import {
   type Investment,
   type InvestmentInput,
@@ -71,6 +76,7 @@ import {
 } from "@/lib/wealth-api";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
 import { toast } from "sonner";
+
 
 const PIE = ["#3B82F6", "#14D8CF", "#F59E0B", "#8B5CF6", "#10B981", "#F97316", "#EF4444", "#94A3B8"];
 const SUB = ["Overview", "Holdings", "Portfolio", "SIP Tracker", "Performance", "P&L Analysis"] as const;
@@ -97,6 +103,15 @@ export function InvestmentsView({
   const [confirm, setConfirm] = useState<Investment | null>(null);
   const [linkQueue, setLinkQueue] = useState<Investment[] | null>(null);
 
+  // Live market data — cache-first, background refresh.
+  const {
+    quoteMap,
+    lastFetchedAt,
+    isFetching: quotesFetching,
+    refetch: refetchQuotes,
+  } = useInvestmentQuotes(rows);
+  const refreshHoldings = useRefreshHoldings();
+
   if (registerAdd) {
     registerAdd(() => {
       setEditing(null);
@@ -110,10 +125,11 @@ export function InvestmentsView({
       current = 0;
     const today = new Date();
     const rich = rows.map((r) => {
-      const inv = r.invested_value ?? r.quantity * r.avg_price;
-      const rawCur = r.current_value ?? r.quantity * r.current_price;
-      // Graceful fallback: unpriced holdings show at cost basis, not zero.
-      const cur = rawCur > 0 ? rawCur : inv;
+      const key = investmentQuoteKey(r);
+      const quote: MarketQuote | null = key ? quoteMap.get(key) ?? null : null;
+      const d = deriveHolding(r, quote);
+      const inv = d.invested;
+      const cur = d.current_value > 0 ? d.current_value : inv; // fallback for unpriced
       const pnl = cur - inv;
       const ret = inv > 0 ? (pnl / inv) * 100 : 0;
       const years = r.purchase_date
@@ -123,16 +139,31 @@ export function InvestmentsView({
           )
         : 0;
       const cagr = cagrPct(inv, cur, years);
-      const xirrPct = singleXirr(r);
+      const xirrPct = singleXirr({ ...r, current_price: d.current_price, current_value: cur });
       invested += inv;
       current += cur;
-      return { ...r, inv, cur, pnl, ret, cagr, xirrPct };
+      return {
+        ...r,
+        inv,
+        cur,
+        pnl,
+        ret,
+        cagr,
+        xirrPct,
+        live_price: d.current_price,
+        day_change: d.day_change,
+        day_change_pct: d.day_change_pct,
+        live_source: d.source,
+        live_as_of: d.as_of,
+        has_live: d.has_live,
+      };
     });
     const pnl = current - invested;
     const overallRet = invested > 0 ? (pnl / invested) * 100 : 0;
     const portXirr = portfolioXirr(rows);
     return { rich, invested, current, pnl, overallRet, portXirr };
-  }, [rows]);
+  }, [rows, quoteMap]);
+
 
   /* ===== Allocation breakdown ===== */
   const alloc = useMemo(
@@ -298,6 +329,18 @@ export function InvestmentsView({
             rows={derived.rich}
             isLoading={isLoading}
             ioMenu={ioMenu}
+            lastFetchedAt={lastFetchedAt}
+            quotesFetching={quotesFetching || refreshHoldings.isPending}
+            onRefreshQuotes={async () => {
+              // Background refresh — never blocks the UI or reloads the page.
+              try {
+                await refreshHoldings.mutateAsync();
+                await refetchQuotes();
+                toast.success("Market prices refreshed");
+              } catch {
+                await refetchQuotes();
+              }
+            }}
             onAdd={() => {
               setEditing(null);
               setDialogOpen(true);
@@ -311,6 +354,7 @@ export function InvestmentsView({
             onLinkAll={(list) => setLinkQueue(list)}
           />
         )}
+
         {sub === "Portfolio" && (
           <Portfolio
             empty={showEmptyOnly}
@@ -562,13 +606,29 @@ function Overview({
 }
 
 /* =================== HOLDINGS =================== */
-type HoldRow = Investment & { inv: number; cur: number; pnl: number; ret: number; cagr: number; xirrPct: number };
+type HoldRow = Investment & {
+  inv: number;
+  cur: number;
+  pnl: number;
+  ret: number;
+  cagr: number;
+  xirrPct: number;
+  live_price: number;
+  day_change: number | null;
+  day_change_pct: number | null;
+  live_source: string | null;
+  live_as_of: string | null;
+  has_live: boolean;
+};
 type HSort = "latest" | "name_asc" | "value_desc" | "pnl_desc" | "ret_desc";
 
 function Holdings({
   rows,
   isLoading,
   ioMenu,
+  lastFetchedAt,
+  quotesFetching,
+  onRefreshQuotes,
   onAdd,
   onEdit,
   onDelete,
@@ -578,12 +638,16 @@ function Holdings({
   rows: HoldRow[];
   isLoading: boolean;
   ioMenu: React.ReactNode;
+  lastFetchedAt?: string | null;
+  quotesFetching?: boolean;
+  onRefreshQuotes?: () => void;
   onAdd: () => void;
   onEdit: (r: Investment) => void;
   onDelete: (r: Investment) => void;
   onLink: (r: Investment) => void;
   onLinkAll: (list: Investment[]) => void;
 }) {
+
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
   const [sort, setSort] = useState<HSort>("latest");
@@ -665,8 +729,31 @@ function Holdings({
               Link All ({unlinked.length})
             </button>
           ) : null}
+          {onRefreshQuotes ? (
+            <button
+              type="button"
+              onClick={onRefreshQuotes}
+              disabled={quotesFetching}
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2/70 disabled:opacity-60"
+              title="Refresh market prices now"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${quotesFetching ? "animate-spin" : ""}`} />
+              Refresh Now
+            </button>
+          ) : null}
           {ioMenu}
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <MarketStatus exchange="NSE" lastUpdated={lastFetchedAt ?? null} />
+          {lastFetchedAt ? (
+            <span>Prices as of {new Date(lastFetchedAt).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+          ) : (
+            <span>Cached values shown — link a holding to enable live prices.</span>
+          )}
+        </div>
+
+
 
 
         {isLoading ? (
@@ -733,7 +820,24 @@ function Holdings({
                         <td className="py-3 text-muted-foreground">{h.category}</td>
                         <td className="py-3 text-right text-foreground">{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
                         <td className="py-3 text-right text-foreground">{inr(h.avg_price)}</td>
-                        <td className="py-3 text-right text-foreground">{inr(h.current_price)}</td>
+                        <td className="py-3 text-right text-foreground">
+                          <div className="flex flex-col items-end">
+                            <span>{inr(h.live_price || h.current_price)}</span>
+                            {h.has_live ? (
+                              <span
+                                className="text-[10px] text-mint"
+                                title={h.live_as_of ? `Updated ${new Date(h.live_as_of).toLocaleString("en-GB")}` : undefined}
+                              >
+                                Live · {h.live_source ?? "market"}
+                                {h.day_change_pct != null ? (
+                                  <span className={`ml-1 ${h.day_change_pct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                    ({h.day_change_pct >= 0 ? "+" : ""}{h.day_change_pct.toFixed(2)}%)
+                                  </span>
+                                ) : null}
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
                         <td className="py-3 text-right text-foreground">{inr(h.inv)}</td>
                         <td className="py-3 text-right font-medium text-foreground">{inr(h.cur)}</td>
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
@@ -745,7 +849,8 @@ function Holdings({
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
                           {(up ? "+" : "") + h.ret.toFixed(2)}%
                         </td>
-                        <td className="py-3 text-muted-foreground">{formatDate(h.last_updated)}</td>
+                        <td className="py-3 text-muted-foreground">{h.has_live && h.live_as_of ? formatDate(h.live_as_of) : formatDate(h.last_updated)}</td>
+
                         <td className="py-3 pr-2">
                           <RowMenu onEdit={() => onEdit(h)} onDelete={() => onDelete(h)} />
                         </td>
