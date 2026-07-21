@@ -862,47 +862,61 @@ function yearsBetween(a: Date, b: Date) {
 /**
  * XIRR via Newton-Raphson on { date, amount } cashflows.
  * Outflows (buys) should be negative; inflows (current value / sells) positive.
- * Returns percentage. Falls back to a simple CAGR if Newton fails to converge.
+ * Returns percentage bounded to [-100, 200]. Returns 0 when it cannot converge
+ * to a realistic value — never a runaway/infinite/NaN number.
  */
 export function xirr(
   flows: { date: Date; amount: number }[],
   guess = 0.1,
 ): number {
-  const cf = flows.filter((f) => f.amount !== 0 && !isNaN(f.amount));
+  const cf = flows
+    .filter(
+      (f) =>
+        f.amount !== 0 &&
+        Number.isFinite(f.amount) &&
+        f.date instanceof Date &&
+        !isNaN(f.date.getTime()),
+    )
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
   if (cf.length < 2) return 0;
-  const hasPos = cf.some((f) => f.amount > 0);
-  const hasNeg = cf.some((f) => f.amount < 0);
-  if (!hasPos || !hasNeg) return 0;
+  if (!cf.some((f) => f.amount > 0) || !cf.some((f) => f.amount < 0)) return 0;
+
   const t0 = cf[0].date;
-  const npv = (r: number) =>
-    cf.reduce(
-      (s, f) => s + f.amount / Math.pow(1 + r, yearsBetween(t0, f.date)),
-      0,
-    );
-  const dnpv = (r: number) =>
-    cf.reduce((s, f) => {
-      const t = yearsBetween(t0, f.date);
-      return s - (t * f.amount) / Math.pow(1 + r, t + 1);
-    }, 0);
+  const tLast = cf[cf.length - 1].date;
+  const spanDays = (tLast.getTime() - t0.getTime()) / 86400000;
+  if (spanDays <= 0) {
+    // Same-day flows: use simple return, not annualised (avoids runaway CAGR).
+    const invested = cf.filter((f) => f.amount < 0).reduce((s, f) => s + -f.amount, 0);
+    const returned = cf.filter((f) => f.amount > 0).reduce((s, f) => s + f.amount, 0);
+    if (invested <= 0) return 0;
+    return Math.max(-100, Math.min(200, ((returned - invested) / invested) * 100));
+  }
+
   let r = guess;
-  for (let i = 0; i < 80; i++) {
-    const v = npv(r);
-    const d = dnpv(r);
-    if (!isFinite(v) || !isFinite(d) || d === 0) break;
+  for (let i = 0; i < 100; i++) {
+    let v = 0;
+    let d = 0;
+    for (const f of cf) {
+      const t = yearsBetween(t0, f.date);
+      const p = Math.pow(1 + r, t);
+      if (!isFinite(p) || p === 0) return 0;
+      v += f.amount / p;
+      d += -(t * f.amount) / (p * (1 + r));
+    }
+    if (!isFinite(v) || !isFinite(d) || Math.abs(d) < 1e-10) break;
     const r1 = r - v / d;
-    if (!isFinite(r1)) break;
+    if (!isFinite(r1)) return 0;
+    if (Math.abs(r1) > 5) return 0; // runaway — bail
     if (Math.abs(r1 - r) < 1e-7) {
       r = r1;
-      return r * 100;
+      break;
     }
     r = r1;
-    if (r < -0.999) r = -0.999;
-    if (r > 10) r = 10;
   }
-  // Fallback to CAGR using first outflow to last inflow
-  const out = cf.find((f) => f.amount < 0)!;
-  const last = cf[cf.length - 1];
-  return cagrPct(Math.abs(out.amount), Math.abs(last.amount), yearsBetween(out.date, last.date) || 1);
+
+  const pct = r * 100;
+  if (!isFinite(pct)) return 0;
+  return Math.max(-100, Math.min(200, pct));
 }
 
 /** Aggregate XIRR for a set of investments using purchase_date → current_value. */
@@ -911,29 +925,38 @@ export function portfolioXirr(rows: Investment[]) {
   const flows: { date: Date; amount: number }[] = [];
   let totalCurrent = 0;
   for (const r of rows) {
-    const invested = r.invested_value ?? r.quantity * r.avg_price;
-    const rawCurrent = r.current_value ?? r.quantity * r.current_price;
-    // Missing market price → fall back to cost basis so the row still counts.
+    const qty = Number(r.quantity) || 0;
+    const avg = Number(r.avg_price) || 0;
+    const px = Number(r.current_price) || 0;
+    if (qty <= 0 || avg <= 0) continue;
+    if (!r.purchase_date) continue;
+    const d = new Date(r.purchase_date);
+    if (isNaN(d.getTime())) continue;
+    const invested = r.invested_value ?? qty * avg;
+    const rawCurrent = r.current_value ?? qty * px;
     const current = rawCurrent > 0 ? rawCurrent : invested;
-    if (invested > 0 && r.purchase_date) {
-      flows.push({ date: new Date(r.purchase_date), amount: -invested });
-    }
+    flows.push({ date: d, amount: -invested });
     totalCurrent += current;
   }
-  if (!flows.length || totalCurrent <= 0) return 0;
+  if (!flows.length || totalCurrent <= 0 || !isFinite(totalCurrent)) return 0;
   flows.push({ date: today, amount: totalCurrent });
-  flows.sort((a, b) => a.date.getTime() - b.date.getTime());
   return xirr(flows);
 }
 
 /** Per-investment XIRR (single buy → current value). */
 export function singleXirr(inv: Investment) {
-  const invested = inv.invested_value ?? inv.quantity * inv.avg_price;
-  const rawCurrent = inv.current_value ?? inv.quantity * inv.current_price;
+  const qty = Number(inv.quantity) || 0;
+  const avg = Number(inv.avg_price) || 0;
+  const px = Number(inv.current_price) || 0;
+  if (qty <= 0 || avg <= 0 || !inv.purchase_date) return 0;
+  const d = new Date(inv.purchase_date);
+  if (isNaN(d.getTime())) return 0;
+  const invested = inv.invested_value ?? qty * avg;
+  const rawCurrent = inv.current_value ?? qty * px;
   const current = rawCurrent > 0 ? rawCurrent : invested;
-  if (!inv.purchase_date || invested <= 0 || current <= 0) return 0;
+  if (invested <= 0 || current <= 0) return 0;
   return xirr([
-    { date: new Date(inv.purchase_date), amount: -invested },
+    { date: d, amount: -invested },
     { date: new Date(), amount: current },
   ]);
 }
