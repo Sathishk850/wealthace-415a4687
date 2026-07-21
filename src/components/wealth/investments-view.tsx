@@ -729,8 +729,31 @@ function Holdings({
               Link All ({unlinked.length})
             </button>
           ) : null}
+          {onRefreshQuotes ? (
+            <button
+              type="button"
+              onClick={onRefreshQuotes}
+              disabled={quotesFetching}
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2/70 disabled:opacity-60"
+              title="Refresh market prices now"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${quotesFetching ? "animate-spin" : ""}`} />
+              Refresh Now
+            </button>
+          ) : null}
           {ioMenu}
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <MarketStatus exchange="NSE" lastUpdated={lastFetchedAt ?? null} />
+          {lastFetchedAt ? (
+            <span>Prices as of {new Date(lastFetchedAt).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+          ) : (
+            <span>Cached values shown — link a holding to enable live prices.</span>
+          )}
+        </div>
+
+
 
 
         {isLoading ? (
