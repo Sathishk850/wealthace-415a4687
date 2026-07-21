@@ -820,7 +820,24 @@ function Holdings({
                         <td className="py-3 text-muted-foreground">{h.category}</td>
                         <td className="py-3 text-right text-foreground">{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
                         <td className="py-3 text-right text-foreground">{inr(h.avg_price)}</td>
-                        <td className="py-3 text-right text-foreground">{inr(h.current_price)}</td>
+                        <td className="py-3 text-right text-foreground">
+                          <div className="flex flex-col items-end">
+                            <span>{inr(h.live_price || h.current_price)}</span>
+                            {h.has_live ? (
+                              <span
+                                className="text-[10px] text-mint"
+                                title={h.live_as_of ? `Updated ${new Date(h.live_as_of).toLocaleString("en-GB")}` : undefined}
+                              >
+                                Live · {h.live_source ?? "market"}
+                                {h.day_change_pct != null ? (
+                                  <span className={`ml-1 ${h.day_change_pct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                    ({h.day_change_pct >= 0 ? "+" : ""}{h.day_change_pct.toFixed(2)}%)
+                                  </span>
+                                ) : null}
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
                         <td className="py-3 text-right text-foreground">{inr(h.inv)}</td>
                         <td className="py-3 text-right font-medium text-foreground">{inr(h.cur)}</td>
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
@@ -832,7 +849,8 @@ function Holdings({
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
                           {(up ? "+" : "") + h.ret.toFixed(2)}%
                         </td>
-                        <td className="py-3 text-muted-foreground">{formatDate(h.last_updated)}</td>
+                        <td className="py-3 text-muted-foreground">{h.has_live && h.live_as_of ? formatDate(h.live_as_of) : formatDate(h.last_updated)}</td>
+
                         <td className="py-3 pr-2">
                           <RowMenu onEdit={() => onEdit(h)} onDelete={() => onDelete(h)} />
                         </td>
