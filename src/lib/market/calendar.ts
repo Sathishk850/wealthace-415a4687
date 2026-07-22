@@ -61,6 +61,32 @@ export function getMarketStatus(exchange: Exchange, now: Date = new Date()): Mar
   };
 }
 
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
+}
+
+/**
+ * Returns today's session times in the exchange's timezone, formatted as
+ * "DD Mon YYYY, HH:MM". Independent of the viewer's local timezone and of any
+ * price-fetch timestamp.
+ */
+export function getExchangeSessionLabels(exchange: Exchange, now: Date = new Date()): {
+  open: string;
+  close: string;
+  timezone: string;
+} {
+  const spec = SPECS[exchange] ?? SPECS.NSE;
+  const p = partsInTz(now, spec.timezone);
+  const dateLabel = `${pad2(p.day)} ${MONTH_SHORT[p.month - 1]} ${p.year}`;
+  return {
+    open: `${dateLabel}, ${pad2(spec.openHour)}:${pad2(spec.openMinute)}`,
+    close: `${dateLabel}, ${pad2(spec.closeHour)}:${pad2(spec.closeMinute)}`,
+    timezone: spec.timezone,
+  };
+}
+
 export function isAnyMarketOpen(exchanges: Exchange[]): boolean {
   return exchanges.some((e) => getMarketStatus(e).is_open);
 }
