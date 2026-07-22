@@ -13,7 +13,8 @@ export type MarketQuote = {
   previous_close: number | null;
   currency: string | null;
   source: string | null;
-  fetched_at: string; // ISO
+  fetched_at: string; // ISO — exchange-native / provider-reported time
+  server_fetched_at: string; // ISO — server wall-clock time when quote was returned
   expires_at: string | null;
   stale: boolean;
 };
