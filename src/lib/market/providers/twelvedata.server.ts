@@ -72,6 +72,7 @@ export async function twelveDataQuotes(items: QuoteRequestItem[]): Promise<Marke
       currency: normalizeCurrency(row.currency),
       source: "twelvedata",
       fetched_at: now,
+      server_fetched_at: now,
       expires_at: null,
       stale: false,
     });
