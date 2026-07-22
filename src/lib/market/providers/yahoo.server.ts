@@ -78,6 +78,7 @@ export async function yahooQuotes(items: QuoteRequestItem[]): Promise<MarketQuot
       currency: normalizeCurrency(q.currency),
       source: "yahoo",
       fetched_at: now,
+      server_fetched_at: now,
       expires_at: null,
       stale: false,
     });
