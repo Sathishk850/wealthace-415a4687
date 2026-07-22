@@ -101,7 +101,8 @@ export function useInvestmentQuotes(investments: Investment[]) {
   const lastFetchedAt = useMemo(() => {
     let latest: string | null = null;
     for (const q of query.data ?? []) {
-      if (!latest || q.fetched_at > latest) latest = q.fetched_at;
+      const ts = q.server_fetched_at ?? q.fetched_at;
+      if (!latest || ts > latest) latest = ts;
     }
     return latest;
   }, [query.data]);
