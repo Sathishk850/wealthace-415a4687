@@ -207,5 +207,16 @@ export async function getQuotes(
     }
   }
 
-  return [...fresh, ...finalStale];
+  const responseNow = new Date().toISOString();
+  const ONE_HOUR_MS = 60 * 60 * 1000;
+  const nowMs = Date.now();
+  return [...fresh, ...finalStale].map((q) => {
+    const ageMs = nowMs - new Date(q.fetched_at).getTime();
+    const potentiallyStale = Number.isFinite(ageMs) && ageMs > ONE_HOUR_MS;
+    return {
+      ...q,
+      server_fetched_at: responseNow,
+      stale: q.stale || potentiallyStale,
+    };
+  });
 }
