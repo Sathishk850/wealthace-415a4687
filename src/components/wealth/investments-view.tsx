@@ -745,7 +745,7 @@ function Holdings({
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-          <MarketStatus exchange="NSE" lastUpdated={lastFetchedAt ?? null} />
+          <MarketStatus exchange="NSE" />
           {lastFetchedAt ? (
             <span>Prices as of {new Date(lastFetchedAt).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
           ) : (
