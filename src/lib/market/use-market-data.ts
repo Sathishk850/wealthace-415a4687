@@ -122,7 +122,8 @@ export function useInvestmentQuotes(investments: Investment[]) {
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isStale: !!query.error,
-    refetch: query.refetch,
+    refetch: forceRefetch,
+    refetchCached: query.refetch,
     error: query.error,
   };
 }
