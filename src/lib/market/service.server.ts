@@ -30,8 +30,16 @@ async function loadCache(items: QuoteRequestItem[]) {
     .in("identifier", idents);
   if (error) throw error;
   const map = new Map<string, MarketQuote>();
+  const HARD_MAX_AGE_MS = 6 * 60 * 60 * 1000; // 6h: drop from cache entirely
+  const nowMs = Date.now();
   for (const row of data ?? []) {
     const key = `${row.identifier_type}:${row.identifier}`;
+    const fetchedAt = row.fetched_at as string;
+    const ageMs = nowMs - new Date(fetchedAt).getTime();
+    if (Number.isFinite(ageMs) && ageMs > HARD_MAX_AGE_MS) {
+      // Too old — force a fresh fetch by not surfacing this row.
+      continue;
+    }
     map.set(key, {
       identifier_type: row.identifier_type as MarketQuote["identifier_type"],
       identifier: row.identifier as string,
@@ -39,9 +47,10 @@ async function loadCache(items: QuoteRequestItem[]) {
       previous_close: row.previous_close == null ? null : Number(row.previous_close),
       currency: (row.currency as string) ?? null,
       source: (row.source as string) ?? null,
-      fetched_at: row.fetched_at as string,
+      fetched_at: fetchedAt,
+      server_fetched_at: fetchedAt,
       expires_at: (row.expires_at as string) ?? null,
-      stale: !!row.expires_at && new Date(row.expires_at as string).getTime() < Date.now(),
+      stale: !!row.expires_at && new Date(row.expires_at as string).getTime() < nowMs,
     });
   }
   return map;
@@ -198,5 +207,16 @@ export async function getQuotes(
     }
   }
 
-  return [...fresh, ...finalStale];
+  const responseNow = new Date().toISOString();
+  const ONE_HOUR_MS = 60 * 60 * 1000;
+  const nowMs = Date.now();
+  return [...fresh, ...finalStale].map((q) => {
+    const ageMs = nowMs - new Date(q.fetched_at).getTime();
+    const potentiallyStale = Number.isFinite(ageMs) && ageMs > ONE_HOUR_MS;
+    return {
+      ...q,
+      server_fetched_at: responseNow,
+      stale: q.stale || potentiallyStale,
+    };
+  });
 }

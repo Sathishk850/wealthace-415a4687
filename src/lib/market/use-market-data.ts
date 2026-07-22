@@ -53,17 +53,25 @@ export function useInvestmentQuotes(investments: Investment[]) {
     return arr;
   }, [investments]);
 
+  const forceRef = useRef(false);
   const query = useQuery({
     queryKey: marketKeys.quotes(items),
     queryFn: async () => {
       if (items.length === 0) return [] as MarketQuote[];
-      return (await fetchQuotes({ data: { items } })) as MarketQuote[];
+      const force = forceRef.current;
+      forceRef.current = false;
+      return (await fetchQuotes({ data: { items, force } })) as MarketQuote[];
     },
     enabled: items.length > 0,
     staleTime: 60 * 1000,
     // Retain previous data on error → "Using cached market data"
     placeholderData: (prev) => prev,
   });
+
+  const forceRefetch = () => {
+    forceRef.current = true;
+    return query.refetch();
+  };
 
   // Auto-refresh loop: honors settings, pauses when tab hidden, respects market status
   const settings = getMarketSettings();
@@ -101,7 +109,8 @@ export function useInvestmentQuotes(investments: Investment[]) {
   const lastFetchedAt = useMemo(() => {
     let latest: string | null = null;
     for (const q of query.data ?? []) {
-      if (!latest || q.fetched_at > latest) latest = q.fetched_at;
+      const ts = q.server_fetched_at ?? q.fetched_at;
+      if (!latest || ts > latest) latest = ts;
     }
     return latest;
   }, [query.data]);
@@ -113,7 +122,8 @@ export function useInvestmentQuotes(investments: Investment[]) {
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isStale: !!query.error,
-    refetch: query.refetch,
+    refetch: forceRefetch,
+    refetchCached: query.refetch,
     error: query.error,
   };
 }
