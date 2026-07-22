@@ -83,6 +83,7 @@ export async function mfapiQuotes(items: QuoteRequestItem[]): Promise<MarketQuot
           currency: "INR",
           source: "mfapi",
           fetched_at: navDate ?? now,
+          server_fetched_at: now,
           expires_at: null,
           stale: false,
         });
