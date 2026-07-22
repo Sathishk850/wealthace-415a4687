@@ -37,7 +37,9 @@ export async function mfapiQuotes(items: QuoteRequestItem[]): Promise<MarketQuot
           data?: Array<{ nav: string; date: string }>;
         };
         const row = body.data?.[0];
-        const nav = row ? Number(row.nav) : NaN;
+        const navStr = row?.nav?.toString().trim() || "";
+        const normalizedNav = navStr.replace(/,/g, ".");
+        const nav = parseFloat(normalizedNav);
         if (!Number.isFinite(nav) || nav <= 0) return;
         out.push({
           identifier_type: "mf_in",
