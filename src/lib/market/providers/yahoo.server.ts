@@ -2,10 +2,12 @@
 // Server-only: file suffix `.server.ts` blocks client bundle import.
 
 import type { IdentifierType, MarketQuote, QuoteRequestItem, SearchResult } from "../types";
+import { fetchWithTimeout, normalizeCurrency, normalizePrice } from "../normalize";
 
 const QUOTE_URL = "https://query1.finance.yahoo.com/v7/finance/quote";
 const SEARCH_URL = "https://query2.finance.yahoo.com/v1/finance/search";
 const UA = "Mozilla/5.0 (compatible; FinVista/1.0)";
+const TIMEOUT_MS = 15_000;
 
 function toYahooSymbol(item: QuoteRequestItem): string {
   if (item.identifier_type === "stock_in") {
@@ -26,39 +28,81 @@ export async function yahooQuotes(items: QuoteRequestItem[]): Promise<MarketQuot
   for (const it of items) symbolMap.set(toYahooSymbol(it), it);
   const symbols = Array.from(symbolMap.keys()).join(",");
   const url = `${QUOTE_URL}?symbols=${encodeURIComponent(symbols)}`;
-  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
-  if (!res.ok) throw new Error(`Yahoo quote HTTP ${res.status}`);
-  const body = (await res.json()) as {
-    quoteResponse?: { result?: Array<Record<string, unknown>> };
-  };
+
+  console.log(`[yahoo] fetching ${symbolMap.size} symbols: ${symbols}`);
+
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(
+      url,
+      { headers: { "User-Agent": UA, Accept: "application/json" } },
+      TIMEOUT_MS,
+    );
+  } catch (err) {
+    console.error("[yahoo] network error", err);
+    return [];
+  }
+  if (!res.ok) {
+    console.error(`[yahoo] HTTP ${res.status} for ${symbols}`);
+    return [];
+  }
+
+  let body: { quoteResponse?: { result?: Array<Record<string, unknown>>; error?: unknown } };
+  try {
+    body = (await res.json()) as typeof body;
+  } catch (err) {
+    console.error("[yahoo] malformed JSON", err);
+    return [];
+  }
+  if (body.quoteResponse?.error) {
+    console.error("[yahoo] API error", body.quoteResponse.error);
+  }
+
   const now = new Date().toISOString();
   const out: MarketQuote[] = [];
   for (const q of body.quoteResponse?.result ?? []) {
     const sym = String(q.symbol ?? "");
     const req = symbolMap.get(sym);
     if (!req) continue;
-    const price = Number(q.regularMarketPrice);
-    const prev = Number(q.regularMarketPreviousClose);
-    if (!Number.isFinite(price) || price <= 0) continue; // Never emit 0/NaN
+    const price = normalizePrice(q.regularMarketPrice);
+    if (price == null) {
+      console.warn(`[yahoo] invalid price for ${sym}:`, q.regularMarketPrice);
+      continue;
+    }
+    const prev = normalizePrice(q.regularMarketPreviousClose);
     out.push({
       identifier_type: req.identifier_type,
       identifier: req.identifier,
       latest_price: price,
-      previous_close: Number.isFinite(prev) && prev > 0 ? prev : null,
-      currency: (q.currency as string) ?? null,
+      previous_close: prev,
+      currency: normalizeCurrency(q.currency),
       source: "yahoo",
       fetched_at: now,
       expires_at: null,
       stale: false,
     });
   }
+  console.log(`[yahoo] resolved ${out.length}/${symbolMap.size} quotes`);
   return out;
 }
 
 export async function yahooSearch(query: string, kind: IdentifierType): Promise<SearchResult[]> {
   const url = `${SEARCH_URL}?q=${encodeURIComponent(query)}&quotesCount=15&newsCount=0`;
-  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
-  if (!res.ok) throw new Error(`Yahoo search HTTP ${res.status}`);
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(
+      url,
+      { headers: { "User-Agent": UA, Accept: "application/json" } },
+      TIMEOUT_MS,
+    );
+  } catch (err) {
+    console.error("[yahoo] search network error", err);
+    return [];
+  }
+  if (!res.ok) {
+    console.error(`[yahoo] search HTTP ${res.status}`);
+    return [];
+  }
   const body = (await res.json()) as {
     quotes?: Array<{
       symbol?: string;

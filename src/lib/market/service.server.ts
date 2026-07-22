@@ -125,6 +125,8 @@ export async function getQuotes(
 
   if (items.length === 0) return [];
 
+  console.log(`[market] getQuotes: ${items.length} unique instrument(s), force=${!!opts.force}`);
+
   const cache = await loadCache(items);
 
   const now = Date.now();
@@ -146,16 +148,25 @@ export async function getQuotes(
     }
   }
 
+  console.log(`[market] cache hits=${fresh.length}, refresh=${stale.length}`);
+
   // Refresh stale
   let refreshed: MarketQuote[] = [];
   if (stale.length > 0) {
     try {
       refreshed = await fetchQuotes(stale);
     } catch (err) {
-      console.error("provider fetch failed", err);
+      console.error("[market] provider fetch failed", err);
       refreshed = [];
     }
   }
+
+  // Reject any invalid prices before they touch the cache.
+  refreshed = refreshed.filter((q) => {
+    const ok = isValid(q.latest_price);
+    if (!ok) console.warn(`[market] dropping invalid quote for ${q.identifier_type}:${q.identifier}`);
+    return ok;
+  });
 
   // Merge: prefer refreshed valid values; fall back to prior cache if provider failed.
   const refreshedKeys = new Set(refreshed.map((q) => `${q.identifier_type}:${q.identifier}`));
