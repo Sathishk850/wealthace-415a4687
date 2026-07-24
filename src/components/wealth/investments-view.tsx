@@ -590,6 +590,15 @@ function Overview({
             </div>
           </div>
 
+          <PortfolioMetrics
+            rows={rows}
+            invested={invested}
+            current={current}
+            portXirr={portXirr}
+            alloc={alloc}
+            sectorAlloc={sectorAlloc}
+          />
+
           <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs text-muted-foreground">
             <Info className="h-3.5 w-3.5 text-mint" />
             Categories tracked: {categories}. Update current price to refresh P&amp;L and XIRR.
