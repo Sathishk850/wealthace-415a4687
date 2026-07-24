@@ -425,9 +425,11 @@ function Overview({
   overallRet,
   portXirr,
   alloc,
+  sectorAlloc,
   trend,
   topHoldings,
   perfByClass,
+  rows,
   count,
   categories,
   onAdd,
@@ -440,9 +442,11 @@ function Overview({
   overallRet: number;
   portXirr: number;
   alloc: { name: string; amt: number; pct: number; color: string }[];
+  sectorAlloc: { s: string; pct: number; color: string }[];
   trend: { m: string; v: number }[];
   topHoldings: any[];
   perfByClass: { name: string; pct: number; bar: number }[];
+  rows: HoldRow[];
   count: number;
   categories: number;
   onAdd: () => void;
