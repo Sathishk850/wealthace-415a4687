@@ -171,10 +171,29 @@ function HoldingDetail() {
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Name" value={form.name} edit={edit} onChange={(v) => setForm({ ...form, name: v })} />
           <Field label="Category" value={form.category} edit={edit} onChange={(v) => setForm({ ...form, category: v })} />
+          <Field
+            label="Currency"
+            value={`${CURRENCY_SYMBOL[(initial.currency ?? "INR") as Currency]} · ${initial.currency ?? "INR"}`}
+            edit={false}
+            onChange={() => {}}
+          />
           <Field label="Quantity" value={String(form.quantity)} edit={edit} onChange={(v) => setForm({ ...form, quantity: Number(v) || 0 })} numeric />
-          <Field label="Avg Price" value={String(form.avg_price)} edit={edit} onChange={(v) => setForm({ ...form, avg_price: Number(v) || 0 })} numeric />
-          <Field label="Current Price" value={String(form.current_price)} edit={edit} onChange={(v) => setForm({ ...form, current_price: Number(v) || 0 })} numeric />
+          <Field
+            label={`Avg Price (${CURRENCY_SYMBOL[(initial.currency ?? "INR") as Currency]})`}
+            value={edit ? String(form.avg_price) : priceIn(form.avg_price, initial.currency)}
+            edit={edit}
+            onChange={(v) => setForm({ ...form, avg_price: Number(v) || 0 })}
+            numeric
+          />
+          <Field
+            label={`Current Price (${CURRENCY_SYMBOL[(initial.currency ?? "INR") as Currency]})`}
+            value={edit ? String(form.current_price) : priceIn(form.current_price, initial.currency)}
+            edit={edit}
+            onChange={(v) => setForm({ ...form, current_price: Number(v) || 0 })}
+            numeric
+          />
           <Field label="Last Updated" value={formatDate(initial.last_updated)} edit={false} onChange={() => {}} />
+
         </div>
       </div>
     </div>
