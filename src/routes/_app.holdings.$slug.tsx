@@ -151,11 +151,11 @@ function HoldingDetail() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Current Value" value={fmtINR(current)} />
-        <Stat label="Invested" value={fmtINR(invested)} />
+        <Stat label="Current Value" value={amountIn(current, initial.currency)} />
+        <Stat label="Invested" value={amountIn(invested, initial.currency)} />
         <Stat
           label="P&L"
-          value={(up ? "+" : "") + fmtINR(pnl)}
+          value={(up ? "+" : "") + amountIn(pnl, initial.currency)}
           tone={up ? "text-emerald-400" : "text-rose-400"}
           icon={up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
         />
