@@ -638,17 +638,16 @@ export function useUpsertInvestment() {
   return useMutation({
     mutationFn: async (input: InvestmentInput) => {
       const user_id = await uid();
-      const payload = investmentPayload(input);
       if (input.id) {
         const { error } = await supabase
           .from("wealth_investments")
-          .update(payload)
+          .update(investmentUpdatePayload(input))
           .eq("id", input.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("wealth_investments")
-          .insert({ ...payload, user_id });
+          .insert({ ...investmentPayload(input), user_id });
         if (error) throw error;
       }
     },
