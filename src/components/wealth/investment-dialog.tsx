@@ -36,6 +36,9 @@ import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
+  CURRENCIES,
+  CURRENCY_SYMBOL,
+  type Currency,
   INVESTMENT_CATEGORIES,
   type Investment,
   type InvestmentInput,
