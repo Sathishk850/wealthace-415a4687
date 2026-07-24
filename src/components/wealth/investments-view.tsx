@@ -315,9 +315,11 @@ export function InvestmentsView({
             overallRet={derived.overallRet}
             portXirr={derived.portXirr}
             alloc={alloc}
+            sectorAlloc={sectorAlloc}
             trend={trend}
             topHoldings={topHoldings}
             perfByClass={perfByClass}
+            rows={derived.rich}
             count={rows.length}
             categories={alloc.length}
             onAdd={() => {
@@ -357,19 +359,6 @@ export function InvestmentsView({
           />
         )}
 
-        {sub === "Portfolio" && (
-          <Portfolio
-            empty={showEmptyOnly}
-            alloc={alloc}
-            sectorAlloc={sectorAlloc}
-            topHoldings={topHoldings}
-            perfByClass={perfByClass}
-            invested={derived.invested}
-            current={derived.current}
-            portXirr={derived.portXirr}
-            rows={derived.rich}
-          />
-        )}
         {sub === "SIP Tracker" && (
           <SipTracker rows={derived.rich} onEdit={(r) => { setEditing(r); setDialogOpen(true); }} />
         )}
