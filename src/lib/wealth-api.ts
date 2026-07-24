@@ -621,7 +621,16 @@ function investmentPayload(i: InvestmentInput) {
     identifier_type: i.identifier_type?.trim() || null,
     identifier: i.identifier?.trim() || null,
     exchange: i.exchange?.trim() || null,
+    currency: (i.currency && CURRENCIES.includes(i.currency) ? i.currency : "INR") as Currency,
   };
+}
+
+/** Currency is immutable after creation — strip it from update payloads. */
+function investmentUpdatePayload(i: InvestmentInput) {
+  const p = investmentPayload(i);
+  const { currency: _omit, ...rest } = p;
+  void _omit;
+  return rest;
 }
 
 export function useUpsertInvestment() {
