@@ -477,6 +477,36 @@ export const INVESTMENT_CATEGORIES: InvestmentCategory[] = [
 
 export type SipFrequency = "monthly" | "weekly" | "quarterly" | "yearly";
 
+export type Currency = "INR" | "USD" | "EUR" | "GBP";
+export const CURRENCIES: Currency[] = ["INR", "USD", "EUR", "GBP"];
+export const CURRENCY_SYMBOL: Record<Currency, string> = {
+  INR: "₹",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
+/** Precise per-unit price formatter with currency symbol (2–4 dp). */
+export const priceIn = (n: number, ccy: Currency | string | null | undefined) => {
+  const sym = CURRENCY_SYMBOL[(ccy as Currency) ?? "INR"] ?? "₹";
+  const locale = ccy === "INR" ? "en-IN" : "en-US";
+  return (
+    sym +
+    (Number.isFinite(n) ? n : 0).toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    })
+  );
+};
+
+/** Rounded amount formatter with currency symbol (whole units). */
+export const amountIn = (n: number, ccy: Currency | string | null | undefined) => {
+  const sym = CURRENCY_SYMBOL[(ccy as Currency) ?? "INR"] ?? "₹";
+  const locale = ccy === "INR" ? "en-IN" : "en-US";
+  return sym + Math.round(Number.isFinite(n) ? n : 0).toLocaleString(locale);
+};
+
+
 export type Investment = {
   id: string;
   user_id: string;
