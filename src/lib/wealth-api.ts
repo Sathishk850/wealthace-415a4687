@@ -387,6 +387,15 @@ export function useBulkInsertLiabilities() {
 export const inr = (n: number) =>
   "₹" + Math.round(n).toLocaleString("en-IN");
 
+/** Preserves decimal precision (2–4 dp) — use for per-unit prices like avg_price / current_price. */
+export const inrPrice = (n: number) =>
+  "₹" +
+  (Number.isFinite(n) ? n : 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+
+
 export const inrSigned = (n: number) =>
   (n < 0 ? "-₹" : "+₹") + Math.abs(Math.round(n)).toLocaleString("en-IN");
 
