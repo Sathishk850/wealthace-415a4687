@@ -819,7 +819,7 @@ function Holdings({
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 text-muted-foreground">{h.category}</td>
+                        <td className="py-3 text-muted-foreground">{h.category}{h.currency && h.currency !== "INR" ? ` · ${h.currency}` : ""}</td>
                         <td className="py-3 text-right text-foreground">{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
                         <td className="py-3 text-right text-foreground">{inrPrice(h.avg_price)}</td>
                         <td className="py-3 text-right text-foreground">

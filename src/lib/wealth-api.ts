@@ -477,6 +477,36 @@ export const INVESTMENT_CATEGORIES: InvestmentCategory[] = [
 
 export type SipFrequency = "monthly" | "weekly" | "quarterly" | "yearly";
 
+export type Currency = "INR" | "USD" | "EUR" | "GBP";
+export const CURRENCIES: Currency[] = ["INR", "USD", "EUR", "GBP"];
+export const CURRENCY_SYMBOL: Record<Currency, string> = {
+  INR: "₹",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
+/** Precise per-unit price formatter with currency symbol (2–4 dp). */
+export const priceIn = (n: number, ccy: Currency | string | null | undefined) => {
+  const sym = CURRENCY_SYMBOL[(ccy as Currency) ?? "INR"] ?? "₹";
+  const locale = ccy === "INR" ? "en-IN" : "en-US";
+  return (
+    sym +
+    (Number.isFinite(n) ? n : 0).toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    })
+  );
+};
+
+/** Rounded amount formatter with currency symbol (whole units). */
+export const amountIn = (n: number, ccy: Currency | string | null | undefined) => {
+  const sym = CURRENCY_SYMBOL[(ccy as Currency) ?? "INR"] ?? "₹";
+  const locale = ccy === "INR" ? "en-IN" : "en-US";
+  return sym + Math.round(Number.isFinite(n) ? n : 0).toLocaleString(locale);
+};
+
+
 export type Investment = {
   id: string;
   user_id: string;
@@ -509,6 +539,7 @@ export type Investment = {
   price_source: string | null;
   price_updated_at: string | null;
   previous_close: number | null;
+  currency: Currency;
   created_at: string;
   updated_at: string;
 };
@@ -537,6 +568,7 @@ export type InvestmentInput = {
   identifier_type?: string | null;
   identifier?: string | null;
   exchange?: string | null;
+  currency?: Currency;
 };
 
 export function useInvestments() {
@@ -589,7 +621,16 @@ function investmentPayload(i: InvestmentInput) {
     identifier_type: i.identifier_type?.trim() || null,
     identifier: i.identifier?.trim() || null,
     exchange: i.exchange?.trim() || null,
+    currency: (i.currency && CURRENCIES.includes(i.currency) ? i.currency : "INR") as Currency,
   };
+}
+
+/** Currency is immutable after creation — strip it from update payloads. */
+function investmentUpdatePayload(i: InvestmentInput) {
+  const p = investmentPayload(i);
+  const { currency: _omit, ...rest } = p;
+  void _omit;
+  return rest;
 }
 
 export function useUpsertInvestment() {
@@ -597,17 +638,16 @@ export function useUpsertInvestment() {
   return useMutation({
     mutationFn: async (input: InvestmentInput) => {
       const user_id = await uid();
-      const payload = investmentPayload(input);
       if (input.id) {
         const { error } = await supabase
           .from("wealth_investments")
-          .update(payload)
+          .update(investmentUpdatePayload(input))
           .eq("id", input.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("wealth_investments")
-          .insert({ ...payload, user_id });
+          .insert({ ...investmentPayload(input), user_id });
         if (error) throw error;
       }
     },

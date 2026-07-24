@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowUpRight, ArrowDownRight, Save, Trash2 } from "lucide-react";
-import { useInvestments, useUpsertInvestment, useDeleteInvestment, formatDate } from "@/lib/wealth-api";
+import { useInvestments, useUpsertInvestment, useDeleteInvestment, formatDate, amountIn, priceIn, CURRENCY_SYMBOL, type Currency } from "@/lib/wealth-api";
 
 export const Route = createFileRoute("/_app/holdings/$slug")({
   head: () => ({
@@ -19,9 +19,6 @@ export const Route = createFileRoute("/_app/holdings/$slug")({
   ),
 });
 
-function fmtINR(n: number) {
-  return "₹" + Math.round(n).toLocaleString("en-IN");
-}
 
 function HoldingDetail() {
   const { slug } = Route.useParams();
@@ -154,11 +151,11 @@ function HoldingDetail() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Current Value" value={fmtINR(current)} />
-        <Stat label="Invested" value={fmtINR(invested)} />
+        <Stat label="Current Value" value={amountIn(current, initial.currency)} />
+        <Stat label="Invested" value={amountIn(invested, initial.currency)} />
         <Stat
           label="P&L"
-          value={(up ? "+" : "") + fmtINR(pnl)}
+          value={(up ? "+" : "") + amountIn(pnl, initial.currency)}
           tone={up ? "text-emerald-400" : "text-rose-400"}
           icon={up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
         />
@@ -174,10 +171,29 @@ function HoldingDetail() {
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Name" value={form.name} edit={edit} onChange={(v) => setForm({ ...form, name: v })} />
           <Field label="Category" value={form.category} edit={edit} onChange={(v) => setForm({ ...form, category: v })} />
+          <Field
+            label="Currency"
+            value={`${CURRENCY_SYMBOL[(initial.currency ?? "INR") as Currency]} · ${initial.currency ?? "INR"}`}
+            edit={false}
+            onChange={() => {}}
+          />
           <Field label="Quantity" value={String(form.quantity)} edit={edit} onChange={(v) => setForm({ ...form, quantity: Number(v) || 0 })} numeric />
-          <Field label="Avg Price" value={String(form.avg_price)} edit={edit} onChange={(v) => setForm({ ...form, avg_price: Number(v) || 0 })} numeric />
-          <Field label="Current Price" value={String(form.current_price)} edit={edit} onChange={(v) => setForm({ ...form, current_price: Number(v) || 0 })} numeric />
+          <Field
+            label={`Avg Price (${CURRENCY_SYMBOL[(initial.currency ?? "INR") as Currency]})`}
+            value={edit ? String(form.avg_price) : priceIn(form.avg_price, initial.currency)}
+            edit={edit}
+            onChange={(v) => setForm({ ...form, avg_price: Number(v) || 0 })}
+            numeric
+          />
+          <Field
+            label={`Current Price (${CURRENCY_SYMBOL[(initial.currency ?? "INR") as Currency]})`}
+            value={edit ? String(form.current_price) : priceIn(form.current_price, initial.currency)}
+            edit={edit}
+            onChange={(v) => setForm({ ...form, current_price: Number(v) || 0 })}
+            numeric
+          />
           <Field label="Last Updated" value={formatDate(initial.last_updated)} edit={false} onChange={() => {}} />
+
         </div>
       </div>
     </div>

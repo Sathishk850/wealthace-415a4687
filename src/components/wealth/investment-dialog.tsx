@@ -36,6 +36,9 @@ import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
+  CURRENCIES,
+  CURRENCY_SYMBOL,
+  type Currency,
   INVESTMENT_CATEGORIES,
   type Investment,
   type InvestmentInput,
@@ -255,6 +258,7 @@ const empty: InvestmentInput = {
   identifier_type: null,
   identifier: null,
   exchange: null,
+  currency: "INR",
 };
 
 function searchKindFor(category: string): IdentifierType | null {
@@ -294,6 +298,7 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             identifier_type: existing.identifier_type,
             identifier: existing.identifier,
             exchange: existing.exchange,
+            currency: (existing.currency ?? "INR") as Currency,
           }
         : empty,
     );
@@ -409,6 +414,23 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
               onChange={(v) => setForm({ ...form, sub_category: v })}
             />
           </Field>
+          <Field label={`Currency${existing ? "" : " *"}`}>
+            <Select
+              value={form.currency ?? "INR"}
+              onValueChange={(v) => setForm({ ...form, currency: v as Currency })}
+              disabled={!!existing}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c} value={c}>{CURRENCY_SYMBOL[c]} · {c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {existing ? (
+              <p className="mt-1 text-[11px] text-muted-foreground">Currency is locked after creation.</p>
+            ) : null}
+          </Field>
           <Field label="Symbol / Ticker">
             <Input
               value={form.symbol ?? ""}
@@ -429,14 +451,14 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
               onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
             />
           </Field>
-          <Field label="Avg buy price (₹) *">
+          <Field label={`Avg buy price (${CURRENCY_SYMBOL[(form.currency ?? "INR") as Currency]}) *`}>
             <Input
               type="number" min={0} step="0.01"
               value={form.avg_price || ""}
               onChange={(e) => setForm({ ...form, avg_price: Number(e.target.value) })}
             />
           </Field>
-          <Field label="Current price (₹) *">
+          <Field label={`Current price (${CURRENCY_SYMBOL[(form.currency ?? "INR") as Currency]}) *`}>
             <Input
               type="number" min={0} step="0.01"
               value={form.current_price || ""}
