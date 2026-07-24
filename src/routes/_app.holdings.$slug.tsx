@@ -19,9 +19,6 @@ export const Route = createFileRoute("/_app/holdings/$slug")({
   ),
 });
 
-function fmtINR(n: number) {
-  return "₹" + Math.round(n).toLocaleString("en-IN");
-}
 
 function HoldingDetail() {
   const { slug } = Route.useParams();
