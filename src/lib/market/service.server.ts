@@ -170,12 +170,43 @@ export async function getQuotes(
     }
   }
 
-  // Reject any invalid prices before they touch the cache.
+  // Identify invalid refreshed quotes and purge their cache rows so next fetch is forced.
+  const invalidRefreshed = refreshed.filter((q) => !isValid(q.latest_price));
   refreshed = refreshed.filter((q) => {
     const ok = isValid(q.latest_price);
     if (!ok) console.warn(`[market] dropping invalid quote for ${q.identifier_type}:${q.identifier}`);
     return ok;
   });
+  if (invalidRefreshed.length > 0) {
+    try {
+      const mod: SupabaseAdminModule = await import("@/integrations/supabase/client.server");
+      const { supabaseAdmin } = mod;
+      await Promise.all(
+        invalidRefreshed.map((q) => {
+          console.log(`[market] purging invalid cache for ${q.identifier_type}:${q.identifier}`);
+          return supabaseAdmin
+            .from("market_price_cache")
+            .delete()
+            .eq("identifier_type", q.identifier_type)
+            .eq("identifier", q.identifier);
+        }),
+      );
+    } catch (err) {
+      console.error("[market] cache purge failed", err);
+    }
+  }
+
+  // Variance guard: warn when price jumps >20% vs previous close (still returned, flagged in logs).
+  for (const q of refreshed) {
+    if (q.previous_close && q.previous_close > 0 && q.latest_price) {
+      const variance = Math.abs((q.latest_price - q.previous_close) / q.previous_close);
+      if (variance > 0.2) {
+        console.warn(
+          `[market] VARIANCE ${q.identifier_type}:${q.identifier} jumped ${(variance * 100).toFixed(1)}% from ${q.previous_close} to ${q.latest_price} (source=${q.source})`,
+        );
+      }
+    }
+  }
 
   // Merge: prefer refreshed valid values; fall back to prior cache if provider failed.
   const refreshedKeys = new Set(refreshed.map((q) => `${q.identifier_type}:${q.identifier}`));
@@ -188,6 +219,7 @@ export async function getQuotes(
       finalStale.push({ ...prior, stale: true });
     }
   }
+
 
   // Write successfully refreshed values to cache
   if (refreshed.length > 0) {

@@ -68,6 +68,8 @@ import {
   groupByCategory,
   inr,
   inrCompact,
+  inrPrice,
+
   portfolioXirr,
   singleXirr,
   useBulkInsertInvestments,
@@ -819,10 +821,10 @@ function Holdings({
                         </td>
                         <td className="py-3 text-muted-foreground">{h.category}</td>
                         <td className="py-3 text-right text-foreground">{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
-                        <td className="py-3 text-right text-foreground">{inr(h.avg_price)}</td>
+                        <td className="py-3 text-right text-foreground">{inrPrice(h.avg_price)}</td>
                         <td className="py-3 text-right text-foreground">
                           <div className="flex flex-col items-end">
-                            <span>{inr(h.live_price || h.current_price)}</span>
+                            <span>{inrPrice(h.live_price || h.current_price)}</span>
                             {h.has_live ? (
                               <span
                                 className="text-[10px] text-mint"
