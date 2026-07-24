@@ -568,6 +568,7 @@ export type InvestmentInput = {
   identifier_type?: string | null;
   identifier?: string | null;
   exchange?: string | null;
+  currency?: Currency;
 };
 
 export function useInvestments() {
