@@ -258,6 +258,7 @@ const empty: InvestmentInput = {
   identifier_type: null,
   identifier: null,
   exchange: null,
+  currency: "INR",
 };
 
 function searchKindFor(category: string): IdentifierType | null {
