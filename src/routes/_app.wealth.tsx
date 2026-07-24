@@ -22,7 +22,6 @@ export const Route = createFileRoute("/_app/wealth")({
 type TabValue =
   | "investments"
   | "holdings"
-  | "portfolio"
   | "sip-tracker"
   | "performance"
   | "pl-analysis"
@@ -33,9 +32,8 @@ type TabValue =
   | "family";
 
 const TABS: { value: TabValue; label: string }[] = [
-  { value: "investments", label: "Investments" },
+  { value: "investments", label: "Investments & Portfolio" },
   { value: "holdings", label: "Holdings" },
-  { value: "portfolio", label: "Portfolio" },
   { value: "sip-tracker", label: "SIP Tracker" },
   { value: "performance", label: "Performance" },
   { value: "pl-analysis", label: "P&L Analysis" },
@@ -49,7 +47,6 @@ const TABS: { value: TabValue; label: string }[] = [
 const INVESTMENT_SUB: Record<string, InvestmentsSub> = {
   investments: "Overview",
   holdings: "Holdings",
-  portfolio: "Portfolio",
   "sip-tracker": "SIP Tracker",
   performance: "Performance",
   "pl-analysis": "P&L Analysis",
