@@ -298,6 +298,7 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             identifier_type: existing.identifier_type,
             identifier: existing.identifier,
             exchange: existing.exchange,
+            currency: (existing.currency ?? "INR") as Currency,
           }
         : empty,
     );
