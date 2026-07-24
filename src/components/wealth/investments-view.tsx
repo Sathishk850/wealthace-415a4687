@@ -872,31 +872,22 @@ function Holdings({
   );
 }
 
-/* =================== PORTFOLIO =================== */
-function Portfolio({
-  empty,
-  alloc,
-  sectorAlloc,
-  topHoldings,
-  perfByClass,
+/* =================== PORTFOLIO METRICS (merged into Overview) =================== */
+function PortfolioMetrics({
+  rows,
   invested,
   current,
   portXirr,
-  rows,
+  alloc,
+  sectorAlloc,
 }: {
-  empty: boolean;
-  alloc: { name: string; pct: number; amt: number; color: string }[];
-  sectorAlloc: { s: string; pct: number; color: string }[];
-  topHoldings: any[];
-  perfByClass: { name: string; pct: number; bar: number }[];
+  rows: HoldRow[];
   invested: number;
   current: number;
   portXirr: number;
-  rows: HoldRow[];
+  alloc: { name: string; amt: number; pct: number; color: string }[];
+  sectorAlloc: { s: string; pct: number; color: string }[];
 }) {
-  if (empty)
-    return <Empty primary="No portfolio yet" secondary="Add investments to see allocation, sector breakdown, XIRR and CAGR." />;
-
   const years = rows.reduce((s, r) => {
     if (!r.purchase_date) return s;
     const y = (Date.now() - new Date(r.purchase_date).getTime()) / (365.25 * 86400000);
@@ -904,67 +895,33 @@ function Portfolio({
   }, 0);
   const weightedYears = invested > 0 ? years / invested : 0;
   const cagr = cagrPct(invested, current, Math.max(0.01, weightedYears));
-  const div = Math.min(10, Math.max(1, new Set(rows.map((r) => r.category)).size + new Set(rows.map((r) => r.sub_category || r.category)).size / 2));
+  const div = Math.min(
+    10,
+    Math.max(
+      1,
+      new Set(rows.map((r) => r.category)).size +
+        new Set(rows.map((r) => r.sub_category || r.category)).size / 2,
+    ),
+  );
   const health =
     portXirr >= 15 ? "Excellent" : portXirr >= 10 ? "Good" : portXirr >= 5 ? "Fair" : "Needs review";
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="text-sm font-semibold text-foreground">Allocation</h3>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="relative h-[160px] w-[160px] shrink-0">
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={alloc} dataKey="pct" innerRadius={52} outerRadius={76} paddingAngle={2} stroke="none">
-                    {alloc.map((a) => (<Cell key={a.name} fill={a.color} />))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="min-w-0 flex-1 space-y-2">
-              {alloc.map((a) => (
-                <div key={a.name} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 text-xs">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
-                    <span className="truncate text-foreground">{a.name}</span>
-                  </div>
-                  <span className="shrink-0 font-medium text-muted-foreground">{a.pct.toFixed(1)}%</span>
-                  <span className="shrink-0 text-right font-medium text-foreground">{inrCompact(a.amt)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="text-sm font-semibold text-foreground">Sector Analysis</h3>
-          <div className="mt-4 space-y-3">
-            {sectorAlloc.map((r) => (
-              <div key={r.s}>
-                <div className="mb-1.5 flex items-center justify-between text-xs">
-                  <span className="text-foreground">{r.s}</span>
-                  <span className="font-medium text-muted-foreground">{r.pct}%</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, r.pct * 2.5)}%`, background: r.color }} />
-                </div>
-              </div>
-            ))}
-            {sectorAlloc.length === 0 && (
-              <div className="grid h-24 place-items-center text-xs text-muted-foreground">No data yet</div>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { k: "XIRR", v: `${portXirr.toFixed(2)}%`, t: "Money-weighted return" },
           { k: "CAGR", v: `${cagr.toFixed(2)}%`, t: "Annualized" },
-          { k: "Diversification", v: `${div.toFixed(0)} / 10`, t: `Across ${alloc.length} asset class${alloc.length === 1 ? "" : "es"}` },
-          { k: "Portfolio Health", v: health, t: portXirr < 10 ? "Rebalance suggested" : "On track" },
+          {
+            k: "Diversification",
+            v: `${div.toFixed(0)} / 10`,
+            t: `Across ${alloc.length} asset class${alloc.length === 1 ? "" : "es"}`,
+          },
+          {
+            k: "Portfolio Health",
+            v: health,
+            t: portXirr < 10 ? "Rebalance suggested" : "On track",
+          },
         ].map((m) => (
           <div key={m.k} className="rounded-2xl border border-border bg-card p-4">
             <div className="text-xs text-muted-foreground">{m.k}</div>
@@ -974,53 +931,32 @@ function Portfolio({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-4">
-          <h3 className="text-sm font-semibold text-foreground">Top Holdings</h3>
-          <div className="mt-3 space-y-3">
-            {topHoldings.map((h) => {
-              const pct = current > 0 ? (h.cur / current) * 100 : 0;
-              return (
-                <div key={h.id} className="flex items-center gap-2">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[10px] font-bold text-white" style={{ background: h.color }}>{h.name.slice(0, 1)}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-medium text-foreground">{h.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{h.sub_category || h.category}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-medium text-mint">{pct.toFixed(2)}%</div>
-                    <div className="text-[10px] text-foreground">{inr(h.cur)}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-8">
-          <h3 className="text-sm font-semibold text-foreground">Asset Class Performance</h3>
-          <div className="mt-4 space-y-4">
-            {perfByClass.map((a) => {
-              const positive = a.pct >= 0;
-              return (
-                <div key={a.name}>
-                  <div className="mb-1.5 flex items-center justify-between text-xs">
-                    <span className="text-foreground">{a.name}</span>
-                    <span className={`font-medium ${positive ? "text-emerald-400" : "text-rose-400"}`}>
-                      {positive ? "+" : ""}{a.pct.toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                    <div className="h-full rounded-full" style={{ width: `${a.bar}%`, background: positive ? "#14D8CF" : "#EF4444" }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <h3 className="text-sm font-semibold text-foreground">Sector Analysis</h3>
+        <div className="mt-4 space-y-3">
+          {sectorAlloc.map((r) => (
+            <div key={r.s}>
+              <div className="mb-1.5 flex items-center justify-between text-xs">
+                <span className="text-foreground">{r.s}</span>
+                <span className="font-medium text-muted-foreground">{r.pct}%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${Math.min(100, r.pct * 2.5)}%`, background: r.color }}
+                />
+              </div>
+            </div>
+          ))}
+          {sectorAlloc.length === 0 && (
+            <div className="grid h-24 place-items-center text-xs text-muted-foreground">No data yet</div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
 
 /* =================== SIP TRACKER =================== */
 function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment) => void }) {
