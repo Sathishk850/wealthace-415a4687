@@ -19,7 +19,11 @@ function toYahooSymbol(item: QuoteRequestItem): string {
   if (item.identifier_type === "crypto") {
     return item.identifier.includes("-") ? item.identifier : `${item.identifier}-USD`;
   }
-  return item.identifier; // stock_us or already suffixed
+  if (item.identifier_type === "stock_us") {
+    // Strip accidental suffixes (.US, .O, .NS, .BO) — Yahoo US tickers are bare.
+    return item.identifier.trim().toUpperCase().replace(/\.(US|O|NS|BO)$/i, "");
+  }
+  return item.identifier;
 }
 
 export async function yahooQuotes(items: QuoteRequestItem[]): Promise<MarketQuote[]> {
