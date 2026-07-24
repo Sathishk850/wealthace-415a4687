@@ -539,6 +539,7 @@ export type Investment = {
   price_source: string | null;
   price_updated_at: string | null;
   previous_close: number | null;
+  currency: Currency;
   created_at: string;
   updated_at: string;
 };
