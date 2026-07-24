@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowUpRight, ArrowDownRight, Save, Trash2 } from "lucide-react";
-import { useInvestments, useUpsertInvestment, useDeleteInvestment, formatDate } from "@/lib/wealth-api";
+import { useInvestments, useUpsertInvestment, useDeleteInvestment, formatDate, amountIn, priceIn, CURRENCY_SYMBOL, type Currency } from "@/lib/wealth-api";
 
 export const Route = createFileRoute("/_app/holdings/$slug")({
   head: () => ({
