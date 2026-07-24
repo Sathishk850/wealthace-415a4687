@@ -1276,6 +1276,7 @@ export type Database = {
           avg_price: number
           category: string
           created_at: string
+          currency: string
           current_price: number
           current_value: number | null
           exchange: string | null
@@ -1311,6 +1312,7 @@ export type Database = {
           avg_price?: number
           category: string
           created_at?: string
+          currency?: string
           current_price?: number
           current_value?: number | null
           exchange?: string | null
@@ -1346,6 +1348,7 @@ export type Database = {
           avg_price?: number
           category?: string
           created_at?: string
+          currency?: string
           current_price?: number
           current_value?: number | null
           exchange?: string | null
