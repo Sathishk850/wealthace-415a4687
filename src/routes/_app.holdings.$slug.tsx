@@ -204,6 +204,7 @@ function Field({
       {edit ? (
         <input
           type={numeric ? "number" : "text"}
+          step={numeric ? "0.01" : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="mt-1 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-foreground focus:border-mint/50 focus:outline-none"
