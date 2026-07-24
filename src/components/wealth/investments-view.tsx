@@ -68,6 +68,8 @@ import {
   groupByCategory,
   inr,
   inrCompact,
+  inrPrice,
+
   portfolioXirr,
   singleXirr,
   useBulkInsertInvestments,
