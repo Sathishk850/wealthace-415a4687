@@ -81,7 +81,7 @@ import { toast } from "sonner";
 
 
 const PIE = ["#3B82F6", "#14D8CF", "#F59E0B", "#8B5CF6", "#10B981", "#F97316", "#EF4444", "#94A3B8"];
-const SUB = ["Overview", "Holdings", "Portfolio", "SIP Tracker", "Performance", "P&L Analysis"] as const;
+const SUB = ["Overview", "Holdings", "SIP Tracker", "Performance", "P&L Analysis"] as const;
 const PAGE = 8;
 
 export type InvestmentsSub = (typeof SUB)[number];
