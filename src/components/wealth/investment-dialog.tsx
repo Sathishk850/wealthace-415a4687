@@ -414,6 +414,23 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
               onChange={(v) => setForm({ ...form, sub_category: v })}
             />
           </Field>
+          <Field label={`Currency${existing ? "" : " *"}`}>
+            <Select
+              value={form.currency ?? "INR"}
+              onValueChange={(v) => setForm({ ...form, currency: v as Currency })}
+              disabled={!!existing}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c} value={c}>{CURRENCY_SYMBOL[c]} · {c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {existing ? (
+              <p className="mt-1 text-[11px] text-muted-foreground">Currency is locked after creation.</p>
+            ) : null}
+          </Field>
           <Field label="Symbol / Ticker">
             <Input
               value={form.symbol ?? ""}
