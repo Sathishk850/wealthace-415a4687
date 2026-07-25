@@ -23,7 +23,7 @@ function saveState(s: ExpandedState) {
   try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch {}
 }
 
-export function WhatsNewPage() {
+export function WhatsNewPage({ showHeader = true }: { showHeader?: boolean } = {}) {
   const grouped = useMemo(() => groupReleases(allReleases), []);
   const latestVersion = allReleases[0]?.version;
 
@@ -58,10 +58,12 @@ export function WhatsNewPage() {
 
   return (
     <>
-      <PageHeader
-        title="What's New"
-        description="See the latest features, improvements and fixes."
-      />
+      {showHeader && (
+        <PageHeader
+          title="What's New"
+          description="See the latest features, improvements and fixes."
+        />
+      )}
       <div className="space-y-3">
         {grouped.map((y) => {
           const yKey = `y:${y.year}`;
