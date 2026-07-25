@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { TextTabs } from "@/components/text-tabs";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
 import { PaymentAccountsPanel } from "@/components/payment/payment-accounts-panel";
+import { WhatsNewPage } from "@/components/settings/whats-new-page";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,7 @@ function Settings() {
           { value: "appearance", label: "Appearance" },
           { value: "security", label: "Security" },
           { value: "data", label: "Data & Backup" },
+          { value: "whats-new", label: "What's New" },
         ]}
         value={tab}
         onChange={setTab}
@@ -62,6 +64,7 @@ function Settings() {
         {tab === "appearance" && <AppearanceTab />}
         {tab === "security" && <SecurityTab />}
         {tab === "data" && <DataTab />}
+        {tab === "whats-new" && <WhatsNewPage showHeader={false} />}
       </div>
     </>
   );
