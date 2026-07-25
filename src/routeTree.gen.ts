@@ -30,6 +30,7 @@ import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
 import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slug'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
+import { Route as ApiPublicHooksReleaseNotesRouteImport } from './routes/api/public/hooks/release-notes'
 import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -137,6 +138,12 @@ const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
   path: '/networth',
   getParentRoute: () => AppDashboardRoute,
 } as any)
+const ApiPublicHooksReleaseNotesRoute =
+  ApiPublicHooksReleaseNotesRouteImport.update({
+    id: '/api/public/hooks/release-notes',
+    path: '/api/public/hooks/release-notes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNotificationCronRoute =
   ApiPublicHooksNotificationCronRouteImport.update({
     id: '/api/public/hooks/notification-cron',
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/reports/': typeof AppReportsIndexRoute
   '/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
+  '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -188,6 +196,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AppReportsIndexRoute
   '/tools': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
+  '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
+  '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/tools/'
     | '/api/public/hooks/notification-cron'
+    | '/api/public/hooks/release-notes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/tools'
     | '/api/public/hooks/notification-cron'
+    | '/api/public/hooks/release-notes'
   id:
     | '__root__'
     | '/'
@@ -284,6 +296,7 @@ export interface FileRouteTypes {
     | '/_app/reports/'
     | '/_app/tools/'
     | '/api/public/hooks/notification-cron'
+    | '/api/public/hooks/release-notes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -292,6 +305,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
+  ApiPublicHooksReleaseNotesRoute: typeof ApiPublicHooksReleaseNotesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -443,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardNetworthRouteImport
       parentRoute: typeof AppDashboardRoute
     }
+    '/api/public/hooks/release-notes': {
+      id: '/api/public/hooks/release-notes'
+      path: '/api/public/hooks/release-notes'
+      fullPath: '/api/public/hooks/release-notes'
+      preLoaderRoute: typeof ApiPublicHooksReleaseNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/notification-cron': {
       id: '/api/public/hooks/notification-cron'
       path: '/api/public/hooks/notification-cron'
@@ -531,17 +552,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
+  ApiPublicHooksReleaseNotesRoute: ApiPublicHooksReleaseNotesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
