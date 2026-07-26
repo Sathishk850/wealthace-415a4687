@@ -78,7 +78,6 @@ export function FinCalculators() {
     { id: "swp", title: "SWP Calculator", desc: "Systematic withdrawals", icon: Wallet, render: () => <SWPCalc /> },
     { id: "fd", title: "FD Calculator", desc: "Fixed deposit maturity", icon: Banknote, render: () => <FDCalc /> },
     { id: "rd", title: "RD Calculator", desc: "Recurring deposit maturity", icon: Coins, render: () => <RDCalc /> },
-    { id: "goal", title: "Goal Planner", desc: "SIP to reach a goal", icon: Target, render: () => <GoalCalc /> },
     { id: "xirr", title: "XIRR Calculator", desc: "Irregular cashflow returns", icon: Percent, render: () => <XIRRCalc /> },
   ];
 
