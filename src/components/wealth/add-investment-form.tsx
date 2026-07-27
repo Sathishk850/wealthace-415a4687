@@ -30,7 +30,7 @@ import {
   type InvestmentInput,
 } from "@/lib/wealth-api";
 import { PaymentFields, type PaymentFieldsValue } from "@/components/payment/payment-fields";
-import { flushPaymentPreference } from "@/lib/user-payment-prefs-api";
+// Note: staged preferences are auto-committed by the outflow save path; no direct flush needed here.
 
 // ---------- Constants ----------
 
