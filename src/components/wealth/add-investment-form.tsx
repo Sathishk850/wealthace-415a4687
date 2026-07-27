@@ -745,12 +745,6 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
     try {
       await upsert.mutateAsync(payload);
-      // Persist last-used payment prefs for cross-device sync.
-      try {
-        await flushPaymentPreference();
-      } catch {
-        /* non-fatal */
-      }
       toast.success(isEdit ? "Investment updated" : "Investment added");
       if (onSaved) onSaved();
       else navigate({ to: "/wealth" });
