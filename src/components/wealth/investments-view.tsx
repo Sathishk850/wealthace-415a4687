@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart,
@@ -114,12 +115,13 @@ export function InvestmentsView({
   } = useInvestmentQuotes(rows);
   const refreshHoldings = useRefreshHoldings();
 
+  const navigate = useNavigate();
   if (registerAdd) {
     registerAdd(() => {
-      setEditing(null);
-      setDialogOpen(true);
+      navigate({ to: "/wealth/add-investment" });
     });
   }
+
 
   /* ===== Derived metrics ===== */
   const derived = useMemo(() => {
