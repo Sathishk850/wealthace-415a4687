@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart,
