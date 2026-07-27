@@ -1,6 +1,7 @@
-// Add Investment — 3-step wizard form.
-// Rebuilt with standard HTML elements to avoid UI component dependency issues.
-// Uses existing Market Data server fns and wealth-api mutations.
+// Add Investment — single-page template matching FinVista reference design.
+// Two-column desktop layout: Sections 1–3 on the left, Payment sidebar on the
+// right, and a single bottom action bar. Uses existing Market Data server fns,
+// wealth-api mutations, and shared PaymentFields component.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,14 +9,12 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   Search,
   Loader2,
-  Link2,
-  Link2Off,
   Plus,
-  Sparkles,
   ArrowLeft,
-  ArrowRight,
-  RotateCcw,
-  Save,
+  HelpCircle,
+  Pencil,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,6 +29,8 @@ import {
   type Investment,
   type InvestmentInput,
 } from "@/lib/wealth-api";
+import { PaymentFields, type PaymentFieldsValue } from "@/components/payment/payment-fields";
+import { flushPaymentPreference } from "@/lib/user-payment-prefs-api";
 
 // ---------- Constants ----------
 
@@ -37,8 +38,8 @@ const DEFAULT_PLATFORMS = [
   "Groww",
   "Zerodha",
   "Coin by Zerodha",
-  "Angel One",
   "Upstox",
+  "Angel One",
   "Dhan",
   "FYERS",
   "ICICI Direct",
@@ -60,12 +61,39 @@ const DEFAULT_PLATFORMS = [
 
 const CUSTOM_PLATFORMS_KEY = "finvista:custom-platforms";
 
-const CATEGORY_OPTIONS = ["Stocks", "Mutual Funds", "ETFs"];
+type CategoryFilter =
+  | "all"
+  | "stock_in"
+  | "mf_in"
+  | "stock_us"
+  | "etf_us"
+  | "reit"
+  | "bond"
+  | "gold"
+  | "crypto";
+
+const CATEGORY_FILTERS: { value: CategoryFilter; label: string }[] = [
+  { value: "all", label: "All Categories" },
+  { value: "stock_in", label: "Stocks (India)" },
+  { value: "mf_in", label: "Mutual Funds (India)" },
+  { value: "stock_us", label: "Stocks (US)" },
+  { value: "etf_us", label: "ETFs (US)" },
+  { value: "reit", label: "REITs / InvITs" },
+  { value: "bond", label: "Bonds" },
+  { value: "gold", label: "Gold / Commodity" },
+  { value: "crypto", label: "Crypto" },
+];
+
+const CATEGORY_OPTIONS = ["Stocks", "Mutual Funds", "ETFs", "REITs", "Bonds", "Commodity", "Crypto"];
 
 const SEGMENT_BY_CATEGORY: Record<string, string[]> = {
   Stocks: ["Equity"],
   "Mutual Funds": ["Equity", "Debt", "Hybrid", "Commodity", "Multi Asset", "International"],
   ETFs: ["Equity", "Debt", "Commodity", "International"],
+  REITs: ["Real Estate"],
+  Bonds: ["Debt"],
+  Commodity: ["Commodity"],
+  Crypto: ["Crypto"],
 };
 
 const CLASSIFICATION_SUGGESTIONS: Record<string, string[]> = {
@@ -95,8 +123,8 @@ const CLASSIFICATION_SUGGESTIONS: Record<string, string[]> = {
 };
 
 const SECTOR_SUGGESTIONS = [
+  "Technology",
   "Banking",
-  "IT/Software",
   "Pharma/Healthcare",
   "Auto/Automotive",
   "Energy/Oil & Gas",
@@ -110,7 +138,28 @@ const SECTOR_SUGGESTIONS = [
   "Chemical",
 ];
 
-const SEARCH_KINDS: IdentifierType[] = ["mf_in", "stock_in", "stock_us"];
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "sold", label: "Sold" },
+  { value: "matured", label: "Matured" },
+];
+
+function kindsForFilter(f: CategoryFilter): IdentifierType[] {
+  switch (f) {
+    case "stock_in":
+      return ["stock_in"];
+    case "mf_in":
+      return ["mf_in"];
+    case "stock_us":
+    case "etf_us":
+      return ["stock_us"];
+    case "crypto":
+      return ["crypto"];
+    case "all":
+    default:
+      return ["stock_in", "mf_in", "stock_us"];
+  }
+}
 
 // ---------- Platform storage ----------
 
@@ -157,15 +206,15 @@ function detectSector(name: string): string {
   const n = name.toLowerCase();
   if (/bank|finance|financial|insur|nbfc|capital/.test(n)) return "Banking";
   if (/pharma|drug|health|hospital|life\s*sci|bio/.test(n)) return "Pharma/Healthcare";
-  if (/tech|software|infosys|tcs|wipro|hcl|mindtree|infotech|systems|digital/.test(n))
-    return "IT/Software";
+  if (/tech|software|infosys|tcs|wipro|hcl|apple|microsoft|google|amazon|meta|nvidia/.test(n))
+    return "Technology";
   if (/energy|oil|gas|petro|coal|reliance|ongc|ntpc|power|solar|renew/.test(n))
     return "Energy/Oil & Gas";
-  if (/motor|auto|maruti|mahindra|hero|bajaj\s*auto/.test(n)) return "Auto/Automotive";
+  if (/motor|auto|maruti|mahindra|hero|bajaj\s*auto|tesla|ford/.test(n)) return "Auto/Automotive";
   if (/steel|metal|zinc|copper|aluminium|mining|jindal|hindalco/.test(n)) return "Metals/Mining";
   if (/cement|infra|construction/.test(n)) return "Infrastructure";
   if (/fmcg|hindustan\s*unilever|nestle|dabur|itc|godrej/.test(n)) return "FMCG";
-  if (/telecom|airtel|jio|vodafone|idea/.test(n)) return "Telecom";
+  if (/telecom|airtel|jio|vodafone|idea|verizon|at&t/.test(n)) return "Telecom";
   if (/real\s*estate|realty|dlf|prestige|oberoi/.test(n)) return "Real Estate";
   if (/chemical|specialty/.test(n)) return "Chemical";
   return "";
@@ -222,10 +271,12 @@ function classifySearchResult(r: SearchResult): Classification {
   }
 
   if (r.identifier_type === "stock_in" || r.identifier_type === "stock_us") {
+    // Rough cap classification is not reliably derivable from search alone;
+    // default to "Large Cap" and let the user edit.
     return {
       category: "Stocks",
       segment: "Equity",
-      classification: "",
+      classification: "Large Cap",
       sector: detectSector(r.name),
     };
   }
@@ -233,15 +284,23 @@ function classifySearchResult(r: SearchResult): Classification {
   return { category: "", segment: "", classification: "", sector: "" };
 }
 
-function inferCountry(r: SearchResult): string {
-  if (r.identifier_type === "stock_in" || r.identifier_type === "mf_in") return "India";
-  if (r.identifier_type === "stock_us") return "United States";
-  return "";
+function inferCountry(r: SearchResult): { country: string; flag: string } {
+  if (r.identifier_type === "stock_in" || r.identifier_type === "mf_in")
+    return { country: "India", flag: "🇮🇳" };
+  if (r.identifier_type === "stock_us") return { country: "United States", flag: "🇺🇸" };
+  return { country: "", flag: "" };
+}
+
+function kindBadge(k: IdentifierType): string {
+  if (k === "mf_in") return "MF (India)";
+  if (k === "stock_in") return "Stock (IN)";
+  if (k === "stock_us") return "Stock (US)";
+  return "Crypto";
 }
 
 // ---------- Search hook ----------
 
-function useMultiSearch(query: string) {
+function useMultiSearch(query: string, filter: CategoryFilter) {
   const runSearch = useServerFn(searchInstruments);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -259,11 +318,12 @@ function useMultiSearch(query: string) {
     const mine = ++seqRef.current;
     setLoading(true);
     setError(null);
+    const kinds = kindsForFilter(filter);
 
     (async () => {
       try {
         const settled = await Promise.allSettled(
-          SEARCH_KINDS.map((kind) => runSearch({ data: { query: q, kind } })),
+          kinds.map((kind) => runSearch({ data: { query: q, kind } })),
         );
         if (seqRef.current !== mine) return;
         const merged: SearchResult[] = [];
@@ -274,6 +334,13 @@ function useMultiSearch(query: string) {
             const key = `${r.identifier_type}:${r.identifier}:${r.exchange ?? ""}`;
             if (seen.has(key)) continue;
             seen.add(key);
+            // ETF filter: keep only ETFs when user picked etf_us.
+            if (filter === "etf_us") {
+              const isETF =
+                /\betf\b|exchange traded fund/i.test(r.name) ||
+                (r.meta?.quoteType ?? "").toUpperCase() === "ETF";
+              if (!isETF) continue;
+            }
             merged.push(r);
           }
         }
@@ -295,16 +362,9 @@ function useMultiSearch(query: string) {
         if (seqRef.current === mine) setLoading(false);
       }
     })();
-  }, [query, runSearch]);
+  }, [query, filter, runSearch]);
 
   return { results, loading, error };
-}
-
-function kindLabel(k: IdentifierType) {
-  if (k === "mf_in") return "MF";
-  if (k === "stock_in") return "IN";
-  if (k === "stock_us") return "US";
-  return "CR";
 }
 
 // ---------- Form state ----------
@@ -316,6 +376,7 @@ type FormState = {
   identifier_type: IdentifierType | null;
   exchange: string | null;
   country: string;
+  country_flag: string;
   currency: Currency;
 
   category: string;
@@ -328,6 +389,12 @@ type FormState = {
   quantity: string;
   avg_price: string;
   notes: string;
+
+  is_sip: boolean;
+  status: string;
+
+  payment_mode: string | null;
+  payment_account_id: string | null;
 
   current_price: number | null;
   price_source: string | null;
@@ -344,6 +411,7 @@ const EMPTY: FormState = {
   identifier_type: null,
   exchange: null,
   country: "",
+  country_flag: "",
   currency: "INR",
   category: "",
   segment: "",
@@ -354,6 +422,10 @@ const EMPTY: FormState = {
   quantity: "",
   avg_price: "",
   notes: "",
+  is_sip: false,
+  status: "active",
+  payment_mode: null,
+  payment_account_id: null,
   current_price: null,
   price_source: null,
 };
@@ -374,6 +446,8 @@ function extractPlatform(notes: string | null): { platform: string; rest: string
 
 function investmentToForm(inv: Investment): FormState {
   const { platform, rest } = extractPlatform(inv.notes);
+  const flag =
+    inv.identifier_type === "stock_us" ? "🇺🇸" : inv.identifier_type ? "🇮🇳" : "";
   return {
     name: inv.name,
     symbol: inv.symbol ?? "",
@@ -381,6 +455,7 @@ function investmentToForm(inv: Investment): FormState {
     identifier_type: (inv.identifier_type as IdentifierType | null) ?? null,
     exchange: inv.exchange,
     country: inv.identifier_type === "stock_us" ? "United States" : inv.identifier_type ? "India" : "",
+    country_flag: flag,
     currency: (inv.currency ?? "INR") as Currency,
     category: inv.category,
     segment: "",
@@ -391,6 +466,10 @@ function investmentToForm(inv: Investment): FormState {
     quantity: String(inv.quantity ?? ""),
     avg_price: String(inv.avg_price ?? ""),
     notes: rest,
+    is_sip: !!inv.is_sip,
+    status: inv.status || "active",
+    payment_mode: inv.payment_mode ?? null,
+    payment_account_id: inv.payment_account_id ?? null,
     current_price: inv.current_price ?? null,
     price_source: inv.price_source ?? null,
   };
@@ -399,22 +478,14 @@ function investmentToForm(inv: Investment): FormState {
 // ---------- Shared class names ----------
 
 const inputCls =
-  "w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none focus:ring-1 focus:ring-mint/40 disabled:cursor-not-allowed disabled:opacity-60";
+  "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/20 disabled:cursor-not-allowed disabled:opacity-60 transition-colors";
 
-const selectCls = inputCls + " appearance-none pr-8";
-
-const btnPrimary =
-  "inline-flex items-center gap-1 rounded-md bg-mint px-3 py-2 text-sm font-semibold text-[#04121C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50";
-
-const btnOutline =
-  "inline-flex items-center gap-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground transition hover:bg-surface-2";
-
-const btnGhost =
-  "inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground transition hover:bg-surface-2 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50";
+const selectCls = inputCls + " appearance-none pr-9 bg-no-repeat bg-[right_0.75rem_center]";
 
 const labelCls = "mb-1.5 block text-xs font-medium text-foreground";
 
-const cardCls = "rounded-xl border border-border bg-card shadow-sm";
+const cardCls =
+  "rounded-2xl border border-border bg-card shadow-sm";
 
 // ---------- Main component ----------
 
@@ -434,14 +505,15 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   );
 
   const [form, setForm] = useState<FormState>(EMPTY);
-  const [step, setStep] = useState<1 | 2 | 3>(isEdit ? 3 : 1);
   const [hydrated, setHydrated] = useState(!isEdit);
+  const [filter, setFilter] = useState<CategoryFilter>("all");
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [priceLoading, setPriceLoading] = useState(false);
   const [customPlatforms, setCustomPlatforms] = useState<string[]>([]);
+  const searchWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setCustomPlatforms(loadCustomPlatforms());
@@ -462,10 +534,21 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     return () => clearTimeout(id);
   }, [query]);
 
-  const { results, loading, error } = useMultiSearch(debounced);
+  const { results, loading, error } = useMultiSearch(debounced, filter);
   const showPanel = panelOpen && debounced.length >= 2;
 
   useEffect(() => setActive(0), [results]);
+
+  // Close panel on outside click.
+  useEffect(() => {
+    if (!showPanel) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!searchWrapRef.current) return;
+      if (!searchWrapRef.current.contains(e.target as Node)) setPanelOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [showPanel]);
 
   const isLinked = !!(form.identifier && form.identifier_type);
 
@@ -496,6 +579,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
   const commitSelection = async (r: SearchResult) => {
     const cls = classifySearchResult(r);
+    const { country, flag } = inferCountry(r);
     const currency = ((r.currency as Currency) ??
       (r.identifier_type === "stock_us" ? "USD" : "INR")) as Currency;
     setForm((prev) => ({
@@ -505,7 +589,8 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       identifier: r.identifier,
       identifier_type: r.identifier_type,
       exchange: r.exchange ?? null,
-      country: inferCountry(r),
+      country,
+      country_flag: flag,
       currency,
       category: cls.category || prev.category,
       segment: cls.segment || prev.segment,
@@ -517,7 +602,6 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     setQuery("");
     setDebounced("");
     setPanelOpen(false);
-    setStep(2);
     void fetchLivePrice(r.identifier, r.identifier_type, r.exchange ?? null);
   };
 
@@ -557,7 +641,8 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   const avg = Number(form.avg_price) || 0;
   const invested = qty * avg;
   const livePrice = form.current_price && form.current_price > 0 ? form.current_price : null;
-  const marketValue = livePrice != null ? qty * livePrice : qty * avg;
+  const displayPrice = livePrice ?? (avg > 0 ? avg : null);
+  const marketValue = displayPrice != null ? qty * displayPrice : null;
   const sym = CURRENCY_SYMBOL[form.currency] ?? "₹";
   const locale = form.currency === "INR" ? "en-IN" : "en-US";
   const fmt = (n: number, max = 2) =>
@@ -578,25 +663,19 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     return out;
   }, [customPlatforms]);
 
-  // Validation per step
-  const canNext1 = isLinked || !!form.name.trim();
-  const canNext2 =
-    !!form.category.trim() && !!form.segment.trim() && !!form.classification.trim();
   const canSave =
-    !!form.platform.trim() && qty > 0 && avg > 0 && !!form.purchase_date && !!form.name.trim();
+    !!form.platform.trim() &&
+    qty > 0 &&
+    avg > 0 &&
+    !!form.purchase_date &&
+    !!form.name.trim();
 
-  const resetClassification = () => {
-    setForm((f) => ({ ...f, category: "", segment: "", classification: "", sector: "" }));
-  };
-  const clearDetails = () => {
-    setForm((f) => ({
-      ...f,
-      platform: "",
-      purchase_date: todayISO(),
-      quantity: "",
-      avg_price: "",
-      notes: "",
-    }));
+  const clearAll = () => {
+    setForm({ ...EMPTY, purchase_date: todayISO() });
+    setQuery("");
+    setDebounced("");
+    setPanelOpen(false);
+    setFilter("all");
   };
 
   const goCancel = () => {
@@ -617,13 +696,21 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     setForm((f) => ({ ...f, platform: v }));
   };
 
+  const setPayment = (v: PaymentFieldsValue) => {
+    setForm((f) => ({
+      ...f,
+      payment_mode: v.payment_mode,
+      payment_account_id: v.payment_account_id,
+    }));
+  };
+
   const submit = async () => {
     if (!canSave) {
-      if (!form.platform.trim()) toast.error("Investment platform is required");
+      if (!form.name.trim()) toast.error("Please select or enter an investment first");
+      else if (!form.platform.trim()) toast.error("Investment platform is required");
       else if (qty <= 0) toast.error("Quantity must be greater than zero");
       else if (avg <= 0) toast.error("Average buy price must be greater than zero");
       else if (!form.purchase_date) toast.error("Purchase date is required");
-      else if (!form.name.trim()) toast.error("Name is required");
       return;
     }
 
@@ -646,15 +733,24 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       current_price: livePrice ?? avg,
       purchase_date: form.purchase_date || null,
       notes: noteLines.join("\n"),
-      status: "active",
+      status: form.status || "active",
+      is_sip: form.is_sip,
       identifier_type: form.identifier_type,
       identifier: form.identifier,
       exchange: form.exchange,
       currency: form.currency,
+      payment_mode: form.payment_mode,
+      payment_account_id: form.payment_account_id,
     };
 
     try {
       await upsert.mutateAsync(payload);
+      // Persist last-used payment prefs for cross-device sync.
+      try {
+        await flushPaymentPreference();
+      } catch {
+        /* non-fatal */
+      }
       toast.success(isEdit ? "Investment updated" : "Investment added");
       if (onSaved) onSaved();
       else navigate({ to: "/wealth" });
@@ -663,455 +759,684 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     }
   };
 
+  const priceSource = form.price_source ?? "live";
+  const liveDot = livePrice != null;
+
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 p-4 sm:p-6">
+    <div className="mx-auto w-full max-w-7xl px-3 pb-28 sm:px-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-mint" />
-          <h1 className="text-xl font-semibold text-foreground">
-            {isEdit ? "Update Investment" : "Add Investment"}
-          </h1>
+      <div className="flex flex-wrap items-start justify-between gap-3 py-4 sm:py-6">
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            aria-label="Back"
+            onClick={goCancel}
+            className="rounded-lg border border-border bg-card p-2 text-foreground transition hover:bg-surface-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {isEdit ? "Update Investment" : "Add Investment"}
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Search, select and add your investment
+            </p>
+          </div>
         </div>
-        <div className="text-xs font-medium text-muted-foreground">Step {step} of 3</div>
+        <div className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-mint">
+          <HelpCircle className="h-4 w-4" />
+          How it works
+        </div>
       </div>
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2">
-        {[1, 2, 3].map((n) => (
-          <div key={n} className="flex-1">
-            <div
-              className={cn(
-                "h-1.5 rounded-full transition-colors",
-                n <= step ? "bg-mint" : "bg-muted",
-              )}
+      {/* Content grid */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* ---------- Left column: sections 1-3 ---------- */}
+        <div className="space-y-4 lg:col-span-2">
+          {/* Section 1: Find Investment */}
+          <section className={cardCls}>
+            <SectionHeader
+              n={1}
+              title="Find Investment"
+              subtitle="Search and select your investment"
             />
-            <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-              {n === 1 ? "Find" : n === 2 ? "Classify" : "Details"}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ---------- Step 1: Search ---------- */}
-      {step === 1 && (
-        <div className={cardCls}>
-          <div className="space-y-3 p-4 sm:p-5">
-            <div className="text-sm font-semibold text-foreground">Find investment</div>
-            <p className="text-xs text-muted-foreground">
-              Search by company name, fund name, or ticker. We auto-fill classification and live
-              price.
-            </p>
-
-            {isLinked ? (
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-mint/40 bg-mint/10 px-3 py-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <Link2 className="h-4 w-4 shrink-0 text-mint" />
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-foreground">{form.name}</div>
-                    <div className="truncate text-[11px] text-muted-foreground">
-                      {form.exchange ? `${form.exchange} · ` : ""}
-                      {form.identifier}
-                      {form.currency ? ` · ${form.currency}` : ""}
-                    </div>
+            <div className="space-y-4 p-4 sm:p-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[220px_1fr]">
+                <div>
+                  <label className={labelCls}>Category</label>
+                  <div className="relative">
+                    <select
+                      className={selectCls}
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value as CategoryFilter)}
+                    >
+                      {CATEGORY_FILTERS.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Chevron />
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleUnlink}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] hover:bg-surface-2"
-                >
-                  <Link2Off className="h-3 w-3" /> Change
-                </button>
-              </div>
-            ) : (
-              <div className="relative">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                      setPanelOpen(true);
-                    }}
-                    onFocus={() => setPanelOpen(true)}
-                    onKeyDown={onKeyDown}
-                    placeholder="Search Investment (e.g. HDFC, AAPL, Parag Parikh)"
-                    className={cn(inputCls, "pl-9 pr-9")}
-                  />
-                  {loading ? (
-                    <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
-                  ) : null}
+
+                <div ref={searchWrapRef}>
+                  <label className={labelCls}>Search Investment</label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => {
+                        setQuery(e.target.value);
+                        setPanelOpen(true);
+                      }}
+                      onFocus={() => setPanelOpen(true)}
+                      onKeyDown={onKeyDown}
+                      placeholder="Search by name, ticker or fund name…"
+                      className={cn(inputCls, "pl-9 pr-9")}
+                    />
+                    {query ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuery("");
+                          setDebounced("");
+                        }}
+                        aria-label="Clear search"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    ) : loading ? (
+                      <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                    ) : null}
+
+                    {showPanel ? (
+                      <div className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                        {error ? (
+                          <div className="px-3 py-2.5 text-xs text-amber-500">
+                            Search provider unavailable.
+                          </div>
+                        ) : loading && results.length === 0 ? (
+                          <div className="px-3 py-2.5 text-xs text-muted-foreground">
+                            Searching…
+                          </div>
+                        ) : results.length === 0 ? (
+                          <div className="px-3 py-2.5 text-xs text-muted-foreground">
+                            No results found.
+                          </div>
+                        ) : (
+                          <div className="max-h-80 overflow-y-auto py-1">
+                            {results.map((r, idx) => (
+                              <button
+                                key={`${r.identifier_type}:${r.identifier}:${r.exchange ?? ""}`}
+                                type="button"
+                                onMouseEnter={() => setActive(idx)}
+                                onClick={() => void commitSelection(r)}
+                                className={cn(
+                                  "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors",
+                                  idx === active ? "bg-surface-2" : "hover:bg-surface-2",
+                                )}
+                              >
+                                <div className="min-w-0">
+                                  <div className="truncate text-sm font-medium text-foreground">
+                                    {r.name}
+                                  </div>
+                                  <div className="truncate text-[11px] text-muted-foreground">
+                                    {r.identifier}
+                                    {r.exchange ? ` · ${r.exchange}` : ""}
+                                    {r.currency ? ` · ${r.currency}` : ""}
+                                  </div>
+                                </div>
+                                <span className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 text-[10px] font-semibold text-mint">
+                                  {kindBadge(r.identifier_type)}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span>Search by company name, fund name or ticker (min 2 characters)</span>
+                    <span className="hidden sm:inline">
+                      Popular: RELIANCE, HDFCBANK, AAPL, VOO, VTI
+                    </span>
+                  </div>
                 </div>
-                {showPanel ? (
-                  <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-lg border border-border bg-card shadow-lg">
-                    {error ? (
-                      <div className="px-3 py-2 text-xs text-amber-400">
-                        Search provider unavailable.
+              </div>
+
+              {/* Selected investment card */}
+              {isLinked ? (
+                <div className="rounded-xl border border-border bg-surface-2/40 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background text-lg">
+                        {form.country_flag || "📈"}
                       </div>
-                    ) : loading && results.length === 0 ? (
-                      <div className="px-3 py-2 text-xs text-muted-foreground">Searching…</div>
-                    ) : results.length === 0 ? (
-                      <div className="px-3 py-2 text-xs text-muted-foreground">
-                        No results found.
-                      </div>
-                    ) : (
-                      <div className="max-h-72 overflow-y-auto py-1">
-                        {results.map((r, idx) => (
-                          <button
-                            key={`${r.identifier_type}:${r.identifier}:${r.exchange ?? ""}`}
-                            type="button"
-                            onMouseEnter={() => setActive(idx)}
-                            onClick={() => void commitSelection(r)}
-                            className={cn(
-                              "flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors",
-                              idx === active ? "bg-surface-2" : "hover:bg-surface-2",
-                            )}
-                          >
-                            <div className="min-w-0">
-                              <div className="truncate text-sm font-medium">{r.name}</div>
-                              <div className="truncate text-[11px] text-muted-foreground">
-                                {r.identifier}
-                                {r.exchange ? ` · ${r.exchange}` : ""}
-                                {r.currency ? ` · ${r.currency}` : ""}
-                              </div>
-                            </div>
-                            <span className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 text-[10px] font-semibold text-mint">
-                              {kindLabel(r.identifier_type)}
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="truncate text-base font-semibold text-foreground">
+                            {form.name}
+                          </div>
+                          {form.identifier_type && (
+                            <span className="rounded-md bg-mint/15 px-2 py-0.5 text-[10px] font-semibold text-mint">
+                              {kindBadge(form.identifier_type)}
                             </span>
-                          </button>
-                        ))}
+                          )}
+                        </div>
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {form.symbol}
+                          {form.exchange ? ` · ${form.exchange}` : ""}
+                        </div>
                       </div>
-                    )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUnlink}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-surface-2"
+                    >
+                      <Pencil className="h-3 w-3" /> Change
+                    </button>
                   </div>
-                ) : null}
-              </div>
-            )}
 
-            {isLinked && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <ReadOnly label="Symbol" value={form.symbol} />
-                <ReadOnly label="Exchange" value={form.exchange ?? "—"} />
-                <ReadOnly label="Country" value={form.country || "—"} />
-                <ReadOnly label="Currency" value={form.currency} />
-              </div>
-            )}
+                  <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
+                    <MetaCol label="Name" value={form.name} />
+                    <MetaCol label="Symbol / Ticker" value={form.symbol || "—"} />
+                    <MetaCol label="Exchange" value={form.exchange || "—"} />
+                    <MetaCol
+                      label="Country"
+                      value={
+                        <span className="inline-flex items-center gap-1">
+                          {form.country_flag ? <span>{form.country_flag}</span> : null}
+                          {form.country || "—"}
+                        </span>
+                      }
+                    />
+                    <MetaCol label="Currency" value={form.currency} />
+                  </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <button type="button" className={btnGhost} onClick={goCancel}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={btnPrimary}
-                onClick={() => setStep(2)}
-                disabled={!canNext1}
-              >
-                Next <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+                  <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint">
+                    <CheckCircle2 className="h-3 w-3" /> Auto-filled from market data
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border bg-surface-2/20 p-6 text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-surface-2 text-muted-foreground">
+                    <Search className="h-4 w-4" />
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    No investment selected yet
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Search above to auto-fill classification and live price. Manual entry is also
+                    supported below.
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-      )}
+          </section>
 
-      {/* ---------- Step 2: Classification ---------- */}
-      {step === 2 && (
-        <div className={cardCls}>
-          <div className="space-y-3 p-4 sm:p-5">
-            <div className="text-sm font-semibold text-foreground">Classification</div>
-            <p className="text-xs text-muted-foreground">
-              Auto-filled from search. All fields remain editable.
-            </p>
+          {/* Section 2: Classification */}
+          <section className={cardCls}>
+            <SectionHeader
+              n={2}
+              title="Classification"
+              subtitle="Automatically detected (editable)"
+            />
+            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-4">
+              <div>
+                <label className={labelCls}>Category</label>
+                <div className="relative">
+                  <select
+                    className={selectCls}
+                    value={form.category}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        category: e.target.value,
+                        segment: "",
+                      }))
+                    }
+                  >
+                    <option value="">Select</option>
+                    {CATEGORY_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <Chevron />
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Category *">
-                <select
-                  className={selectCls}
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      category: e.target.value,
-                      segment: "",
-                      classification: "",
-                    }))
-                  }
-                >
-                  <option value="">Select category</option>
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              <div>
+                <label className={labelCls}>Segment</label>
+                <div className="relative">
+                  <select
+                    className={selectCls}
+                    value={form.segment}
+                    onChange={(e) => setForm((f) => ({ ...f, segment: e.target.value }))}
+                    disabled={!form.category}
+                  >
+                    <option value="">Select</option>
+                    {segmentOptions.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <Chevron />
+                </div>
+              </div>
 
-              <Field label="Segment *">
-                <select
-                  className={selectCls}
-                  value={form.segment}
-                  onChange={(e) => setForm((f) => ({ ...f, segment: e.target.value }))}
-                  disabled={!form.category}
-                >
-                  <option value="">Select segment</option>
-                  {segmentOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Classification *">
+              <div>
+                <label className={labelCls}>Classification</label>
                 <input
                   type="text"
                   className={inputCls}
                   list="classification-suggestions"
                   value={form.classification}
                   onChange={(e) => setForm((f) => ({ ...f, classification: e.target.value }))}
-                  placeholder="e.g. Large Cap, Flexi Cap, Gold ETF"
+                  placeholder="e.g. Large Cap"
                 />
                 <datalist id="classification-suggestions">
                   {classificationOptions.map((c) => (
                     <option key={c} value={c} />
                   ))}
                 </datalist>
-              </Field>
+              </div>
 
-              <Field label="Sector">
+              <div>
+                <label className={labelCls}>Sector</label>
                 <input
                   type="text"
                   className={inputCls}
                   list="sector-suggestions"
                   value={form.sector}
                   onChange={(e) => setForm((f) => ({ ...f, sector: e.target.value }))}
-                  placeholder="e.g. IT/Software, Banking"
+                  placeholder="e.g. Technology"
                 />
                 <datalist id="sector-suggestions">
                   {SECTOR_SUGGESTIONS.map((s) => (
                     <option key={s} value={s} />
                   ))}
                 </datalist>
-              </Field>
-            </div>
+              </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <button type="button" className={btnGhost} onClick={() => setStep(1)}>
-                <ArrowLeft className="h-3.5 w-3.5" /> Back
-              </button>
-              <div className="flex items-center gap-2">
-                <button type="button" className={btnOutline} onClick={resetClassification}>
-                  <RotateCcw className="h-3.5 w-3.5" /> Reset
-                </button>
-                <button
-                  type="button"
-                  className={btnPrimary}
-                  onClick={() => setStep(3)}
-                  disabled={!canNext2}
-                >
-                  Next <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+              <div className="sm:col-span-2 lg:col-span-4">
+                <p className="inline-flex items-center gap-1.5 text-[11px] text-sky-500">
+                  <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-sky-500/15 text-sky-500">
+                    i
+                  </span>
+                  You can edit these details if required
+                </p>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </section>
 
-      {/* ---------- Step 3: Details ---------- */}
-      {step === 3 && (
-        <div className={cardCls}>
-          <div className="space-y-3 p-4 sm:p-5">
-            <div className="text-sm font-semibold text-foreground">Investment details</div>
-            <p className="text-xs text-muted-foreground">
-              Enter your purchase details. Current price and market value update automatically.
-            </p>
+          {/* Section 3: Investment Details */}
+          <section className={cardCls}>
+            <SectionHeader
+              n={3}
+              title="Investment Details"
+              subtitle="Enter your investment details"
+            />
+            <div className="space-y-4 p-4 sm:p-5">
+              {/* Manual name (only when nothing selected) */}
+              {!isLinked && (
+                <div>
+                  <label className={labelCls}>
+                    Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className={inputCls}
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Instrument name"
+                  />
+                </div>
+              )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Name *" className="sm:col-span-2">
-                <input
-                  type="text"
-                  className={inputCls}
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Instrument name"
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <label className={labelCls}>
+                    Investment Platform <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      className={selectCls}
+                      value={
+                        mergedPlatforms.some(
+                          (p) => p.toLowerCase() === form.platform.toLowerCase(),
+                        )
+                          ? form.platform
+                          : form.platform || ""
+                      }
+                      onChange={(e) => handlePlatformChange(e.target.value)}
+                    >
+                      <option value="">Select platform…</option>
+                      {mergedPlatforms.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                      {form.platform &&
+                        !mergedPlatforms.some(
+                          (p) => p.toLowerCase() === form.platform.toLowerCase(),
+                        ) && <option value={form.platform}>{form.platform}</option>}
+                      <option value="__add_custom__">+ Add custom platform…</option>
+                    </select>
+                    <Chevron />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>
+                    Purchase Date <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={form.purchase_date}
+                    onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelCls}>
+                    Quantity <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    className={inputCls}
+                    min={0}
+                    step="0.0001"
+                    value={form.quantity}
+                    onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <label className={labelCls}>
+                    Average Buy Price ({sym}){" "}
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    className={inputCls}
+                    min={0}
+                    step="0.01"
+                    value={form.avg_price}
+                    onChange={(e) => setForm((f) => ({ ...f, avg_price: e.target.value }))}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* Summary row */}
+              <div className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-2/40 p-4 sm:grid-cols-3">
+                <SummaryCell
+                  label="Invested Amount"
+                  value={invested > 0 ? fmt(invested) : "—"}
                 />
-              </Field>
+                <SummaryCell
+                  label="Current Price (Live)"
+                  value={
+                    priceLoading
+                      ? "Fetching…"
+                      : displayPrice != null
+                        ? fmt(displayPrice, 4)
+                        : "—"
+                  }
+                  badge={
+                    displayPrice != null ? (
+                      <LivePill live={liveDot} source={priceSource} />
+                    ) : null
+                  }
+                />
+                <SummaryCell
+                  label="Current Value (Live)"
+                  value={marketValue != null ? fmt(marketValue) : "—"}
+                  badge={
+                    marketValue != null ? (
+                      <LivePill live={liveDot} source={priceSource} />
+                    ) : null
+                  }
+                />
+              </div>
+            </div>
+          </section>
+        </div>
 
-              <Field label="Investment Platform *">
+        {/* ---------- Right column: Payment ---------- */}
+        <aside className="lg:col-span-1">
+          <section className={cn(cardCls, "lg:sticky lg:top-4")}>
+            <SectionHeader
+              n={4}
+              title="Payment Mode"
+              subtitle="How you purchased this investment"
+            />
+            <div className="space-y-4 p-4 sm:p-5">
+              <PaymentFields
+                value={{
+                  payment_mode: form.payment_mode,
+                  payment_account_id: form.payment_account_id,
+                }}
+                onChange={setPayment}
+                required={false}
+              />
+
+              {/* SIP tracking toggle */}
+              <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-surface-2/40 px-3 py-3">
+                <div>
+                  <div className="text-xs font-medium text-foreground">
+                    SIP tracking{" "}
+                    <span className="font-normal text-muted-foreground">(optional)</span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    Track recurring contributions to this investment.
+                  </p>
+                </div>
+                <ToggleSwitch
+                  checked={form.is_sip}
+                  onChange={(v) => setForm((f) => ({ ...f, is_sip: v }))}
+                  label="SIP tracking"
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Status</label>
                 <div className="relative">
                   <select
                     className={selectCls}
-                    value={
-                      mergedPlatforms.some(
-                        (p) => p.toLowerCase() === form.platform.toLowerCase(),
-                      )
-                        ? form.platform
-                        : form.platform
-                        ? form.platform
-                        : ""
-                    }
-                    onChange={(e) => handlePlatformChange(e.target.value)}
+                    value={form.status}
+                    onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
                   >
-                    <option value="">Select platform…</option>
-                    {mergedPlatforms.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
                       </option>
                     ))}
-                    {form.platform &&
-                      !mergedPlatforms.some(
-                        (p) => p.toLowerCase() === form.platform.toLowerCase(),
-                      ) && <option value={form.platform}>{form.platform}</option>}
-                    <option value="__add_custom__">+ Add custom platform…</option>
                   </select>
-                  <Plus className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Chevron />
                 </div>
-              </Field>
+              </div>
 
-              <Field label="Purchase Date *">
-                <input
-                  type="date"
-                  className={inputCls}
-                  value={form.purchase_date}
-                  onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))}
-                />
-              </Field>
-
-              <Field label="Quantity *">
-                <input
-                  type="number"
-                  className={inputCls}
-                  min={0}
-                  step="0.01"
-                  value={form.quantity}
-                  onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-                  placeholder="0"
-                />
-              </Field>
-
-              <Field label={`Average Buy Price (${sym}) *`}>
-                <input
-                  type="number"
-                  className={inputCls}
-                  min={0}
-                  step="0.01"
-                  value={form.avg_price}
-                  onChange={(e) => setForm((f) => ({ ...f, avg_price: e.target.value }))}
-                  placeholder="0.00"
-                />
-              </Field>
-
-              <Field label="Current Price">
-                <div className="flex h-10 items-center justify-between rounded-md border border-border bg-surface-2/60 px-3 text-sm">
-                  <span className={cn(livePrice == null && "text-muted-foreground")}>
-                    {priceLoading
-                      ? "Fetching…"
-                      : livePrice != null
-                      ? fmt(livePrice, 4)
-                      : avg > 0
-                      ? fmt(avg, 4)
-                      : "—"}
-                  </span>
-                  <span className="text-[10px] uppercase text-muted-foreground">
-                    {priceLoading ? "" : livePrice != null ? form.price_source ?? "live" : "manual"}
-                  </span>
-                </div>
-              </Field>
-
-              <Field label="Market Value">
-                <div className="flex h-10 items-center rounded-md border border-border bg-surface-2/60 px-3 text-sm">
-                  {marketValue > 0 ? fmt(marketValue) : "—"}
-                  {invested > 0 && livePrice != null && (
-                    <span
-                      className={cn(
-                        "ml-auto text-[11px]",
-                        marketValue >= invested ? "text-emerald-500" : "text-rose-500",
-                      )}
-                    >
-                      {marketValue >= invested ? "▲" : "▼"}{" "}
-                      {(((marketValue - invested) / invested) * 100).toFixed(2)}%
-                    </span>
-                  )}
-                </div>
-              </Field>
-
-              <Field label="Notes" className="sm:col-span-2">
+              <div>
+                <label className={labelCls}>
+                  Notes <span className="font-normal text-muted-foreground">(optional)</span>
+                </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   className={cn(inputCls, "resize-y")}
+                  maxLength={300}
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                  placeholder="Add notes about this investment..."
+                  placeholder="Add any additional notes (optional)"
                 />
-              </Field>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-              <button
-                type="button"
-                className={btnGhost}
-                onClick={() => setStep(isEdit ? 3 : 2)}
-                disabled={isEdit}
-              >
-                <ArrowLeft className="h-3.5 w-3.5" /> Back
-              </button>
-              <div className="flex items-center gap-2">
-                <button type="button" className={btnOutline} onClick={clearDetails}>
-                  <RotateCcw className="h-3.5 w-3.5" /> Clear
-                </button>
-                <button
-                  type="button"
-                  className={btnPrimary}
-                  onClick={submit}
-                  disabled={upsert.isPending || !canSave}
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  {upsert.isPending
-                    ? "Saving…"
-                    : isEdit
-                    ? "Update Investment"
-                    : "Save Investment"}
-                </button>
+                <div className="mt-1 text-right text-[10px] text-muted-foreground">
+                  {form.notes.length} / 300
+                </div>
               </div>
             </div>
-          </div>
+          </section>
+        </aside>
+      </div>
+
+      {/* ---------- Bottom action bar (sticky) ---------- */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-end gap-2 px-3 py-3 sm:px-6">
+          <button
+            type="button"
+            onClick={clearAll}
+            className="inline-flex items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface-2"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onClick={goCancel}
+            className="inline-flex items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={upsert.isPending || !canSave}
+            className="inline-flex items-center rounded-lg bg-mint px-5 py-2 text-sm font-semibold text-[#04121C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {upsert.isPending ? "Saving…" : isEdit ? "Update Investment" : "Add Investment"}
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 // ---------- Small helpers ----------
 
-function Field({
-  label,
-  className,
-  children,
+function SectionHeader({
+  n,
+  title,
+  subtitle,
 }: {
-  label: string;
-  className?: string;
-  children: React.ReactNode;
+  n: number;
+  title: string;
+  subtitle?: string;
 }) {
   return (
-    <div className={className}>
-      <label className={labelCls}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function ReadOnly({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <label className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </label>
-      <div className="truncate rounded-md border border-border bg-surface-2/40 px-2 py-1.5 text-xs">
-        {value}
+    <div className="flex items-center gap-3 border-b border-border px-4 py-3.5 sm:px-5">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-sm font-semibold text-[#04121C]">
+        {n}
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-mint">{title}</div>
+        {subtitle && <div className="text-[11px] text-muted-foreground">{subtitle}</div>}
       </div>
     </div>
   );
 }
+
+function MetaCol({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-0.5 truncate text-sm font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function SummaryCell({
+  label,
+  value,
+  badge,
+}: {
+  label: string;
+  value: React.ReactNode;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <div className="text-base font-semibold text-foreground">{value}</div>
+        {badge}
+      </div>
+    </div>
+  );
+}
+
+function LivePill({ live, source }: { live: boolean; source: string | null }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+        live ? "bg-emerald-500/15 text-emerald-500" : "bg-muted text-muted-foreground",
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          live ? "bg-emerald-500" : "bg-muted-foreground/60",
+        )}
+      />
+      {live ? "Live" : source ?? "manual"}
+    </span>
+  );
+}
+
+function ToggleSwitch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+        checked ? "bg-mint" : "bg-muted",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-block h-4 w-4 transform rounded-full bg-background shadow-sm transition",
+          checked ? "translate-x-4" : "translate-x-0.5",
+        )}
+      />
+    </button>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 20 20"
+      className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+      fill="currentColor"
+    >
+      <path d="M5.5 7.5 10 12l4.5-4.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
+
+// Backwards-compatible dummy export in case older callers imported Plus icon.
+export const _AddInvestmentIcons = { Plus };
 
 export default AddInvestmentForm;
