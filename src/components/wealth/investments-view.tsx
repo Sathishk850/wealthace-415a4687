@@ -115,12 +115,13 @@ export function InvestmentsView({
   } = useInvestmentQuotes(rows);
   const refreshHoldings = useRefreshHoldings();
 
+  const navigate = useNavigate();
   if (registerAdd) {
     registerAdd(() => {
-      setEditing(null);
-      setDialogOpen(true);
+      navigate({ to: "/wealth/add-investment" });
     });
   }
+
 
   /* ===== Derived metrics ===== */
   const derived = useMemo(() => {
