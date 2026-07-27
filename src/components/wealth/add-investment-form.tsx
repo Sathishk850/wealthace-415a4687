@@ -1,6 +1,6 @@
 // Add Investment — 3-step wizard form.
-// Uses existing Market Data server fns, wealth-api mutations, and UI primitives.
-// Additive; does not replace InvestmentDialog or AddInvestmentModal.
+// Rebuilt with standard HTML elements to avoid UI component dependency issues.
+// Uses existing Market Data server fns and wealth-api mutations.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,8 +10,6 @@ import {
   Loader2,
   Link2,
   Link2Off,
-  Check,
-  ChevronsUpDown,
   Plus,
   Sparkles,
   ArrowLeft,
@@ -21,23 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-
 import { searchInstruments, getMarketQuotes } from "@/lib/market.functions";
 import type { IdentifierType, MarketQuote, SearchResult } from "@/lib/market/types";
 import {
@@ -257,106 +239,6 @@ function inferCountry(r: SearchResult): string {
   return "";
 }
 
-// ---------- Platform combobox ----------
-
-function PlatformCombobox({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [custom, setCustom] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (open) setCustom(loadCustomPlatforms());
-  }, [open]);
-
-  const merged = useMemo(() => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const p of [...DEFAULT_PLATFORMS, ...custom]) {
-      const k = p.toLowerCase();
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(p);
-    }
-    return out;
-  }, [custom]);
-
-  const trimmed = search.trim();
-  const filtered = trimmed
-    ? merged.filter((p) => p.toLowerCase().includes(trimmed.toLowerCase()))
-    : merged;
-  const canAdd =
-    trimmed.length > 0 && !merged.some((p) => p.toLowerCase() === trimmed.toLowerCase());
-
-  return (
-    <Popover open={open} onOpenChange={setOpen} modal>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          role="combobox"
-          aria-expanded={open}
-          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          <span className={cn("truncate", !value && "text-muted-foreground")}>
-            {value || "Select platform…"}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[--radix-popover-trigger-width] max-h-[min(60vh,var(--radix-popover-content-available-height))] p-0"
-        align="start"
-      >
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search or add platform…"
-            value={search}
-            onValueChange={setSearch}
-          />
-          <CommandList className="max-h-[calc(min(60vh,var(--radix-popover-content-available-height))-3rem)] overflow-y-auto">
-            {filtered.length === 0 && !canAdd && (
-              <div className="py-6 text-center text-sm text-muted-foreground">No matches.</div>
-            )}
-            {filtered.map((p) => (
-              <CommandItem
-                key={p}
-                value={p}
-                onSelect={() => {
-                  onChange(p);
-                  setSearch("");
-                  setOpen(false);
-                }}
-              >
-                <Check className={cn("mr-2 h-4 w-4", value === p ? "opacity-100" : "opacity-0")} />
-                {p}
-              </CommandItem>
-            ))}
-            {canAdd && (
-              <CommandItem
-                value={`__add__ ${trimmed}`}
-                onSelect={() => {
-                  saveCustomPlatform(trimmed);
-                  onChange(trimmed);
-                  setSearch("");
-                  setOpen(false);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add &ldquo;{trimmed}&rdquo;
-              </CommandItem>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 // ---------- Search hook ----------
 
 function useMultiSearch(query: string) {
@@ -514,6 +396,26 @@ function investmentToForm(inv: Investment): FormState {
   };
 }
 
+// ---------- Shared class names ----------
+
+const inputCls =
+  "w-full rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none focus:ring-1 focus:ring-mint/40 disabled:cursor-not-allowed disabled:opacity-60";
+
+const selectCls = inputCls + " appearance-none pr-8";
+
+const btnPrimary =
+  "inline-flex items-center gap-1 rounded-md bg-mint px-3 py-2 text-sm font-semibold text-[#04121C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50";
+
+const btnOutline =
+  "inline-flex items-center gap-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground transition hover:bg-surface-2";
+
+const btnGhost =
+  "inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground transition hover:bg-surface-2 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50";
+
+const labelCls = "mb-1.5 block text-xs font-medium text-foreground";
+
+const cardCls = "rounded-xl border border-border bg-card shadow-sm";
+
 // ---------- Main component ----------
 
 export type AddInvestmentFormProps = {
@@ -539,6 +441,11 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   const [panelOpen, setPanelOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [customPlatforms, setCustomPlatforms] = useState<string[]>([]);
+
+  useEffect(() => {
+    setCustomPlatforms(loadCustomPlatforms());
+  }, []);
 
   const upsert = useUpsertInvestment();
   const fetchQuotes = useServerFn(getMarketQuotes);
@@ -659,6 +566,18 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   const segmentOptions = SEGMENT_BY_CATEGORY[form.category] ?? [];
   const classificationOptions = CLASSIFICATION_SUGGESTIONS[form.category] ?? [];
 
+  const mergedPlatforms = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const p of [...DEFAULT_PLATFORMS, ...customPlatforms]) {
+      const k = p.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(p);
+    }
+    return out;
+  }, [customPlatforms]);
+
   // Validation per step
   const canNext1 = isLinked || !!form.name.trim();
   const canNext2 =
@@ -683,6 +602,19 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   const goCancel = () => {
     if (onCancel) return onCancel();
     navigate({ to: "/wealth" });
+  };
+
+  const handlePlatformChange = (v: string) => {
+    if (v === "__add_custom__") {
+      const name = typeof window !== "undefined" ? window.prompt("Enter platform name") : "";
+      const trimmed = (name ?? "").trim();
+      if (!trimmed) return;
+      saveCustomPlatform(trimmed);
+      setCustomPlatforms(loadCustomPlatforms());
+      setForm((f) => ({ ...f, platform: trimmed }));
+      return;
+    }
+    setForm((f) => ({ ...f, platform: v }));
   };
 
   const submit = async () => {
@@ -737,7 +669,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-mint" />
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl font-semibold text-foreground">
             {isEdit ? "Update Investment" : "Add Investment"}
           </h1>
         </div>
@@ -763,9 +695,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
       {/* ---------- Step 1: Search ---------- */}
       {step === 1 && (
-        <Card>
-          <CardContent className="space-y-3 p-4 sm:p-5">
-            <div className="text-sm font-semibold">Find investment</div>
+        <div className={cardCls}>
+          <div className="space-y-3 p-4 sm:p-5">
+            <div className="text-sm font-semibold text-foreground">Find investment</div>
             <p className="text-xs text-muted-foreground">
               Search by company name, fund name, or ticker. We auto-fill classification and live
               price.
@@ -797,6 +729,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    type="text"
                     value={query}
                     onChange={(e) => {
                       setQuery(e.target.value);
@@ -805,10 +738,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     onFocus={() => setPanelOpen(true)}
                     onKeyDown={onKeyDown}
                     placeholder="Search Investment (e.g. HDFC, AAPL, Parag Parikh)"
-                    role="combobox"
-                    aria-expanded={showPanel}
-                    aria-autocomplete="list"
-                    className="w-full rounded-lg border border-border bg-surface-2 pl-9 pr-9 py-2 text-sm focus:border-mint/50 focus:outline-none"
+                    className={cn(inputCls, "pl-9 pr-9")}
                   />
                   {loading ? (
                     <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -869,72 +799,74 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
             )}
 
             <div className="flex items-center justify-between pt-2">
-              <Button variant="ghost" onClick={goCancel}>
+              <button type="button" className={btnGhost} onClick={goCancel}>
                 Cancel
-              </Button>
-              <Button
-                className="bg-mint text-[#04121C] hover:brightness-110"
+              </button>
+              <button
+                type="button"
+                className={btnPrimary}
                 onClick={() => setStep(2)}
                 disabled={!canNext1}
               >
-                Next <ArrowRight className="ml-1 h-3.5 w-3.5" />
-              </Button>
+                Next <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* ---------- Step 2: Classification ---------- */}
       {step === 2 && (
-        <Card>
-          <CardContent className="space-y-3 p-4 sm:p-5">
-            <div className="text-sm font-semibold">Classification</div>
+        <div className={cardCls}>
+          <div className="space-y-3 p-4 sm:p-5">
+            <div className="text-sm font-semibold text-foreground">Classification</div>
             <p className="text-xs text-muted-foreground">
               Auto-filled from search. All fields remain editable.
             </p>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Category *">
-                <Select
+                <select
+                  className={selectCls}
                   value={form.category}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, category: v, segment: "", classification: "" }))
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      category: e.target.value,
+                      segment: "",
+                      classification: "",
+                    }))
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORY_OPTIONS.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="">Select category</option>
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               <Field label="Segment *">
-                <Select
+                <select
+                  className={selectCls}
                   value={form.segment}
-                  onValueChange={(v) => setForm((f) => ({ ...f, segment: v }))}
+                  onChange={(e) => setForm((f) => ({ ...f, segment: e.target.value }))}
                   disabled={!form.category}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select segment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {segmentOptions.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="">Select segment</option>
+                  {segmentOptions.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               <Field label="Classification *">
-                <Input
+                <input
+                  type="text"
+                  className={inputCls}
                   list="classification-suggestions"
                   value={form.classification}
                   onChange={(e) => setForm((f) => ({ ...f, classification: e.target.value }))}
@@ -948,7 +880,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               </Field>
 
               <Field label="Sector">
-                <Input
+                <input
+                  type="text"
+                  className={inputCls}
                   list="sector-suggestions"
                   value={form.sector}
                   onChange={(e) => setForm((f) => ({ ...f, sector: e.target.value }))}
@@ -963,38 +897,41 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep(1)}>
-                <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Back
-              </Button>
+              <button type="button" className={btnGhost} onClick={() => setStep(1)}>
+                <ArrowLeft className="h-3.5 w-3.5" /> Back
+              </button>
               <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={resetClassification}>
-                  <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
-                </Button>
-                <Button
-                  className="bg-mint text-[#04121C] hover:brightness-110"
+                <button type="button" className={btnOutline} onClick={resetClassification}>
+                  <RotateCcw className="h-3.5 w-3.5" /> Reset
+                </button>
+                <button
+                  type="button"
+                  className={btnPrimary}
                   onClick={() => setStep(3)}
                   disabled={!canNext2}
                 >
-                  Next <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Button>
+                  Next <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* ---------- Step 3: Details ---------- */}
       {step === 3 && (
-        <Card>
-          <CardContent className="space-y-3 p-4 sm:p-5">
-            <div className="text-sm font-semibold">Investment details</div>
+        <div className={cardCls}>
+          <div className="space-y-3 p-4 sm:p-5">
+            <div className="text-sm font-semibold text-foreground">Investment details</div>
             <p className="text-xs text-muted-foreground">
               Enter your purchase details. Current price and market value update automatically.
             </p>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Name *" className="sm:col-span-2">
-                <Input
+                <input
+                  type="text"
+                  className={inputCls}
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Instrument name"
@@ -1002,22 +939,49 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               </Field>
 
               <Field label="Investment Platform *">
-                <PlatformCombobox
-                  value={form.platform}
-                  onChange={(v) => setForm((f) => ({ ...f, platform: v }))}
-                />
+                <div className="relative">
+                  <select
+                    className={selectCls}
+                    value={
+                      mergedPlatforms.some(
+                        (p) => p.toLowerCase() === form.platform.toLowerCase(),
+                      )
+                        ? form.platform
+                        : form.platform
+                        ? form.platform
+                        : ""
+                    }
+                    onChange={(e) => handlePlatformChange(e.target.value)}
+                  >
+                    <option value="">Select platform…</option>
+                    {mergedPlatforms.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                    {form.platform &&
+                      !mergedPlatforms.some(
+                        (p) => p.toLowerCase() === form.platform.toLowerCase(),
+                      ) && <option value={form.platform}>{form.platform}</option>}
+                    <option value="__add_custom__">+ Add custom platform…</option>
+                  </select>
+                  <Plus className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                </div>
               </Field>
 
               <Field label="Purchase Date *">
-                <DatePicker
+                <input
+                  type="date"
+                  className={inputCls}
                   value={form.purchase_date}
-                  onChange={(v) => setForm((f) => ({ ...f, purchase_date: v || "" }))}
+                  onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))}
                 />
               </Field>
 
               <Field label="Quantity *">
-                <Input
+                <input
                   type="number"
+                  className={inputCls}
                   min={0}
                   step="0.01"
                   value={form.quantity}
@@ -1027,8 +991,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               </Field>
 
               <Field label={`Average Buy Price (${sym}) *`}>
-                <Input
+                <input
                   type="number"
+                  className={inputCls}
                   min={0}
                   step="0.01"
                   value={form.avg_price}
@@ -1038,7 +1003,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               </Field>
 
               <Field label="Current Price">
-                <div className="flex h-10 items-center justify-between rounded-md border border-input bg-surface-2/60 px-3 text-sm">
+                <div className="flex h-10 items-center justify-between rounded-md border border-border bg-surface-2/60 px-3 text-sm">
                   <span className={cn(livePrice == null && "text-muted-foreground")}>
                     {priceLoading
                       ? "Fetching…"
@@ -1055,7 +1020,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               </Field>
 
               <Field label="Market Value">
-                <div className="flex h-10 items-center rounded-md border border-input bg-surface-2/60 px-3 text-sm">
+                <div className="flex h-10 items-center rounded-md border border-border bg-surface-2/60 px-3 text-sm">
                   {marketValue > 0 ? fmt(marketValue) : "—"}
                   {invested > 0 && livePrice != null && (
                     <span
@@ -1072,8 +1037,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               </Field>
 
               <Field label="Notes" className="sm:col-span-2">
-                <Textarea
+                <textarea
                   rows={3}
+                  className={cn(inputCls, "resize-y")}
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                   placeholder="Add notes about this investment..."
@@ -1082,29 +1048,35 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-              <Button variant="ghost" onClick={() => setStep(isEdit ? 3 : 2)} disabled={isEdit}>
-                <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Back
-              </Button>
+              <button
+                type="button"
+                className={btnGhost}
+                onClick={() => setStep(isEdit ? 3 : 2)}
+                disabled={isEdit}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back
+              </button>
               <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={clearDetails}>
-                  <RotateCcw className="mr-1 h-3.5 w-3.5" /> Clear
-                </Button>
-                <Button
-                  className="bg-mint text-[#04121C] hover:brightness-110"
+                <button type="button" className={btnOutline} onClick={clearDetails}>
+                  <RotateCcw className="h-3.5 w-3.5" /> Clear
+                </button>
+                <button
+                  type="button"
+                  className={btnPrimary}
                   onClick={submit}
                   disabled={upsert.isPending || !canSave}
                 >
-                  <Save className="mr-1 h-3.5 w-3.5" />
+                  <Save className="h-3.5 w-3.5" />
                   {upsert.isPending
                     ? "Saving…"
                     : isEdit
                     ? "Update Investment"
                     : "Save Investment"}
-                </Button>
+                </button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -1123,7 +1095,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <Label className="mb-1.5 block text-xs">{label}</Label>
+      <label className={labelCls}>{label}</label>
       {children}
     </div>
   );
@@ -1132,9 +1104,9 @@ function Field({
 function ReadOnly({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <Label className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">
+      <label className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">
         {label}
-      </Label>
+      </label>
       <div className="truncate rounded-md border border-border bg-surface-2/40 px-2 py-1.5 text-xs">
         {value}
       </div>
