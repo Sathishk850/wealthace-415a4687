@@ -1288,12 +1288,12 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       </div>
 
       {/* ---------- Bottom action bar (sticky) ---------- */}
-      <div className="fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-40 border-t border-border bg-background/95 backdrop-blur lg:bottom-0 lg:pb-0">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-end gap-2 px-3 py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:px-6 lg:pb-3">
+      <div className="fixed inset-x-0 bottom-[calc(78px+env(safe-area-inset-bottom))] z-[80] border-t border-border bg-background/95 shadow-lg backdrop-blur lg:bottom-0 lg:pb-0">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-end gap-2 px-3 py-3 sm:px-6">
           <button
             type="button"
             onClick={goCancel}
-            className="inline-flex items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface-2"
+            className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-surface-2 sm:flex-none sm:px-4"
           >
             Cancel
           </button>
@@ -1302,7 +1302,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               type="button"
               onClick={() => submit(true)}
               disabled={upsert.isPending || !canSave}
-              className="inline-flex items-center rounded-lg border border-mint bg-transparent px-4 py-2 text-sm font-semibold text-mint transition hover:bg-mint/10 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg border border-mint bg-transparent px-3 py-2 text-sm font-semibold text-mint transition hover:bg-mint/10 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-4"
             >
               {upsert.isPending ? "Saving…" : "Save & Add"}
             </button>
@@ -1311,7 +1311,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
             type="button"
             onClick={() => submit(false)}
             disabled={upsert.isPending || !canSave}
-            className="inline-flex items-center rounded-lg bg-mint px-5 py-2 text-sm font-semibold text-[#04121C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-[#04121C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-5"
           >
             {upsert.isPending ? "Saving…" : "Save"}
           </button>
