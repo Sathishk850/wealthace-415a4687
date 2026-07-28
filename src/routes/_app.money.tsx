@@ -937,7 +937,7 @@ function TransactionDialog({
   const existingNames = new Set(kindCats.map((c) => c.name.toLowerCase()));
   const missingPresets = presets.filter((p) => !existingNames.has(p.toLowerCase()));
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     setErr(null);
     const n = Number(amount);
     if (!merchant.trim()) return setErr("Merchant / source is required.");
