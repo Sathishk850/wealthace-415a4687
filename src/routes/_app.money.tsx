@@ -1358,7 +1358,7 @@ function BudgetDialog({
     }
   };
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     setErr(null);
     const n = Number(amount);
     if (!categoryId) return setErr("Select a category.");
@@ -1371,11 +1371,18 @@ function BudgetDialog({
         period_month: `${month}-01`,
         amount_limit: n,
       });
-      onOpenChange(false);
+      if (keepOpen && !editing) {
+        setCategoryId("");
+        setAmount("");
+        setErr(null);
+      } else {
+        onOpenChange(false);
+      }
     } catch (e: any) {
       setErr(e.message);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
