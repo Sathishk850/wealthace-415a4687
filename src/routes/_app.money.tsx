@@ -1125,27 +1125,22 @@ function TransactionDialog({
           {err && <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{err}</div>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <ClearButton
-            dirty={!!(amount || merchant || account || note || categoryId)}
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>Cancel</Button>
+          {!editing && (
+            <Button variant="outline" onClick={() => submit(true)} disabled={upsert.isPending}>
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
+          <Button
+            className="bg-mint text-[#04121C] hover:brightness-110"
+            onClick={() => submit(false)}
             disabled={upsert.isPending}
-            onClear={() => {
-              setAmount("");
-              setDate(todayIso());
-              setCategoryId("");
-              setMerchant("");
-              setAccount("");
-              setNote("");
-              setPaymentMode(null);
-              setPaymentAccountId(null);
-              setErr(null);
-            }}
-          />
-          <Button onClick={submit} disabled={upsert.isPending}>
+          >
             {upsert.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-            {editing ? "Save changes" : "Add transaction"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
