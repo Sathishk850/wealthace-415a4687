@@ -1029,7 +1029,18 @@ function TransactionDialog({
         payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
       if (kind === "expense") void commitStagedPaymentPreferences();
-      onOpenChange(false);
+      if (keepOpen && !editing) {
+        setAmount("");
+        setMerchant("");
+        setAccount("");
+        setNote("");
+        setCategoryId("");
+        setPaymentMode(null);
+        setPaymentAccountId(null);
+        setErr(null);
+      } else {
+        onOpenChange(false);
+      }
     } catch (e: any) {
       setErr(e.message || "Failed to save");
     }
