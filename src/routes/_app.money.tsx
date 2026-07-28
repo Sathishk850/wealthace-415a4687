@@ -937,7 +937,7 @@ function TransactionDialog({
   const existingNames = new Set(kindCats.map((c) => c.name.toLowerCase()));
   const missingPresets = presets.filter((p) => !existingNames.has(p.toLowerCase()));
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     setErr(null);
     const n = Number(amount);
     if (!merchant.trim()) return setErr("Merchant / source is required.");
@@ -1029,7 +1029,18 @@ function TransactionDialog({
         payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
       if (kind === "expense") void commitStagedPaymentPreferences();
-      onOpenChange(false);
+      if (keepOpen && !editing) {
+        setAmount("");
+        setMerchant("");
+        setAccount("");
+        setNote("");
+        setCategoryId("");
+        setPaymentMode(null);
+        setPaymentAccountId(null);
+        setErr(null);
+      } else {
+        onOpenChange(false);
+      }
     } catch (e: any) {
       setErr(e.message || "Failed to save");
     }
@@ -1125,27 +1136,22 @@ function TransactionDialog({
           {err && <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{err}</div>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <ClearButton
-            dirty={!!(amount || merchant || account || note || categoryId)}
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>Cancel</Button>
+          {!editing && (
+            <Button variant="outline" onClick={() => submit(true)} disabled={upsert.isPending}>
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
+          <Button
+            className="bg-mint text-[#04121C] hover:brightness-110"
+            onClick={() => submit(false)}
             disabled={upsert.isPending}
-            onClear={() => {
-              setAmount("");
-              setDate(todayIso());
-              setCategoryId("");
-              setMerchant("");
-              setAccount("");
-              setNote("");
-              setPaymentMode(null);
-              setPaymentAccountId(null);
-              setErr(null);
-            }}
-          />
-          <Button onClick={submit} disabled={upsert.isPending}>
+          >
             {upsert.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-            {editing ? "Save changes" : "Add transaction"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
@@ -1352,7 +1358,7 @@ function BudgetDialog({
     }
   };
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     setErr(null);
     const n = Number(amount);
     if (!categoryId) return setErr("Select a category.");
@@ -1365,11 +1371,18 @@ function BudgetDialog({
         period_month: `${month}-01`,
         amount_limit: n,
       });
-      onOpenChange(false);
+      if (keepOpen && !editing) {
+        setCategoryId("");
+        setAmount("");
+        setErr(null);
+      } else {
+        onOpenChange(false);
+      }
     } catch (e: any) {
       setErr(e.message);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1431,21 +1444,22 @@ function BudgetDialog({
           {err && <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{err}</div>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <ClearButton
-            dirty={!!(categoryId || amount)}
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>Cancel</Button>
+          {!editing && (
+            <Button variant="outline" onClick={() => submit(true)} disabled={upsert.isPending}>
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
+          <Button
+            className="bg-mint text-[#04121C] hover:brightness-110"
+            onClick={() => submit(false)}
             disabled={upsert.isPending}
-            onClear={() => {
-              setCategoryId("");
-              setAmount("");
-              setErr(null);
-            }}
-          />
-          <Button onClick={submit} disabled={upsert.isPending}>
+          >
             {upsert.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-            {editing ? "Save changes" : "Add budget"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
