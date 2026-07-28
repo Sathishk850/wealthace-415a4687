@@ -32,7 +32,7 @@ type TabValue =
   | "family";
 
 const TABS: { value: TabValue; label: string }[] = [
-  { value: "investments", label: "Investments & Portfolio" },
+  { value: "investments", label: "Overview" },
   { value: "holdings", label: "Holdings" },
   { value: "sip-tracker", label: "SIP Tracker" },
   { value: "performance", label: "Performance" },

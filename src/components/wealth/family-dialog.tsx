@@ -10,7 +10,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ClearButton, isDirty } from "@/components/clear-button";
+
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
@@ -63,11 +63,12 @@ export function FamilyDialog({ open, onOpenChange, existing }: Props) {
     );
   }, [open, existing]);
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     if (!form.name.trim()) return toast.error("Name is required");
     try {
       await upsert.mutateAsync(form);
-      onOpenChange(false);
+      if (keepOpen && !existing) setForm(empty);
+      else onOpenChange(false);
     } catch {
       /* hook toast */
     }
@@ -178,17 +179,17 @@ export function FamilyDialog({ open, onOpenChange, existing }: Props) {
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>Cancel</Button>
-          <ClearButton
-            dirty={isDirty(form as unknown as Record<string, unknown>, empty as unknown as Record<string, unknown>)}
-            disabled={upsert.isPending}
-            onClear={() => setForm(empty)}
-          />
+          {!existing && (
+            <Button variant="outline" onClick={() => submit(true)} disabled={upsert.isPending}>
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
           <Button
             className="bg-mint text-[#04121C] hover:brightness-110"
-            onClick={submit}
+            onClick={() => submit(false)}
             disabled={upsert.isPending}
           >
-            {upsert.isPending ? "Saving…" : existing ? "Save changes" : "Add member"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

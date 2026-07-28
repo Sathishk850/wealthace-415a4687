@@ -20,7 +20,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ClearButton, isDirty } from "@/components/clear-button";
 import { PaymentFields } from "@/components/payment/payment-fields";
 import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import {
@@ -82,7 +81,7 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
     }
   }, [open, existing]);
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     if (!form.name.trim()) return toast.error("Name is required");
     if (!form.category) return toast.error("Category is required");
     if (Number.isNaN(Number(form.current_value)) || Number(form.current_value) < 0)
@@ -93,7 +92,8 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
         current_value: Number(form.current_value),
       });
       void commitStagedPaymentPreferences();
-      onOpenChange(false);
+      if (keepOpen && !existing) setForm(empty);
+      else onOpenChange(false);
     } catch {
       /* toast handled in hook */
     }
@@ -242,17 +242,21 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>
             Cancel
           </Button>
-          <ClearButton
-            dirty={isDirty(form as unknown as Record<string, unknown>, empty as unknown as Record<string, unknown>)}
-            disabled={upsert.isPending}
-            onClear={() => setForm(empty)}
-          />
+          {!existing && (
+            <Button
+              variant="outline"
+              onClick={() => submit(true)}
+              disabled={upsert.isPending}
+            >
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
           <Button
             className="bg-mint text-[#04121C] hover:brightness-110"
-            onClick={submit}
+            onClick={() => submit(false)}
             disabled={upsert.isPending}
           >
-            {upsert.isPending ? "Saving…" : existing ? "Save changes" : "Add asset"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

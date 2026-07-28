@@ -704,7 +704,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     }));
   };
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     if (!canSave) {
       if (!form.name.trim()) toast.error("Please select or enter an investment first");
       else if (!form.platform.trim()) toast.error("Investment platform is required");
@@ -746,6 +746,10 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     try {
       await upsert.mutateAsync(payload);
       toast.success(isEdit ? "Investment updated" : "Investment added");
+      if (keepOpen && !isEdit) {
+        clearAll();
+        return;
+      }
       if (onSaved) onSaved();
       else navigate({ to: "/wealth" });
     } catch {
@@ -1288,25 +1292,28 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-end gap-2 px-3 py-3 sm:px-6">
           <button
             type="button"
-            onClick={clearAll}
-            className="inline-flex items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface-2"
-          >
-            Clear
-          </button>
-          <button
-            type="button"
             onClick={goCancel}
             className="inline-flex items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface-2"
           >
             Cancel
           </button>
+          {!isEdit && (
+            <button
+              type="button"
+              onClick={() => submit(true)}
+              disabled={upsert.isPending || !canSave}
+              className="inline-flex items-center rounded-lg border border-mint bg-transparent px-4 py-2 text-sm font-semibold text-mint transition hover:bg-mint/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </button>
+          )}
           <button
             type="button"
-            onClick={submit}
+            onClick={() => submit(false)}
             disabled={upsert.isPending || !canSave}
             className="inline-flex items-center rounded-lg bg-mint px-5 py-2 text-sm font-semibold text-[#04121C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {upsert.isPending ? "Saving…" : isEdit ? "Update Investment" : "Add Investment"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </button>
         </div>
       </div>
@@ -1403,14 +1410,14 @@ function ToggleSwitch({
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
-        checked ? "bg-mint" : "bg-muted",
+        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/40",
+        checked ? "border-mint bg-mint" : "border-border bg-muted",
       )}
     >
       <span
         className={cn(
-          "inline-block h-4 w-4 transform rounded-full bg-background shadow-sm transition",
-          checked ? "translate-x-4" : "translate-x-0.5",
+          "inline-block h-5 w-5 transform rounded-full shadow-md transition",
+          checked ? "translate-x-5 bg-[#04121C]" : "translate-x-0 bg-foreground",
         )}
       />
     </button>
