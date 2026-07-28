@@ -164,14 +164,11 @@ export function PaymentAccountDialog({
     return [...builtins, ...customPresets];
   }, [form.account_type, customPresets]);
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     if (fields.showInstitution && !form.institution?.trim())
       return toast.error("Please select an institution");
     if (fields.nameRequired && !form.name.trim())
       return toast.error(`${fields.nameLabel.replace(" *", "")} is required`);
-    // Account Name is optional for bank / card types — keep it empty so the
-    // UI shows the institution alone. Cash / wallet / UPI still require a
-    // name and fall back to institution if somehow missing.
     const finalName = form.name.trim()
       ? form.name.trim()
       : fields.showInstitution
@@ -184,7 +181,6 @@ export function PaymentAccountDialog({
         onOpenChange(false);
         return;
       }
-      // Insert directly so we can return the new id to callers.
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -216,7 +212,12 @@ export function PaymentAccountDialog({
       toast.success("Payment account added");
       qc.invalidateQueries({ queryKey: paymentAccountKeys.all });
       onCreated?.((data as { id: string }).id);
-      onOpenChange(false);
+      if (keepOpen) {
+        setForm(emptyFor(defaultType));
+        setNickname("");
+      } else {
+        onOpenChange(false);
+      }
     } catch (e) {
       toast.error((e as Error).message || "Failed to save account");
     }
@@ -572,16 +573,21 @@ export function PaymentAccountDialog({
           >
             Cancel
           </Button>
+          {!existing && (
+            <Button
+              variant="outline"
+              onClick={() => submit(true)}
+              disabled={upsert.isPending}
+            >
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
           <Button
             className="bg-mint text-[#04121C] hover:brightness-110"
-            onClick={submit}
+            onClick={() => submit(false)}
             disabled={upsert.isPending}
           >
-            {upsert.isPending
-              ? "Saving…"
-              : existing
-                ? "Save changes"
-                : "Add account"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
