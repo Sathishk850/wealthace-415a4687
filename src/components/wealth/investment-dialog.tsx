@@ -324,7 +324,7 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
   };
 
 
-  const submit = async () => {
+  const submit = async (keepOpen = false) => {
     if (!form.name.trim()) return toast.error("Name is required");
     if (Number(form.quantity) < 0) return toast.error("Quantity cannot be negative");
     if (Number(form.avg_price) < 0 || Number(form.current_price) < 0)
@@ -332,7 +332,8 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
     try {
       await upsert.mutateAsync(form);
       void commitStagedPaymentPreferences();
-      onOpenChange(false);
+      if (keepOpen && !existing) setForm(empty);
+      else onOpenChange(false);
     } catch {
       /* hook toast */
     }
@@ -576,17 +577,17 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>
             Cancel
           </Button>
-          <ClearButton
-            dirty={isDirty(form as unknown as Record<string, unknown>, empty as unknown as Record<string, unknown>)}
-            disabled={upsert.isPending}
-            onClear={() => setForm(empty)}
-          />
+          {!existing && (
+            <Button variant="outline" onClick={() => submit(true)} disabled={upsert.isPending}>
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
           <Button
             className="bg-mint text-[#04121C] hover:brightness-110"
-            onClick={submit}
+            onClick={() => submit(false)}
             disabled={upsert.isPending}
           >
-            {upsert.isPending ? "Saving…" : existing ? "Save changes" : "Add investment"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
