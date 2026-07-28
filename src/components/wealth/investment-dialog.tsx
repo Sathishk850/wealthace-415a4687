@@ -30,7 +30,7 @@ import { Check, ChevronsUpDown, Plus, ChevronRight, ChevronDown, Link2, Link2Off
 import { InstrumentSearch } from "@/components/market/instrument-search";
 import type { IdentifierType, SearchResult } from "@/lib/market/types";
 import { cn } from "@/lib/utils";
-import { ClearButton, isDirty } from "@/components/clear-button";
+
 import { PaymentFields } from "@/components/payment/payment-fields";
 import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import { Switch } from "@/components/ui/switch";

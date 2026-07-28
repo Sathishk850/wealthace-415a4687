@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ClearButton } from "@/components/clear-button";
+
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -85,7 +85,18 @@ export function ReminderDialog({
     }
   }, [open, reminder, today]);
 
-  const submit = async () => {
+  const resetForm = () => {
+    setKind("custom");
+    setTitle("");
+    setAmount(0);
+    setDueDate(today);
+    setRecurrence("monthly");
+    setNotifyDays(1);
+    setNotifyEnabled(true);
+    setNotes("");
+  };
+
+  const submit = async (keepOpen = false) => {
     if (!title.trim()) return;
     await upsert.mutateAsync({
       id: reminder?.id,
@@ -98,7 +109,8 @@ export function ReminderDialog({
       notify_enabled: notifyEnabled,
       notes,
     });
-    onOpenChange(false);
+    if (keepOpen && !reminder) resetForm();
+    else onOpenChange(false);
   };
 
   return (
@@ -175,25 +187,21 @@ export function ReminderDialog({
           ) : <span />}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <ClearButton
-              dirty={!!(title || amount || notes)}
-              onClear={() => {
-                setKind("custom");
-                setTitle("");
-                setAmount(0);
-                setDueDate(today);
-                setRecurrence("monthly");
-                setNotifyDays(1);
-                setNotifyEnabled(true);
-                setNotes("");
-              }}
-            />
+            {!reminder && (
+              <Button
+                variant="outline"
+                onClick={() => submit(true)}
+                disabled={upsert.isPending || !title.trim()}
+              >
+                {upsert.isPending ? "Saving…" : "Save & Add"}
+              </Button>
+            )}
             <Button
               className="bg-mint text-mint-foreground hover:bg-mint/90"
-              onClick={submit}
+              onClick={() => submit(false)}
               disabled={upsert.isPending || !title.trim()}
             >
-              {reminder ? "Save Changes" : "Create Reminder"}
+              {upsert.isPending ? "Saving…" : "Save"}
             </Button>
           </div>
         </DialogFooter>

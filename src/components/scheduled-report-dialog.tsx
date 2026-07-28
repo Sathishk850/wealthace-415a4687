@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ClearButton } from "@/components/clear-button";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -94,7 +94,22 @@ export function ScheduledReportDialog({
   const parseEmails = (s: string) =>
     s.split(",").map((e) => e.trim()).filter((e) => e.length > 0);
 
-  const submit = async () => {
+  const resetForm = () => {
+    setName("");
+    setKeys([]);
+    setFormats(["pdf"]);
+    setFrequency("monthly");
+    setDateRange("last_period");
+    setRecipients("");
+    setCc("");
+    setBcc("");
+    setEmailEnabled(true);
+    setInAppEnabled(true);
+    setAiInsights(true);
+    setActive(true);
+  };
+
+  const submit = async (keepOpen = false) => {
     if (!name.trim() || keys.length === 0) return;
     await upsert.mutateAsync({
       id: initial?.id,
@@ -111,7 +126,8 @@ export function ScheduledReportDialog({
       active,
       next_run_at: initial?.next_run_at ?? computeNextRun(frequency).toISOString(),
     });
-    onOpenChange(false);
+    if (keepOpen && !initial?.id) resetForm();
+    else onOpenChange(false);
   };
 
   return (
@@ -232,29 +248,20 @@ export function ScheduledReportDialog({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <ClearButton
-            dirty={!!(name || keys.length || recipients || cc || bcc)}
-            disabled={upsert.isPending}
-            onClear={() => {
-              setName("");
-              setKeys([]);
-              setFormats(["pdf"]);
-              setFrequency("monthly");
-              setDateRange("last_period");
-              setRecipients("");
-              setCc("");
-              setBcc("");
-              setEmailEnabled(true);
-              setInAppEnabled(true);
-              setAiInsights(true);
-              setActive(true);
-            }}
-          />
+          {!initial?.id && (
+            <Button
+              variant="outline"
+              onClick={() => submit(true)}
+              disabled={upsert.isPending || !name.trim() || keys.length === 0}
+            >
+              {upsert.isPending ? "Saving…" : "Save & Add"}
+            </Button>
+          )}
           <Button
-            onClick={submit}
+            onClick={() => submit(false)}
             disabled={upsert.isPending || !name.trim() || keys.length === 0}
           >
-            {upsert.isPending ? "Saving…" : initial?.id ? "Save changes" : "Create schedule"}
+            {upsert.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
