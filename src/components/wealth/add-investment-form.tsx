@@ -1288,8 +1288,8 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       </div>
 
       {/* ---------- Bottom action bar (sticky) ---------- */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-end gap-2 px-3 py-3 sm:px-6">
+      <div className="fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-40 border-t border-border bg-background/95 backdrop-blur lg:bottom-0 lg:pb-0">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-end gap-2 px-3 py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:px-6 lg:pb-3">
           <button
             type="button"
             onClick={goCancel}
