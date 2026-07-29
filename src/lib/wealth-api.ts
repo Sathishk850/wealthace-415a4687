@@ -1297,3 +1297,132 @@ export function ageFromDob(dob: string | null): number | null {
   if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
   return age;
 }
+/* =================== Investment Transactions =================== */
+export type InvestmentTxn = {
+  id: string;
+  user_id: string;
+  investment_id: string;
+  txn_type: "buy" | "sell" | string;
+  quantity: number;
+  price: number;
+  amount: number;
+  occurred_on: string;
+  notes: string | null;
+  payment_mode: string | null;
+  payment_account_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InvestmentTxnInput = {
+  id?: string;
+  investment_id: string;
+  txn_type: "buy" | "sell";
+  quantity: number;
+  price: number;
+  amount?: number;
+  occurred_on: string;
+  notes?: string | null;
+  payment_mode?: string | null;
+  payment_account_id?: string | null;
+};
+
+export function useInvestmentTxns(investment_id: string | null | undefined) {
+  return useQuery({
+    queryKey: [...wealthKeys.investmentTxns, investment_id ?? "none"],
+    enabled: !!investment_id,
+    queryFn: async (): Promise<InvestmentTxn[]> => {
+      const { data, error } = await supabase
+        .from("wealth_investment_txns")
+        .select("*")
+        .eq("investment_id", investment_id!)
+        .order("occurred_on", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        quantity: num(r.quantity),
+        price: num(r.price),
+        amount: num(r.amount),
+      })) as InvestmentTxn[];
+    },
+  });
+}
+
+export function useUpsertInvestmentTxn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: InvestmentTxnInput) => {
+      const user_id = await uid();
+      const qty = Number(input.quantity) || 0;
+      const price = Number(input.price) || 0;
+      const amount = Number(input.amount ?? qty * price) || 0;
+      const payload = {
+        investment_id: input.investment_id,
+        txn_type: input.txn_type,
+        quantity: qty,
+        price,
+        amount,
+        occurred_on: input.occurred_on,
+        notes: input.notes?.trim() || null,
+        payment_mode: input.payment_mode ?? null,
+        payment_account_id: input.payment_account_id ?? null,
+      };
+      if (input.id) {
+        const { error } = await supabase
+          .from("wealth_investment_txns")
+          .update(payload)
+          .eq("id", input.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("wealth_investment_txns")
+          .insert({ ...payload, user_id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, vars) => {
+      toast.success("Transaction saved");
+      qc.invalidateQueries({ queryKey: [...wealthKeys.investmentTxns, vars.investment_id] });
+      qc.invalidateQueries({ queryKey: wealthKeys.investmentTxns });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save transaction"),
+  });
+}
+
+export function useDeleteInvestmentTxn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { id: string; investment_id: string }) => {
+      const { error } = await supabase
+        .from("wealth_investment_txns")
+        .delete()
+        .eq("id", payload.id);
+      if (error) throw error;
+      return payload;
+    },
+    onSuccess: (p) => {
+      toast.success("Transaction deleted");
+      qc.invalidateQueries({ queryKey: [...wealthKeys.investmentTxns, p.investment_id] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete transaction"),
+  });
+}
+
+export function useUpdateInvestmentNotes() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { id: string; notes: string | null }) => {
+      const { error } = await supabase
+        .from("wealth_investments")
+        .update({ notes: payload.notes?.trim() || null })
+        .eq("id", payload.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Notes saved");
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save notes"),
+  });
+}
