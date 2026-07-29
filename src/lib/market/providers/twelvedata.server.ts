@@ -55,15 +55,27 @@ export async function twelveDataQuotes(items: QuoteRequestItem[]): Promise<Marke
       console.error(`[twelvedata] symbol error ${keyHint ?? row.symbol}:`, row.message ?? row.code);
       return;
     }
-    const sym = String(row.symbol ?? keyHint ?? "");
-    const req = symbolMap.get(sym);
-    if (!req) return;
+    // Prefer the request keyHint (e.g. "HDFC:NSE") because the batch response
+    // sometimes strips the exchange suffix on `row.symbol`, causing lookup misses.
+    const rowSym = String(row.symbol ?? "");
+    const req =
+      (keyHint && symbolMap.get(keyHint)) ||
+      symbolMap.get(rowSym) ||
+      // Last resort: match by bare identifier when exchange suffix is missing.
+      (rowSym ? Array.from(symbolMap.values()).find((r) => r.identifier === rowSym) : undefined);
+    if (!req) {
+      console.warn(`[twelvedata] no request match for response symbol="${rowSym}" keyHint="${keyHint}"`);
+      return;
+    }
     const price = normalizePrice(row.close ?? row.price);
     if (price == null) {
-      console.warn(`[twelvedata] invalid price for ${sym}:`, row.close ?? row.price);
+      console.warn(`[twelvedata] invalid price for ${keyHint ?? rowSym}:`, row.close ?? row.price);
       return;
     }
     const prev = normalizePrice(row.previous_close);
+    console.log(
+      `[twelvedata] ${req.identifier_type}:${req.identifier} → ${price} (prev ${prev ?? "-"}) via "${keyHint ?? rowSym}"`,
+    );
     out.push({
       identifier_type: req.identifier_type,
       identifier: req.identifier,
@@ -81,8 +93,14 @@ export async function twelveDataQuotes(items: QuoteRequestItem[]): Promise<Marke
     for (const r of raw) if (r && typeof r === "object") consume(r as Record<string, unknown>, null);
   } else if (raw && typeof raw === "object") {
     const obj = raw as Record<string, unknown>;
-    if (obj.symbol || obj.close || obj.price) consume(obj, null);
-    else for (const [k, v] of Object.entries(obj)) if (v && typeof v === "object") consume(v as Record<string, unknown>, k);
+    // Single-symbol response
+    if (symbolMap.size === 1 && (obj.symbol || obj.close || obj.price)) {
+      consume(obj, Array.from(symbolMap.keys())[0] ?? null);
+    } else if (obj.symbol || obj.close || obj.price) {
+      consume(obj, null);
+    } else {
+      for (const [k, v] of Object.entries(obj)) if (v && typeof v === "object") consume(v as Record<string, unknown>, k);
+    }
   }
   console.log(`[twelvedata] resolved ${out.length}/${symbolMap.size} quotes`);
   return out;

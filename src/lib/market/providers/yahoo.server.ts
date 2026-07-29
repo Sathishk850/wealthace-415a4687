@@ -67,13 +67,19 @@ export async function yahooQuotes(items: QuoteRequestItem[]): Promise<MarketQuot
   for (const q of body.quoteResponse?.result ?? []) {
     const sym = String(q.symbol ?? "");
     const req = symbolMap.get(sym);
-    if (!req) continue;
+    if (!req) {
+      console.warn(`[yahoo] response symbol "${sym}" not in request map`);
+      continue;
+    }
     const price = normalizePrice(q.regularMarketPrice);
     if (price == null) {
       console.warn(`[yahoo] invalid price for ${sym}:`, q.regularMarketPrice);
       continue;
     }
     const prev = normalizePrice(q.regularMarketPreviousClose);
+    console.log(
+      `[yahoo] ${req.identifier_type}:${req.identifier} → ${price} ${q.currency ?? ""} (prev ${prev ?? "-"}) via "${sym}"`,
+    );
     out.push({
       identifier_type: req.identifier_type,
       identifier: req.identifier,
