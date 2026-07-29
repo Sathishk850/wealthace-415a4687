@@ -30,13 +30,16 @@ async function loadCache(items: QuoteRequestItem[]) {
     .in("identifier", idents);
   if (error) throw error;
   const map = new Map<string, MarketQuote>();
-  const HARD_MAX_AGE_MS = 6 * 60 * 60 * 1000; // 6h: drop from cache entirely
+  // Hard drop from cache: stocks/crypto after 2h (fast-moving); MFs after 24h (single NAV/day).
+  const HARD_MAX_STOCK_MS = 2 * 60 * 60 * 1000;
+  const HARD_MAX_MF_MS = 24 * 60 * 60 * 1000;
   const nowMs = Date.now();
   for (const row of data ?? []) {
     const key = `${row.identifier_type}:${row.identifier}`;
     const fetchedAt = row.fetched_at as string;
     const ageMs = nowMs - new Date(fetchedAt).getTime();
-    if (Number.isFinite(ageMs) && ageMs > HARD_MAX_AGE_MS) {
+    const maxAge = row.identifier_type === "mf_in" ? HARD_MAX_MF_MS : HARD_MAX_STOCK_MS;
+    if (Number.isFinite(ageMs) && ageMs > maxAge) {
       // Too old — force a fresh fetch by not surfacing this row.
       continue;
     }
