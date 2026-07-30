@@ -371,8 +371,16 @@ export function InsuranceView({
                           : days != null && days <= 30 ? "text-amber-400"
                           : "text-muted-foreground";
                         return (
-                          <tr key={p.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                          <tr key={p.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${sel.isSelected(p.id) ? "bg-mint/[0.06]" : ""}`}>
+                            <td className="w-[40px] py-3 pl-2">
+                              <SelectCheckbox
+                                label={`Select ${p.policy_name}`}
+                                checked={sel.isSelected(p.id)}
+                                onChange={(v) => sel.toggle(p.id, v)}
+                              />
+                            </td>
                             <td className="py-3 pl-2">
+
                               <div className="flex items-center gap-3">
                                 <div className={`grid h-8 w-8 place-items-center rounded-lg ${meta.tint}`}>
                                   <meta.Icon className="h-4 w-4" />
