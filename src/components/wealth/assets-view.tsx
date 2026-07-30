@@ -521,7 +521,7 @@ export function AssetsView({
         }}
         existing={editAsset}
         defaultCategory={
-          tab === "Real Estate" ? "Real Estate"
+          tab === "Real Estate" ? "Property"
           : tab === "Savings" ? "Cash"
           : undefined
         }
