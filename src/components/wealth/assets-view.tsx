@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   ArrowUp,
@@ -28,7 +28,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TextTabs } from "@/components/text-tabs";
-import { InvestmentDialog } from "@/components/wealth/investment-dialog";
 import { AssetDialog } from "@/components/wealth/asset-dialog";
 import { HoldingDetailsModal } from "@/components/wealth/holding-details-modal";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
@@ -166,9 +165,7 @@ export function AssetsView({
   const [sortKey, setSortKey] = useState<SortKey>("current");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [details, setDetails] = useState<Holding | null>(null);
-  const [editInv, setEditInv] = useState<Investment | null>(null);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
-  const [invDialogOpen, setInvDialogOpen] = useState(false);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [confirm, setConfirm] = useState<Holding | null>(null);
   const navigate = useNavigate();
@@ -337,6 +334,29 @@ export function AssetsView({
   };
   if (registerAdd) registerAdd(openAdd);
 
+  /* Edit routes to the matching existing form in edit mode */
+  const openEdit = (h: Holding) => {
+    if (h.source === "investment") {
+      navigate({ to: "/wealth/add-investment", search: { id: h.id } });
+    } else {
+      setEditAsset(h.raw_asset!);
+      setAssetDialogOpen(true);
+    }
+  };
+
+  /* Row selection */
+  const rowKeys = useMemo(() => sorted.map((h) => `${h.source}-${h.id}`), [sorted]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((k) => rowKeys.includes(k)));
+  }, [rowKeys]);
+  const allSelected = rowKeys.length > 0 && selectedIds.length === rowKeys.length;
+  const someSelected = selectedIds.length > 0;
+  const toggleSelectAll = (v: boolean) => setSelectedIds(v ? rowKeys : []);
+  const toggleSelectRow = (key: string, v: boolean) =>
+    setSelectedIds((prev) => (v ? [...new Set([...prev, key])] : prev.filter((k) => k !== key)));
+
+
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(k); setSortDir("desc"); }
@@ -422,6 +442,18 @@ export function AssetsView({
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="w-[44px] px-3 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all holdings"
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someSelected && !allSelected;
+                    }}
+                    onChange={(e) => toggleSelectAll(e.target.checked)}
+                    className="h-4 w-4 cursor-pointer accent-mint"
+                  />
+                </th>
                 <SortHeader label={`Holdings (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
                 <SortHeader label="Type" col="type" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
                 <SortHeader label="Qty" col="quantity" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
@@ -437,23 +469,17 @@ export function AssetsView({
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</td></tr>
+                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</td></tr>
               ) : sorted.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span> to add one.</td></tr>
+                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span> to add one.</td></tr>
               ) : sorted.map((h) => (
                 <HoldingRow
                   key={`${h.source}-${h.id}`}
                   h={h}
+                  selected={selectedIds.includes(`${h.source}-${h.id}`)}
+                  onSelectChange={(v) => toggleSelectRow(`${h.source}-${h.id}`, v)}
                   onView={() => setDetails(h)}
-                  onEdit={() => {
-                    if (h.source === "investment") {
-                      setEditInv(h.raw_investment!);
-                      setInvDialogOpen(true);
-                    } else {
-                      setEditAsset(h.raw_asset!);
-                      setAssetDialogOpen(true);
-                    }
-                  }}
+                  onEdit={() => openEdit(h)}
                   onDelete={() => setConfirm(h)}
                 />
               ))}
@@ -505,14 +531,6 @@ export function AssetsView({
         />
       ) : null}
 
-      <InvestmentDialog
-        open={invDialogOpen}
-        onOpenChange={(v) => {
-          setInvDialogOpen(v);
-          if (!v) setEditInv(null);
-        }}
-        existing={editInv}
-      />
       <AssetDialog
         open={assetDialogOpen}
         onOpenChange={(v) => {
@@ -559,15 +577,32 @@ function HoldingRow({
   onView,
   onEdit,
   onDelete,
+  selected,
+  onSelectChange,
 }: {
   h: Holding;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  selected: boolean;
+  onSelectChange: (v: boolean) => void;
 }) {
   const up = h.pnl >= 0;
   return (
-    <tr className="group border-b border-border/40 last:border-0 hover:bg-surface-2/30">
+    <tr
+      className={`group border-b border-border/40 last:border-0 hover:bg-surface-2/30 ${
+        selected ? "bg-mint/[0.06]" : ""
+      }`}
+    >
+      <td className="w-[44px] px-3 py-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelectChange(e.target.checked)}
+          aria-label={`Select ${h.name}`}
+          className="h-4 w-4 cursor-pointer accent-mint"
+        />
+      </td>
       <td className="px-3 py-3">
         <div className="flex items-center gap-3">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">

@@ -258,7 +258,7 @@ export function AssetDialog({ open, onOpenChange, existing, defaultCategory }: P
             onClick={() => submit(false)}
             disabled={upsert.isPending}
           >
-            {upsert.isPending ? "Saving…" : "Save"}
+            {upsert.isPending ? "Saving…" : existing ? "Save Changes" : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
