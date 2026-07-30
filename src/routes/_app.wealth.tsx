@@ -39,7 +39,8 @@ function Wealth() {
   const [tab, setTab] = useState<TabValue>("overview");
   const addRef = useRef<(() => void) | null>(null);
 
-  const showAdd = tab !== "overview";
+  // Assets tab renders its own contextual Add button in its toolbar.
+  const showAdd = tab !== "overview" && tab !== "assets";
   const addLabel =
     tab === "liabilities" ? "Add Liability"
     : tab === "insurance" ? "Add Policy"

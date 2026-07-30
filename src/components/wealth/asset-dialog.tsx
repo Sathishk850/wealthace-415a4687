@@ -33,6 +33,7 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existing?: Asset | null;
+  defaultCategory?: string;
 };
 
 const empty: AssetInput = {
@@ -51,7 +52,7 @@ const empty: AssetInput = {
   payment_account_id: null,
 };
 
-export function AssetDialog({ open, onOpenChange, existing }: Props) {
+export function AssetDialog({ open, onOpenChange, existing, defaultCategory }: Props) {
   const [form, setForm] = useState<AssetInput>(empty);
   const upsert = useUpsertAsset();
 
@@ -76,10 +77,11 @@ export function AssetDialog({ open, onOpenChange, existing }: Props) {
               payment_mode: existing.payment_mode,
               payment_account_id: existing.payment_account_id,
             }
-          : empty,
+          : { ...empty, category: defaultCategory || empty.category },
       );
     }
-  }, [open, existing]);
+  }, [open, existing, defaultCategory]);
+
 
   const submit = async (keepOpen = false) => {
     if (!form.name.trim()) return toast.error("Name is required");
