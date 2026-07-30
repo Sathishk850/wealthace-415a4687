@@ -520,6 +520,11 @@ export function AssetsView({
           if (!v) setEditAsset(null);
         }}
         existing={editAsset}
+        defaultCategory={
+          tab === "Real Estate" ? "Real Estate"
+          : tab === "Savings" ? "Cash"
+          : undefined
+        }
       />
 
       <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
