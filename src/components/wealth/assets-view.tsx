@@ -559,15 +559,32 @@ function HoldingRow({
   onView,
   onEdit,
   onDelete,
+  selected,
+  onSelectChange,
 }: {
   h: Holding;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  selected: boolean;
+  onSelectChange: (v: boolean) => void;
 }) {
   const up = h.pnl >= 0;
   return (
-    <tr className="group border-b border-border/40 last:border-0 hover:bg-surface-2/30">
+    <tr
+      className={`group border-b border-border/40 last:border-0 hover:bg-surface-2/30 ${
+        selected ? "bg-mint/[0.06]" : ""
+      }`}
+    >
+      <td className="w-[44px] px-3 py-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelectChange(e.target.checked)}
+          aria-label={`Select ${h.name}`}
+          className="h-4 w-4 cursor-pointer accent-mint"
+        />
+      </td>
       <td className="px-3 py-3">
         <div className="flex items-center gap-3">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
