@@ -1315,7 +1315,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
             disabled={upsert.isPending || !canSave}
             className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg bg-mint px-3 py-2 text-sm font-semibold text-[#04121C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-5"
           >
-            {upsert.isPending ? "Saving…" : "Save"}
+            {upsert.isPending ? "Saving…" : isEdit ? "Save Changes" : "Save"}
           </button>
         </div>
       </div>
