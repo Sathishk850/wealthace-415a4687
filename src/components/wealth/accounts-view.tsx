@@ -129,6 +129,17 @@ export function AccountsView({
   const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
 
+  /* Global bulk selection */
+  const sel = useBulkSelection(
+    pageRows,
+    getRowId,
+    useMemo(() => filtered.map((r) => r.id), [filtered]),
+  );
+  const bulkDel = useBulkDeleteRows("wealth_accounts", "accounts");
+  const bulkUpd = useBulkUpdateRows("wealth_accounts", "accounts");
+
+
+
   const exportCols = [
     { key: "name", label: "Name" },
     { key: "account_type", label: "Type" },
