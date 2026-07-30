@@ -1,4 +1,11 @@
 import { useMemo, useState } from "react";
+import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
+import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
+import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
+
+const getRowId = (r: { id: string }) => r.id;
+
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -122,6 +129,17 @@ export function InsuranceView({
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
+
+  /* Global bulk selection */
+  const sel = useBulkSelection(
+    pageRows,
+    getRowId,
+    useMemo(() => filtered.map((r) => r.id), [filtered]),
+  );
+  const bulkDel = useBulkDeleteRows("wealth_insurance", "policies");
+  const bulkUpd = useBulkUpdateRows("wealth_insurance", "policies");
+
+
 
   /* ===== Import / Export ===== */
   const exportCols = [
@@ -316,7 +334,16 @@ export function InsuranceView({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="w-[40px] py-3 pl-2">
+                          <SelectCheckbox
+                            label="Select all policies"
+                            checked={sel.allSelected}
+                            indeterminate={sel.someSelected && !sel.allSelected}
+                            onChange={(v) => sel.toggleAll(v)}
+                          />
+                        </th>
                         <th className="py-3 pl-2 font-medium">Policy Name</th>
+
                         <th className="py-3 font-medium">Type</th>
                         <th className="py-3 font-medium">Provider</th>
                         <th className="py-3 font-medium">Policy Number</th>

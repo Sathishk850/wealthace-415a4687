@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
+import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
+import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
+
 import {
   Search,
   ArrowUp,
@@ -344,17 +349,38 @@ export function AssetsView({
     }
   };
 
-  /* Row selection */
-  const rowKeys = useMemo(() => sorted.map((h) => `${h.source}-${h.id}`), [sorted]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  useEffect(() => {
-    setSelectedIds((prev) => prev.filter((k) => rowKeys.includes(k)));
-  }, [rowKeys]);
-  const allSelected = rowKeys.length > 0 && selectedIds.length === rowKeys.length;
-  const someSelected = selectedIds.length > 0;
-  const toggleSelectAll = (v: boolean) => setSelectedIds(v ? rowKeys : []);
-  const toggleSelectRow = (key: string, v: boolean) =>
-    setSelectedIds((prev) => (v ? [...new Set([...prev, key])] : prev.filter((k) => k !== key)));
+  /* Row selection (global bulk framework) */
+  const rowKey = useCallback((h: Holding) => `${h.source}-${h.id}`, []);
+  const sel = useBulkSelection(sorted, rowKey);
+  const bulkDelInv = useBulkDeleteRows("wealth_investments", "holdings");
+  const bulkDelAsset = useBulkDeleteRows("wealth_assets", "assets");
+  const bulkUpdInv = useBulkUpdateRows("wealth_investments", "holdings");
+  const bulkUpdAsset = useBulkUpdateRows("wealth_assets", "assets");
+
+  const splitSelection = () => {
+    const inv: string[] = [];
+    const ast: string[] = [];
+    for (const h of sel.selectedRows) (h.source === "investment" ? inv : ast).push(h.id);
+    return { inv, ast };
+  };
+
+  const bulkDelete = async () => {
+    const { inv, ast } = splitSelection();
+    if (inv.length) await bulkDelInv.mutateAsync(inv);
+    if (ast.length) await bulkDelAsset.mutateAsync(ast);
+    sel.clear();
+  };
+
+  const bulkClassify = async (value: string) => {
+    const { inv, ast } = splitSelection();
+    if (inv.length) await bulkUpdInv.mutateAsync({ ids: inv, patch: { sub_category: value } });
+    if (ast.length) await bulkUpdAsset.mutateAsync({ ids: ast, patch: { sub_category: value } });
+    sel.clear();
+  };
+
+  const bulkBusy =
+    bulkDelInv.isPending || bulkDelAsset.isPending || bulkUpdInv.isPending || bulkUpdAsset.isPending;
+
 
 
   const toggleSort = (k: SortKey) => {
@@ -443,17 +469,14 @@ export function AssetsView({
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <th className="w-[44px] px-3 py-3">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all holdings"
-                    checked={allSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = someSelected && !allSelected;
-                    }}
-                    onChange={(e) => toggleSelectAll(e.target.checked)}
-                    className="h-4 w-4 cursor-pointer accent-mint"
+                  <SelectCheckbox
+                    label="Select all holdings"
+                    checked={sel.allSelected}
+                    indeterminate={sel.someSelected && !sel.allSelected}
+                    onChange={(v) => sel.toggleAll(v)}
                   />
                 </th>
+
                 <SortHeader label={`Holdings (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
                 <SortHeader label="Type" col="type" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
                 <SortHeader label="Qty" col="quantity" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
@@ -476,8 +499,9 @@ export function AssetsView({
                 <HoldingRow
                   key={`${h.source}-${h.id}`}
                   h={h}
-                  selected={selectedIds.includes(`${h.source}-${h.id}`)}
-                  onSelectChange={(v) => toggleSelectRow(`${h.source}-${h.id}`, v)}
+                  selected={sel.isSelected(rowKey(h))}
+                  onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+
                   onView={() => setDetails(h)}
                   onEdit={() => openEdit(h)}
                   onDelete={() => setConfirm(h)}
@@ -508,6 +532,30 @@ export function AssetsView({
           </table>
         </div>
       </div>
+
+      {/* ============ GLOBAL BULK ACTION BAR ============ */}
+      <BulkActionBar
+        count={sel.selectedCount}
+        entityLabel="holding"
+        busy={bulkBusy}
+        onClear={sel.clear}
+        onDelete={bulkDelete}
+        fieldActions={
+          typeOptions.filter((o) => o !== "all").length
+            ? [
+                {
+                  label: "Change Asset Classification",
+                  options: typeOptions
+                    .filter((o) => o !== "all")
+                    .map((o) => ({ value: o, label: o })),
+                  onSelect: bulkClassify,
+                },
+              ]
+            : []
+        }
+
+      />
+
 
       {/* ============ MODALS ============ */}
       <HoldingDetailsModal
