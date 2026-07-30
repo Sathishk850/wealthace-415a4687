@@ -33,6 +33,7 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   existing?: Asset | null;
+  defaultCategory?: string;
 };
 
 const empty: AssetInput = {
