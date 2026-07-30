@@ -29,6 +29,10 @@ function Transactions() {
   const { data: cats = [] } = useCategories();
   const catName = (id: string | null) => cats.find((c) => c.id === id)?.name ?? "Uncategorized";
 
+  const sel = useBulkSelection(txns, getRowId);
+  const bulkDel = useBulkDeleteRows("money_transactions", "transactions");
+  const bulkUpd = useBulkUpdateRows("money_transactions", "transactions");
+
   return (
     <>
       <PageHeader
@@ -60,11 +64,30 @@ function Transactions() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex items-center gap-3 border-b border-border px-4 py-2.5 sm:px-5">
+            <SelectCheckbox
+              label="Select all transactions"
+              checked={sel.allSelected}
+              indeterminate={sel.someSelected && !sel.allSelected}
+              onChange={(v) => sel.toggleAll(v)}
+            />
+            <span className="text-xs text-muted-foreground">Select all ({txns.length})</span>
+          </div>
           <ul className="divide-y divide-border">
             {txns.map((r) => {
               const pos = r.kind === "income";
               return (
-                <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-5">
+                <li
+                  key={r.id}
+                  className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-5 ${
+                    sel.isSelected(r.id) ? "bg-mint/[0.06]" : ""
+                  }`}
+                >
+                  <SelectCheckbox
+                    label={`Select ${r.merchant || catName(r.category_id)}`}
+                    checked={sel.isSelected(r.id)}
+                    onChange={(v) => sel.toggle(r.id, v)}
+                  />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-foreground">{r.merchant || catName(r.category_id)}</div>
                     <div className="text-xs text-muted-foreground">
@@ -80,6 +103,32 @@ function Transactions() {
           </ul>
         </div>
       )}
+
+      <BulkActionBar
+        count={sel.selectedCount}
+        entityLabel="transaction"
+        busy={bulkDel.isPending || bulkUpd.isPending}
+        onClear={sel.clear}
+        onDelete={async () => {
+          await bulkDel.mutateAsync(sel.selectedIds);
+          sel.clear();
+        }}
+        fieldActions={
+          cats.length
+            ? [
+                {
+                  label: "Change Category",
+                  options: cats.map((c) => ({ value: c.id, label: `${c.name} (${c.kind})` })),
+                  onSelect: async (value) => {
+                    await bulkUpd.mutateAsync({ ids: sel.selectedIds, patch: { category_id: value } });
+                    sel.clear();
+                  },
+                },
+              ]
+            : []
+        }
+      />
     </>
   );
 }
+
