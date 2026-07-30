@@ -337,6 +337,29 @@ export function AssetsView({
   };
   if (registerAdd) registerAdd(openAdd);
 
+  /* Edit routes to the matching existing form in edit mode */
+  const openEdit = (h: Holding) => {
+    if (h.source === "investment") {
+      navigate({ to: "/wealth/add-investment", search: { id: h.id } });
+    } else {
+      setEditAsset(h.raw_asset!);
+      setAssetDialogOpen(true);
+    }
+  };
+
+  /* Row selection */
+  const rowKeys = useMemo(() => sorted.map((h) => `${h.source}-${h.id}`), [sorted]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((k) => rowKeys.includes(k)));
+  }, [rowKeys]);
+  const allSelected = rowKeys.length > 0 && selectedIds.length === rowKeys.length;
+  const someSelected = selectedIds.length > 0;
+  const toggleSelectAll = (v: boolean) => setSelectedIds(v ? rowKeys : []);
+  const toggleSelectRow = (key: string, v: boolean) =>
+    setSelectedIds((prev) => (v ? [...new Set([...prev, key])] : prev.filter((k) => k !== key)));
+
+
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(k); setSortDir("desc"); }
