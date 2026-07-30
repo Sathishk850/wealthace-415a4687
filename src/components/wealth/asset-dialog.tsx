@@ -53,7 +53,30 @@ const empty: AssetInput = {
 };
 
 export function AssetDialog({ open, onOpenChange, existing, defaultCategory }: Props) {
-...
+  const [form, setForm] = useState<AssetInput>(empty);
+  const upsert = useUpsertAsset();
+
+  useEffect(() => {
+    if (open) {
+      setForm(
+        existing
+          ? {
+              id: existing.id,
+              name: existing.name,
+              category: existing.category,
+              sub_category: existing.sub_category ?? "",
+              current_value: existing.current_value,
+              purchase_value: existing.purchase_value,
+              purchase_date: existing.purchase_date,
+              quantity: existing.quantity,
+              unit: existing.unit ?? "",
+              location: existing.location ?? "",
+              notes: existing.notes ?? "",
+              status: existing.status,
+              last_updated: existing.last_updated,
+              payment_mode: existing.payment_mode,
+              payment_account_id: existing.payment_account_id,
+            }
           : { ...empty, category: defaultCategory || empty.category },
       );
     }
