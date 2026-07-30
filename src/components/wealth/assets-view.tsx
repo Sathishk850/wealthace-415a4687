@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   ArrowUp,
@@ -28,7 +28,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TextTabs } from "@/components/text-tabs";
-import { InvestmentDialog } from "@/components/wealth/investment-dialog";
 import { AssetDialog } from "@/components/wealth/asset-dialog";
 import { HoldingDetailsModal } from "@/components/wealth/holding-details-modal";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
@@ -166,9 +165,7 @@ export function AssetsView({
   const [sortKey, setSortKey] = useState<SortKey>("current");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [details, setDetails] = useState<Holding | null>(null);
-  const [editInv, setEditInv] = useState<Investment | null>(null);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
-  const [invDialogOpen, setInvDialogOpen] = useState(false);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [confirm, setConfirm] = useState<Holding | null>(null);
   const navigate = useNavigate();
@@ -534,14 +531,6 @@ export function AssetsView({
         />
       ) : null}
 
-      <InvestmentDialog
-        open={invDialogOpen}
-        onOpenChange={(v) => {
-          setInvDialogOpen(v);
-          if (!v) setEditInv(null);
-        }}
-        existing={editInv}
-      />
       <AssetDialog
         open={assetDialogOpen}
         onOpenChange={(v) => {
