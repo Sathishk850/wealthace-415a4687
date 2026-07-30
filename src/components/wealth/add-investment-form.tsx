@@ -775,10 +775,12 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
           </button>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {isEdit ? "Update Investment" : "Add Investment"}
+              {isEdit ? "Edit Investment" : "Add Investment"}
             </h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Search, select and add your investment
+              {isEdit
+                ? "Update the details of this investment"
+                : "Search, select and add your investment"}
             </p>
           </div>
         </div>
