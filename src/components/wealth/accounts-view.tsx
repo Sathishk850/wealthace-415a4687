@@ -344,8 +344,16 @@ export function AccountsView({
                         const meta = ICONS[a.account_type] ?? ICONS.Other;
                         const negative = a.balance < 0;
                         return (
-                          <tr key={a.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                          <tr key={a.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${sel.isSelected(a.id) ? "bg-mint/[0.06]" : ""}`}>
+                            <td className="w-[40px] py-3 pl-2">
+                              <SelectCheckbox
+                                label={`Select ${a.name}`}
+                                checked={sel.isSelected(a.id)}
+                                onChange={(v) => sel.toggle(a.id, v)}
+                              />
+                            </td>
                             <td className="py-3 pl-2">
+
                               <div className="flex items-center gap-3">
                                 <div className={`grid h-8 w-8 place-items-center rounded-lg ${meta.tint}`}>
                                   <meta.Icon className="h-4 w-4" />
