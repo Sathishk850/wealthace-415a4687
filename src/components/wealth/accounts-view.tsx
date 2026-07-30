@@ -320,7 +320,16 @@ export function AccountsView({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="w-[40px] py-3 pl-2">
+                          <SelectCheckbox
+                            label="Select all accounts"
+                            checked={sel.allSelected}
+                            indeterminate={sel.someSelected && !sel.allSelected}
+                            onChange={(v) => sel.toggleAll(v)}
+                          />
+                        </th>
                         <th className="py-3 pl-2 font-medium">Account</th>
+
                         <th className="py-3 font-medium">Type</th>
                         <th className="py-3 font-medium">Provider</th>
                         <th className="py-3 font-medium">Account #</th>
