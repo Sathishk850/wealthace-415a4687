@@ -1,4 +1,11 @@
 import { useMemo, useState } from "react";
+import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
+import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
+import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
+
+const getRowId = (r: { id: string }) => r.id;
+
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
 } from "recharts";
