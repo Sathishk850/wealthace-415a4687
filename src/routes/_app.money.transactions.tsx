@@ -3,6 +3,13 @@ import { Plus, Upload, Download, Receipt } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { useTransactions, useCategories } from "@/lib/money-api";
 import { inr } from "@/lib/wealth-api";
+import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
+import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
+import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
+
+const getRowId = (r: { id: string }) => r.id;
+
 
 export const Route = createFileRoute("/_app/money/transactions")({
   head: () => ({
