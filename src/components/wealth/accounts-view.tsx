@@ -396,7 +396,29 @@ export function AccountsView({
         </>
       )}
 
+      <BulkActionBar
+        count={sel.selectedCount}
+        entityLabel="account"
+        busy={bulkDel.isPending || bulkUpd.isPending}
+        onClear={sel.clear}
+        onDelete={async () => {
+          await bulkDel.mutateAsync(sel.selectedIds);
+          sel.clear();
+        }}
+        fieldActions={[
+          {
+            label: "Change Status",
+            options: ["Active", "Dormant", "Closed"].map((s) => ({ value: s, label: s })),
+            onSelect: async (value) => {
+              await bulkUpd.mutateAsync({ ids: sel.selectedIds, patch: { status: value } });
+              sel.clear();
+            },
+          },
+        ]}
+      />
+
       <AccountDialog
+
         open={dialogOpen}
         onOpenChange={(v) => { setDialogOpen(v); if (!v) setEditing(null); }}
         existing={editing}
