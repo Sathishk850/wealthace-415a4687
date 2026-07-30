@@ -1,4 +1,11 @@
 import { useMemo, useState } from "react";
+import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
+import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
+import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
+
+const getRowId = (r: { id: string }) => r.id;
+
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
 } from "recharts";
@@ -121,6 +128,17 @@ export function AccountsView({
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
+
+  /* Global bulk selection */
+  const sel = useBulkSelection(
+    pageRows,
+    getRowId,
+    useMemo(() => filtered.map((r) => r.id), [filtered]),
+  );
+  const bulkDel = useBulkDeleteRows("wealth_accounts", "accounts");
+  const bulkUpd = useBulkUpdateRows("wealth_accounts", "accounts");
+
+
 
   const exportCols = [
     { key: "name", label: "Name" },
@@ -302,7 +320,16 @@ export function AccountsView({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="w-[40px] py-3 pl-2">
+                          <SelectCheckbox
+                            label="Select all accounts"
+                            checked={sel.allSelected}
+                            indeterminate={sel.someSelected && !sel.allSelected}
+                            onChange={(v) => sel.toggleAll(v)}
+                          />
+                        </th>
                         <th className="py-3 pl-2 font-medium">Account</th>
+
                         <th className="py-3 font-medium">Type</th>
                         <th className="py-3 font-medium">Provider</th>
                         <th className="py-3 font-medium">Account #</th>
@@ -317,8 +344,16 @@ export function AccountsView({
                         const meta = ICONS[a.account_type] ?? ICONS.Other;
                         const negative = a.balance < 0;
                         return (
-                          <tr key={a.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                          <tr key={a.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${sel.isSelected(a.id) ? "bg-mint/[0.06]" : ""}`}>
+                            <td className="w-[40px] py-3 pl-2">
+                              <SelectCheckbox
+                                label={`Select ${a.name}`}
+                                checked={sel.isSelected(a.id)}
+                                onChange={(v) => sel.toggle(a.id, v)}
+                              />
+                            </td>
                             <td className="py-3 pl-2">
+
                               <div className="flex items-center gap-3">
                                 <div className={`grid h-8 w-8 place-items-center rounded-lg ${meta.tint}`}>
                                   <meta.Icon className="h-4 w-4" />
@@ -361,7 +396,29 @@ export function AccountsView({
         </>
       )}
 
+      <BulkActionBar
+        count={sel.selectedCount}
+        entityLabel="account"
+        busy={bulkDel.isPending || bulkUpd.isPending}
+        onClear={sel.clear}
+        onDelete={async () => {
+          await bulkDel.mutateAsync(sel.selectedIds);
+          sel.clear();
+        }}
+        fieldActions={[
+          {
+            label: "Change Status",
+            options: ["Active", "Dormant", "Closed"].map((s) => ({ value: s, label: s })),
+            onSelect: async (value) => {
+              await bulkUpd.mutateAsync({ ids: sel.selectedIds, patch: { status: value } });
+              sel.clear();
+            },
+          },
+        ]}
+      />
+
       <AccountDialog
+
         open={dialogOpen}
         onOpenChange={(v) => { setDialogOpen(v); if (!v) setEditing(null); }}
         existing={editing}

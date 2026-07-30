@@ -1,4 +1,11 @@
 import { useMemo, useState } from "react";
+import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
+import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
+import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
+
+const getRowId = (r: { id: string }) => r.id;
+
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -122,6 +129,17 @@ export function InsuranceView({
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
+
+  /* Global bulk selection */
+  const sel = useBulkSelection(
+    pageRows,
+    getRowId,
+    useMemo(() => filtered.map((r) => r.id), [filtered]),
+  );
+  const bulkDel = useBulkDeleteRows("wealth_insurance", "policies");
+  const bulkUpd = useBulkUpdateRows("wealth_insurance", "policies");
+
+
 
   /* ===== Import / Export ===== */
   const exportCols = [
@@ -316,7 +334,16 @@ export function InsuranceView({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="w-[40px] py-3 pl-2">
+                          <SelectCheckbox
+                            label="Select all policies"
+                            checked={sel.allSelected}
+                            indeterminate={sel.someSelected && !sel.allSelected}
+                            onChange={(v) => sel.toggleAll(v)}
+                          />
+                        </th>
                         <th className="py-3 pl-2 font-medium">Policy Name</th>
+
                         <th className="py-3 font-medium">Type</th>
                         <th className="py-3 font-medium">Provider</th>
                         <th className="py-3 font-medium">Policy Number</th>
@@ -344,8 +371,16 @@ export function InsuranceView({
                           : days != null && days <= 30 ? "text-amber-400"
                           : "text-muted-foreground";
                         return (
-                          <tr key={p.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
+                          <tr key={p.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${sel.isSelected(p.id) ? "bg-mint/[0.06]" : ""}`}>
+                            <td className="w-[40px] py-3 pl-2">
+                              <SelectCheckbox
+                                label={`Select ${p.policy_name}`}
+                                checked={sel.isSelected(p.id)}
+                                onChange={(v) => sel.toggle(p.id, v)}
+                              />
+                            </td>
                             <td className="py-3 pl-2">
+
                               <div className="flex items-center gap-3">
                                 <div className={`grid h-8 w-8 place-items-center rounded-lg ${meta.tint}`}>
                                   <meta.Icon className="h-4 w-4" />
@@ -392,6 +427,29 @@ export function InsuranceView({
           </div>
         </>
       )}
+
+      <BulkActionBar
+        count={sel.selectedCount}
+        entityLabel="policy"
+        busy={bulkDel.isPending || bulkUpd.isPending}
+        onClear={sel.clear}
+        onDelete={async () => {
+          await bulkDel.mutateAsync(sel.selectedIds);
+          sel.clear();
+        }}
+        fieldActions={[
+          {
+            label: "Change Status",
+            options: ["Active", "Lapsed", "Matured"].map((s) => ({ value: s, label: s })),
+            onSelect: async (value) => {
+              await bulkUpd.mutateAsync({ ids: sel.selectedIds, patch: { status: value } });
+              sel.clear();
+            },
+          },
+        ]}
+      />
+
+
 
       <InsuranceDialog
         open={dialogOpen}
