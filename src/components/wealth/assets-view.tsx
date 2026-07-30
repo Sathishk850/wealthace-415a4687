@@ -422,6 +422,18 @@ export function AssetsView({
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="w-[44px] px-3 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all holdings"
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someSelected && !allSelected;
+                    }}
+                    onChange={(e) => toggleSelectAll(e.target.checked)}
+                    className="h-4 w-4 cursor-pointer accent-mint"
+                  />
+                </th>
                 <SortHeader label={`Holdings (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
                 <SortHeader label="Type" col="type" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
                 <SortHeader label="Qty" col="quantity" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
@@ -437,23 +449,17 @@ export function AssetsView({
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</td></tr>
+                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</td></tr>
               ) : sorted.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span> to add one.</td></tr>
+                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span> to add one.</td></tr>
               ) : sorted.map((h) => (
                 <HoldingRow
                   key={`${h.source}-${h.id}`}
                   h={h}
+                  selected={selectedIds.includes(`${h.source}-${h.id}`)}
+                  onSelectChange={(v) => toggleSelectRow(`${h.source}-${h.id}`, v)}
                   onView={() => setDetails(h)}
-                  onEdit={() => {
-                    if (h.source === "investment") {
-                      setEditInv(h.raw_investment!);
-                      setInvDialogOpen(true);
-                    } else {
-                      setEditAsset(h.raw_asset!);
-                      setAssetDialogOpen(true);
-                    }
-                  }}
+                  onEdit={() => openEdit(h)}
                   onDelete={() => setConfirm(h)}
                 />
               ))}
