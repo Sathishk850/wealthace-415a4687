@@ -213,17 +213,6 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
   );
 }
 
-function MiniStat({ label, value, sub, up }: { label: string; value: string; sub?: string; up?: boolean }) {
-  const tone = up == null ? "text-foreground" : up ? "text-emerald-500" : "text-rose-500";
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className={`mt-0.5 font-display text-lg font-bold ${tone}`}>{value}</div>
-      {sub ? <div className={`text-[11px] ${tone}`}>{sub}</div> : null}
-    </div>
-  );
-}
-
 function KpiCard({ label, value, tone = "text-foreground", icon }: { label: string; value: string; tone?: string; icon?: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-surface-2/40 p-3">
@@ -545,8 +534,104 @@ function PerformanceTab({
   );
 }
 
-/* -------------------- Overview Tab -------------------- */
-function OverviewTab({
+/* -------------------- Fundamental Tab (auto-fetched) -------------------- */
+function identifierTypeFor(inv: Investment): IdentifierType | null {
+  if (inv.identifier_type) return inv.identifier_type as IdentifierType;
+  return null;
+}
+
+function fmtNum(v: number | null | undefined, digits = 2, suffix = ""): string {
+  if (v == null || !Number.isFinite(v)) return "N/A";
+  return `${v.toFixed(digits)}${suffix}`;
+}
+
+function fmtCap(v: number | null | undefined, ccy: string): string {
+  if (v == null || !Number.isFinite(v) || v <= 0) return "N/A";
+  if (ccy === "INR") {
+    const cr = v / 1e7;
+    return cr >= 1e5 ? `₹${(cr / 1e5).toFixed(2)} L Cr` : `₹${cr.toFixed(0)} Cr`;
+  }
+  if (v >= 1e12) return `${(v / 1e12).toFixed(2)}T`;
+  if (v >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
+  return `${(v / 1e6).toFixed(2)}M`;
+}
+
+function useFundamentals(investment: Investment) {
+  const kind = identifierTypeFor(investment);
+  return useInstrumentFundamentals(
+    kind && investment.identifier
+      ? { identifier_type: kind, identifier: investment.identifier, exchange: investment.exchange ?? null }
+      : null,
+  );
+}
+
+function LastUpdated({ at, source }: { at?: string | null; source?: string | null }) {
+  if (!at) return null;
+  return (
+    <div className="mt-2 text-[11px] text-muted-foreground">
+      Last updated {new Date(at).toLocaleString("en-GB")}
+      {source ? ` · ${source}` : ""}
+    </div>
+  );
+}
+
+function FundamentalTab({
+  investment,
+  derived,
+}: {
+  investment: Investment;
+  derived: ReturnType<typeof deriveHolding>;
+}) {
+  const ccy = investment.currency || "INR";
+  const { data, isLoading } = useFundamentals(investment);
+  const f: InstrumentFundamentals | null = data ?? null;
+
+  if (!investment.identifier) {
+    return (
+      <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        Link this holding to a market instrument to see live fundamentals.
+      </div>
+    );
+  }
+
+  const rows: [string, string][] = [
+    ["Current Market Price (CMP)", priceIn(f?.price ?? derived.current_price, ccy)],
+    ["52-Week High", f?.week52_high != null ? priceIn(f.week52_high, ccy) : "N/A"],
+    ["52-Week Low", f?.week52_low != null ? priceIn(f.week52_low, ccy) : "N/A"],
+    ["P/E Ratio", fmtNum(f?.pe)],
+    ["P/B Ratio", fmtNum(f?.pb)],
+    ["Dividend Yield", fmtNum(f?.dividend_yield, 2, "%")],
+    ["EPS", f?.eps != null ? priceIn(f.eps, ccy) : "N/A"],
+    ["Market Capitalization", fmtCap(f?.market_cap, ccy)],
+    ["Return on Equity (ROE)", fmtNum(f?.roe, 2, "%")],
+    ["Debt-to-Equity Ratio", fmtNum(f?.debt_to_equity)],
+    ["Face Value", f?.face_value != null ? priceIn(f.face_value, ccy) : "N/A"],
+    ["Book Value", f?.book_value != null ? priceIn(f.book_value, ccy) : "N/A"],
+  ];
+
+  return (
+    <Section title="Fundamental Data (auto-fetched)">
+      {isLoading && !f ? (
+        <div className="py-4 text-sm text-muted-foreground">Fetching fundamentals…</div>
+      ) : (
+        <>
+          <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+            {rows.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-3 border-b border-border/60 py-2 text-sm">
+                <dt className="text-muted-foreground">{k}</dt>
+                <dd className="text-right font-medium text-foreground">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <LastUpdated at={f?.fetched_at} source={f?.source} />
+        </>
+      )}
+    </Section>
+  );
+}
+
+/* -------------------- Classification Tab -------------------- */
+function ClassificationTab({
   investment,
   derived,
   platformLabel,
@@ -556,11 +641,13 @@ function OverviewTab({
   platformLabel?: string;
 }) {
   const ccy = investment.currency || "INR";
+  const { data: f } = useFundamentals(investment);
   const rows: [string, string][] = [
+    ["Market Capitalization Category", f?.market_cap_band ?? "N/A"],
+    ["Sector", f?.sector ?? investment.sub_category ?? "N/A"],
+    ["Industry", f?.industry ?? "N/A"],
+    ["Segment Type", f?.segment_type ?? investment.category ?? "N/A"],
     ["Category", investment.category || "—"],
-    ["Segment", investment.sub_category || "—"],
-    ["Classification", investment.identifier_type || "—"],
-    ["Sector", investment.sub_category || "—"],
     ["Exchange", investment.exchange || "—"],
     ["Currency", ccy],
     ["Platform", platformLabel || "—"],
@@ -577,7 +664,7 @@ function OverviewTab({
   ];
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Section title="General Information">
+      <Section title="Classification (auto-fetched)">
         <dl className="divide-y divide-border/60">
           {rows.map(([k, v]) => (
             <div key={k} className="flex justify-between gap-3 py-2 text-sm">
@@ -586,6 +673,7 @@ function OverviewTab({
             </div>
           ))}
         </dl>
+        <LastUpdated at={f?.fetched_at} source={f?.source} />
       </Section>
       <Section title="Holding Summary">
         <dl className="divide-y divide-border/60">
