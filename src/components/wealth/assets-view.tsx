@@ -2,6 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
 import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
+import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
+import {
+  ASSET_CATEGORY_FOR,
+  ASSET_CLASSIFICATIONS,
+  INVESTMENT_CATEGORY_FOR,
+  type AssetClassification,
+} from "@/lib/asset-classification";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 
 import {
@@ -208,9 +215,11 @@ export function AssetsView({
       const key = investmentQuoteKey(inv);
       const quote: MarketQuote | null = key ? quoteMap.get(key) ?? null : null;
       const d = deriveHolding(inv, quote);
+      // Platform = broker / bank / AMC the holding sits with.
+      // Never the payment mode and never the price provider.
       const platform = inv.payment_account_id
         ? platformLabelById.get(inv.payment_account_id) ?? null
-        : inv.price_source ?? null;
+        : null;
       out.push({
         id: inv.id,
         source: "investment",
@@ -240,7 +249,7 @@ export function AssetsView({
       const pnl_pct = invested > 0 ? (pnl / invested) * 100 : 0;
       const platform = a.payment_account_id
         ? platformLabelById.get(a.payment_account_id) ?? null
-        : a.location ?? null;
+        : null;
       out.push({
         id: a.id,
         source: "asset",
@@ -372,9 +381,18 @@ export function AssetsView({
   };
 
   const bulkClassify = async (value: string) => {
+    const cls = value as AssetClassification;
     const { inv, ast } = splitSelection();
-    if (inv.length) await bulkUpdInv.mutateAsync({ ids: inv, patch: { sub_category: value } });
-    if (ast.length) await bulkUpdAsset.mutateAsync({ ids: ast, patch: { sub_category: value } });
+    if (inv.length)
+      await bulkUpdInv.mutateAsync({
+        ids: inv,
+        patch: { category: INVESTMENT_CATEGORY_FOR[cls] ?? "Others", sub_category: cls },
+      });
+    if (ast.length)
+      await bulkUpdAsset.mutateAsync({
+        ids: ast,
+        patch: { category: ASSET_CATEGORY_FOR[cls] ?? "Other", sub_category: cls },
+      });
     sel.clear();
   };
 
@@ -508,29 +526,22 @@ export function AssetsView({
                 />
               ))}
             </tbody>
-            {sorted.length > 0 && (
-              <tfoot className="sticky bottom-0 bg-card">
-                <tr className="border-t border-border text-xs font-medium">
-                  <td colSpan={5} className="px-3 py-3 text-muted-foreground">
-                    All {sorted.length} holdings visible on this page
-                  </td>
-                  <td className="px-3 py-3 text-right text-muted-foreground">
-                    Total Invested: <span className="font-bold text-foreground">{inr(totals.invested)}</span>
-                  </td>
-                  <td className="px-3 py-3 text-right text-muted-foreground">
-                    Total Current: <span className="font-bold text-foreground">{inr(totals.current)}</span>
-                  </td>
-                  <td colSpan={3} className="px-3 py-3 text-right text-muted-foreground">
-                    Total P&L:{" "}
-                    <span className={`font-bold ${totals.pnl >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                      {totals.pnl >= 0 ? "+" : ""}{inr(totals.pnl)} ({totals.pnl >= 0 ? "+" : ""}{totals.pnl_pct.toFixed(2)}%)
-                    </span>
-                  </td>
-                </tr>
-              </tfoot>
-            )}
           </table>
         </div>
+
+        {sorted.length > 0 && (
+          <div className="border-t border-border px-3 py-3 sm:px-4">
+            <div className="mb-2 text-xs text-muted-foreground">
+              All {sorted.length} holdings visible on this page
+            </div>
+            <HoldingSummaryRow
+              invested={totals.invested}
+              current={totals.current}
+              pnl={totals.pnl}
+              pnlPct={totals.pnl_pct}
+            />
+          </div>
+        )}
       </div>
 
       {/* ============ GLOBAL BULK ACTION BAR ============ */}
@@ -540,19 +551,13 @@ export function AssetsView({
         busy={bulkBusy}
         onClear={sel.clear}
         onDelete={bulkDelete}
-        fieldActions={
-          typeOptions.filter((o) => o !== "all").length
-            ? [
-                {
-                  label: "Change Asset Classification",
-                  options: typeOptions
-                    .filter((o) => o !== "all")
-                    .map((o) => ({ value: o, label: o })),
-                  onSelect: bulkClassify,
-                },
-              ]
-            : []
-        }
+        fieldActions={[
+          {
+            label: "Change Asset Classification",
+            options: ASSET_CLASSIFICATIONS.map((o) => ({ value: o, label: o })),
+            onSelect: bulkClassify,
+          },
+        ]}
 
       />
 
@@ -681,7 +686,13 @@ function HoldingRow({
         </div>
       </td>
       <td className="px-3 py-3 text-muted-foreground">
-        <span className="truncate">{h.platform || "—"}</span>
+        {h.platform ? (
+          <span className="inline-block max-w-[190px] truncate rounded-full border border-border bg-surface-2/60 px-2.5 py-1 text-xs font-medium text-foreground">
+            {h.platform}
+          </span>
+        ) : (
+          <span className="text-xs">—</span>
+        )}
       </td>
       <td className="w-[120px] px-3 py-3">
         <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
