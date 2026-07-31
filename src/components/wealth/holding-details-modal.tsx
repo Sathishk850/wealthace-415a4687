@@ -40,7 +40,6 @@ import { deriveHolding } from "@/lib/market/derive";
 import { useInstrumentFundamentals } from "@/lib/market/use-market-data";
 import type { IdentifierType, InstrumentFundamentals, MarketQuote } from "@/lib/market/types";
 import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 type Props = {
   open: boolean;
@@ -50,13 +49,7 @@ type Props = {
   platformLabel?: string;
 };
 
-type DetailTab =
-  | "fundamental"
-  | "classification"
-  | "history"
-  | "corporate"
-  | "notes"
-  | "performance";
+type DetailTab = "fundamental" | "classification" | "history" | "corporate" | "notes";
 
 const CORPORATE_CATEGORIES = new Set(["Stocks", "ETFs"]);
 
@@ -115,7 +108,6 @@ export function HoldingDetailsModal({
     { value: "history", label: "Buy / Sell History" },
     ...(showCorporate ? [{ value: "corporate" as const, label: "Corporate Actions" }] : []),
     { value: "notes", label: "Notes" },
-    { value: "performance", label: "Performance" },
   ];
 
   const years = inv.purchase_date
@@ -208,18 +200,6 @@ export function HoldingDetailsModal({
 
           <div className="mt-4">
             {tab === "history" && <HistoryTab investment={inv} />}
-            {tab === "performance" && (
-              <PerformanceTab
-                investment={inv}
-                invested={invested}
-                current={current}
-                pnl={pnl}
-                pnlPct={pnlPct}
-                xirrVal={xirrVal}
-                cagr={cagr}
-                years={years}
-              />
-            )}
             {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
               <ClassificationTab investment={inv} derived={d} platformLabel={platformLabel} />
@@ -551,115 +531,6 @@ function TxnForm({
           {saving ? "Saving…" : existing ? "Update" : "Save"}
         </Button>
       </div>
-    </div>
-  );
-}
-
-/* -------------------- Performance Tab -------------------- */
-function PerformanceTab({
-  investment,
-  invested,
-  current,
-  pnl,
-  pnlPct,
-  xirrVal,
-  cagr,
-  years,
-}: {
-  investment: Investment;
-  invested: number;
-  current: number;
-  pnl: number;
-  pnlPct: number;
-  xirrVal: number;
-  cagr: number;
-  years: number;
-}) {
-  const ccy = investment.currency || "INR";
-  const up = pnl >= 0;
-  // Simple two-point trend from purchase to now.
-  const trend = useMemo(() => {
-    if (!investment.purchase_date) return [];
-    const start = new Date(investment.purchase_date).getTime();
-    const end = Date.now();
-    const points = 8;
-    const arr: { m: string; v: number }[] = [];
-    for (let i = 0; i <= points; i++) {
-      const t = start + ((end - start) * i) / points;
-      const frac = i / points;
-      const v = invested + (current - invested) * frac;
-      arr.push({
-        m: new Date(t).toLocaleDateString("en-GB", { month: "short", year: "2-digit" }),
-        v,
-      });
-    }
-    return arr;
-  }, [investment.purchase_date, invested, current]);
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <KpiCard label="Invested" value={amountIn(invested, ccy)} />
-        <KpiCard label="Current" value={amountIn(current, ccy)} />
-        <KpiCard
-          label="P&L"
-          value={`${up ? "+" : ""}${amountIn(pnl, ccy)}`}
-          tone={up ? "text-emerald-500" : "text-rose-500"}
-        />
-        <KpiCard
-          label="Return %"
-          value={`${up ? "+" : ""}${pnlPct.toFixed(2)}%`}
-          tone={up ? "text-emerald-500" : "text-rose-500"}
-        />
-        <KpiCard label="XIRR" value={xirrVal ? `${xirrVal.toFixed(2)}%` : "—"} tone="text-mint" />
-        <KpiCard label="CAGR" value={years > 0 ? `${cagr.toFixed(2)}%` : "—"} />
-        <KpiCard label="Annualized" value={years > 0 ? `${cagr.toFixed(2)}%` : "—"} />
-        <KpiCard label="Holding Period" value={years > 0 ? `${years.toFixed(1)} yr` : "—"} />
-      </div>
-
-      {trend.length > 1 ? (
-        <div className="rounded-xl border border-border bg-surface-2/30 p-4">
-          <div className="mb-2 text-xs font-semibold text-foreground">Portfolio Value Trend</div>
-          <div className="h-[220px]">
-            <ResponsiveContainer>
-              <AreaChart data={trend} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="perfTrend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#14D8CF" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#14D8CF" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="m"
-                  tick={{ fill: "#6E8294", fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--popover)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="v"
-                  stroke="#14D8CF"
-                  strokeWidth={2.5}
-                  fill="url(#perfTrend)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          Add a purchase date to see the performance trend.
-        </div>
-      )}
     </div>
   );
 }
