@@ -104,7 +104,7 @@ async function mirrorToInvestments(quotes: MarketQuote[]) {
         supabaseAdmin
           .from("wealth_investments")
           .update({
-            current_price: q.latest_price!,
+            current_price: q.latest_price,
             previous_close: q.previous_close ?? undefined,
             price_source: q.source ?? undefined,
             price_updated_at: now,
