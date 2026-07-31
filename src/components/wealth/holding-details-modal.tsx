@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Pencil, Trash2, Plus, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import {
   Dialog,
@@ -42,7 +42,9 @@ import {
   type InvestmentTxn,
 } from "@/lib/wealth-api";
 import { deriveHolding } from "@/lib/market/derive";
-import type { MarketQuote } from "@/lib/market/types";
+import { useInstrumentFundamentals } from "@/lib/market/use-market-data";
+import type { IdentifierType, InstrumentFundamentals, MarketQuote } from "@/lib/market/types";
+import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
 import {
   AreaChart,
   Area,
@@ -60,12 +62,47 @@ type Props = {
   platformLabel?: string;
 };
 
-type DetailTab = "history" | "performance" | "overview" | "corporate" | "notes";
+type DetailTab =
+  | "fundamental"
+  | "classification"
+  | "history"
+  | "corporate"
+  | "notes"
+  | "performance";
 
 const CORPORATE_CATEGORIES = new Set(["Stocks", "ETFs"]);
 
 export function HoldingDetailsModal({ open, onOpenChange, investment, quote, platformLabel }: Props) {
-  const [tab, setTab] = useState<DetailTab>("history");
+  const [tab, setTab] = useState<DetailTab>("fundamental");
+
+  // Back / Esc / Close must return to the exact page + tab the user came from.
+  // Pushing a history entry while open makes the browser/device back button
+  // close the modal instead of navigating away from the listing.
+  const pushedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (open && !pushedRef.current) {
+      pushedRef.current = true;
+      window.history.pushState({ finvistaHoldingDetails: true }, "");
+    }
+    const onPop = () => {
+      if (pushedRef.current) {
+        pushedRef.current = false;
+        onOpenChange(false);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [open, onOpenChange]);
+
+  const requestClose = () => {
+    if (pushedRef.current) {
+      pushedRef.current = false;
+      window.history.back();
+      return;
+    }
+    onOpenChange(false);
+  };
 
   if (!investment) return null;
   const inv = investment;
@@ -79,11 +116,12 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
 
   const showCorporate = CORPORATE_CATEGORIES.has(inv.category);
   const tabs: { value: DetailTab; label: string }[] = [
+    { value: "fundamental", label: "Fundamental" },
+    { value: "classification", label: "Classification" },
     { value: "history", label: "Buy / Sell History" },
-    { value: "performance", label: "Performance" },
-    { value: "overview", label: "Overview" },
     ...(showCorporate ? [{ value: "corporate" as const, label: "Corporate Actions" }] : []),
     { value: "notes", label: "Notes" },
+    { value: "performance", label: "Performance" },
   ];
 
   const years = inv.purchase_date
@@ -94,7 +132,7 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
   const annualized = years > 0 ? cagr : 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : requestClose())}>
       <DialogContent className="max-w-4xl gap-0 overflow-hidden p-0">
         <DialogHeader className="sticky top-0 z-10 border-b border-border bg-card px-6 py-4">
           <div className="flex items-start gap-4">
@@ -117,7 +155,7 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
               </div>
             </div>
             <button
-              onClick={() => onOpenChange(false)}
+              onClick={requestClose}
               className="grid h-8 w-8 place-items-center rounded-lg border border-border text-muted-foreground hover:text-foreground"
               aria-label="Close"
             >
@@ -125,14 +163,13 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
             </button>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <MiniStat label="Current Price (CMP)" value={priceIn(d.current_price, ccy)} sub={d.day_change_pct != null ? `${d.day_change_pct >= 0 ? "+" : ""}${d.day_change_pct.toFixed(2)}%` : undefined} up={d.day_change_pct != null ? d.day_change_pct >= 0 : undefined} />
-            <MiniStat label="Current Value" value={amountIn(current, ccy)} />
-            <MiniStat
-              label="Unrealized P&L"
-              value={`${up ? "+" : ""}${amountIn(pnl, ccy)}`}
-              sub={`(${up ? "+" : ""}${pnlPct.toFixed(2)}%)`}
-              up={up}
+          <div className="mt-4">
+            <HoldingSummaryRow
+              invested={invested}
+              current={current}
+              pnl={pnl}
+              pnlPct={pnlPct}
+              currency={ccy}
             />
           </div>
         </DialogHeader>
@@ -157,14 +194,17 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
           <div className="mt-4">
             {tab === "history" && <HistoryTab investment={inv} />}
             {tab === "performance" && <PerformanceTab investment={inv} invested={invested} current={current} pnl={pnl} pnlPct={pnlPct} xirrVal={xirrVal} cagr={cagr} years={years} />}
-            {tab === "overview" && <OverviewTab investment={inv} derived={d} platformLabel={platformLabel} />}
+            {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
+            {tab === "classification" && (
+              <ClassificationTab investment={inv} derived={d} platformLabel={platformLabel} />
+            )}
             {tab === "corporate" && showCorporate && <CorporateTab category={inv.category} />}
             {tab === "notes" && <NotesTab investment={inv} />}
           </div>
         </div>
 
         <div className="sticky bottom-0 border-t border-border bg-card px-6 py-3 flex justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={requestClose}>
             Close
           </Button>
         </div>
