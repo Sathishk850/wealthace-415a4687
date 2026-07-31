@@ -214,11 +214,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       const key = investmentQuoteKey(inv);
       const quote: MarketQuote | null = key ? (quoteMap.get(key) ?? null) : null;
       const d = deriveHolding(inv, quote);
-      // Platform = broker / bank / AMC the holding sits with.
-      // Never the payment mode and never the price provider.
-      const platform = inv.payment_account_id
-        ? (platformLabelById.get(inv.payment_account_id) ?? null)
-        : null;
+      // Platform = the investment platform / broker chosen on the form
+      // (stored as a "Platform: X" line in notes). Never the payment mode
+      // and never the price provider.
+      const platform =
+        platformFromNotes(inv.notes) ??
+        (inv.payment_account_id
+          ? (platformLabelById.get(inv.payment_account_id) ?? null)
+          : null);
       out.push({
         id: inv.id,
         source: "investment",
