@@ -20,7 +20,10 @@ function toYahooSymbol(item: QuoteRequestItem): string {
   if (item.identifier_type === "crypto") {
     return item.identifier.includes("-") ? item.identifier : `${item.identifier}-USD`;
   }
-  return item.identifier.trim().toUpperCase().replace(/\.(US|O|NS|BO)$/i, "");
+  return item.identifier
+    .trim()
+    .toUpperCase()
+    .replace(/\.(US|O|NS|BO)$/i, "");
 }
 
 function capBand(marketCap: number | null, currency: string | null): string | null {
@@ -95,7 +98,8 @@ export async function yahooFundamentals(
   if (!q && !s) return null;
 
   const currency = normalizeCurrency(q?.currency) ?? null;
-  const marketCap = pickNum(q?.marketCap as RawNum) ?? pickNum(s?.defaultKeyStatistics?.enterpriseValue);
+  const marketCap =
+    pickNum(q?.marketCap as RawNum) ?? pickNum(s?.defaultKeyStatistics?.enterpriseValue);
   const roeRaw = pickNum(s?.financialData?.returnOnEquity);
   const divYield =
     pickNum(q?.dividendYield as RawNum) ??
@@ -110,12 +114,15 @@ export async function yahooFundamentals(
     identifier: item.identifier,
     currency,
     price: pickNum(q?.regularMarketPrice as RawNum),
-    week52_high: pickNum(q?.fiftyTwoWeekHigh as RawNum) ?? pickNum(s?.summaryDetail?.fiftyTwoWeekHigh),
+    week52_high:
+      pickNum(q?.fiftyTwoWeekHigh as RawNum) ?? pickNum(s?.summaryDetail?.fiftyTwoWeekHigh),
     week52_low: pickNum(q?.fiftyTwoWeekLow as RawNum) ?? pickNum(s?.summaryDetail?.fiftyTwoWeekLow),
     pe: pickNum(q?.trailingPE as RawNum) ?? pickNum(s?.summaryDetail?.trailingPE),
     pb: pickNum(q?.priceToBook as RawNum) ?? pickNum(s?.defaultKeyStatistics?.priceToBook),
     dividend_yield: divYield,
-    eps: pickNum(q?.epsTrailingTwelveMonths as RawNum) ?? pickNum(s?.defaultKeyStatistics?.trailingEps),
+    eps:
+      pickNum(q?.epsTrailingTwelveMonths as RawNum) ??
+      pickNum(s?.defaultKeyStatistics?.trailingEps),
     market_cap: marketCap,
     roe: roeRaw != null ? roeRaw * 100 : null,
     debt_to_equity:

@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Pencil, Trash2, Plus, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,14 +40,7 @@ import { deriveHolding } from "@/lib/market/derive";
 import { useInstrumentFundamentals } from "@/lib/market/use-market-data";
 import type { IdentifierType, InstrumentFundamentals, MarketQuote } from "@/lib/market/types";
 import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 type Props = {
   open: boolean;
@@ -72,7 +60,13 @@ type DetailTab =
 
 const CORPORATE_CATEGORIES = new Set(["Stocks", "ETFs"]);
 
-export function HoldingDetailsModal({ open, onOpenChange, investment, quote, platformLabel }: Props) {
+export function HoldingDetailsModal({
+  open,
+  onOpenChange,
+  investment,
+  quote,
+  platformLabel,
+}: Props) {
   const [tab, setTab] = useState<DetailTab>("fundamental");
 
   // Back / Esc / Close must return to the exact page + tab the user came from.
@@ -178,11 +172,32 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
           {/* KPI CARDS */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <KpiCard label="Invested Amount" value={amountIn(invested, ccy)} />
-            <KpiCard label={`Absolute Return (${ccy === "INR" ? "₹" : ccy})`} value={`${up ? "+" : ""}${amountIn(pnl, ccy)}`} tone={up ? "text-emerald-500" : "text-rose-500"} />
-            <KpiCard label="Absolute Return (%)" value={`${up ? "+" : ""}${pnlPct.toFixed(2)}%`} tone={up ? "text-emerald-500" : "text-rose-500"} />
-            <KpiCard label="XIRR (All Time)" value={xirrVal ? `${xirrVal.toFixed(2)}%` : "—"} icon={<TrendingUp className="h-3 w-3" />} tone="text-mint" />
-            <KpiCard label="CAGR (All Time)" value={years > 0 ? `${cagr.toFixed(2)}%` : "—"} icon={<TrendingUp className="h-3 w-3" />} tone={cagr >= 0 ? "text-emerald-500" : "text-rose-500"} />
-            <KpiCard label="Annualized Return" value={years > 0 ? `${annualized.toFixed(2)}%` : "—"} />
+            <KpiCard
+              label={`Absolute Return (${ccy === "INR" ? "₹" : ccy})`}
+              value={`${up ? "+" : ""}${amountIn(pnl, ccy)}`}
+              tone={up ? "text-emerald-500" : "text-rose-500"}
+            />
+            <KpiCard
+              label="Absolute Return (%)"
+              value={`${up ? "+" : ""}${pnlPct.toFixed(2)}%`}
+              tone={up ? "text-emerald-500" : "text-rose-500"}
+            />
+            <KpiCard
+              label="XIRR (All Time)"
+              value={xirrVal ? `${xirrVal.toFixed(2)}%` : "—"}
+              icon={<TrendingUp className="h-3 w-3" />}
+              tone="text-mint"
+            />
+            <KpiCard
+              label="CAGR (All Time)"
+              value={years > 0 ? `${cagr.toFixed(2)}%` : "—"}
+              icon={<TrendingUp className="h-3 w-3" />}
+              tone={cagr >= 0 ? "text-emerald-500" : "text-rose-500"}
+            />
+            <KpiCard
+              label="Annualized Return"
+              value={years > 0 ? `${annualized.toFixed(2)}%` : "—"}
+            />
             <KpiCard label="Avg. Buy Price" value={priceIn(inv.avg_price, ccy)} />
             <KpiCard label="Net Quantity" value={String(inv.quantity)} />
           </div>
@@ -193,7 +208,18 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
 
           <div className="mt-4">
             {tab === "history" && <HistoryTab investment={inv} />}
-            {tab === "performance" && <PerformanceTab investment={inv} invested={invested} current={current} pnl={pnl} pnlPct={pnlPct} xirrVal={xirrVal} cagr={cagr} years={years} />}
+            {tab === "performance" && (
+              <PerformanceTab
+                investment={inv}
+                invested={invested}
+                current={current}
+                pnl={pnl}
+                pnlPct={pnlPct}
+                xirrVal={xirrVal}
+                cagr={cagr}
+                years={years}
+              />
+            )}
             {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
               <ClassificationTab investment={inv} derived={d} platformLabel={platformLabel} />
@@ -213,7 +239,17 @@ export function HoldingDetailsModal({ open, onOpenChange, investment, quote, pla
   );
 }
 
-function KpiCard({ label, value, tone = "text-foreground", icon }: { label: string; value: string; tone?: string; icon?: React.ReactNode }) {
+function KpiCard({
+  label,
+  value,
+  tone = "text-foreground",
+  icon,
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+  icon?: React.ReactNode;
+}) {
   return (
     <div className="rounded-xl border border-border bg-surface-2/40 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -236,7 +272,9 @@ function HistoryTab({ investment }: { investment: Investment }) {
   const ccy = investment.currency || "INR";
 
   const summary = useMemo(() => {
-    let buyQty = 0, sellQty = 0, buyAmt = 0;
+    let buyQty = 0,
+      sellQty = 0,
+      buyAmt = 0;
     for (const t of txns) {
       if (t.txn_type === "buy") {
         buyQty += t.quantity;
@@ -256,7 +294,11 @@ function HistoryTab({ investment }: { investment: Investment }) {
         <div className="text-xs text-muted-foreground">
           {isLoading ? "Loading…" : `${txns.length} transaction${txns.length === 1 ? "" : "s"}`}
         </div>
-        <Button size="sm" onClick={() => setAdding(true)} className="bg-mint text-[#04121C] hover:brightness-110">
+        <Button
+          size="sm"
+          onClick={() => setAdding(true)}
+          className="bg-mint text-[#04121C] hover:brightness-110"
+        >
           <Plus className="mr-1 h-3.5 w-3.5" /> Add Transaction
         </Button>
       </div>
@@ -265,7 +307,10 @@ function HistoryTab({ investment }: { investment: Investment }) {
         <TxnForm
           investment={investment}
           existing={editing}
-          onCancel={() => { setAdding(false); setEditing(null); }}
+          onCancel={() => {
+            setAdding(false);
+            setEditing(null);
+          }}
           onSubmit={async (input) => {
             await upsert.mutateAsync(input);
             setAdding(false);
@@ -299,20 +344,36 @@ function HistoryTab({ investment }: { investment: Investment }) {
               <tr key={t.id} className="group border-t border-border/60 hover:bg-surface-2/40">
                 <td className="px-3 py-2 text-foreground">{formatDate(t.occurred_on)}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
+                  <span
+                    className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}
+                  >
                     {t.txn_type}
                   </span>
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums text-foreground">{t.quantity}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-foreground">{priceIn(t.price, ccy)}</td>
-                <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">{amountIn(t.amount, ccy)}</td>
-                <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">{t.notes || "—"}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                  {priceIn(t.price, ccy)}
+                </td>
+                <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
+                  {amountIn(t.amount, ccy)}
+                </td>
+                <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">
+                  {t.notes || "—"}
+                </td>
                 <td className="px-3 py-2">
                   <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button onClick={() => setEditing(t)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-mint" aria-label="Edit">
+                    <button
+                      onClick={() => setEditing(t)}
+                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-mint"
+                      aria-label="Edit"
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
-                    <button onClick={() => setConfirmDel(t)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500" aria-label="Delete">
+                    <button
+                      onClick={() => setConfirmDel(t)}
+                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+                      aria-label="Delete"
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -376,12 +437,18 @@ function TxnForm({
   investment: Investment;
   existing: InvestmentTxn | null;
   onCancel: () => void;
-  onSubmit: (input: Parameters<ReturnType<typeof useUpsertInvestmentTxn>["mutateAsync"]>[0]) => Promise<void>;
+  onSubmit: (
+    input: Parameters<ReturnType<typeof useUpsertInvestmentTxn>["mutateAsync"]>[0],
+  ) => Promise<void>;
 }) {
   const [txnType, setTxnType] = useState<"buy" | "sell">((existing?.txn_type as any) || "buy");
-  const [date, setDate] = useState<string>(existing?.occurred_on || new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState<string>(
+    existing?.occurred_on || new Date().toISOString().slice(0, 10),
+  );
   const [qty, setQty] = useState<string>(existing ? String(existing.quantity) : "");
-  const [price, setPrice] = useState<string>(existing ? String(existing.price) : String(investment.avg_price || ""));
+  const [price, setPrice] = useState<string>(
+    existing ? String(existing.price) : String(investment.avg_price || ""),
+  );
   const [notes, setNotes] = useState<string>(existing?.notes ?? "");
   const [saving, setSaving] = useState(false);
 
@@ -414,7 +481,9 @@ function TxnForm({
         <div>
           <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Type</label>
           <Select value={txnType} onValueChange={(v) => setTxnType(v as any)}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="buy">Buy</SelectItem>
               <SelectItem value="sell">Sell</SelectItem>
@@ -423,18 +492,39 @@ function TxnForm({
         </div>
         <div>
           <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Date</label>
-          <DatePicker value={date} onChange={(v) => setDate(v || new Date().toISOString().slice(0, 10))} />
+          <DatePicker
+            value={date}
+            onChange={(v) => setDate(v || new Date().toISOString().slice(0, 10))}
+          />
         </div>
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Quantity</label>
-          <Input type="number" step="0.0001" value={qty} onChange={(e) => setQty(e.target.value)} className="mt-1" />
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Quantity
+          </label>
+          <Input
+            type="number"
+            step="0.0001"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            className="mt-1"
+          />
         </div>
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Price</label>
-          <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1" />
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Price
+          </label>
+          <Input
+            type="number"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="mt-1"
+          />
         </div>
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Amount</label>
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Amount
+          </label>
           <div className="mt-1 flex h-9 items-center rounded-md border border-border bg-surface-2 px-3 text-sm font-medium">
             {amountIn(amount, investment.currency || "INR")}
           </div>
@@ -442,11 +532,22 @@ function TxnForm({
       </div>
       <div className="mt-3">
         <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Notes</label>
-        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" className="mt-1" />
+        <Input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Optional notes"
+          className="mt-1"
+        />
       </div>
       <div className="mt-3 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onCancel} disabled={saving}>Cancel</Button>
-        <Button onClick={submit} disabled={saving || !q || !p} className="bg-mint text-[#04121C] hover:brightness-110">
+        <Button variant="ghost" onClick={onCancel} disabled={saving}>
+          Cancel
+        </Button>
+        <Button
+          onClick={submit}
+          disabled={saving || !q || !p}
+          className="bg-mint text-[#04121C] hover:brightness-110"
+        >
           {saving ? "Saving…" : existing ? "Update" : "Save"}
         </Button>
       </div>
@@ -487,7 +588,10 @@ function PerformanceTab({
       const t = start + ((end - start) * i) / points;
       const frac = i / points;
       const v = invested + (current - invested) * frac;
-      arr.push({ m: new Date(t).toLocaleDateString("en-GB", { month: "short", year: "2-digit" }), v });
+      arr.push({
+        m: new Date(t).toLocaleDateString("en-GB", { month: "short", year: "2-digit" }),
+        v,
+      });
     }
     return arr;
   }, [investment.purchase_date, invested, current]);
@@ -497,8 +601,16 @@ function PerformanceTab({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Invested" value={amountIn(invested, ccy)} />
         <KpiCard label="Current" value={amountIn(current, ccy)} />
-        <KpiCard label="P&L" value={`${up ? "+" : ""}${amountIn(pnl, ccy)}`} tone={up ? "text-emerald-500" : "text-rose-500"} />
-        <KpiCard label="Return %" value={`${up ? "+" : ""}${pnlPct.toFixed(2)}%`} tone={up ? "text-emerald-500" : "text-rose-500"} />
+        <KpiCard
+          label="P&L"
+          value={`${up ? "+" : ""}${amountIn(pnl, ccy)}`}
+          tone={up ? "text-emerald-500" : "text-rose-500"}
+        />
+        <KpiCard
+          label="Return %"
+          value={`${up ? "+" : ""}${pnlPct.toFixed(2)}%`}
+          tone={up ? "text-emerald-500" : "text-rose-500"}
+        />
         <KpiCard label="XIRR" value={xirrVal ? `${xirrVal.toFixed(2)}%` : "—"} tone="text-mint" />
         <KpiCard label="CAGR" value={years > 0 ? `${cagr.toFixed(2)}%` : "—"} />
         <KpiCard label="Annualized" value={years > 0 ? `${cagr.toFixed(2)}%` : "—"} />
@@ -517,10 +629,28 @@ function PerformanceTab({
                     <stop offset="100%" stopColor="#14D8CF" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="m"
+                  tick={{ fill: "#6E8294", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <YAxis tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} />
-                <Area type="monotone" dataKey="v" stroke="#14D8CF" strokeWidth={2.5} fill="url(#perfTrend)" />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="v"
+                  stroke="#14D8CF"
+                  strokeWidth={2.5}
+                  fill="url(#perfTrend)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -560,7 +690,11 @@ function useFundamentals(investment: Investment) {
   const kind = identifierTypeFor(investment);
   return useInstrumentFundamentals(
     kind && investment.identifier
-      ? { identifier_type: kind, identifier: investment.identifier, exchange: investment.exchange ?? null }
+      ? {
+          identifier_type: kind,
+          identifier: investment.identifier,
+          exchange: investment.exchange ?? null,
+        }
       : null,
   );
 }
@@ -617,7 +751,10 @@ function FundamentalTab({
         <>
           <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
             {rows.map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-3 border-b border-border/60 py-2 text-sm">
+              <div
+                key={k}
+                className="flex justify-between gap-3 border-b border-border/60 py-2 text-sm"
+              >
                 <dt className="text-muted-foreground">{k}</dt>
                 <dd className="text-right font-medium text-foreground">{v}</dd>
               </div>
@@ -659,8 +796,16 @@ function ClassificationTab({
     ["Current Market Price", priceIn(derived.current_price, ccy)],
     ["Invested Amount", amountIn(derived.invested, ccy)],
     ["Current Value", amountIn(derived.current_value, ccy)],
-    ["Unrealized P&L", `${derived.unrealized_pl >= 0 ? "+" : ""}${amountIn(derived.unrealized_pl, ccy)}`, derived.unrealized_pl >= 0 ? "text-emerald-500" : "text-rose-500"],
-    ["Return %", `${derived.return_pct >= 0 ? "+" : ""}${derived.return_pct.toFixed(2)}%`, derived.return_pct >= 0 ? "text-emerald-500" : "text-rose-500"],
+    [
+      "Unrealized P&L",
+      `${derived.unrealized_pl >= 0 ? "+" : ""}${amountIn(derived.unrealized_pl, ccy)}`,
+      derived.unrealized_pl >= 0 ? "text-emerald-500" : "text-rose-500",
+    ],
+    [
+      "Return %",
+      `${derived.return_pct >= 0 ? "+" : ""}${derived.return_pct.toFixed(2)}%`,
+      derived.return_pct >= 0 ? "text-emerald-500" : "text-rose-500",
+    ],
   ];
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -692,7 +837,9 @@ function ClassificationTab({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-surface-2/30 p-4">
-      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </h4>
       <div className="mt-2">{children}</div>
     </div>
   );
@@ -700,7 +847,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 /* -------------------- Corporate Actions Tab -------------------- */
 function CorporateTab({ category }: { category: string }) {
-  const items = category === "ETFs" ? ["Dividend", "Split"] : ["Dividend", "Bonus", "Split", "Rights Issue", "Merger"];
+  const items =
+    category === "ETFs"
+      ? ["Dividend", "Split"]
+      : ["Dividend", "Bonus", "Split", "Rights Issue", "Merger"];
   return (
     <div className="space-y-3">
       <div className="text-sm text-muted-foreground">
@@ -708,7 +858,10 @@ function CorporateTab({ category }: { category: string }) {
       </div>
       <div className="flex flex-wrap gap-2">
         {items.map((t) => (
-          <span key={t} className="rounded-full border border-border bg-surface-2/40 px-3 py-1 text-xs text-muted-foreground">
+          <span
+            key={t}
+            className="rounded-full border border-border bg-surface-2/40 px-3 py-1 text-xs text-muted-foreground"
+          >
             {t}
           </span>
         ))}
@@ -734,7 +887,11 @@ function NotesTab({ investment }: { investment: Investment }) {
         placeholder="Write notes about this holding — thesis, targets, review dates…"
       />
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={() => setNotes(investment.notes || "")} disabled={!dirty || save.isPending}>
+        <Button
+          variant="ghost"
+          onClick={() => setNotes(investment.notes || "")}
+          disabled={!dirty || save.isPending}
+        >
           Reset
         </Button>
         <Button

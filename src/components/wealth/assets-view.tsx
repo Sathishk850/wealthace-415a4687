@@ -163,11 +163,7 @@ type SortKey =
    Component
 ========================================================= */
 
-export function AssetsView({
-  registerAdd,
-}: {
-  registerAdd?: (open: () => void) => void;
-}) {
+export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) => void }) {
   const [tab, setTab] = useState<AssetTab>("Stocks");
   const [search, setSearch] = useState("");
   const [fType, setFType] = useState<string>("all");
@@ -189,8 +185,11 @@ export function AssetsView({
   const delInv = useDeleteInvestment();
   const delAsset = useDeleteAsset();
 
-  const { quoteMap, isFetching: quotesFetching, refetch: refetchQuotes } =
-    useInvestmentQuotes(investments);
+  const {
+    quoteMap,
+    isFetching: quotesFetching,
+    refetch: refetchQuotes,
+  } = useInvestmentQuotes(investments);
   const refreshHoldings = useRefreshHoldings();
 
   const platformLabelById = useMemo(() => {
@@ -213,12 +212,12 @@ export function AssetsView({
     const out: Holding[] = [];
     for (const inv of investments) {
       const key = investmentQuoteKey(inv);
-      const quote: MarketQuote | null = key ? quoteMap.get(key) ?? null : null;
+      const quote: MarketQuote | null = key ? (quoteMap.get(key) ?? null) : null;
       const d = deriveHolding(inv, quote);
       // Platform = broker / bank / AMC the holding sits with.
       // Never the payment mode and never the price provider.
       const platform = inv.payment_account_id
-        ? platformLabelById.get(inv.payment_account_id) ?? null
+        ? (platformLabelById.get(inv.payment_account_id) ?? null)
         : null;
       out.push({
         id: inv.id,
@@ -248,7 +247,7 @@ export function AssetsView({
       const pnl = a.current_value - invested;
       const pnl_pct = invested > 0 ? (pnl / invested) * 100 : 0;
       const platform = a.payment_account_id
-        ? platformLabelById.get(a.payment_account_id) ?? null
+        ? (platformLabelById.get(a.payment_account_id) ?? null)
         : null;
       out.push({
         id: a.id,
@@ -314,27 +313,42 @@ export function AssetsView({
     const dir = sortDir === "asc" ? 1 : -1;
     const cmp = (a: Holding, b: Holding): number => {
       switch (sortKey) {
-        case "name": return a.name.localeCompare(b.name) * dir;
-        case "type": return (a.type || "").localeCompare(b.type || "") * dir;
-        case "platform": return (a.platform || "").localeCompare(b.platform || "") * dir;
-        case "quantity": return (a.quantity - b.quantity) * dir;
-        case "avg_price": return (a.avg_price - b.avg_price) * dir;
-        case "cmp": return (a.cmp - b.cmp) * dir;
-        case "invested": return (a.invested - b.invested) * dir;
-        case "current": return (a.current - b.current) * dir;
-        case "pnl": return (a.pnl - b.pnl) * dir;
+        case "name":
+          return a.name.localeCompare(b.name) * dir;
+        case "type":
+          return (a.type || "").localeCompare(b.type || "") * dir;
+        case "platform":
+          return (a.platform || "").localeCompare(b.platform || "") * dir;
+        case "quantity":
+          return (a.quantity - b.quantity) * dir;
+        case "avg_price":
+          return (a.avg_price - b.avg_price) * dir;
+        case "cmp":
+          return (a.cmp - b.cmp) * dir;
+        case "invested":
+          return (a.invested - b.invested) * dir;
+        case "current":
+          return (a.current - b.current) * dir;
+        case "pnl":
+          return (a.pnl - b.pnl) * dir;
       }
     };
     return [...filtered].sort(cmp);
   }, [filtered, sortKey, sortDir]);
 
   const totals = useMemo(() => {
-    let invested = 0, current = 0;
+    let invested = 0,
+      current = 0;
     for (const r of sorted) {
       invested += r.invested;
       current += r.current;
     }
-    return { invested, current, pnl: current - invested, pnl_pct: invested > 0 ? ((current - invested) / invested) * 100 : 0 };
+    return {
+      invested,
+      current,
+      pnl: current - invested,
+      pnl_pct: invested > 0 ? ((current - invested) / invested) * 100 : 0,
+    };
   }, [sorted]);
 
   const openAdd = () => {
@@ -397,13 +411,17 @@ export function AssetsView({
   };
 
   const bulkBusy =
-    bulkDelInv.isPending || bulkDelAsset.isPending || bulkUpdInv.isPending || bulkUpdAsset.isPending;
-
-
+    bulkDelInv.isPending ||
+    bulkDelAsset.isPending ||
+    bulkUpdInv.isPending ||
+    bulkUpdAsset.isPending;
 
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(k); setSortDir("desc"); }
+    else {
+      setSortKey(k);
+      setSortDir("desc");
+    }
   };
 
   const doDelete = async () => {
@@ -450,8 +468,18 @@ export function AssetsView({
         </div>
         <FilterMenu label="Type" value={fType} onChange={setFType} options={typeOptions} />
         <FilterMenu label="Sector" value={fSector} onChange={setFSector} options={sectorOptions} />
-        <FilterMenu label="Exchange" value={fExchange} onChange={setFExchange} options={exchangeOptions} />
-        <FilterMenu label="Platform" value={fPlatform} onChange={setFPlatform} options={platformOptions} />
+        <FilterMenu
+          label="Exchange"
+          value={fExchange}
+          onChange={setFExchange}
+          options={exchangeOptions}
+        />
+        <FilterMenu
+          label="Platform"
+          value={fPlatform}
+          onChange={setFPlatform}
+          options={platformOptions}
+        />
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={async () => {
@@ -468,7 +496,9 @@ export function AssetsView({
             disabled={quotesFetching || refreshHoldings.isPending}
             className="inline-flex items-center gap-1.5 rounded-xl border border-mint/40 bg-mint/[0.06] px-3 py-2 text-xs font-medium text-mint hover:bg-mint/10 disabled:opacity-60"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${quotesFetching || refreshHoldings.isPending ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${quotesFetching || refreshHoldings.isPending ? "animate-spin" : ""}`}
+            />
             Refresh Now
           </button>
           <button
@@ -495,36 +525,109 @@ export function AssetsView({
                   />
                 </th>
 
-                <SortHeader label={`Holdings (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Type" col="type" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Qty" col="quantity" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Avg. Price" col="avg_price" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="CMP" col="cmp" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Invested" col="invested" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Current" col="current" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="P&L" col="pnl" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Platform" col="platform" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <SortHeader
+                  label={`Holdings (${sorted.length})`}
+                  col="name"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="left"
+                />
+                <SortHeader
+                  label="Type"
+                  col="type"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="left"
+                />
+                <SortHeader
+                  label="Qty"
+                  col="quantity"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
+                  label="Avg. Price"
+                  col="avg_price"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
+                  label="CMP"
+                  col="cmp"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
+                  label="Invested"
+                  col="invested"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
+                  label="Current"
+                  col="current"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
+                  label="P&L"
+                  col="pnl"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
+                  label="Platform"
+                  col="platform"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="left"
+                />
                 {/* reserved actions column, no header */}
                 <th className="w-[120px] px-3 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</td></tr>
+                <tr>
+                  <td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                    Loading…
+                  </td>
+                </tr>
               ) : sorted.length === 0 ? (
-                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span> to add one.</td></tr>
-              ) : sorted.map((h) => (
-                <HoldingRow
-                  key={`${h.source}-${h.id}`}
-                  h={h}
-                  selected={sel.isSelected(rowKey(h))}
-                  onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-
-                  onView={() => setDetails(h)}
-                  onEdit={() => openEdit(h)}
-                  onDelete={() => setConfirm(h)}
-                />
-              ))}
+                <tr>
+                  <td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                    No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span>{" "}
+                    to add one.
+                  </td>
+                </tr>
+              ) : (
+                sorted.map((h) => (
+                  <HoldingRow
+                    key={`${h.source}-${h.id}`}
+                    h={h}
+                    selected={sel.isSelected(rowKey(h))}
+                    onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+                    onView={() => setDetails(h)}
+                    onEdit={() => openEdit(h)}
+                    onDelete={() => setConfirm(h)}
+                  />
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -558,15 +661,13 @@ export function AssetsView({
             onSelect: bulkClassify,
           },
         ]}
-
       />
-
 
       {/* ============ MODALS ============ */}
       <HoldingDetailsModal
         open={!!details && details.source === "investment"}
         onOpenChange={(v) => !v && setDetails(null)}
-        investment={details?.source === "investment" ? details.raw_investment ?? null : null}
+        investment={details?.source === "investment" ? (details.raw_investment ?? null) : null}
         quote={details?.quote ?? null}
         platformLabel={platformLabelFor(details)}
       />
@@ -592,9 +693,7 @@ export function AssetsView({
         }}
         existing={editAsset}
         defaultCategory={
-          tab === "Real Estate" ? "Property"
-          : tab === "Savings" ? "Cash"
-          : undefined
+          tab === "Real Estate" ? "Property" : tab === "Savings" ? "Cash" : undefined
         }
       />
 
@@ -607,13 +706,15 @@ export function AssetsView({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={delInv.isPending || delAsset.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={delInv.isPending || delAsset.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-rose-500 text-white hover:bg-rose-600"
               disabled={delInv.isPending || delAsset.isPending}
               onClick={doDelete}
             >
-              {(delInv.isPending || delAsset.isPending) ? "Deleting…" : "Delete"}
+              {delInv.isPending || delAsset.isPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -675,14 +776,28 @@ function HoldingRow({
         </span>
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">{formatQty(h.quantity)}</td>
-      <td className="px-3 py-3 text-right tabular-nums text-foreground">{priceIn(h.avg_price, h.currency)}</td>
-      <td className="px-3 py-3 text-right tabular-nums text-foreground">{priceIn(h.cmp, h.currency)}</td>
-      <td className="px-3 py-3 text-right tabular-nums text-foreground">{amountIn(h.invested, h.currency)}</td>
-      <td className="px-3 py-3 text-right tabular-nums font-medium text-foreground">{amountIn(h.current, h.currency)}</td>
+      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+        {priceIn(h.avg_price, h.currency)}
+      </td>
+      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+        {priceIn(h.cmp, h.currency)}
+      </td>
+      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+        {amountIn(h.invested, h.currency)}
+      </td>
+      <td className="px-3 py-3 text-right tabular-nums font-medium text-foreground">
+        {amountIn(h.current, h.currency)}
+      </td>
       <td className="px-3 py-3 text-right tabular-nums">
         <div className={up ? "text-emerald-500" : "text-rose-500"}>
-          <div>{up ? "+" : ""}{amountIn(h.pnl, h.currency)}</div>
-          <div className="text-[10px]">({up ? "+" : ""}{h.pnl_pct.toFixed(2)}%)</div>
+          <div>
+            {up ? "+" : ""}
+            {amountIn(h.pnl, h.currency)}
+          </div>
+          <div className="text-[10px]">
+            ({up ? "+" : ""}
+            {h.pnl_pct.toFixed(2)}%)
+          </div>
         </div>
       </td>
       <td className="px-3 py-3 text-muted-foreground">
@@ -696,9 +811,15 @@ function HoldingRow({
       </td>
       <td className="w-[120px] px-3 py-3">
         <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-          <IconBtn label="View Details" onClick={onView}><Eye className="h-3.5 w-3.5" /></IconBtn>
-          <IconBtn label="Edit" onClick={onEdit}><Pencil className="h-3.5 w-3.5" /></IconBtn>
-          <IconBtn label="Delete" onClick={onDelete} tone="rose"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+          <IconBtn label="View Details" onClick={onView}>
+            <Eye className="h-3.5 w-3.5" />
+          </IconBtn>
+          <IconBtn label="Edit" onClick={onEdit}>
+            <Pencil className="h-3.5 w-3.5" />
+          </IconBtn>
+          <IconBtn label="Delete" onClick={onDelete} tone="rose">
+            <Trash2 className="h-3.5 w-3.5" />
+          </IconBtn>
         </div>
       </td>
     </tr>
@@ -716,7 +837,10 @@ function IconBtn({
   label: string;
   tone?: "rose";
 }) {
-  const hover = tone === "rose" ? "hover:bg-rose-500/10 hover:text-rose-500" : "hover:bg-mint/10 hover:text-mint";
+  const hover =
+    tone === "rose"
+      ? "hover:bg-rose-500/10 hover:text-rose-500"
+      : "hover:bg-mint/10 hover:text-mint";
   return (
     <button
       onClick={onClick}
@@ -785,7 +909,9 @@ function FilterMenu({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="max-h-[280px] overflow-y-auto">
-        <DropdownMenuItem onSelect={() => onChange("all")}>All {label.toLowerCase()}s</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onChange("all")}>
+          All {label.toLowerCase()}s
+        </DropdownMenuItem>
         {options.map((o) => (
           <DropdownMenuItem key={o} onSelect={() => onChange(o)}>
             {o}
@@ -818,7 +944,8 @@ function AssetDetailsModal({
         <AlertDialogHeader>
           <AlertDialogTitle>{a.name}</AlertDialogTitle>
           <AlertDialogDescription>
-            {a.category}{a.sub_category ? ` · ${a.sub_category}` : ""}
+            {a.category}
+            {a.sub_category ? ` · ${a.sub_category}` : ""}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -829,7 +956,10 @@ function AssetDetailsModal({
             value={`${up ? "+" : ""}${amountIn(holding.pnl, ccy)} (${up ? "+" : ""}${holding.pnl_pct.toFixed(2)}%)`}
             tone={up ? "text-emerald-500" : "text-rose-500"}
           />
-          <MiniStat label="Quantity" value={a.quantity != null ? `${a.quantity}${a.unit ? " " + a.unit : ""}` : "—"} />
+          <MiniStat
+            label="Quantity"
+            value={a.quantity != null ? `${a.quantity}${a.unit ? " " + a.unit : ""}` : "—"}
+          />
           <MiniStat label="Location" value={a.location || "—"} />
           <MiniStat label="Status" value={a.status || "—"} />
         </div>
@@ -840,7 +970,10 @@ function AssetDetailsModal({
         ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel>Close</AlertDialogCancel>
-          <AlertDialogAction onClick={onEdit} className="bg-mint text-[#04121C] hover:brightness-110">
+          <AlertDialogAction
+            onClick={onEdit}
+            className="bg-mint text-[#04121C] hover:brightness-110"
+          >
             Edit Holding
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -28,7 +28,9 @@ export const marketKeys = {
   search: (q: string, kind: IdentifierType) => ["market", "search", kind, q] as const,
 };
 
-function investmentToItem(inv: Pick<Investment, "identifier_type" | "identifier" | "exchange" | "status">): QuoteRequestItem | null {
+function investmentToItem(
+  inv: Pick<Investment, "identifier_type" | "identifier" | "exchange" | "status">,
+): QuoteRequestItem | null {
   if (!inv.identifier || !inv.identifier_type) return null;
   if ((inv.status ?? "active") !== "active") return null;
   return {
