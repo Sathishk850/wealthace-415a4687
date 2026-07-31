@@ -49,12 +49,7 @@ type Props = {
   platformLabel?: string;
 };
 
-type DetailTab =
-  | "fundamental"
-  | "classification"
-  | "history"
-  | "corporate"
-  | "notes";
+type DetailTab = "fundamental" | "classification" | "history" | "corporate" | "notes";
 
 const CORPORATE_CATEGORIES = new Set(["Stocks", "ETFs"]);
 
@@ -205,7 +200,7 @@ export function HoldingDetailsModal({
 
           <div className="mt-4">
             {tab === "history" && <HistoryTab investment={inv} />}
-                        {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
+            {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
               <ClassificationTab investment={inv} derived={d} platformLabel={platformLabel} />
             )}
@@ -539,7 +534,6 @@ function TxnForm({
     </div>
   );
 }
-
 
 /* -------------------- Fundamental Tab (auto-fetched) -------------------- */
 function identifierTypeFor(inv: Investment): IdentifierType | null {

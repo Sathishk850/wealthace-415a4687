@@ -70,7 +70,6 @@ function platformFromNotes(notes: string | null | undefined): string | null {
   return null;
 }
 
-
 /* =========================================================
    Tab definitions & bucketing rules
 ========================================================= */
@@ -230,9 +229,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       // and never the price provider.
       const platform =
         platformFromNotes(inv.notes) ??
-        (inv.payment_account_id
-          ? (platformLabelById.get(inv.payment_account_id) ?? null)
-          : null);
+        (inv.payment_account_id ? (platformLabelById.get(inv.payment_account_id) ?? null) : null);
       out.push({
         id: inv.id,
         source: "investment",
