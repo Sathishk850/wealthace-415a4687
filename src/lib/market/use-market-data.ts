@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMarketQuotes, refreshMyHoldings, searchInstruments } from "@/lib/market.functions";
+import {
+  getInstrumentFundamentals,
+  getMarketQuotes,
+  refreshMyHoldings,
+  searchInstruments,
+} from "@/lib/market.functions";
 import type { Investment } from "@/lib/wealth-api";
 import type {
   IdentifierType,
+  InstrumentFundamentals,
   MarketQuote,
   MarketRefreshInterval,
   QuoteRequestItem,
@@ -160,3 +166,27 @@ export function useMarketStatus(exchange: string = "NSE") {
 export type UseAutoRefreshOptions = {
   interval?: MarketRefreshInterval;
 };
+
+/**
+ * Read-only fundamentals + classification for a single instrument.
+ * Auto-fetched; never user-editable. Returns null when unsupported (e.g. MFs).
+ */
+export function useInstrumentFundamentals(item: QuoteRequestItem | null) {
+  const fn = useServerFn(getInstrumentFundamentals);
+  return useQuery({
+    queryKey: ["market", "fundamentals", item?.identifier_type, item?.identifier],
+    queryFn: async () => {
+      if (!item) return null;
+      return (await fn({
+        data: {
+          identifier_type: item.identifier_type,
+          identifier: item.identifier,
+          exchange: item.exchange ?? null,
+        },
+      })) as InstrumentFundamentals | null;
+    },
+    enabled: !!item,
+    staleTime: 15 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
+}
