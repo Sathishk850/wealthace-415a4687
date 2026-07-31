@@ -56,3 +56,30 @@ export const DEFAULT_MARKET_SETTINGS: MarketDataSettings = {
   interval_minutes: 5,
   last_refresh_at: null,
 };
+
+/* ---------------- Fundamentals (auto-fetched, read-only) ---------------- */
+
+export type InstrumentFundamentals = {
+  identifier_type: IdentifierType;
+  identifier: string;
+  currency: string | null;
+  price: number | null;
+  week52_high: number | null;
+  week52_low: number | null;
+  pe: number | null;
+  pb: number | null;
+  dividend_yield: number | null; // percent
+  eps: number | null;
+  market_cap: number | null; // native currency, absolute
+  roe: number | null; // percent
+  debt_to_equity: number | null;
+  face_value: number | null;
+  book_value: number | null;
+  /** Classification block */
+  market_cap_band: string | null; // Large Cap / Mid Cap / Small Cap
+  sector: string | null;
+  industry: string | null;
+  segment_type: string | null;
+  source: string | null;
+  fetched_at: string; // ISO
+};

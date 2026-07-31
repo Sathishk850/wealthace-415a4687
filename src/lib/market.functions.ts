@@ -4,7 +4,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { MarketQuote, QuoteRequestItem, SearchResult } from "./market/types";
+import type {
+  InstrumentFundamentals,
+  MarketQuote,
+  QuoteRequestItem,
+  SearchResult,
+} from "./market/types";
 
 const identifierTypeSchema = z.enum(["stock_in", "stock_us", "mf_in", "crypto"]);
 
@@ -84,4 +89,29 @@ export const refreshMyHoldings = createServerFn({ method: "POST" })
     const { getQuotes } = await import("./market/service.server");
     const quotes = await getQuotes(items, { force: true, mirror: true });
     return { refreshed: quotes.filter((q) => q.latest_price != null).length, total: items.length };
+  });
+
+const fundamentalsSchema = z.object({
+  identifier_type: identifierTypeSchema,
+  identifier: z.string().min(1),
+  exchange: z.string().nullable().optional(),
+});
+
+/** Auto-fetched, read-only fundamentals + classification for one instrument. */
+export const getInstrumentFundamentals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => fundamentalsSchema.parse(input))
+  .handler(async ({ data }): Promise<InstrumentFundamentals | null> => {
+    if (data.identifier_type === "mf_in") return null;
+    const { yahooFundamentals } = await import("./market/providers/yahoo-fundamentals.server");
+    try {
+      return await yahooFundamentals({
+        identifier_type: data.identifier_type,
+        identifier: data.identifier,
+        exchange: data.exchange ?? null,
+      });
+    } catch (err) {
+      console.error("getInstrumentFundamentals failed", err);
+      return null;
+    }
   });
