@@ -115,7 +115,6 @@ export function HoldingDetailsModal({
     { value: "history", label: "Buy / Sell History" },
     ...(showCorporate ? [{ value: "corporate" as const, label: "Corporate Actions" }] : []),
     { value: "notes", label: "Notes" },
-    { value: "performance", label: "Performance" },
   ];
 
   const years = inv.purchase_date
@@ -208,19 +207,7 @@ export function HoldingDetailsModal({
 
           <div className="mt-4">
             {tab === "history" && <HistoryTab investment={inv} />}
-            {tab === "performance" && (
-              <PerformanceTab
-                investment={inv}
-                invested={invested}
-                current={current}
-                pnl={pnl}
-                pnlPct={pnlPct}
-                xirrVal={xirrVal}
-                cagr={cagr}
-                years={years}
-              />
-            )}
-            {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
+                        {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
               <ClassificationTab investment={inv} derived={d} platformLabel={platformLabel} />
             )}

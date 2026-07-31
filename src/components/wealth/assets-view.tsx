@@ -60,6 +60,17 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+/** Investment platform chosen on the Add Investment form, stored in notes. */
+function platformFromNotes(notes: string | null | undefined): string | null {
+  if (!notes) return null;
+  for (const line of notes.split(/\r?\n/)) {
+    const m = line.match(/^\s*Platform:\s*(.+)$/i);
+    if (m && m[1].trim()) return m[1].trim();
+  }
+  return null;
+}
+
+
 /* =========================================================
    Tab definitions & bucketing rules
 ========================================================= */
