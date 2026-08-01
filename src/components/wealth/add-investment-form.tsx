@@ -317,8 +317,10 @@ function classifySearchResult(r: SearchResult): Classification {
     return { category: "REIT", segment: "Real Estate", classification, sector: "Real Estate" };
   }
 
-  // ---- Commodities ----
-  if (curated === "commodity" || /\bgold\b|\bsilver\b|crude oil|agricultur|commodit/.test(name)) {
+  // ---- Commodities ---- (only ETFs / funds / curated instruments; a stock
+  // merely named "…Gold Loan" stays an equity stock)
+  const commodityName = /\bgold\b|\bsilver\b|crude oil|agricultur|commodit/.test(name);
+  if (curated === "commodity" || (commodityName && (isETF || r.identifier_type === "mf_in"))) {
     let segment = "Precious Metal";
     let classification = "Gold ETF";
     if (/silver/.test(name)) classification = "Silver ETF";
