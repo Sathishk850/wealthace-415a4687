@@ -82,6 +82,28 @@ function segmentFromNotes(notes: string | null | undefined): string | null {
   return null;
 }
 
+/** Fallback segment when the holding was created before segments were captured. */
+const SEGMENT_FALLBACK: Record<string, string> = {
+  Stocks: "Equity",
+  "Mutual Funds": "Mutual Fund",
+  ETFs: "Equity",
+  Bonds: "Debt",
+  Bond: "Debt",
+  Gold: "Commodity",
+  Commodities: "Commodity",
+  Crypto: "Crypto",
+  REIT: "Real Estate",
+  REITs: "Real Estate",
+  InvIT: "Infrastructure",
+  InvITs: "Infrastructure",
+  Property: "Real Estate",
+  Cash: "Cash & Savings",
+  EPF: "Cash & Savings",
+  PPF: "Cash & Savings",
+  Others: "Other",
+  Other: "Other",
+};
+
 /* =========================================================
    Tab definitions & bucketing rules
 ========================================================= */
