@@ -659,7 +659,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           onChange={(v) => {
             setTab(v as AssetTab);
             setSearch("");
-            setFType("all");
+            setFSegment("all");
             setFSector("all");
             setFExchange("all");
             setFPlatform("all");
