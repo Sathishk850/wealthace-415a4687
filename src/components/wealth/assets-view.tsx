@@ -679,7 +679,12 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
           />
         </div>
-        <FilterMenu label="Type" value={fType} onChange={setFType} options={typeOptions} />
+        <FilterMenu
+          label="Segment"
+          value={fSegment}
+          onChange={setFSegment}
+          options={segmentOptions}
+        />
         <FilterMenu label="Sector" value={fSector} onChange={setFSector} options={sectorOptions} />
         <FilterMenu
           label="Exchange"
