@@ -587,7 +587,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
   /* Row selection (global bulk framework) */
   const rowKey = useCallback((h: Holding) => `${h.source}-${h.id}`, []);
-  const sel = useBulkSelection(sorted, rowKey);
+  const sel = useBulkSelection(filtered, rowKey);
   const bulkDelInv = useBulkDeleteRows("wealth_investments", "holdings");
   const bulkDelAsset = useBulkDeleteRows("wealth_assets", "assets");
   const bulkUpdInv = useBulkUpdateRows("wealth_investments", "holdings");
