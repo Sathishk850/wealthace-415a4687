@@ -388,10 +388,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       out.push({
         id: inv.id,
         source: "investment",
-        tab: classifyInvestment(inv.category),
+        tab: classifyInvestment(inv.category, inv.sub_category),
         name: inv.name,
         symbol: inv.symbol,
         type: inv.sub_category || inv.category,
+        segment: segmentFromNotes(inv.notes) ?? SEGMENT_FALLBACK[inv.category] ?? "",
         sector: inv.sub_category ?? null,
         exchange: inv.exchange ?? null,
         platform,
@@ -403,6 +404,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         current: d.current_value,
         pnl: d.unrealized_pl,
         pnl_pct: d.return_pct,
+        xirr_pct: singleXirr(inv),
         currency: inv.currency || "INR",
         raw_investment: inv,
         quote,
@@ -422,6 +424,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         name: a.name,
         symbol: null,
         type: a.sub_category || a.category,
+        segment: SEGMENT_FALLBACK[a.category] ?? "",
         sector: a.sub_category ?? null,
         exchange: null,
         platform,
@@ -433,6 +436,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         current: a.current_value,
         pnl,
         pnl_pct,
+        xirr_pct: 0,
         currency: "INR",
         raw_asset: a,
       });
@@ -440,11 +444,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     return out;
   }, [investments, assets, quoteMap, platformLabelById]);
 
-  const tabRows = useMemo(() => rows.filter((r) => r.tab === tab), [rows, tab]);
+  const tabRows = useMemo(
+    () => (tab === "All Holdings" ? rows : rows.filter((r) => r.tab === tab)),
+    [rows, tab],
+  );
 
   /* Filter option lists (per-tab) */
-  const typeOptions = useMemo(
-    () => uniqSorted(tabRows.map((r) => r.type).filter(Boolean) as string[]),
+  const segmentOptions = useMemo(
+    () => uniqSorted(tabRows.map((r) => r.segment).filter(Boolean) as string[]),
     [tabRows],
   );
   const sectorOptions = useMemo(
@@ -464,25 +471,29 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     const q = search.trim().toLowerCase();
     return tabRows.filter((r) => {
       if (q) {
-        const hay = `${r.name} ${r.symbol ?? ""} ${r.type} ${r.platform ?? ""}`.toLowerCase();
+        const hay =
+          `${r.name} ${r.symbol ?? ""} ${r.type} ${r.segment} ${r.platform ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
-      if (fType !== "all" && r.type !== fType) return false;
+      if (fSegment !== "all" && r.segment !== fSegment) return false;
       if (fSector !== "all" && r.sector !== fSector) return false;
       if (fExchange !== "all" && r.exchange !== fExchange) return false;
       if (fPlatform !== "all" && r.platform !== fPlatform) return false;
       return true;
     });
-  }, [tabRows, search, fType, fSector, fExchange, fPlatform]);
+  }, [tabRows, search, fSegment, fSector, fExchange, fPlatform]);
+
+  /* Fix 1: same-name holdings collapse into one expandable row. */
+  const groups = useMemo(() => groupHoldings(filtered), [filtered]);
 
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
-    const cmp = (a: Holding, b: Holding): number => {
+    const cmp = (a: Group, b: Group): number => {
       switch (sortKey) {
         case "name":
           return a.name.localeCompare(b.name) * dir;
-        case "type":
-          return (a.type || "").localeCompare(b.type || "") * dir;
+        case "segment":
+          return (a.segment || "").localeCompare(b.segment || "") * dir;
         case "platform":
           return (a.platform || "").localeCompare(b.platform || "") * dir;
         case "quantity":
@@ -497,10 +508,15 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           return (a.current - b.current) * dir;
         case "pnl":
           return (a.pnl - b.pnl) * dir;
+        case "xirr":
+          return (a.xirr_pct - b.xirr_pct) * dir;
+        default:
+          return a.name.localeCompare(b.name) * dir;
       }
     };
-    return [...filtered].sort(cmp);
-  }, [filtered, sortKey, sortDir]);
+    return [...groups].sort(cmp);
+  }, [groups, sortKey, sortDir]);
+
 
   const totals = useMemo(() => {
     let invested = 0,
