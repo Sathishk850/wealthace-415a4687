@@ -20,25 +20,20 @@ export const INDIA_LISTED: Listed[] = [
   { identifier: "MINDSPACE", name: "Mindspace Business Parks REIT", kind: "reit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "BIRET", name: "Brookfield India Real Estate Trust REIT", kind: "reit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "NXST", name: "Nexus Select Trust REIT", kind: "reit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "KNOWLEDGE", name: "Knowledge Realty Trust REIT", kind: "reit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "PROPSHARE", name: "Property Share Investment Trust (SM REIT)", kind: "reit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
 
   // ---------- InvITs (NSE) ----------
   { identifier: "PGINVIT", name: "PowerGrid Infrastructure Investment Trust (InvIT)", kind: "invit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "IRB-INVIT", name: "IRB InvIT Fund", kind: "invit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
+  { identifier: "IRBINVIT", name: "IRB InvIT Fund", kind: "invit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "INDIGRID", name: "IndiGrid Infrastructure Trust (InvIT)", kind: "invit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "NDRINVIT", name: "National Highways Infra Trust (NHIT InvIT)", kind: "invit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "ANANDRATHI", name: "Anzen India Energy Yield Plus Trust (InvIT)", kind: "invit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "CAPINFRA", name: "Capital Infra Trust (InvIT)", kind: "invit", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
 
   // ---------- Commodity ETFs (NSE) ----------
+  { identifier: "GOLD1", name: "ICICI Prudential Gold ETF", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
+  { identifier: "GOLDIETF", name: "Nippon India Gold ETF (GoldIETF)", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "GOLDBEES", name: "Nippon India ETF Gold BeES", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "SILVERBEES", name: "Nippon India Silver ETF (Silver BeES)", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "GOLDSHARE", name: "UTI Gold Exchange Traded Fund", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "HDFCGOLD", name: "HDFC Gold Exchange Traded Fund", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "SETFGOLD", name: "SBI Gold ETF", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "AXISGOLD", name: "Axis Gold ETF", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
-  { identifier: "ICICIGOLD", name: "ICICI Prudential Gold ETF", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "HDFCSILVER", name: "HDFC Silver ETF", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
   { identifier: "SILVER", name: "ICICI Prudential Silver ETF", kind: "commodity", identifier_type: "stock_in", exchange: "NSE", currency: "INR" },
 
