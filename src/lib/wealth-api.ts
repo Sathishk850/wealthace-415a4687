@@ -460,6 +460,9 @@ export type InvestmentCategory =
   | "Mutual Funds"
   | "Stocks"
   | "ETFs"
+  | "Commodities"
+  | "REIT"
+  | "InvIT"
   | "Gold"
   | "Bonds"
   | "Crypto"
@@ -469,6 +472,9 @@ export const INVESTMENT_CATEGORIES: InvestmentCategory[] = [
   "Mutual Funds",
   "Stocks",
   "ETFs",
+  "Commodities",
+  "REIT",
+  "InvIT",
   "Gold",
   "Bonds",
   "Crypto",

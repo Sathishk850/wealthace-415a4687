@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { searchInstruments, getMarketQuotes } from "@/lib/market.functions";
 import type { IdentifierType, MarketQuote, SearchResult } from "@/lib/market/types";
+import { curatedKindFor, searchIndiaListed } from "@/lib/market/india-listed";
 import {
   CURRENCY_SYMBOL,
   useInvestments,
@@ -51,6 +52,10 @@ const DEFAULT_PLATFORMS = [
   "INDmoney",
   "ET Money",
   "Kuvera",
+  "NSE Listed",
+  "BullionByPost",
+  "MMTC",
+  "IBJA",
   "Interactive Brokers",
   "Charles Schwab",
   "Fidelity",
@@ -68,8 +73,9 @@ type CategoryFilter =
   | "stock_us"
   | "etf_us"
   | "reit"
+  | "invit"
+  | "commodity"
   | "bond"
-  | "gold"
   | "crypto";
 
 const CATEGORY_FILTERS: { value: CategoryFilter; label: string }[] = [
@@ -78,21 +84,32 @@ const CATEGORY_FILTERS: { value: CategoryFilter; label: string }[] = [
   { value: "mf_in", label: "Mutual Funds (India)" },
   { value: "stock_us", label: "Stocks (US)" },
   { value: "etf_us", label: "ETFs (US)" },
-  { value: "reit", label: "REITs / InvITs" },
+  { value: "commodity", label: "Commodities (Gold / Silver)" },
+  { value: "reit", label: "REITs" },
+  { value: "invit", label: "InvITs" },
   { value: "bond", label: "Bonds" },
-  { value: "gold", label: "Gold / Commodity" },
   { value: "crypto", label: "Crypto" },
 ];
 
-const CATEGORY_OPTIONS = ["Stocks", "Mutual Funds", "ETFs", "REITs", "Bonds", "Commodity", "Crypto"];
+const CATEGORY_OPTIONS = [
+  "Stocks",
+  "Mutual Funds",
+  "ETFs",
+  "Commodities",
+  "REIT",
+  "InvIT",
+  "Bonds",
+  "Crypto",
+];
 
 const SEGMENT_BY_CATEGORY: Record<string, string[]> = {
   Stocks: ["Equity"],
   "Mutual Funds": ["Equity", "Debt", "Hybrid", "Commodity", "Multi Asset", "International"],
   ETFs: ["Equity", "Debt", "Commodity", "International"],
-  REITs: ["Real Estate"],
+  Commodities: ["Precious Metal", "Energy", "Agriculture"],
+  REIT: ["Real Estate"],
+  InvIT: ["Infrastructure"],
   Bonds: ["Debt"],
-  Commodity: ["Commodity"],
   Crypto: ["Crypto"],
 };
 
@@ -120,6 +137,40 @@ const CLASSIFICATION_SUGGESTIONS: Record<string, string[]> = {
     "International ETF",
     "Commodity ETF",
   ],
+  Commodities: [
+    "Gold ETF",
+    "Silver ETF",
+    "Crude Oil ETF",
+    "Agricultural Commodity ETF",
+    "Physical Gold",
+    "Physical Silver",
+  ],
+  REIT: [
+    "Residential REIT",
+    "Commercial REIT",
+    "Industrial REIT",
+    "Mixed REIT",
+    "Hospitality REIT",
+  ],
+  InvIT: [
+    "Power Infrastructure",
+    "Telecom Infrastructure",
+    "Highway Infrastructure",
+    "Water Infrastructure",
+    "Mixed Infrastructure",
+  ],
+};
+
+/** Currencies allowed per category (first entry is the default). */
+const CURRENCY_BY_CATEGORY: Record<string, Currency[]> = {
+  Stocks: ["INR", "USD"],
+  "Mutual Funds": ["INR"],
+  ETFs: ["INR", "USD"],
+  Commodities: ["INR", "USD"],
+  REIT: ["INR"],
+  InvIT: ["INR"],
+  Bonds: ["INR", "USD"],
+  Crypto: ["INR", "USD"],
 };
 
 const SECTOR_SUGGESTIONS = [
@@ -147,18 +198,34 @@ const STATUS_OPTIONS = [
 function kindsForFilter(f: CategoryFilter): IdentifierType[] {
   switch (f) {
     case "stock_in":
+    case "reit":
+    case "invit":
+    case "bond":
       return ["stock_in"];
     case "mf_in":
       return ["mf_in"];
     case "stock_us":
     case "etf_us":
       return ["stock_us"];
+    case "commodity":
+      return ["stock_in", "stock_us"];
     case "crypto":
       return ["crypto"];
     case "all":
     default:
       return ["stock_in", "mf_in", "stock_us"];
   }
+}
+
+/** Curated instruments (REIT / InvIT / commodity) to merge into results. */
+function curatedKindsForFilter(
+  f: CategoryFilter,
+): Array<"reit" | "invit" | "commodity"> | undefined {
+  if (f === "reit") return ["reit"];
+  if (f === "invit") return ["invit"];
+  if (f === "commodity") return ["commodity"];
+  if (f === "all") return undefined; // all curated kinds
+  return [];
 }
 
 // ---------- Platform storage ----------
@@ -226,10 +293,63 @@ function classifySearchResult(r: SearchResult): Classification {
     /\betf\b|exchange traded fund/i.test(r.name) ||
     (r.meta?.quoteType ?? "").toUpperCase() === "ETF";
 
+  const curated = (r.meta?.curatedKind ?? curatedKindFor(r.identifier)) as
+    | "reit"
+    | "invit"
+    | "commodity"
+    | null;
+
+  // ---- InvIT ----
+  if (curated === "invit" || /\binvit\b|infrastructure (investment )?trust/.test(name)) {
+    let classification = "Mixed Infrastructure";
+    if (/power|grid|energy|solar|renew/.test(name)) classification = "Power Infrastructure";
+    else if (/telecom|tower|fibre|fiber/.test(name)) classification = "Telecom Infrastructure";
+    else if (/highway|road|toll|nhit/.test(name)) classification = "Highway Infrastructure";
+    else if (/water|pipeline/.test(name)) classification = "Water Infrastructure";
+    return {
+      category: "InvIT",
+      segment: "Infrastructure",
+      classification,
+      sector: "Infrastructure",
+    };
+  }
+
+  // ---- REIT ----
+  if (curated === "reit" || /\breit\b|real estate (investment )?trust/.test(name)) {
+    let classification = "Commercial REIT";
+    if (/residential|housing|realty homes/.test(name)) classification = "Residential REIT";
+    else if (/industrial|warehous|logistic/.test(name)) classification = "Industrial REIT";
+    else if (/hotel|hospitality|resort/.test(name)) classification = "Hospitality REIT";
+    else if (/mixed|diversified|select/.test(name)) classification = "Mixed REIT";
+    return { category: "REIT", segment: "Real Estate", classification, sector: "Real Estate" };
+  }
+
+  // ---- Commodities ---- (only ETFs / funds / curated instruments; a stock
+  // merely named "…Gold Loan" stays an equity stock)
+  const commodityName = /\bgold\b|\bsilver\b|crude oil|agricultur|commodit/.test(name);
+  if (curated === "commodity" || (commodityName && (isETF || r.identifier_type === "mf_in"))) {
+    let segment = "Precious Metal";
+    let classification = "Gold ETF";
+    if (/silver/.test(name)) classification = "Silver ETF";
+    else if (/crude|oil|energy/.test(name)) {
+      segment = "Energy";
+      classification = "Crude Oil ETF";
+    } else if (/agricultur|agri/.test(name)) {
+      segment = "Agriculture";
+      classification = "Agricultural Commodity ETF";
+    }
+    if (r.identifier_type === "mf_in") {
+      // Gold/silver savings funds stay under Mutual Funds.
+      return { category: "Mutual Funds", segment: "Commodity", classification, sector: "" };
+    }
+    return { category: "Commodities", segment, classification, sector: "Commodities" };
+  }
+
   if (r.identifier_type === "mf_in") {
     let segment = "Equity";
     let classification = "";
-    if (/debt|bond|gilt|liquid|overnight|duration|corporate|banking & psu/.test(name)) segment = "Debt";
+    if (/debt|bond|gilt|liquid|overnight|duration|corporate|banking & psu/.test(name))
+      segment = "Debt";
     else if (/hybrid|balanced|arbitrage|dynamic asset/.test(name)) segment = "Hybrid";
     else if (/multi asset/.test(name)) segment = "Multi Asset";
     else if (/gold|silver|commodit/.test(name)) segment = "Commodity";
@@ -328,6 +448,15 @@ function useMultiSearch(query: string, filter: CategoryFilter) {
         if (seqRef.current !== mine) return;
         const merged: SearchResult[] = [];
         const seen = new Set<string>();
+        // Curated NSE REITs / InvITs / commodity ETFs first — providers index
+        // these inconsistently.
+        const curatedKinds = curatedKindsForFilter(filter);
+        for (const r of searchIndiaListed(q, curatedKinds)) {
+          const key = `${r.identifier_type}:${r.identifier}:${r.exchange ?? ""}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          merged.push(r);
+        }
         for (const s of settled) {
           if (s.status !== "fulfilled") continue;
           for (const r of s.value as SearchResult[]) {
@@ -446,15 +575,15 @@ function extractPlatform(notes: string | null): { platform: string; rest: string
 
 function investmentToForm(inv: Investment): FormState {
   const { platform, rest } = extractPlatform(inv.notes);
-  const flag =
-    inv.identifier_type === "stock_us" ? "🇺🇸" : inv.identifier_type ? "🇮🇳" : "";
+  const flag = inv.identifier_type === "stock_us" ? "🇺🇸" : inv.identifier_type ? "🇮🇳" : "";
   return {
     name: inv.name,
     symbol: inv.symbol ?? "",
     identifier: inv.identifier,
     identifier_type: (inv.identifier_type as IdentifierType | null) ?? null,
     exchange: inv.exchange,
-    country: inv.identifier_type === "stock_us" ? "United States" : inv.identifier_type ? "India" : "",
+    country:
+      inv.identifier_type === "stock_us" ? "United States" : inv.identifier_type ? "India" : "",
     country_flag: flag,
     currency: (inv.currency ?? "INR") as Currency,
     category: inv.category,
@@ -484,8 +613,7 @@ const selectCls = inputCls + " appearance-none pr-9 bg-no-repeat bg-[right_0.75r
 
 const labelCls = "mb-1.5 block text-xs font-medium text-foreground";
 
-const cardCls =
-  "rounded-2xl border border-border bg-card shadow-sm";
+const cardCls = "rounded-2xl border border-border bg-card shadow-sm";
 
 // ---------- Main component ----------
 
@@ -650,6 +778,23 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
   const segmentOptions = SEGMENT_BY_CATEGORY[form.category] ?? [];
   const classificationOptions = CLASSIFICATION_SUGGESTIONS[form.category] ?? [];
+  const currencyOptions = CURRENCY_BY_CATEGORY[form.category] ?? (["INR", "USD"] as Currency[]);
+  const isExchangeListedTrust = form.category === "REIT" || form.category === "InvIT";
+
+  // REIT / InvIT units are bought directly on the exchange — default the
+  // platform to "NSE Listed" and keep currency inside the allowed set.
+  useEffect(() => {
+    setForm((f) => {
+      const allowed = CURRENCY_BY_CATEGORY[f.category] ?? (["INR", "USD"] as Currency[]);
+      const nextCurrency = allowed.includes(f.currency) ? f.currency : allowed[0];
+      const nextPlatform =
+        (f.category === "REIT" || f.category === "InvIT") && !f.platform
+          ? "NSE Listed"
+          : f.platform;
+      if (nextCurrency === f.currency && nextPlatform === f.platform) return f;
+      return { ...f, currency: nextCurrency, platform: nextPlatform };
+    });
+  }, [form.category]);
 
   const mergedPlatforms = useMemo(() => {
     const seen = new Set<string>();
@@ -664,11 +809,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   }, [customPlatforms]);
 
   const canSave =
-    !!form.platform.trim() &&
-    qty > 0 &&
-    avg > 0 &&
-    !!form.purchase_date &&
-    !!form.name.trim();
+    !!form.platform.trim() && qty > 0 && avg > 0 && !!form.purchase_date && !!form.name.trim();
 
   const clearAll = () => {
     setForm({ ...EMPTY, purchase_date: todayISO() });
@@ -1111,9 +1252,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     <select
                       className={selectCls}
                       value={
-                        mergedPlatforms.some(
-                          (p) => p.toLowerCase() === form.platform.toLowerCase(),
-                        )
+                        mergedPlatforms.some((p) => p.toLowerCase() === form.platform.toLowerCase())
                           ? form.platform
                           : form.platform || ""
                       }
@@ -1164,8 +1303,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
                 <div>
                   <label className={labelCls}>
-                    Average Buy Price ({sym}){" "}
-                    <span className="text-rose-500">*</span>
+                    Average Buy Price ({sym}) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -1177,36 +1315,51 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     placeholder="0.00"
                   />
                 </div>
+
+                <div>
+                  <label className={labelCls}>Currency</label>
+                  <div className="relative">
+                    <select
+                      className={selectCls}
+                      value={form.currency}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, currency: e.target.value as Currency }))
+                      }
+                      disabled={currencyOptions.length <= 1}
+                    >
+                      {currencyOptions.map((c) => (
+                        <option key={c} value={c}>
+                          {CURRENCY_SYMBOL[c]} · {c}
+                        </option>
+                      ))}
+                    </select>
+                    <Chevron />
+                  </div>
+                  {isExchangeListedTrust ? (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      NSE listed — traded in INR.
+                    </p>
+                  ) : null}
+                </div>
               </div>
 
               {/* Summary row */}
               <div className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-2/40 p-4 sm:grid-cols-3">
-                <SummaryCell
-                  label="Invested Amount"
-                  value={invested > 0 ? fmt(invested) : "—"}
-                />
+                <SummaryCell label="Invested Amount" value={invested > 0 ? fmt(invested) : "—"} />
                 <SummaryCell
                   label="Current Price (Live)"
                   value={
-                    priceLoading
-                      ? "Fetching…"
-                      : displayPrice != null
-                        ? fmt(displayPrice, 4)
-                        : "—"
+                    priceLoading ? "Fetching…" : displayPrice != null ? fmt(displayPrice, 4) : "—"
                   }
                   badge={
-                    displayPrice != null ? (
-                      <LivePill live={liveDot} source={priceSource} />
-                    ) : null
+                    displayPrice != null ? <LivePill live={liveDot} source={priceSource} /> : null
                   }
                 />
                 <SummaryCell
                   label="Current Value (Live)"
                   value={marketValue != null ? fmt(marketValue) : "—"}
                   badge={
-                    marketValue != null ? (
-                      <LivePill live={liveDot} source={priceSource} />
-                    ) : null
+                    marketValue != null ? <LivePill live={liveDot} source={priceSource} /> : null
                   }
                 />
               </div>
@@ -1325,15 +1478,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
 // ---------- Small helpers ----------
 
-function SectionHeader({
-  n,
-  title,
-  subtitle,
-}: {
-  n: number;
-  title: string;
-  subtitle?: string;
-}) {
+function SectionHeader({ n, title, subtitle }: { n: number; title: string; subtitle?: string }) {
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3.5 sm:px-5">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-sm font-semibold text-[#04121C]">
@@ -1390,7 +1535,7 @@ function LivePill({ live, source }: { live: boolean; source: string | null }) {
           live ? "bg-emerald-500" : "bg-muted-foreground/60",
         )}
       />
-      {live ? "Live" : source ?? "manual"}
+      {live ? "Live" : (source ?? "manual")}
     </span>
   );
 }

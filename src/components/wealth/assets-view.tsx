@@ -79,6 +79,8 @@ type AssetTab =
   | "Mutual Funds"
   | "ETFs"
   | "Commodities"
+  | "REIT"
+  | "InvIT"
   | "Real Estate"
   | "Savings"
   | "Other Assets";
@@ -88,6 +90,8 @@ const ASSET_TABS: AssetTab[] = [
   "Mutual Funds",
   "ETFs",
   "Commodities",
+  "REIT",
+  "InvIT",
   "Real Estate",
   "Savings",
   "Other Assets",
@@ -98,6 +102,8 @@ const ADD_LABEL: Record<AssetTab, string> = {
   "Mutual Funds": "Add Mutual Fund",
   ETFs: "Add ETF",
   Commodities: "Add Commodity",
+  REIT: "Add REIT",
+  InvIT: "Add InvIT",
   "Real Estate": "Add Property",
   Savings: "Add Savings",
   "Other Assets": "Add Asset",
@@ -108,6 +114,8 @@ const SEARCH_PLACEHOLDER: Record<AssetTab, string> = {
   "Mutual Funds": "Search mutual funds...",
   ETFs: "Search ETFs...",
   Commodities: "Search commodities...",
+  REIT: "Search REITs...",
+  InvIT: "Search InvITs...",
   "Real Estate": "Search properties...",
   Savings: "Search savings...",
   "Other Assets": "Search assets...",
@@ -117,7 +125,16 @@ function classifyInvestment(cat: string): AssetTab {
   if (cat === "Stocks") return "Stocks";
   if (cat === "Mutual Funds") return "Mutual Funds";
   if (cat === "ETFs") return "ETFs";
-  if (cat === "Gold" || cat === "Crypto" || cat === "Bonds") return "Commodities";
+  if (cat === "REIT" || cat === "REITs") return "REIT";
+  if (cat === "InvIT" || cat === "InvITs") return "InvIT";
+  if (
+    cat === "Commodities" ||
+    cat === "Commodity" ||
+    cat === "Gold" ||
+    cat === "Crypto" ||
+    cat === "Bonds"
+  )
+    return "Commodities";
   return "Other Assets";
 }
 
@@ -363,7 +380,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   }, [sorted]);
 
   const openAdd = () => {
-    if (tab === "Stocks" || tab === "Mutual Funds" || tab === "ETFs" || tab === "Commodities") {
+    if (
+      tab === "Stocks" ||
+      tab === "Mutual Funds" ||
+      tab === "ETFs" ||
+      tab === "Commodities" ||
+      tab === "REIT" ||
+      tab === "InvIT"
+    ) {
       // Investments go through the redesigned add flow.
       navigate({ to: "/wealth/add-investment" });
     } else {
