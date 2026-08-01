@@ -218,7 +218,9 @@ function kindsForFilter(f: CategoryFilter): IdentifierType[] {
 }
 
 /** Curated instruments (REIT / InvIT / commodity) to merge into results. */
-function curatedKindsForFilter(f: CategoryFilter): Array<"reit" | "invit" | "commodity"> | undefined {
+function curatedKindsForFilter(
+  f: CategoryFilter,
+): Array<"reit" | "invit" | "commodity"> | undefined {
   if (f === "reit") return ["reit"];
   if (f === "invit") return ["invit"];
   if (f === "commodity") return ["commodity"];
@@ -304,7 +306,12 @@ function classifySearchResult(r: SearchResult): Classification {
     else if (/telecom|tower|fibre|fiber/.test(name)) classification = "Telecom Infrastructure";
     else if (/highway|road|toll|nhit/.test(name)) classification = "Highway Infrastructure";
     else if (/water|pipeline/.test(name)) classification = "Water Infrastructure";
-    return { category: "InvIT", segment: "Infrastructure", classification, sector: "Infrastructure" };
+    return {
+      category: "InvIT",
+      segment: "Infrastructure",
+      classification,
+      sector: "Infrastructure",
+    };
   }
 
   // ---- REIT ----
@@ -338,12 +345,11 @@ function classifySearchResult(r: SearchResult): Classification {
     return { category: "Commodities", segment, classification, sector: "Commodities" };
   }
 
-
-
   if (r.identifier_type === "mf_in") {
     let segment = "Equity";
     let classification = "";
-    if (/debt|bond|gilt|liquid|overnight|duration|corporate|banking & psu/.test(name)) segment = "Debt";
+    if (/debt|bond|gilt|liquid|overnight|duration|corporate|banking & psu/.test(name))
+      segment = "Debt";
     else if (/hybrid|balanced|arbitrage|dynamic asset/.test(name)) segment = "Hybrid";
     else if (/multi asset/.test(name)) segment = "Multi Asset";
     else if (/gold|silver|commodit/.test(name)) segment = "Commodity";
@@ -569,15 +575,15 @@ function extractPlatform(notes: string | null): { platform: string; rest: string
 
 function investmentToForm(inv: Investment): FormState {
   const { platform, rest } = extractPlatform(inv.notes);
-  const flag =
-    inv.identifier_type === "stock_us" ? "🇺🇸" : inv.identifier_type ? "🇮🇳" : "";
+  const flag = inv.identifier_type === "stock_us" ? "🇺🇸" : inv.identifier_type ? "🇮🇳" : "";
   return {
     name: inv.name,
     symbol: inv.symbol ?? "",
     identifier: inv.identifier,
     identifier_type: (inv.identifier_type as IdentifierType | null) ?? null,
     exchange: inv.exchange,
-    country: inv.identifier_type === "stock_us" ? "United States" : inv.identifier_type ? "India" : "",
+    country:
+      inv.identifier_type === "stock_us" ? "United States" : inv.identifier_type ? "India" : "",
     country_flag: flag,
     currency: (inv.currency ?? "INR") as Currency,
     category: inv.category,
@@ -607,8 +613,7 @@ const selectCls = inputCls + " appearance-none pr-9 bg-no-repeat bg-[right_0.75r
 
 const labelCls = "mb-1.5 block text-xs font-medium text-foreground";
 
-const cardCls =
-  "rounded-2xl border border-border bg-card shadow-sm";
+const cardCls = "rounded-2xl border border-border bg-card shadow-sm";
 
 // ---------- Main component ----------
 
@@ -783,12 +788,13 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       const allowed = CURRENCY_BY_CATEGORY[f.category] ?? (["INR", "USD"] as Currency[]);
       const nextCurrency = allowed.includes(f.currency) ? f.currency : allowed[0];
       const nextPlatform =
-        (f.category === "REIT" || f.category === "InvIT") && !f.platform ? "NSE Listed" : f.platform;
+        (f.category === "REIT" || f.category === "InvIT") && !f.platform
+          ? "NSE Listed"
+          : f.platform;
       if (nextCurrency === f.currency && nextPlatform === f.platform) return f;
       return { ...f, currency: nextCurrency, platform: nextPlatform };
     });
   }, [form.category]);
-
 
   const mergedPlatforms = useMemo(() => {
     const seen = new Set<string>();
@@ -803,11 +809,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   }, [customPlatforms]);
 
   const canSave =
-    !!form.platform.trim() &&
-    qty > 0 &&
-    avg > 0 &&
-    !!form.purchase_date &&
-    !!form.name.trim();
+    !!form.platform.trim() && qty > 0 && avg > 0 && !!form.purchase_date && !!form.name.trim();
 
   const clearAll = () => {
     setForm({ ...EMPTY, purchase_date: todayISO() });
@@ -1250,9 +1252,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     <select
                       className={selectCls}
                       value={
-                        mergedPlatforms.some(
-                          (p) => p.toLowerCase() === form.platform.toLowerCase(),
-                        )
+                        mergedPlatforms.some((p) => p.toLowerCase() === form.platform.toLowerCase())
                           ? form.platform
                           : form.platform || ""
                       }
@@ -1303,8 +1303,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
                 <div>
                   <label className={labelCls}>
-                    Average Buy Price ({sym}){" "}
-                    <span className="text-rose-500">*</span>
+                    Average Buy Price ({sym}) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -1344,35 +1343,23 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                 </div>
               </div>
 
-
               {/* Summary row */}
               <div className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-2/40 p-4 sm:grid-cols-3">
-                <SummaryCell
-                  label="Invested Amount"
-                  value={invested > 0 ? fmt(invested) : "—"}
-                />
+                <SummaryCell label="Invested Amount" value={invested > 0 ? fmt(invested) : "—"} />
                 <SummaryCell
                   label="Current Price (Live)"
                   value={
-                    priceLoading
-                      ? "Fetching…"
-                      : displayPrice != null
-                        ? fmt(displayPrice, 4)
-                        : "—"
+                    priceLoading ? "Fetching…" : displayPrice != null ? fmt(displayPrice, 4) : "—"
                   }
                   badge={
-                    displayPrice != null ? (
-                      <LivePill live={liveDot} source={priceSource} />
-                    ) : null
+                    displayPrice != null ? <LivePill live={liveDot} source={priceSource} /> : null
                   }
                 />
                 <SummaryCell
                   label="Current Value (Live)"
                   value={marketValue != null ? fmt(marketValue) : "—"}
                   badge={
-                    marketValue != null ? (
-                      <LivePill live={liveDot} source={priceSource} />
-                    ) : null
+                    marketValue != null ? <LivePill live={liveDot} source={priceSource} /> : null
                   }
                 />
               </div>
@@ -1491,15 +1478,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
 // ---------- Small helpers ----------
 
-function SectionHeader({
-  n,
-  title,
-  subtitle,
-}: {
-  n: number;
-  title: string;
-  subtitle?: string;
-}) {
+function SectionHeader({ n, title, subtitle }: { n: number; title: string; subtitle?: string }) {
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3.5 sm:px-5">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-sm font-semibold text-[#04121C]">
@@ -1556,7 +1535,7 @@ function LivePill({ live, source }: { live: boolean; source: string | null }) {
           live ? "bg-emerald-500" : "bg-muted-foreground/60",
         )}
       />
-      {live ? "Live" : source ?? "manual"}
+      {live ? "Live" : (source ?? "manual")}
     </span>
   );
 }

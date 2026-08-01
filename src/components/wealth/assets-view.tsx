@@ -127,7 +127,13 @@ function classifyInvestment(cat: string): AssetTab {
   if (cat === "ETFs") return "ETFs";
   if (cat === "REIT" || cat === "REITs") return "REIT";
   if (cat === "InvIT" || cat === "InvITs") return "InvIT";
-  if (cat === "Commodities" || cat === "Commodity" || cat === "Gold" || cat === "Crypto" || cat === "Bonds")
+  if (
+    cat === "Commodities" ||
+    cat === "Commodity" ||
+    cat === "Gold" ||
+    cat === "Crypto" ||
+    cat === "Bonds"
+  )
     return "Commodities";
   return "Other Assets";
 }
@@ -138,7 +144,6 @@ function classifyAsset(cat: string): AssetTab {
   if (cat === "Gold") return "Commodities";
   return "Other Assets";
 }
-
 
 /* =========================================================
    Unified Holding row
