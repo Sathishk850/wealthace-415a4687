@@ -887,7 +887,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     try {
       const saved = await upsert.mutateAsync(payload);
       // Let the holdings table scroll back to / highlight this row.
-      const savedId = (saved as { id?: string } | undefined)?.id ?? editId ?? null;
+      const savedId = (saved as { id?: string } | undefined)?.id ?? investmentId ?? null;
       if (savedId && typeof sessionStorage !== "undefined") {
         sessionStorage.setItem("finvista.holdings.lastTouched", savedId);
       }
