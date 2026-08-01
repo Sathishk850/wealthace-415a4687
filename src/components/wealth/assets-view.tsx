@@ -70,38 +70,53 @@ function platformFromNotes(notes: string | null | undefined): string | null {
   return null;
 }
 
+/** Segment chosen on the Add Investment form, stored in notes as "Segment: X". */
+function segmentFromNotes(notes: string | null | undefined): string | null {
+  if (!notes) return null;
+  for (const line of notes.split(/\r?\n/)) {
+    const m = line.match(/^\s*Segment:\s*(.+)$/i);
+    if (m && m[1].trim()) return m[1].trim();
+  }
+  return null;
+}
+
 /* =========================================================
    Tab definitions & bucketing rules
 ========================================================= */
 
 type AssetTab =
+  | "All Holdings"
   | "Stocks"
   | "Mutual Funds"
   | "ETFs"
   | "Commodities"
+  | "Bonds"
   | "REIT"
   | "InvIT"
   | "Real Estate"
   | "Savings"
   | "Other Assets";
 
+/** Tabs shown in the UI. REIT / InvIT holdings surface under "All Holdings". */
 const ASSET_TABS: AssetTab[] = [
+  "All Holdings",
   "Stocks",
   "Mutual Funds",
   "ETFs",
   "Commodities",
-  "REIT",
-  "InvIT",
+  "Bonds",
   "Real Estate",
   "Savings",
   "Other Assets",
 ];
 
 const ADD_LABEL: Record<AssetTab, string> = {
+  "All Holdings": "Add Investment",
   Stocks: "Add Stock",
   "Mutual Funds": "Add Mutual Fund",
   ETFs: "Add ETF",
   Commodities: "Add Commodity",
+  Bonds: "Add Bond",
   REIT: "Add REIT",
   InvIT: "Add InvIT",
   "Real Estate": "Add Property",
@@ -110,10 +125,12 @@ const ADD_LABEL: Record<AssetTab, string> = {
 };
 
 const SEARCH_PLACEHOLDER: Record<AssetTab, string> = {
+  "All Holdings": "Search holdings...",
   Stocks: "Search stocks...",
   "Mutual Funds": "Search mutual funds...",
   ETFs: "Search ETFs...",
   Commodities: "Search commodities...",
+  Bonds: "Search bonds...",
   REIT: "Search REITs...",
   InvIT: "Search InvITs...",
   "Real Estate": "Search properties...",
@@ -121,19 +138,15 @@ const SEARCH_PLACEHOLDER: Record<AssetTab, string> = {
   "Other Assets": "Search assets...",
 };
 
-function classifyInvestment(cat: string): AssetTab {
+function classifyInvestment(cat: string, subCategory?: string | null): AssetTab {
+  const sub = (subCategory ?? "").toLowerCase();
+  if (cat === "Bonds" || cat === "Bond") return "Bonds";
+  if (cat === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
   if (cat === "Stocks") return "Stocks";
   if (cat === "Mutual Funds") return "Mutual Funds";
-  if (cat === "ETFs") return "ETFs";
   if (cat === "REIT" || cat === "REITs") return "REIT";
   if (cat === "InvIT" || cat === "InvITs") return "InvIT";
-  if (
-    cat === "Commodities" ||
-    cat === "Commodity" ||
-    cat === "Gold" ||
-    cat === "Crypto" ||
-    cat === "Bonds"
-  )
+  if (cat === "Commodities" || cat === "Commodity" || cat === "Gold" || cat === "Crypto")
     return "Commodities";
   return "Other Assets";
 }
@@ -144,6 +157,21 @@ function classifyAsset(cat: string): AssetTab {
   if (cat === "Gold") return "Commodities";
   return "Other Assets";
 }
+
+/** Which add-flow a tab belongs to. */
+const INVESTMENT_TABS: AssetTab[] = [
+  "All Holdings",
+  "Stocks",
+  "Mutual Funds",
+  "ETFs",
+  "Commodities",
+  "Bonds",
+  "REIT",
+  "InvIT",
+];
+
+const TAB_STORAGE_KEY = "finvista:holdings-tab";
+const LAST_TOUCHED_KEY = "finvista:holdings-last-touched";
 
 /* =========================================================
    Unified Holding row
