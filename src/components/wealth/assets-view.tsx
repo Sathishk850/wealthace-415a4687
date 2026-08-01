@@ -752,8 +752,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   align="left"
                 />
                 <SortHeader
-                  label="Type"
-                  col="type"
+                  label="Segment"
+                  col="segment"
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onClick={toggleSort}
@@ -808,6 +808,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   align="right"
                 />
                 <SortHeader
+                  label="XIRR"
+                  col="xirr"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
                   label="Platform"
                   col="platform"
                   sortKey={sortKey}
@@ -822,30 +830,74 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  <td colSpan={12} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     Loading…
                   </td>
                 </tr>
               ) : sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  <td colSpan={12} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span>{" "}
                     to add one.
                   </td>
                 </tr>
               ) : (
-                sorted.map((h) => (
-                  <HoldingRow
-                    key={`${h.source}-${h.id}`}
-                    h={h}
-                    selected={sel.isSelected(rowKey(h))}
-                    onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                    onView={() => setDetails(h)}
-                    onEdit={() => openEdit(h)}
-                    onDelete={() => setConfirm(h)}
-                  />
-                ))
+                sorted.flatMap((g) => {
+                  if (g.items.length === 1) {
+                    const h = g.items[0];
+                    return [
+                      <HoldingRow
+                        key={rowKey(h)}
+                        h={h}
+                        holdingId={h.id}
+                        highlight={lastTouched === h.id}
+                        selected={sel.isSelected(rowKey(h))}
+                        onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+                        onView={() => setDetails(h)}
+                        onEdit={() => openEdit(h)}
+                        onDelete={() => setConfirm(h)}
+                      />,
+                    ];
+                  }
+                  const open = !!expanded[g.key];
+                  const allSel = g.items.every((i) => sel.isSelected(rowKey(i)));
+                  const someSel = !allSel && g.items.some((i) => sel.isSelected(rowKey(i)));
+                  const rowsOut = [
+                    <HoldingRow
+                      key={g.key}
+                      h={g}
+                      lots={g.items.length}
+                      open={open}
+                      onToggle={() => setExpanded((s) => ({ ...s, [g.key]: !s[g.key] }))}
+                      selected={allSel}
+                      indeterminate={someSel}
+                      onSelectChange={(v) =>
+                        g.items.forEach((i) => sel.toggle(rowKey(i), v))
+                      }
+                    />,
+                  ];
+                  if (open) {
+                    for (const h of g.items) {
+                      rowsOut.push(
+                        <HoldingRow
+                          key={rowKey(h)}
+                          h={h}
+                          child
+                          holdingId={h.id}
+                          highlight={lastTouched === h.id}
+                          selected={sel.isSelected(rowKey(h))}
+                          onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+                          onView={() => setDetails(h)}
+                          onEdit={() => openEdit(h)}
+                          onDelete={() => setConfirm(h)}
+                        />,
+                      );
+                    }
+                  }
+                  return rowsOut;
+                })
               )}
+
             </tbody>
           </table>
         </div>
