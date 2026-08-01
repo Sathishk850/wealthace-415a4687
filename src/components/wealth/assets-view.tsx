@@ -186,6 +186,7 @@ type Holding = {
   name: string;
   symbol: string | null;
   type: string; // e.g. "Equity", "Property", "Gold"
+  segment: string; // Equity / Debt / Hybrid / Commodity / Real Estate / …
   sector: string | null;
   exchange: string | null;
   platform: string | null;
@@ -197,41 +198,150 @@ type Holding = {
   current: number;
   pnl: number;
   pnl_pct: number;
+  xirr_pct: number;
   currency: string;
   raw_investment?: Investment;
   raw_asset?: Asset;
   quote?: MarketQuote | null;
 };
 
+/** A displayed table row: either a single holding or an aggregate of same-name holdings. */
+type Group = {
+  key: string;
+  name: string;
+  symbol: string | null;
+  segment: string;
+  exchange: string | null;
+  platform: string | null;
+  quantity: number;
+  avg_price: number;
+  cmp: number;
+  invested: number;
+  current: number;
+  pnl: number;
+  pnl_pct: number;
+  xirr_pct: number;
+  currency: string;
+  items: Holding[];
+};
+
 type SortKey =
   | "name"
-  | "type"
+  | "segment"
   | "quantity"
   | "avg_price"
   | "cmp"
   | "invested"
   | "current"
   | "pnl"
+  | "xirr"
   | "platform";
+
+const DEFAULT_SORT: { key: SortKey; dir: "asc" | "desc" } = { key: "name", dir: "asc" };
+
+function groupHoldings(rows: Holding[]): Group[] {
+  const byName = new Map<string, Holding[]>();
+  for (const r of rows) {
+    const k = `${r.source}|${r.name.trim().toLowerCase()}|${r.currency}`;
+    const arr = byName.get(k);
+    if (arr) arr.push(r);
+    else byName.set(k, [r]);
+  }
+  const out: Group[] = [];
+  for (const [key, items] of byName) {
+    if (items.length === 1) {
+      const h = items[0];
+      out.push({
+        key,
+        name: h.name,
+        symbol: h.symbol,
+        segment: h.segment,
+        exchange: h.exchange,
+        platform: h.platform,
+        quantity: h.quantity,
+        avg_price: h.avg_price,
+        cmp: h.cmp,
+        invested: h.invested,
+        current: h.current,
+        pnl: h.pnl,
+        pnl_pct: h.pnl_pct,
+        xirr_pct: h.xirr_pct,
+        currency: h.currency,
+        items,
+      });
+      continue;
+    }
+    const quantity = items.reduce((s, h) => s + h.quantity, 0);
+    const invested = items.reduce((s, h) => s + h.invested, 0);
+    const current = items.reduce((s, h) => s + h.current, 0);
+    const pnl = current - invested;
+    const invs = items.map((h) => h.raw_investment).filter(Boolean) as Investment[];
+    out.push({
+      key,
+      name: items[0].name,
+      symbol: items[0].symbol,
+      segment: items[0].segment,
+      exchange: items[0].exchange,
+      platform: uniqSorted(items.map((h) => h.platform).filter(Boolean) as string[]).join(", ") || null,
+      quantity,
+      avg_price: quantity > 0 ? invested / quantity : 0,
+      cmp: items[0].cmp,
+      invested,
+      current,
+      pnl,
+      pnl_pct: invested > 0 ? (pnl / invested) * 100 : 0,
+      xirr_pct: invs.length ? portfolioXirr(invs) : 0,
+      currency: items[0].currency,
+      items,
+    });
+  }
+  return out;
+}
 
 /* =========================================================
    Component
 ========================================================= */
 
 export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) => void }) {
-  const [tab, setTab] = useState<AssetTab>("Stocks");
+  const [tab, setTab] = useState<AssetTab>(() => {
+    if (typeof sessionStorage === "undefined") return "All Holdings";
+    const saved = sessionStorage.getItem(TAB_STORAGE_KEY) as AssetTab | null;
+    return saved && ASSET_TABS.includes(saved) ? saved : "All Holdings";
+  });
   const [search, setSearch] = useState("");
-  const [fType, setFType] = useState<string>("all");
+  const [fSegment, setFSegment] = useState<string>("all");
   const [fSector, setFSector] = useState<string>("all");
   const [fExchange, setFExchange] = useState<string>("all");
   const [fPlatform, setFPlatform] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("current");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(DEFAULT_SORT.dir);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [details, setDetails] = useState<Holding | null>(null);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [confirm, setConfirm] = useState<Holding | null>(null);
+  const [lastTouched, setLastTouched] = useState<string | null>(() =>
+    typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(LAST_TOUCHED_KEY),
+  );
   const navigate = useNavigate();
+
+  // Fix 6: remember the active tab across add / edit navigations.
+  useEffect(() => {
+    if (typeof sessionStorage !== "undefined") sessionStorage.setItem(TAB_STORAGE_KEY, tab);
+  }, [tab]);
+
+  // Highlight the recently added/edited holding, then fade the marker away.
+  useEffect(() => {
+    if (!lastTouched) return;
+    const el = document.querySelector<HTMLElement>(`[data-holding-id="${lastTouched}"]`);
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const t = setTimeout(() => {
+      setLastTouched(null);
+      if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(LAST_TOUCHED_KEY);
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [lastTouched]);
+
 
   const { data: investments = [], isLoading: invLoading, refetch: refetchInv } = useInvestments();
   const { data: assets = [], isLoading: assetLoading, refetch: refetchAssets } = useAssets();
