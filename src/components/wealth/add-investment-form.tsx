@@ -885,7 +885,12 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     };
 
     try {
-      await upsert.mutateAsync(payload);
+      const saved = await upsert.mutateAsync(payload);
+      // Let the holdings table scroll back to / highlight this row.
+      const savedId = (saved as { id?: string } | undefined)?.id ?? investmentId ?? null;
+      if (savedId && typeof sessionStorage !== "undefined") {
+        sessionStorage.setItem("finvista.holdings.lastTouched", savedId);
+      }
       toast.success(isEdit ? "Investment updated" : "Investment added");
       if (keepOpen && !isEdit) {
         clearAll();

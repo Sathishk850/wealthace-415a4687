@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Plus,
   ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -56,6 +57,8 @@ import {
   useDeleteInvestment,
   useInvestments,
   inr,
+  portfolioXirr,
+  singleXirr,
 } from "@/lib/wealth-api";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -70,38 +73,75 @@ function platformFromNotes(notes: string | null | undefined): string | null {
   return null;
 }
 
+/** Segment chosen on the Add Investment form, stored in notes as "Segment: X". */
+function segmentFromNotes(notes: string | null | undefined): string | null {
+  if (!notes) return null;
+  for (const line of notes.split(/\r?\n/)) {
+    const m = line.match(/^\s*Segment:\s*(.+)$/i);
+    if (m && m[1].trim()) return m[1].trim();
+  }
+  return null;
+}
+
+/** Fallback segment when the holding was created before segments were captured. */
+const SEGMENT_FALLBACK: Record<string, string> = {
+  Stocks: "Equity",
+  "Mutual Funds": "Mutual Fund",
+  ETFs: "Equity",
+  Bonds: "Debt",
+  Bond: "Debt",
+  Gold: "Commodity",
+  Commodities: "Commodity",
+  Crypto: "Crypto",
+  REIT: "Real Estate",
+  REITs: "Real Estate",
+  InvIT: "Infrastructure",
+  InvITs: "Infrastructure",
+  Property: "Real Estate",
+  Cash: "Cash & Savings",
+  EPF: "Cash & Savings",
+  PPF: "Cash & Savings",
+  Others: "Other",
+  Other: "Other",
+};
+
 /* =========================================================
    Tab definitions & bucketing rules
 ========================================================= */
 
 type AssetTab =
+  | "All Holdings"
   | "Stocks"
   | "Mutual Funds"
   | "ETFs"
   | "Commodities"
+  | "Bonds"
   | "REIT"
   | "InvIT"
   | "Real Estate"
   | "Savings"
   | "Other Assets";
 
+/** Tabs shown in the UI. REIT / InvIT holdings surface under "All Holdings". */
 const ASSET_TABS: AssetTab[] = [
+  "All Holdings",
   "Stocks",
   "Mutual Funds",
   "ETFs",
   "Commodities",
-  "REIT",
-  "InvIT",
+  "Bonds",
   "Real Estate",
   "Savings",
   "Other Assets",
 ];
 
 const ADD_LABEL: Record<AssetTab, string> = {
+  "All Holdings": "Add Investment",
   Stocks: "Add Stock",
   "Mutual Funds": "Add Mutual Fund",
   ETFs: "Add ETF",
   Commodities: "Add Commodity",
+  Bonds: "Add Bond",
   REIT: "Add REIT",
   InvIT: "Add InvIT",
   "Real Estate": "Add Property",
@@ -110,10 +150,12 @@ const ADD_LABEL: Record<AssetTab, string> = {
 };
 
 const SEARCH_PLACEHOLDER: Record<AssetTab, string> = {
+  "All Holdings": "Search holdings...",
   Stocks: "Search stocks...",
   "Mutual Funds": "Search mutual funds...",
   ETFs: "Search ETFs...",
   Commodities: "Search commodities...",
+  Bonds: "Search bonds...",
   REIT: "Search REITs...",
   InvIT: "Search InvITs...",
   "Real Estate": "Search properties...",
@@ -121,19 +163,15 @@ const SEARCH_PLACEHOLDER: Record<AssetTab, string> = {
   "Other Assets": "Search assets...",
 };
 
-function classifyInvestment(cat: string): AssetTab {
+function classifyInvestment(cat: string, subCategory?: string | null): AssetTab {
+  const sub = (subCategory ?? "").toLowerCase();
+  if (cat === "Bonds" || cat === "Bond") return "Bonds";
+  if (cat === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
   if (cat === "Stocks") return "Stocks";
   if (cat === "Mutual Funds") return "Mutual Funds";
-  if (cat === "ETFs") return "ETFs";
   if (cat === "REIT" || cat === "REITs") return "REIT";
   if (cat === "InvIT" || cat === "InvITs") return "InvIT";
-  if (
-    cat === "Commodities" ||
-    cat === "Commodity" ||
-    cat === "Gold" ||
-    cat === "Crypto" ||
-    cat === "Bonds"
-  )
+  if (cat === "Commodities" || cat === "Commodity" || cat === "Gold" || cat === "Crypto")
     return "Commodities";
   return "Other Assets";
 }
@@ -144,6 +182,21 @@ function classifyAsset(cat: string): AssetTab {
   if (cat === "Gold") return "Commodities";
   return "Other Assets";
 }
+
+/** Which add-flow a tab belongs to. */
+const INVESTMENT_TABS: AssetTab[] = [
+  "All Holdings",
+  "Stocks",
+  "Mutual Funds",
+  "ETFs",
+  "Commodities",
+  "Bonds",
+  "REIT",
+  "InvIT",
+];
+
+const TAB_STORAGE_KEY = "finvista:holdings-tab";
+const LAST_TOUCHED_KEY = "finvista:holdings-last-touched";
 
 /* =========================================================
    Unified Holding row
@@ -158,6 +211,7 @@ type Holding = {
   name: string;
   symbol: string | null;
   type: string; // e.g. "Equity", "Property", "Gold"
+  segment: string; // Equity / Debt / Hybrid / Commodity / Real Estate / …
   sector: string | null;
   exchange: string | null;
   platform: string | null;
@@ -169,41 +223,150 @@ type Holding = {
   current: number;
   pnl: number;
   pnl_pct: number;
+  xirr_pct: number;
   currency: string;
   raw_investment?: Investment;
   raw_asset?: Asset;
   quote?: MarketQuote | null;
 };
 
+/** A displayed table row: either a single holding or an aggregate of same-name holdings. */
+type Group = {
+  key: string;
+  name: string;
+  symbol: string | null;
+  segment: string;
+  exchange: string | null;
+  platform: string | null;
+  quantity: number;
+  avg_price: number;
+  cmp: number;
+  invested: number;
+  current: number;
+  pnl: number;
+  pnl_pct: number;
+  xirr_pct: number;
+  currency: string;
+  items: Holding[];
+};
+
 type SortKey =
   | "name"
-  | "type"
+  | "segment"
   | "quantity"
   | "avg_price"
   | "cmp"
   | "invested"
   | "current"
   | "pnl"
+  | "xirr"
   | "platform";
+
+const DEFAULT_SORT: { key: SortKey; dir: "asc" | "desc" } = { key: "name", dir: "asc" };
+
+function groupHoldings(rows: Holding[]): Group[] {
+  const byName = new Map<string, Holding[]>();
+  for (const r of rows) {
+    const k = `${r.source}|${r.name.trim().toLowerCase()}|${r.currency}`;
+    const arr = byName.get(k);
+    if (arr) arr.push(r);
+    else byName.set(k, [r]);
+  }
+  const out: Group[] = [];
+  for (const [key, items] of byName) {
+    if (items.length === 1) {
+      const h = items[0];
+      out.push({
+        key,
+        name: h.name,
+        symbol: h.symbol,
+        segment: h.segment,
+        exchange: h.exchange,
+        platform: h.platform,
+        quantity: h.quantity,
+        avg_price: h.avg_price,
+        cmp: h.cmp,
+        invested: h.invested,
+        current: h.current,
+        pnl: h.pnl,
+        pnl_pct: h.pnl_pct,
+        xirr_pct: h.xirr_pct,
+        currency: h.currency,
+        items,
+      });
+      continue;
+    }
+    const quantity = items.reduce((s, h) => s + h.quantity, 0);
+    const invested = items.reduce((s, h) => s + h.invested, 0);
+    const current = items.reduce((s, h) => s + h.current, 0);
+    const pnl = current - invested;
+    const invs = items.map((h) => h.raw_investment).filter(Boolean) as Investment[];
+    out.push({
+      key,
+      name: items[0].name,
+      symbol: items[0].symbol,
+      segment: items[0].segment,
+      exchange: items[0].exchange,
+      platform: uniqSorted(items.map((h) => h.platform).filter(Boolean) as string[]).join(", ") || null,
+      quantity,
+      avg_price: quantity > 0 ? invested / quantity : 0,
+      cmp: items[0].cmp,
+      invested,
+      current,
+      pnl,
+      pnl_pct: invested > 0 ? (pnl / invested) * 100 : 0,
+      xirr_pct: invs.length ? portfolioXirr(invs) : 0,
+      currency: items[0].currency,
+      items,
+    });
+  }
+  return out;
+}
 
 /* =========================================================
    Component
 ========================================================= */
 
 export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) => void }) {
-  const [tab, setTab] = useState<AssetTab>("Stocks");
+  const [tab, setTab] = useState<AssetTab>(() => {
+    if (typeof sessionStorage === "undefined") return "All Holdings";
+    const saved = sessionStorage.getItem(TAB_STORAGE_KEY) as AssetTab | null;
+    return saved && ASSET_TABS.includes(saved) ? saved : "All Holdings";
+  });
   const [search, setSearch] = useState("");
-  const [fType, setFType] = useState<string>("all");
+  const [fSegment, setFSegment] = useState<string>("all");
   const [fSector, setFSector] = useState<string>("all");
   const [fExchange, setFExchange] = useState<string>("all");
   const [fPlatform, setFPlatform] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("current");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">(DEFAULT_SORT.dir);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [details, setDetails] = useState<Holding | null>(null);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [confirm, setConfirm] = useState<Holding | null>(null);
+  const [lastTouched, setLastTouched] = useState<string | null>(() =>
+    typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(LAST_TOUCHED_KEY),
+  );
   const navigate = useNavigate();
+
+  // Fix 6: remember the active tab across add / edit navigations.
+  useEffect(() => {
+    if (typeof sessionStorage !== "undefined") sessionStorage.setItem(TAB_STORAGE_KEY, tab);
+  }, [tab]);
+
+  // Highlight the recently added/edited holding, then fade the marker away.
+  useEffect(() => {
+    if (!lastTouched) return;
+    const el = document.querySelector<HTMLElement>(`[data-holding-id="${lastTouched}"]`);
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const t = setTimeout(() => {
+      setLastTouched(null);
+      if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(LAST_TOUCHED_KEY);
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [lastTouched]);
+
 
   const { data: investments = [], isLoading: invLoading, refetch: refetchInv } = useInvestments();
   const { data: assets = [], isLoading: assetLoading, refetch: refetchAssets } = useAssets();
@@ -250,10 +413,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       out.push({
         id: inv.id,
         source: "investment",
-        tab: classifyInvestment(inv.category),
+        tab: classifyInvestment(inv.category, inv.sub_category),
         name: inv.name,
         symbol: inv.symbol,
         type: inv.sub_category || inv.category,
+        segment: segmentFromNotes(inv.notes) ?? SEGMENT_FALLBACK[inv.category] ?? "",
         sector: inv.sub_category ?? null,
         exchange: inv.exchange ?? null,
         platform,
@@ -265,6 +429,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         current: d.current_value,
         pnl: d.unrealized_pl,
         pnl_pct: d.return_pct,
+        xirr_pct: singleXirr(inv),
         currency: inv.currency || "INR",
         raw_investment: inv,
         quote,
@@ -284,6 +449,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         name: a.name,
         symbol: null,
         type: a.sub_category || a.category,
+        segment: SEGMENT_FALLBACK[a.category] ?? "",
         sector: a.sub_category ?? null,
         exchange: null,
         platform,
@@ -295,6 +461,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         current: a.current_value,
         pnl,
         pnl_pct,
+        xirr_pct: 0,
         currency: "INR",
         raw_asset: a,
       });
@@ -302,11 +469,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     return out;
   }, [investments, assets, quoteMap, platformLabelById]);
 
-  const tabRows = useMemo(() => rows.filter((r) => r.tab === tab), [rows, tab]);
+  const tabRows = useMemo(
+    () => (tab === "All Holdings" ? rows : rows.filter((r) => r.tab === tab)),
+    [rows, tab],
+  );
 
   /* Filter option lists (per-tab) */
-  const typeOptions = useMemo(
-    () => uniqSorted(tabRows.map((r) => r.type).filter(Boolean) as string[]),
+  const segmentOptions = useMemo(
+    () => uniqSorted(tabRows.map((r) => r.segment).filter(Boolean) as string[]),
     [tabRows],
   );
   const sectorOptions = useMemo(
@@ -326,25 +496,29 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     const q = search.trim().toLowerCase();
     return tabRows.filter((r) => {
       if (q) {
-        const hay = `${r.name} ${r.symbol ?? ""} ${r.type} ${r.platform ?? ""}`.toLowerCase();
+        const hay =
+          `${r.name} ${r.symbol ?? ""} ${r.type} ${r.segment} ${r.platform ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
-      if (fType !== "all" && r.type !== fType) return false;
+      if (fSegment !== "all" && r.segment !== fSegment) return false;
       if (fSector !== "all" && r.sector !== fSector) return false;
       if (fExchange !== "all" && r.exchange !== fExchange) return false;
       if (fPlatform !== "all" && r.platform !== fPlatform) return false;
       return true;
     });
-  }, [tabRows, search, fType, fSector, fExchange, fPlatform]);
+  }, [tabRows, search, fSegment, fSector, fExchange, fPlatform]);
+
+  /* Fix 1: same-name holdings collapse into one expandable row. */
+  const groups = useMemo(() => groupHoldings(filtered), [filtered]);
 
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
-    const cmp = (a: Holding, b: Holding): number => {
+    const cmp = (a: Group, b: Group): number => {
       switch (sortKey) {
         case "name":
           return a.name.localeCompare(b.name) * dir;
-        case "type":
-          return (a.type || "").localeCompare(b.type || "") * dir;
+        case "segment":
+          return (a.segment || "").localeCompare(b.segment || "") * dir;
         case "platform":
           return (a.platform || "").localeCompare(b.platform || "") * dir;
         case "quantity":
@@ -359,10 +533,15 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           return (a.current - b.current) * dir;
         case "pnl":
           return (a.pnl - b.pnl) * dir;
+        case "xirr":
+          return (a.xirr_pct - b.xirr_pct) * dir;
+        default:
+          return a.name.localeCompare(b.name) * dir;
       }
     };
-    return [...filtered].sort(cmp);
-  }, [filtered, sortKey, sortDir]);
+    return [...groups].sort(cmp);
+  }, [groups, sortKey, sortDir]);
+
 
   const totals = useMemo(() => {
     let invested = 0,
@@ -409,7 +588,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
   /* Row selection (global bulk framework) */
   const rowKey = useCallback((h: Holding) => `${h.source}-${h.id}`, []);
-  const sel = useBulkSelection(sorted, rowKey);
+  const sel = useBulkSelection(filtered, rowKey);
   const bulkDelInv = useBulkDeleteRows("wealth_investments", "holdings");
   const bulkDelAsset = useBulkDeleteRows("wealth_assets", "assets");
   const bulkUpdInv = useBulkUpdateRows("wealth_investments", "holdings");
@@ -481,7 +660,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           onChange={(v) => {
             setTab(v as AssetTab);
             setSearch("");
-            setFType("all");
+            setFSegment("all");
             setFSector("all");
             setFExchange("all");
             setFPlatform("all");
@@ -501,7 +680,12 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
           />
         </div>
-        <FilterMenu label="Type" value={fType} onChange={setFType} options={typeOptions} />
+        <FilterMenu
+          label="Segment"
+          value={fSegment}
+          onChange={setFSegment}
+          options={segmentOptions}
+        />
         <FilterMenu label="Sector" value={fSector} onChange={setFSector} options={sectorOptions} />
         <FilterMenu
           label="Exchange"
@@ -569,8 +753,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   align="left"
                 />
                 <SortHeader
-                  label="Type"
-                  col="type"
+                  label="Segment"
+                  col="segment"
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onClick={toggleSort}
@@ -625,6 +809,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   align="right"
                 />
                 <SortHeader
+                  label="XIRR"
+                  col="xirr"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onClick={toggleSort}
+                  align="right"
+                />
+                <SortHeader
                   label="Platform"
                   col="platform"
                   sortKey={sortKey}
@@ -639,30 +831,74 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  <td colSpan={12} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     Loading…
                   </td>
                 </tr>
               ) : sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  <td colSpan={12} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span>{" "}
                     to add one.
                   </td>
                 </tr>
               ) : (
-                sorted.map((h) => (
-                  <HoldingRow
-                    key={`${h.source}-${h.id}`}
-                    h={h}
-                    selected={sel.isSelected(rowKey(h))}
-                    onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                    onView={() => setDetails(h)}
-                    onEdit={() => openEdit(h)}
-                    onDelete={() => setConfirm(h)}
-                  />
-                ))
+                sorted.flatMap((g) => {
+                  if (g.items.length === 1) {
+                    const h = g.items[0];
+                    return [
+                      <HoldingRow
+                        key={rowKey(h)}
+                        h={h}
+                        holdingId={h.id}
+                        highlight={lastTouched === h.id}
+                        selected={sel.isSelected(rowKey(h))}
+                        onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+                        onView={() => setDetails(h)}
+                        onEdit={() => openEdit(h)}
+                        onDelete={() => setConfirm(h)}
+                      />,
+                    ];
+                  }
+                  const open = !!expanded[g.key];
+                  const allSel = g.items.every((i) => sel.isSelected(rowKey(i)));
+                  const someSel = !allSel && g.items.some((i) => sel.isSelected(rowKey(i)));
+                  const rowsOut = [
+                    <HoldingRow
+                      key={g.key}
+                      h={g}
+                      lots={g.items.length}
+                      open={open}
+                      onToggle={() => setExpanded((s) => ({ ...s, [g.key]: !s[g.key] }))}
+                      selected={allSel}
+                      indeterminate={someSel}
+                      onSelectChange={(v) =>
+                        g.items.forEach((i) => sel.toggle(rowKey(i), v))
+                      }
+                    />,
+                  ];
+                  if (open) {
+                    for (const h of g.items) {
+                      rowsOut.push(
+                        <HoldingRow
+                          key={rowKey(h)}
+                          h={h}
+                          child
+                          holdingId={h.id}
+                          highlight={lastTouched === h.id}
+                          selected={sel.isSelected(rowKey(h))}
+                          onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+                          onView={() => setDetails(h)}
+                          onEdit={() => openEdit(h)}
+                          onDelete={() => setConfirm(h)}
+                        />,
+                      );
+                    }
+                  }
+                  return rowsOut;
+                })
               )}
+
             </tbody>
           </table>
         </div>
@@ -761,44 +997,97 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 /* =========================================================
    Table row (with hover-reveal actions, no layout shift)
 ========================================================= */
+type RowLike = {
+  name: string;
+  symbol: string | null;
+  segment: string;
+  quantity: number;
+  avg_price: number;
+  cmp: number;
+  invested: number;
+  current: number;
+  pnl: number;
+  pnl_pct: number;
+  xirr_pct: number;
+  currency: string;
+  platform: string | null;
+};
+
 function HoldingRow({
   h,
   onView,
   onEdit,
   onDelete,
   selected,
+  indeterminate,
   onSelectChange,
+  child,
+  lots,
+  open,
+  onToggle,
+  holdingId,
+  highlight,
 }: {
-  h: Holding;
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  h: RowLike;
+  onView?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   selected: boolean;
+  indeterminate?: boolean;
   onSelectChange: (v: boolean) => void;
+  child?: boolean;
+  lots?: number;
+  open?: boolean;
+  onToggle?: () => void;
+  holdingId?: string;
+  highlight?: boolean;
 }) {
   const up = h.pnl >= 0;
+  const xirrUp = h.xirr_pct >= 0;
   return (
     <tr
+      data-holding-id={holdingId}
       className={`group border-b border-border/40 last:border-0 hover:bg-surface-2/30 ${
         selected ? "bg-mint/[0.06]" : ""
-      }`}
+      } ${child ? "bg-surface-2/20" : ""} ${highlight ? "ring-1 ring-inset ring-mint/50" : ""}`}
     >
       <td className="w-[44px] px-3 py-3">
-        <input
-          type="checkbox"
+        <SelectCheckbox
+          label={`Select ${h.name}`}
           checked={selected}
-          onChange={(e) => onSelectChange(e.target.checked)}
-          aria-label={`Select ${h.name}`}
-          className="h-4 w-4 cursor-pointer accent-mint"
+          indeterminate={!!indeterminate}
+          onChange={onSelectChange}
         />
       </td>
       <td className="px-3 py-3">
-        <div className="flex items-center gap-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
-            {h.name.slice(0, 1).toUpperCase()}
-          </span>
+        <div className={`flex items-center gap-3 ${child ? "pl-6" : ""}`}>
+          {lots ? (
+            <button
+              onClick={onToggle}
+              aria-label={open ? "Collapse lots" : "Expand lots"}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-mint/10 hover:text-mint"
+            >
+              {open ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </button>
+          ) : null}
+          {child ? null : (
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
+              {h.name.slice(0, 1).toUpperCase()}
+            </span>
+          )}
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
+            <div className="truncate text-sm font-medium text-foreground">
+              {h.name}
+              {lots ? (
+                <span className="ml-2 rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
+                  {lots} lots
+                </span>
+              ) : null}
+            </div>
             {h.symbol ? (
               <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
             ) : null}
@@ -806,9 +1095,13 @@ function HoldingRow({
         </div>
       </td>
       <td className="px-3 py-3">
-        <span className="rounded-md bg-surface-2/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-          {h.type}
-        </span>
+        {h.segment ? (
+          <span className="rounded-md bg-surface-2/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {h.segment}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">{formatQty(h.quantity)}</td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">
@@ -835,6 +1128,16 @@ function HoldingRow({
           </div>
         </div>
       </td>
+      <td className="px-3 py-3 text-right tabular-nums">
+        {h.xirr_pct ? (
+          <span className={xirrUp ? "text-emerald-500" : "text-rose-500"}>
+            {xirrUp ? "+" : ""}
+            {h.xirr_pct.toFixed(2)}%
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </td>
       <td className="px-3 py-3 text-muted-foreground">
         {h.platform ? (
           <span className="inline-block max-w-[190px] truncate rounded-full border border-border bg-surface-2/60 px-2.5 py-1 text-xs font-medium text-foreground">
@@ -846,20 +1149,27 @@ function HoldingRow({
       </td>
       <td className="w-[120px] px-3 py-3">
         <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-          <IconBtn label="View Details" onClick={onView}>
-            <Eye className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn label="Edit" onClick={onEdit}>
-            <Pencil className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn label="Delete" onClick={onDelete} tone="rose">
-            <Trash2 className="h-3.5 w-3.5" />
-          </IconBtn>
+          {onView ? (
+            <IconBtn label="View Details" onClick={onView}>
+              <Eye className="h-3.5 w-3.5" />
+            </IconBtn>
+          ) : null}
+          {onEdit ? (
+            <IconBtn label="Edit" onClick={onEdit}>
+              <Pencil className="h-3.5 w-3.5" />
+            </IconBtn>
+          ) : null}
+          {onDelete ? (
+            <IconBtn label="Delete" onClick={onDelete} tone="rose">
+              <Trash2 className="h-3.5 w-3.5" />
+            </IconBtn>
+          ) : null}
         </div>
       </td>
     </tr>
   );
 }
+
 
 function IconBtn({
   children,
