@@ -996,44 +996,97 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 /* =========================================================
    Table row (with hover-reveal actions, no layout shift)
 ========================================================= */
+type RowLike = {
+  name: string;
+  symbol: string | null;
+  segment: string;
+  quantity: number;
+  avg_price: number;
+  cmp: number;
+  invested: number;
+  current: number;
+  pnl: number;
+  pnl_pct: number;
+  xirr_pct: number;
+  currency: string;
+  platform: string | null;
+};
+
 function HoldingRow({
   h,
   onView,
   onEdit,
   onDelete,
   selected,
+  indeterminate,
   onSelectChange,
+  child,
+  lots,
+  open,
+  onToggle,
+  holdingId,
+  highlight,
 }: {
-  h: Holding;
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  h: RowLike;
+  onView?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   selected: boolean;
+  indeterminate?: boolean;
   onSelectChange: (v: boolean) => void;
+  child?: boolean;
+  lots?: number;
+  open?: boolean;
+  onToggle?: () => void;
+  holdingId?: string;
+  highlight?: boolean;
 }) {
   const up = h.pnl >= 0;
+  const xirrUp = h.xirr_pct >= 0;
   return (
     <tr
+      data-holding-id={holdingId}
       className={`group border-b border-border/40 last:border-0 hover:bg-surface-2/30 ${
         selected ? "bg-mint/[0.06]" : ""
-      }`}
+      } ${child ? "bg-surface-2/20" : ""} ${highlight ? "ring-1 ring-inset ring-mint/50" : ""}`}
     >
       <td className="w-[44px] px-3 py-3">
-        <input
-          type="checkbox"
+        <SelectCheckbox
+          label={`Select ${h.name}`}
           checked={selected}
-          onChange={(e) => onSelectChange(e.target.checked)}
-          aria-label={`Select ${h.name}`}
-          className="h-4 w-4 cursor-pointer accent-mint"
+          indeterminate={!!indeterminate}
+          onChange={onSelectChange}
         />
       </td>
       <td className="px-3 py-3">
-        <div className="flex items-center gap-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
-            {h.name.slice(0, 1).toUpperCase()}
-          </span>
+        <div className={`flex items-center gap-3 ${child ? "pl-6" : ""}`}>
+          {lots ? (
+            <button
+              onClick={onToggle}
+              aria-label={open ? "Collapse lots" : "Expand lots"}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-mint/10 hover:text-mint"
+            >
+              {open ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </button>
+          ) : null}
+          {child ? null : (
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
+              {h.name.slice(0, 1).toUpperCase()}
+            </span>
+          )}
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
+            <div className="truncate text-sm font-medium text-foreground">
+              {h.name}
+              {lots ? (
+                <span className="ml-2 rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
+                  {lots} lots
+                </span>
+              ) : null}
+            </div>
             {h.symbol ? (
               <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
             ) : null}
@@ -1041,9 +1094,13 @@ function HoldingRow({
         </div>
       </td>
       <td className="px-3 py-3">
-        <span className="rounded-md bg-surface-2/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-          {h.type}
-        </span>
+        {h.segment ? (
+          <span className="rounded-md bg-surface-2/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {h.segment}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">{formatQty(h.quantity)}</td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">
@@ -1070,6 +1127,16 @@ function HoldingRow({
           </div>
         </div>
       </td>
+      <td className="px-3 py-3 text-right tabular-nums">
+        {h.xirr_pct ? (
+          <span className={xirrUp ? "text-emerald-500" : "text-rose-500"}>
+            {xirrUp ? "+" : ""}
+            {h.xirr_pct.toFixed(2)}%
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </td>
       <td className="px-3 py-3 text-muted-foreground">
         {h.platform ? (
           <span className="inline-block max-w-[190px] truncate rounded-full border border-border bg-surface-2/60 px-2.5 py-1 text-xs font-medium text-foreground">
@@ -1081,20 +1148,27 @@ function HoldingRow({
       </td>
       <td className="w-[120px] px-3 py-3">
         <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-          <IconBtn label="View Details" onClick={onView}>
-            <Eye className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn label="Edit" onClick={onEdit}>
-            <Pencil className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn label="Delete" onClick={onDelete} tone="rose">
-            <Trash2 className="h-3.5 w-3.5" />
-          </IconBtn>
+          {onView ? (
+            <IconBtn label="View Details" onClick={onView}>
+              <Eye className="h-3.5 w-3.5" />
+            </IconBtn>
+          ) : null}
+          {onEdit ? (
+            <IconBtn label="Edit" onClick={onEdit}>
+              <Pencil className="h-3.5 w-3.5" />
+            </IconBtn>
+          ) : null}
+          {onDelete ? (
+            <IconBtn label="Delete" onClick={onDelete} tone="rose">
+              <Trash2 className="h-3.5 w-3.5" />
+            </IconBtn>
+          ) : null}
         </div>
       </td>
     </tr>
   );
 }
+
 
 function IconBtn({
   children,
