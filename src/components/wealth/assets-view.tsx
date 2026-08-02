@@ -1009,11 +1009,22 @@ function HoldingRow({
             {h.name.slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
+            <div className="flex items-center gap-2">
+              <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
+              {h.txn_count && h.txn_count > 1 ? (
+                <span
+                  title={`${h.txn_count} transactions`}
+                  className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint"
+                >
+                  {h.txn_count} txns
+                </span>
+              ) : null}
+            </div>
             {h.symbol ? (
               <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
             ) : null}
           </div>
+
         </div>
 
       </td>
