@@ -38,10 +38,11 @@ function annualized(from: number, to: number, years: number): number | null {
 export async function mfapiFundamentals(
   item: QuoteRequestItem,
 ): Promise<InstrumentFundamentals | null> {
-  let body: {
+  type Body = {
     meta?: Record<string, unknown>;
     data?: Array<{ date?: unknown; nav?: unknown }>;
-  } | null = null;
+  };
+  let body: Body | null = null;
   try {
     const res = await fetchWithTimeout(
       `${BASE}/mf/${encodeURIComponent(item.identifier)}`,
@@ -52,7 +53,7 @@ export async function mfapiFundamentals(
       console.warn(`[mfapi-fund] scheme ${item.identifier} HTTP ${res.status}`);
       return null;
     }
-    body = (await res.json()) as typeof body;
+    body = (await res.json()) as Body;
   } catch (err) {
     console.warn("[mfapi-fund] fetch failed", err);
     return null;
