@@ -17,6 +17,7 @@ import {
   ArrowDown,
   ArrowUpDown,
   Eye,
+  Info,
   Pencil,
   Trash2,
   RefreshCw,
