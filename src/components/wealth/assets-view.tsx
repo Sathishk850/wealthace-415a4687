@@ -881,6 +881,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         open={!!details && details.source === "investment"}
         onOpenChange={(v) => !v && setDetails(null)}
         investment={details?.source === "investment" ? (details.raw_investment ?? null) : null}
+        lots={details?.source === "investment" ? (details.lots ?? null) : null}
         quote={details?.quote ?? null}
         platformLabel={platformLabelFor(details)}
         initialTab={detailsTab}
