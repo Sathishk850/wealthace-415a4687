@@ -460,8 +460,9 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           return a.name.localeCompare(b.name) * dir;
       }
     };
-    return [...groups].sort(cmp);
-  }, [groups, sortKey, sortDir]);
+    return [...filtered].sort(cmp);
+  }, [filtered, sortKey, sortDir]);
+
 
 
   const totals = useMemo(() => {
