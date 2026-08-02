@@ -430,12 +430,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     });
   }, [tabRows, search, fSegment, fSector, fExchange, fPlatform]);
 
-  /* Fix 1: same-name holdings collapse into one expandable row. */
-  const groups = useMemo(() => groupHoldings(filtered), [filtered]);
-
+  /* Individual holdings — one row per holding (no grouping). */
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
-    const cmp = (a: Group, b: Group): number => {
+    const cmp = (a: Holding, b: Holding): number => {
+
       switch (sortKey) {
         case "name":
           return a.name.localeCompare(b.name) * dir;
