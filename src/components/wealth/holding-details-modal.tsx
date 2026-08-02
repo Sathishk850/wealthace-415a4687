@@ -32,7 +32,6 @@ import {
   singleXirr,
   portfolioXirr,
   useInvestmentTxnsMulti,
-  useInvestmentTxns,
   useUpsertInvestmentTxn,
   useDeleteInvestmentTxn,
   useUpdateInvestmentNotes,
