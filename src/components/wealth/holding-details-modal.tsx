@@ -30,6 +30,8 @@ import {
   priceIn,
   cagrPct,
   singleXirr,
+  portfolioXirr,
+  useInvestmentTxnsMulti,
   useInvestmentTxns,
   useUpsertInvestmentTxn,
   useDeleteInvestmentTxn,
