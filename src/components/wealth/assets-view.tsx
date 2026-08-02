@@ -230,26 +230,6 @@ type Holding = {
   quote?: MarketQuote | null;
 };
 
-/** A displayed table row: either a single holding or an aggregate of same-name holdings. */
-type Group = {
-  key: string;
-  name: string;
-  symbol: string | null;
-  segment: string;
-  exchange: string | null;
-  platform: string | null;
-  quantity: number;
-  avg_price: number;
-  cmp: number;
-  invested: number;
-  current: number;
-  pnl: number;
-  pnl_pct: number;
-  xirr_pct: number;
-  currency: string;
-  items: Holding[];
-};
-
 type SortKey =
   | "name"
   | "segment"
@@ -264,64 +244,6 @@ type SortKey =
 
 const DEFAULT_SORT: { key: SortKey; dir: "asc" | "desc" } = { key: "name", dir: "asc" };
 
-function groupHoldings(rows: Holding[]): Group[] {
-  const byName = new Map<string, Holding[]>();
-  for (const r of rows) {
-    const k = `${r.source}|${r.name.trim().toLowerCase()}|${r.currency}`;
-    const arr = byName.get(k);
-    if (arr) arr.push(r);
-    else byName.set(k, [r]);
-  }
-  const out: Group[] = [];
-  for (const [key, items] of byName) {
-    if (items.length === 1) {
-      const h = items[0];
-      out.push({
-        key,
-        name: h.name,
-        symbol: h.symbol,
-        segment: h.segment,
-        exchange: h.exchange,
-        platform: h.platform,
-        quantity: h.quantity,
-        avg_price: h.avg_price,
-        cmp: h.cmp,
-        invested: h.invested,
-        current: h.current,
-        pnl: h.pnl,
-        pnl_pct: h.pnl_pct,
-        xirr_pct: h.xirr_pct,
-        currency: h.currency,
-        items,
-      });
-      continue;
-    }
-    const quantity = items.reduce((s, h) => s + h.quantity, 0);
-    const invested = items.reduce((s, h) => s + h.invested, 0);
-    const current = items.reduce((s, h) => s + h.current, 0);
-    const pnl = current - invested;
-    const invs = items.map((h) => h.raw_investment).filter(Boolean) as Investment[];
-    out.push({
-      key,
-      name: items[0].name,
-      symbol: items[0].symbol,
-      segment: items[0].segment,
-      exchange: items[0].exchange,
-      platform: uniqSorted(items.map((h) => h.platform).filter(Boolean) as string[]).join(", ") || null,
-      quantity,
-      avg_price: quantity > 0 ? invested / quantity : 0,
-      cmp: items[0].cmp,
-      invested,
-      current,
-      pnl,
-      pnl_pct: invested > 0 ? (pnl / invested) * 100 : 0,
-      xirr_pct: invs.length ? portfolioXirr(invs) : 0,
-      currency: items[0].currency,
-      items,
-    });
-  }
-  return out;
-}
 
 /* =========================================================
    Component
