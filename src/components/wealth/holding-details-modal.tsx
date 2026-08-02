@@ -202,7 +202,7 @@ export function HoldingDetailsModal({
             {tab === "history" && <HistoryTab investment={inv} />}
             {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
-              <ClassificationTab investment={inv} derived={d} platformLabel={platformLabel} />
+              <ClassificationTab investment={inv} platformLabel={platformLabel} />
             )}
             {tab === "corporate" && showCorporate && <CorporateTab category={inv.category} />}
             {tab === "notes" && <NotesTab investment={inv} />}
@@ -599,20 +599,39 @@ function FundamentalTab({
     );
   }
 
-  const rows: [string, string][] = [
-    ["Current Market Price (CMP)", priceIn(f?.price ?? derived.current_price, ccy)],
-    ["52-Week High", f?.week52_high != null ? priceIn(f.week52_high, ccy) : "N/A"],
-    ["52-Week Low", f?.week52_low != null ? priceIn(f.week52_low, ccy) : "N/A"],
-    ["P/E Ratio", fmtNum(f?.pe)],
-    ["P/B Ratio", fmtNum(f?.pb)],
-    ["Dividend Yield", fmtNum(f?.dividend_yield, 2, "%")],
-    ["EPS", f?.eps != null ? priceIn(f.eps, ccy) : "N/A"],
-    ["Market Capitalization", fmtCap(f?.market_cap, ccy)],
-    ["Return on Equity (ROE)", fmtNum(f?.roe, 2, "%")],
-    ["Debt-to-Equity Ratio", fmtNum(f?.debt_to_equity)],
-    ["Face Value", f?.face_value != null ? priceIn(f.face_value, ccy) : "N/A"],
-    ["Book Value", f?.book_value != null ? priceIn(f.book_value, ccy) : "N/A"],
-  ];
+  const isFund =
+    investment.identifier_type === "mf_in" ||
+    /etf|fund|invit|reit/i.test(`${investment.category} ${investment.sub_category ?? ""}`);
+
+  const rows: [string, string][] = isFund
+    ? [
+        ["Current NAV / Price", priceIn(f?.price ?? derived.current_price, ccy)],
+        ["52-Week High", f?.week52_high != null ? priceIn(f.week52_high, ccy) : "N/A"],
+        ["52-Week Low", f?.week52_low != null ? priceIn(f.week52_low, ccy) : "N/A"],
+        ["1Y Return", fmtNum(f?.return_1y, 2, "%")],
+        ["3Y Return (CAGR)", fmtNum(f?.return_3y, 2, "%")],
+        ["5Y Return (CAGR)", fmtNum(f?.return_5y, 2, "%")],
+        ["Category Average", fmtNum(f?.category_average, 2, "%")],
+        ["Expense Ratio", fmtNum(f?.expense_ratio, 2, "%")],
+        ["Exit Load", f?.exit_load ?? "N/A"],
+        ["Risk Rating", f?.risk_rating ?? "N/A"],
+        ["Fund Manager", f?.fund_manager ?? "N/A"],
+        ["Fund House", f?.fund_house ?? f?.industry ?? "N/A"],
+      ]
+    : [
+        ["Current Market Price (CMP)", priceIn(f?.price ?? derived.current_price, ccy)],
+        ["52-Week High", f?.week52_high != null ? priceIn(f.week52_high, ccy) : "N/A"],
+        ["52-Week Low", f?.week52_low != null ? priceIn(f.week52_low, ccy) : "N/A"],
+        ["P/E Ratio", fmtNum(f?.pe)],
+        ["P/B Ratio", fmtNum(f?.pb)],
+        ["Dividend Yield", fmtNum(f?.dividend_yield, 2, "%")],
+        ["EPS", f?.eps != null ? priceIn(f.eps, ccy) : "N/A"],
+        ["Market Capitalization", fmtCap(f?.market_cap, ccy)],
+        ["Return on Equity (ROE)", fmtNum(f?.roe, 2, "%")],
+        ["Debt-to-Equity Ratio", fmtNum(f?.debt_to_equity)],
+        ["Face Value", f?.face_value != null ? priceIn(f.face_value, ccy) : "N/A"],
+        ["Book Value", f?.book_value != null ? priceIn(f.book_value, ccy) : "N/A"],
+      ];
 
   return (
     <Section title="Fundamental Data (auto-fetched)">
@@ -641,11 +660,9 @@ function FundamentalTab({
 /* -------------------- Classification Tab -------------------- */
 function ClassificationTab({
   investment,
-  derived,
   platformLabel,
 }: {
   investment: Investment;
-  derived: ReturnType<typeof deriveHolding>;
   platformLabel?: string;
 }) {
   const ccy = investment.currency || "INR";
@@ -661,47 +678,21 @@ function ClassificationTab({
     ["Platform", platformLabel || "—"],
     ["Purchase Date", investment.purchase_date ? formatDate(investment.purchase_date) : "—"],
   ];
-  const summary: [string, string, string?][] = [
-    ["Quantity", String(investment.quantity)],
-    ["Average Buy Price", priceIn(investment.avg_price, ccy)],
-    ["Current Market Price", priceIn(derived.current_price, ccy)],
-    ["Invested Amount", amountIn(derived.invested, ccy)],
-    ["Current Value", amountIn(derived.current_value, ccy)],
-    [
-      "Unrealized P&L",
-      `${derived.unrealized_pl >= 0 ? "+" : ""}${amountIn(derived.unrealized_pl, ccy)}`,
-      derived.unrealized_pl >= 0 ? "text-emerald-500" : "text-rose-500",
-    ],
-    [
-      "Return %",
-      `${derived.return_pct >= 0 ? "+" : ""}${derived.return_pct.toFixed(2)}%`,
-      derived.return_pct >= 0 ? "text-emerald-500" : "text-rose-500",
-    ],
-  ];
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Section title="Classification (auto-fetched)">
-        <dl className="divide-y divide-border/60">
-          {rows.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-3 py-2 text-sm">
-              <dt className="text-muted-foreground">{k}</dt>
-              <dd className="text-right font-medium text-foreground">{v}</dd>
-            </div>
-          ))}
-        </dl>
-        <LastUpdated at={f?.fetched_at} source={f?.source} />
-      </Section>
-      <Section title="Holding Summary">
-        <dl className="divide-y divide-border/60">
-          {summary.map(([k, v, tone]) => (
-            <div key={k} className="flex justify-between gap-3 py-2 text-sm">
-              <dt className="text-muted-foreground">{k}</dt>
-              <dd className={`text-right font-medium ${tone ?? "text-foreground"}`}>{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </Section>
-    </div>
+    <Section title="Classification (auto-fetched)">
+      <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+        {rows.map(([k, v]) => (
+          <div
+            key={k}
+            className="flex justify-between gap-3 border-b border-border/60 py-2 text-sm"
+          >
+            <dt className="text-muted-foreground">{k}</dt>
+            <dd className="text-right font-medium text-foreground">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <LastUpdated at={f?.fetched_at} source={f?.source} />
+    </Section>
   );
 }
 
