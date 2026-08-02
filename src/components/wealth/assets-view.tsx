@@ -1072,17 +1072,13 @@ function HoldingRow({
       </td>
       <td className="w-[150px] px-3 py-3">
         <div className="flex items-center justify-end gap-1">
-          {onViewTransactions ? (
-            <IconBtn label="View Transactions" onClick={onViewTransactions}>
-              <Eye className="h-3.5 w-3.5" />
-            </IconBtn>
-          ) : null}
           <span className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
             {onView ? (
               <IconBtn label="View Details" onClick={onView}>
-                <Info className="h-3.5 w-3.5" />
+                <Eye className="h-3.5 w-3.5" />
               </IconBtn>
             ) : null}
+
             {onEdit ? (
               <IconBtn label="Edit" onClick={onEdit}>
                 <Pencil className="h-3.5 w-3.5" />
