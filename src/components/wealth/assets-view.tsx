@@ -324,7 +324,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   };
 
   /* Build unified rows */
-  const rows: Holding[] = useMemo(() => {
+  const flatRows: Holding[] = useMemo(() => {
     const out: Holding[] = [];
     for (const inv of investments) {
       const key = investmentQuoteKey(inv);
