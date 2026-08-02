@@ -279,20 +279,49 @@ function KpiCard({
 }
 
 /* -------------------- History Tab -------------------- */
-function HistoryTab({ investment }: { investment: Investment }) {
-  const { data: txns = [], isLoading } = useInvestmentTxns(investment.id);
+function HistoryTab({ investment, lots }: { investment: Investment; lots?: Investment[] }) {
+  const members = lots && lots.length > 0 ? lots : [investment];
+  const ids = members.map((m) => m.id);
+  const { data: txns = [], isLoading } = useInvestmentTxnsMulti(ids);
   const upsert = useUpsertInvestmentTxn();
   const del = useDeleteInvestmentTxn();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<InvestmentTxn | null>(null);
   const [confirmDel, setConfirmDel] = useState<InvestmentTxn | null>(null);
+  const [lotId, setLotId] = useState<string>(members[0].id);
   const ccy = investment.currency || "INR";
+
+  const lotLabel = (m: Investment) =>
+    `${m.purchase_date ? formatDate(m.purchase_date) : "Entry"} · ${m.quantity} @ ${priceIn(m.avg_price, ccy)}`;
+
+  /** Lots with no recorded transactions are shown as their implicit opening buy. */
+  const entries = useMemo(() => {
+    const withTxn = new Set(txns.map((t) => t.investment_id));
+    const rows: Array<
+      | { kind: "txn"; key: string; t: InvestmentTxn }
+      | { kind: "lot"; key: string; m: Investment }
+    > = txns.map((t) => ({ kind: "txn" as const, key: t.id, t }));
+    for (const m of members) {
+      if (withTxn.has(m.id)) continue;
+      rows.push({ kind: "lot" as const, key: `lot-${m.id}`, m });
+    }
+    const dateOf = (r: (typeof rows)[number]) =>
+      r.kind === "txn" ? r.t.occurred_on : (r.m.purchase_date ?? "");
+    rows.sort((a, b) => (dateOf(a) < dateOf(b) ? 1 : -1));
+    return rows;
+  }, [txns, members]);
 
   const summary = useMemo(() => {
     let buyQty = 0,
       sellQty = 0,
       buyAmt = 0;
-    for (const t of txns) {
+    for (const r of entries) {
+      if (r.kind === "lot") {
+        buyQty += Number(r.m.quantity) || 0;
+        buyAmt += (Number(r.m.quantity) || 0) * (Number(r.m.avg_price) || 0);
+        continue;
+      }
+      const t = r.t;
       if (t.txn_type === "buy") {
         buyQty += t.quantity;
         buyAmt += t.amount;
@@ -303,13 +332,18 @@ function HistoryTab({ investment }: { investment: Investment }) {
     const net = buyQty - sellQty;
     const avg = buyQty > 0 ? buyAmt / buyQty : 0;
     return { buyQty, sellQty, net, avg };
-  }, [txns]);
+  }, [entries]);
+
+  const target = members.find((m) => m.id === lotId) ?? members[0];
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground">
-          {isLoading ? "Loading…" : `${txns.length} transaction${txns.length === 1 ? "" : "s"}`}
+          {isLoading
+            ? "Loading…"
+            : `${entries.length} transaction${entries.length === 1 ? "" : "s"}` +
+              (members.length > 1 ? ` across ${members.length} entries` : "")}
         </div>
         <Button
           size="sm"
@@ -320,9 +354,33 @@ function HistoryTab({ investment }: { investment: Investment }) {
         </Button>
       </div>
 
+      {adding && members.length > 1 ? (
+        <div className="rounded-xl border border-border bg-surface-2/30 p-3">
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Add to entry
+          </label>
+          <Select value={lotId} onValueChange={setLotId}>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {members.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {lotLabel(m)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
       {adding || editing ? (
         <TxnForm
-          investment={investment}
+          investment={
+            editing
+              ? (members.find((m) => m.id === editing.investment_id) ?? investment)
+              : target
+          }
           existing={editing}
           onCancel={() => {
             setAdding(false);
@@ -350,58 +408,89 @@ function HistoryTab({ investment }: { investment: Investment }) {
             </tr>
           </thead>
           <tbody>
-            {txns.length === 0 && !isLoading ? (
+            {entries.length === 0 && !isLoading ? (
               <tr>
                 <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground">
                   No transactions recorded yet.
                 </td>
               </tr>
             ) : null}
-            {txns.map((t) => (
-              <tr key={t.id} className="group border-t border-border/60 hover:bg-surface-2/40">
-                <td className="px-3 py-2 text-foreground">{formatDate(t.occurred_on)}</td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}
-                  >
-                    {t.txn_type}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums text-foreground">{t.quantity}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                  {priceIn(t.price, ccy)}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
-                  {amountIn(t.amount, ccy)}
-                </td>
-                <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">
-                  {t.notes || "—"}
-                </td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      onClick={() => setEditing(t)}
-                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-mint"
-                      aria-label="Edit"
+            {entries.map((r) =>
+              r.kind === "lot" ? (
+                <tr key={r.key} className="border-t border-border/60 hover:bg-surface-2/40">
+                  <td className="px-3 py-2 text-foreground">
+                    {r.m.purchase_date ? formatDate(r.m.purchase_date) : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-500">
+                      buy
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {r.m.quantity}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {priceIn(r.m.avg_price, ccy)}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
+                    {amountIn((Number(r.m.quantity) || 0) * (Number(r.m.avg_price) || 0), ccy)}
+                  </td>
+                  <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">
+                    Opening entry
+                  </td>
+                  <td className="px-3 py-2" />
+                </tr>
+              ) : (
+                <tr
+                  key={r.key}
+                  className="group border-t border-border/60 hover:bg-surface-2/40"
+                >
+                  <td className="px-3 py-2 text-foreground">{formatDate(r.t.occurred_on)}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${r.t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDel(t)}
-                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {r.t.txn_type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {r.t.quantity}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {priceIn(r.t.price, ccy)}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
+                    {amountIn(r.t.amount, ccy)}
+                  </td>
+                  <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">
+                    {r.t.notes || "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        onClick={() => setEditing(r.t)}
+                        className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-mint"
+                        aria-label="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDel(r.t)}
+                        className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>
 
-      {txns.length > 0 ? (
+      {entries.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <SumCard label="Total Buy Qty" value={String(summary.buyQty)} />
           <SumCard label="Total Sell Qty" value={String(summary.sellQty)} />
@@ -409,6 +498,8 @@ function HistoryTab({ investment }: { investment: Investment }) {
           <SumCard label="Avg. Buy Price" value={priceIn(summary.avg, ccy)} />
         </div>
       ) : null}
+
+
 
       <AlertDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)}>
         <AlertDialogContent>
