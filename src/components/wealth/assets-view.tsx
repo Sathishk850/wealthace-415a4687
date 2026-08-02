@@ -23,7 +23,6 @@ import {
   RefreshCw,
   Plus,
   ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -58,7 +57,6 @@ import {
   useDeleteInvestment,
   useInvestments,
   inr,
-  portfolioXirr,
   singleXirr,
 } from "@/lib/wealth-api";
 import { useNavigate } from "@tanstack/react-router";
