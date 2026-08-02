@@ -831,10 +831,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     highlight={lastTouched === h.id}
                     selected={sel.isSelected(rowKey(h))}
                     onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                    onViewTransactions={() => {
-                      setDetailsTab("history");
-                      setDetails(h);
-                    }}
                     onView={() => {
                       setDetailsTab("fundamental");
                       setDetails(h);
