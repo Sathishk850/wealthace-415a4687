@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  getCorporateActions,
   getInstrumentFundamentals,
   getMarketQuotes,
   refreshMyHoldings,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/market.functions";
 import type { Investment } from "@/lib/wealth-api";
 import type {
+  CorporateAction,
   IdentifierType,
   InstrumentFundamentals,
   MarketQuote,
@@ -16,6 +18,7 @@ import type {
   QuoteRequestItem,
   SearchResult,
 } from "./types";
+
 import { getMarketStatus, isAnyMarketOpen } from "./calendar";
 import { getMarketSettings } from "./settings";
 
@@ -189,6 +192,30 @@ export function useInstrumentFundamentals(item: QuoteRequestItem | null) {
     },
     enabled: !!item,
     // Fundamentals change at most daily — cache for a day.
+    staleTime: 24 * 60 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
+}
+
+/**
+ * Read-only corporate actions (dividends / splits) for a single instrument.
+ * Auto-fetched, never user-editable. Empty for mutual funds.
+ */
+export function useCorporateActions(item: QuoteRequestItem | null) {
+  const fn = useServerFn(getCorporateActions);
+  return useQuery({
+    queryKey: ["market", "corporate-actions", item?.identifier_type, item?.identifier],
+    queryFn: async () => {
+      if (!item) return [] as CorporateAction[];
+      return (await fn({
+        data: {
+          identifier_type: item.identifier_type,
+          identifier: item.identifier,
+          exchange: item.exchange ?? null,
+        },
+      })) as CorporateAction[];
+    },
+    enabled: !!item,
     staleTime: 24 * 60 * 60 * 1000,
     placeholderData: (prev) => prev,
   });

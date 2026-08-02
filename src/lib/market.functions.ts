@@ -5,11 +5,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type {
+  CorporateAction,
   InstrumentFundamentals,
   MarketQuote,
   QuoteRequestItem,
   SearchResult,
 } from "./market/types";
+
 
 const identifierTypeSchema = z.enum(["stock_in", "stock_us", "mf_in", "crypto"]);
 
@@ -122,5 +124,26 @@ export const getInstrumentFundamentals = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("getInstrumentFundamentals failed", err);
       return null;
+    }
+  });
+
+/** Auto-fetched corporate actions (dividends, splits) for one instrument. */
+export const getCorporateActions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => fundamentalsSchema.parse(input))
+  .handler(async ({ data }): Promise<CorporateAction[]> => {
+    try {
+      if (data.identifier_type === "mf_in") return [];
+      const { yahooCorporateActions } = await import(
+        "./market/providers/yahoo-actions.server"
+      );
+      return await yahooCorporateActions({
+        identifier_type: data.identifier_type,
+        identifier: data.identifier,
+        exchange: data.exchange ?? null,
+      });
+    } catch (err) {
+      console.error("getCorporateActions failed", err);
+      return [];
     }
   });

@@ -30,14 +30,15 @@ import {
   priceIn,
   cagrPct,
   singleXirr,
-  useInvestmentTxns,
+  portfolioXirr,
+  useInvestmentTxnsMulti,
   useUpsertInvestmentTxn,
   useDeleteInvestmentTxn,
   useUpdateInvestmentNotes,
   type InvestmentTxn,
 } from "@/lib/wealth-api";
 import { deriveHolding } from "@/lib/market/derive";
-import { useInstrumentFundamentals } from "@/lib/market/use-market-data";
+import { useCorporateActions, useInstrumentFundamentals } from "@/lib/market/use-market-data";
 import type { IdentifierType, InstrumentFundamentals, MarketQuote } from "@/lib/market/types";
 import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
 
@@ -45,11 +46,14 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   investment: Investment | null;
+  /** All duplicate entries (lots) merged into this row; defaults to [investment]. */
+  lots?: Investment[] | null;
   quote?: MarketQuote | null;
   platformLabel?: string;
   /** Tab to auto-select when the modal opens. */
   initialTab?: DetailTab;
 };
+
 
 type DetailTab = "fundamental" | "classification" | "history" | "corporate" | "notes";
 
@@ -59,10 +63,12 @@ export function HoldingDetailsModal({
   open,
   onOpenChange,
   investment,
+  lots,
   quote,
   platformLabel,
   initialTab = "fundamental",
 }: Props) {
+
   const [tab, setTab] = useState<DetailTab>(initialTab);
 
   // Re-sync the active tab whenever the modal is (re)opened for a holding.
@@ -102,11 +108,17 @@ export function HoldingDetailsModal({
 
   if (!investment) return null;
   const inv = investment;
+  // Duplicate entries of the same instrument are merged into a single row, so
+  // every headline metric aggregates across all lots.
+  const members: Investment[] = lots && lots.length > 0 ? lots : [inv];
+  const derivedLots = members.map((m) => deriveHolding(m, quote ?? null));
   const d = deriveHolding(inv, quote ?? null);
-  const invested = d.invested;
-  const current = d.current_value;
-  const pnl = d.unrealized_pl;
-  const pnlPct = d.return_pct;
+  const invested = derivedLots.reduce((s, x) => s + x.invested, 0);
+  const current = derivedLots.reduce((s, x) => s + x.current_value, 0);
+  const netQty = members.reduce((s, m) => s + (Number(m.quantity) || 0), 0);
+  const avgBuy = netQty > 0 ? invested / netQty : Number(inv.avg_price) || 0;
+  const pnl = current - invested;
+  const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
   const up = pnl >= 0;
   const ccy = inv.currency || "INR";
 
@@ -119,12 +131,26 @@ export function HoldingDetailsModal({
     { value: "notes", label: "Notes" },
   ];
 
-  const years = inv.purchase_date
-    ? Math.max(0.01, (Date.now() - new Date(inv.purchase_date).getTime()) / (365.25 * 86400000))
+  const firstBuy = members
+    .map((m) => m.purchase_date)
+    .filter(Boolean)
+    .sort()[0] as string | undefined;
+  const years = firstBuy
+    ? Math.max(0.01, (Date.now() - new Date(firstBuy).getTime()) / (365.25 * 86400000))
     : 0;
   const cagr = years > 0 ? cagrPct(invested, current, years) : 0;
-  const xirrVal = singleXirr({ ...inv, current_price: d.current_price, current_value: current });
+  const xirrVal =
+    members.length > 1
+      ? portfolioXirr(
+          members.map((m, i) => ({
+            ...m,
+            current_price: derivedLots[i].current_price,
+            current_value: derivedLots[i].current_value,
+          })),
+        )
+      : singleXirr({ ...inv, current_price: d.current_price, current_value: current });
   const annualized = years > 0 ? cagr : 0;
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : requestClose())}>
@@ -199,8 +225,8 @@ export function HoldingDetailsModal({
               label="Annualized Return"
               value={years > 0 ? `${annualized.toFixed(2)}%` : "—"}
             />
-            <KpiCard label="Avg. Buy Price" value={priceIn(inv.avg_price, ccy)} />
-            <KpiCard label="Net Quantity" value={String(inv.quantity)} />
+            <KpiCard label="Avg. Buy Price" value={priceIn(avgBuy, ccy)} />
+            <KpiCard label="Net Quantity" value={String(netQty)} />
           </div>
 
           <div className="mt-5">
@@ -208,14 +234,15 @@ export function HoldingDetailsModal({
           </div>
 
           <div className="mt-4">
-            {tab === "history" && <HistoryTab investment={inv} />}
+            {tab === "history" && <HistoryTab investment={inv} lots={members} />}
             {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
               <ClassificationTab investment={inv} platformLabel={platformLabel} />
             )}
-            {tab === "corporate" && showCorporate && <CorporateTab category={inv.category} />}
+            {tab === "corporate" && showCorporate && <CorporateTab investment={inv} />}
             {tab === "notes" && <NotesTab investment={inv} />}
           </div>
+
         </div>
 
         <div className="sticky bottom-0 border-t border-border bg-card px-6 py-3 flex justify-end">
@@ -251,20 +278,49 @@ function KpiCard({
 }
 
 /* -------------------- History Tab -------------------- */
-function HistoryTab({ investment }: { investment: Investment }) {
-  const { data: txns = [], isLoading } = useInvestmentTxns(investment.id);
+function HistoryTab({ investment, lots }: { investment: Investment; lots?: Investment[] }) {
+  const members = lots && lots.length > 0 ? lots : [investment];
+  const ids = members.map((m) => m.id);
+  const { data: txns = [], isLoading } = useInvestmentTxnsMulti(ids);
   const upsert = useUpsertInvestmentTxn();
   const del = useDeleteInvestmentTxn();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<InvestmentTxn | null>(null);
   const [confirmDel, setConfirmDel] = useState<InvestmentTxn | null>(null);
+  const [lotId, setLotId] = useState<string>(members[0].id);
   const ccy = investment.currency || "INR";
+
+  const lotLabel = (m: Investment) =>
+    `${m.purchase_date ? formatDate(m.purchase_date) : "Entry"} · ${m.quantity} @ ${priceIn(m.avg_price, ccy)}`;
+
+  /** Lots with no recorded transactions are shown as their implicit opening buy. */
+  const entries = useMemo(() => {
+    const withTxn = new Set(txns.map((t) => t.investment_id));
+    const rows: Array<
+      | { kind: "txn"; key: string; t: InvestmentTxn }
+      | { kind: "lot"; key: string; m: Investment }
+    > = txns.map((t) => ({ kind: "txn" as const, key: t.id, t }));
+    for (const m of members) {
+      if (withTxn.has(m.id)) continue;
+      rows.push({ kind: "lot" as const, key: `lot-${m.id}`, m });
+    }
+    const dateOf = (r: (typeof rows)[number]) =>
+      r.kind === "txn" ? r.t.occurred_on : (r.m.purchase_date ?? "");
+    rows.sort((a, b) => (dateOf(a) < dateOf(b) ? 1 : -1));
+    return rows;
+  }, [txns, members]);
 
   const summary = useMemo(() => {
     let buyQty = 0,
       sellQty = 0,
       buyAmt = 0;
-    for (const t of txns) {
+    for (const r of entries) {
+      if (r.kind === "lot") {
+        buyQty += Number(r.m.quantity) || 0;
+        buyAmt += (Number(r.m.quantity) || 0) * (Number(r.m.avg_price) || 0);
+        continue;
+      }
+      const t = r.t;
       if (t.txn_type === "buy") {
         buyQty += t.quantity;
         buyAmt += t.amount;
@@ -275,13 +331,18 @@ function HistoryTab({ investment }: { investment: Investment }) {
     const net = buyQty - sellQty;
     const avg = buyQty > 0 ? buyAmt / buyQty : 0;
     return { buyQty, sellQty, net, avg };
-  }, [txns]);
+  }, [entries]);
+
+  const target = members.find((m) => m.id === lotId) ?? members[0];
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground">
-          {isLoading ? "Loading…" : `${txns.length} transaction${txns.length === 1 ? "" : "s"}`}
+          {isLoading
+            ? "Loading…"
+            : `${entries.length} transaction${entries.length === 1 ? "" : "s"}` +
+              (members.length > 1 ? ` across ${members.length} entries` : "")}
         </div>
         <Button
           size="sm"
@@ -292,9 +353,33 @@ function HistoryTab({ investment }: { investment: Investment }) {
         </Button>
       </div>
 
+      {adding && members.length > 1 ? (
+        <div className="rounded-xl border border-border bg-surface-2/30 p-3">
+          <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Add to entry
+          </label>
+          <Select value={lotId} onValueChange={setLotId}>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {members.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {lotLabel(m)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
       {adding || editing ? (
         <TxnForm
-          investment={investment}
+          investment={
+            editing
+              ? (members.find((m) => m.id === editing.investment_id) ?? investment)
+              : target
+          }
           existing={editing}
           onCancel={() => {
             setAdding(false);
@@ -322,58 +407,89 @@ function HistoryTab({ investment }: { investment: Investment }) {
             </tr>
           </thead>
           <tbody>
-            {txns.length === 0 && !isLoading ? (
+            {entries.length === 0 && !isLoading ? (
               <tr>
                 <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground">
                   No transactions recorded yet.
                 </td>
               </tr>
             ) : null}
-            {txns.map((t) => (
-              <tr key={t.id} className="group border-t border-border/60 hover:bg-surface-2/40">
-                <td className="px-3 py-2 text-foreground">{formatDate(t.occurred_on)}</td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}
-                  >
-                    {t.txn_type}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums text-foreground">{t.quantity}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                  {priceIn(t.price, ccy)}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
-                  {amountIn(t.amount, ccy)}
-                </td>
-                <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">
-                  {t.notes || "—"}
-                </td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      onClick={() => setEditing(t)}
-                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-mint"
-                      aria-label="Edit"
+            {entries.map((r) =>
+              r.kind === "lot" ? (
+                <tr key={r.key} className="border-t border-border/60 hover:bg-surface-2/40">
+                  <td className="px-3 py-2 text-foreground">
+                    {r.m.purchase_date ? formatDate(r.m.purchase_date) : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-500">
+                      buy
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {r.m.quantity}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {priceIn(r.m.avg_price, ccy)}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
+                    {amountIn((Number(r.m.quantity) || 0) * (Number(r.m.avg_price) || 0), ccy)}
+                  </td>
+                  <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">
+                    Opening entry
+                  </td>
+                  <td className="px-3 py-2" />
+                </tr>
+              ) : (
+                <tr
+                  key={r.key}
+                  className="group border-t border-border/60 hover:bg-surface-2/40"
+                >
+                  <td className="px-3 py-2 text-foreground">{formatDate(r.t.occurred_on)}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${r.t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDel(t)}
-                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {r.t.txn_type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {r.t.quantity}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {priceIn(r.t.price, ccy)}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
+                    {amountIn(r.t.amount, ccy)}
+                  </td>
+                  <td className="px-3 py-2 max-w-[160px] truncate text-muted-foreground">
+                    {r.t.notes || "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        onClick={() => setEditing(r.t)}
+                        className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-mint"
+                        aria-label="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDel(r.t)}
+                        className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>
 
-      {txns.length > 0 ? (
+      {entries.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <SumCard label="Total Buy Qty" value={String(summary.buyQty)} />
           <SumCard label="Total Sell Qty" value={String(summary.sellQty)} />
@@ -381,6 +497,8 @@ function HistoryTab({ investment }: { investment: Investment }) {
           <SumCard label="Avg. Buy Price" value={priceIn(summary.avg, ccy)} />
         </div>
       ) : null}
+
+
 
       <AlertDialog open={!!confirmDel} onOpenChange={(v) => !v && setConfirmDel(null)}>
         <AlertDialogContent>
@@ -717,32 +835,69 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /* -------------------- Corporate Actions Tab -------------------- */
-function CorporateTab({ category }: { category: string }) {
-  const items =
-    category === "ETFs"
-      ? ["Dividend", "Split"]
-      : ["Dividend", "Bonus", "Split", "Rights Issue", "Merger"];
-  return (
-    <div className="space-y-3">
-      <div className="text-sm text-muted-foreground">
-        Corporate actions history will appear here as it is reported.
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {items.map((t) => (
-          <span
-            key={t}
-            className="rounded-full border border-border bg-surface-2/40 px-3 py-1 text-xs text-muted-foreground"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
+function CorporateTab({ investment }: { investment: Investment }) {
+  const kind = identifierTypeFor(investment);
+  const ccy = investment.currency || "INR";
+  const { data: actions = [], isLoading } = useCorporateActions(
+    kind && investment.identifier
+      ? {
+          identifier_type: kind,
+          identifier: investment.identifier,
+          exchange: investment.exchange ?? null,
+        }
+      : null,
+  );
+
+  if (!investment.identifier) {
+    return (
       <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-        No corporate actions recorded for this holding.
+        Link this holding to a market instrument to see corporate actions.
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <Section title="Corporate Actions (auto-fetched)">
+      {isLoading && actions.length === 0 ? (
+        <div className="py-4 text-sm text-muted-foreground">Fetching corporate actions…</div>
+      ) : actions.length === 0 ? (
+        <div className="py-4 text-sm text-muted-foreground">
+          No dividends or splits reported for this instrument.
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-2/50">
+              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="px-3 py-2 font-medium">Date</th>
+                <th className="px-3 py-2 font-medium">Action</th>
+                <th className="px-3 py-2 text-right font-medium">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {actions.map((a, i) => (
+                <tr key={`${a.type}-${a.date}-${i}`} className="border-t border-border/60">
+                  <td className="px-3 py-2 text-foreground">{formatDate(a.date.slice(0, 10))}</td>
+                  <td className="px-3 py-2">
+                    <span className="rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-mint">
+                      {a.type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium text-foreground">
+                    {a.type === "dividend" && a.amount != null
+                      ? `${priceIn(a.amount, ccy)} / unit`
+                      : (a.ratio ?? a.detail)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
   );
 }
+
 
 /* -------------------- Notes Tab -------------------- */
 function NotesTab({ investment }: { investment: Investment }) {

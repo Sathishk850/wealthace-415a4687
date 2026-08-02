@@ -17,7 +17,6 @@ import {
   ArrowDown,
   ArrowUpDown,
   Eye,
-  Info,
   Pencil,
   Trash2,
   RefreshCw,
@@ -58,6 +57,8 @@ import {
   useInvestments,
   inr,
   singleXirr,
+  portfolioXirr,
+  useInvestmentTxnCounts,
 } from "@/lib/wealth-api";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -227,7 +228,12 @@ type Holding = {
   raw_investment?: Investment;
   raw_asset?: Asset;
   quote?: MarketQuote | null;
+  /** All duplicate entries merged into this row (investments only). */
+  lots?: Investment[];
+  /** Number of recorded buy/sell transactions across the merged entries. */
+  txn_count?: number;
 };
+
 
 type SortKey =
   | "name"
@@ -302,6 +308,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     refetch: refetchQuotes,
   } = useInvestmentQuotes(investments);
   const refreshHoldings = useRefreshHoldings();
+  const { data: txnCounts = {} } = useInvestmentTxnCounts();
 
   const platformLabelById = useMemo(() => {
     const m = new Map<string, string>();
@@ -319,7 +326,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   };
 
   /* Build unified rows */
-  const rows: Holding[] = useMemo(() => {
+  const flatRows: Holding[] = useMemo(() => {
     const out: Holding[] = [];
     for (const inv of investments) {
       const key = investmentQuoteKey(inv);
@@ -390,8 +397,59 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     return out;
   }, [investments, assets, quoteMap, platformLabelById]);
 
+  /* Merge duplicate entries of the same instrument into one row */
+  const rows: Holding[] = useMemo(() => {
+    const out: Holding[] = [];
+    const byKey = new Map<string, number>();
+    for (const r of flatRows) {
+      if (r.source !== "investment" || !r.raw_investment) {
+        out.push(r);
+        continue;
+      }
+      const key = [
+        r.tab,
+        (r.symbol ?? r.name).trim().toLowerCase(),
+        r.name.trim().toLowerCase(),
+        r.currency,
+      ].join("|");
+      const at = byKey.get(key);
+      if (at == null) {
+        byKey.set(key, out.length);
+        out.push({ ...r, lots: [r.raw_investment] });
+        continue;
+      }
+      const g = out[at];
+      const lots = [...(g.lots ?? []), r.raw_investment];
+      const quantity = g.quantity + r.quantity;
+      const invested = g.invested + r.invested;
+      const current = g.current + r.current;
+      const pnl = current - invested;
+      out[at] = {
+        ...g,
+        lots,
+        quantity,
+        invested,
+        current,
+        pnl,
+        pnl_pct: invested > 0 ? (pnl / invested) * 100 : 0,
+        avg_price: quantity > 0 ? invested / quantity : g.avg_price,
+        cmp: r.cmp || g.cmp,
+        xirr_pct: portfolioXirr(lots) ?? 0,
+      };
+    }
+    return out.map((r) =>
+      r.lots
+        ? {
+            ...r,
+            txn_count: r.lots.reduce((s, l) => s + (txnCounts[l.id] ?? 0), 0) || r.lots.length,
+          }
+        : r,
+    );
+  }, [flatRows, txnCounts]);
+
   const tabRows = useMemo(
     () => (tab === "All Holdings" ? rows : rows.filter((r) => r.tab === tab)),
+
     [rows, tab],
   );
 
@@ -772,10 +830,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     highlight={lastTouched === h.id}
                     selected={sel.isSelected(rowKey(h))}
                     onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                    onViewTransactions={() => {
-                      setDetailsTab("history");
-                      setDetails(h);
-                    }}
                     onView={() => {
                       setDetailsTab("fundamental");
                       setDetails(h);
@@ -827,6 +881,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         open={!!details && details.source === "investment"}
         onOpenChange={(v) => !v && setDetails(null)}
         investment={details?.source === "investment" ? (details.raw_investment ?? null) : null}
+        lots={details?.source === "investment" ? (details.lots ?? null) : null}
         quote={details?.quote ?? null}
         platformLabel={platformLabelFor(details)}
         initialTab={detailsTab}
@@ -900,12 +955,13 @@ type RowLike = {
   xirr_pct: number;
   currency: string;
   platform: string | null;
+  txn_count?: number;
 };
+
 
 function HoldingRow({
   h,
   onView,
-  onViewTransactions,
   onEdit,
   onDelete,
   selected,
@@ -916,7 +972,6 @@ function HoldingRow({
 }: {
   h: RowLike;
   onView?: () => void;
-  onViewTransactions?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   selected: boolean;
@@ -948,11 +1003,22 @@ function HoldingRow({
             {h.name.slice(0, 1).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
+            <div className="flex items-center gap-2">
+              <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
+              {h.txn_count && h.txn_count > 1 ? (
+                <span
+                  title={`${h.txn_count} transactions`}
+                  className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint"
+                >
+                  {h.txn_count} txns
+                </span>
+              ) : null}
+            </div>
             {h.symbol ? (
               <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
             ) : null}
           </div>
+
         </div>
 
       </td>
@@ -1011,17 +1077,13 @@ function HoldingRow({
       </td>
       <td className="w-[150px] px-3 py-3">
         <div className="flex items-center justify-end gap-1">
-          {onViewTransactions ? (
-            <IconBtn label="View Transactions" onClick={onViewTransactions}>
-              <Eye className="h-3.5 w-3.5" />
-            </IconBtn>
-          ) : null}
           <span className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
             {onView ? (
               <IconBtn label="View Details" onClick={onView}>
-                <Info className="h-3.5 w-3.5" />
+                <Eye className="h-3.5 w-3.5" />
               </IconBtn>
             ) : null}
+
             {onEdit ? (
               <IconBtn label="Edit" onClick={onEdit}>
                 <Pencil className="h-3.5 w-3.5" />
