@@ -262,8 +262,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [fPlatform, setFPlatform] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(DEFAULT_SORT.dir);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [details, setDetails] = useState<Holding | null>(null);
+  const [detailsTab, setDetailsTab] = useState<"fundamental" | "history">("fundamental");
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [confirm, setConfirm] = useState<Holding | null>(null);
