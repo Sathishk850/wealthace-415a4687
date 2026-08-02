@@ -830,6 +830,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         investment={details?.source === "investment" ? (details.raw_investment ?? null) : null}
         quote={details?.quote ?? null}
         platformLabel={platformLabelFor(details)}
+        initialTab={detailsTab}
       />
 
       {/* Asset details fallback: reuse edit dialog in read/edit mode for now */}
