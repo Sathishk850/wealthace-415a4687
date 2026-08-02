@@ -226,8 +226,8 @@ export function HoldingDetailsModal({
               label="Annualized Return"
               value={years > 0 ? `${annualized.toFixed(2)}%` : "—"}
             />
-            <KpiCard label="Avg. Buy Price" value={priceIn(inv.avg_price, ccy)} />
-            <KpiCard label="Net Quantity" value={String(inv.quantity)} />
+            <KpiCard label="Avg. Buy Price" value={priceIn(avgBuy, ccy)} />
+            <KpiCard label="Net Quantity" value={String(netQty)} />
           </div>
 
           <div className="mt-5">
@@ -235,14 +235,15 @@ export function HoldingDetailsModal({
           </div>
 
           <div className="mt-4">
-            {tab === "history" && <HistoryTab investment={inv} />}
+            {tab === "history" && <HistoryTab investment={inv} lots={members} />}
             {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
               <ClassificationTab investment={inv} platformLabel={platformLabel} />
             )}
-            {tab === "corporate" && showCorporate && <CorporateTab category={inv.category} />}
+            {tab === "corporate" && showCorporate && <CorporateTab investment={inv} />}
             {tab === "notes" && <NotesTab investment={inv} />}
           </div>
+
         </div>
 
         <div className="sticky bottom-0 border-t border-border bg-card px-6 py-3 flex justify-end">
