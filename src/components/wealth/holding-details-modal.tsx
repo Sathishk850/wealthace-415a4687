@@ -599,20 +599,39 @@ function FundamentalTab({
     );
   }
 
-  const rows: [string, string][] = [
-    ["Current Market Price (CMP)", priceIn(f?.price ?? derived.current_price, ccy)],
-    ["52-Week High", f?.week52_high != null ? priceIn(f.week52_high, ccy) : "N/A"],
-    ["52-Week Low", f?.week52_low != null ? priceIn(f.week52_low, ccy) : "N/A"],
-    ["P/E Ratio", fmtNum(f?.pe)],
-    ["P/B Ratio", fmtNum(f?.pb)],
-    ["Dividend Yield", fmtNum(f?.dividend_yield, 2, "%")],
-    ["EPS", f?.eps != null ? priceIn(f.eps, ccy) : "N/A"],
-    ["Market Capitalization", fmtCap(f?.market_cap, ccy)],
-    ["Return on Equity (ROE)", fmtNum(f?.roe, 2, "%")],
-    ["Debt-to-Equity Ratio", fmtNum(f?.debt_to_equity)],
-    ["Face Value", f?.face_value != null ? priceIn(f.face_value, ccy) : "N/A"],
-    ["Book Value", f?.book_value != null ? priceIn(f.book_value, ccy) : "N/A"],
-  ];
+  const isFund =
+    investment.identifier_type === "mf_in" ||
+    /etf|fund|invit|reit/i.test(`${investment.category} ${investment.sub_category ?? ""}`);
+
+  const rows: [string, string][] = isFund
+    ? [
+        ["Current NAV / Price", priceIn(f?.price ?? derived.current_price, ccy)],
+        ["52-Week High", f?.week52_high != null ? priceIn(f.week52_high, ccy) : "N/A"],
+        ["52-Week Low", f?.week52_low != null ? priceIn(f.week52_low, ccy) : "N/A"],
+        ["1Y Return", fmtNum(f?.return_1y, 2, "%")],
+        ["3Y Return (CAGR)", fmtNum(f?.return_3y, 2, "%")],
+        ["5Y Return (CAGR)", fmtNum(f?.return_5y, 2, "%")],
+        ["Category Average", fmtNum(f?.category_average, 2, "%")],
+        ["Expense Ratio", fmtNum(f?.expense_ratio, 2, "%")],
+        ["Exit Load", f?.exit_load ?? "N/A"],
+        ["Risk Rating", f?.risk_rating ?? "N/A"],
+        ["Fund Manager", f?.fund_manager ?? "N/A"],
+        ["Fund House", f?.fund_house ?? f?.industry ?? "N/A"],
+      ]
+    : [
+        ["Current Market Price (CMP)", priceIn(f?.price ?? derived.current_price, ccy)],
+        ["52-Week High", f?.week52_high != null ? priceIn(f.week52_high, ccy) : "N/A"],
+        ["52-Week Low", f?.week52_low != null ? priceIn(f.week52_low, ccy) : "N/A"],
+        ["P/E Ratio", fmtNum(f?.pe)],
+        ["P/B Ratio", fmtNum(f?.pb)],
+        ["Dividend Yield", fmtNum(f?.dividend_yield, 2, "%")],
+        ["EPS", f?.eps != null ? priceIn(f.eps, ccy) : "N/A"],
+        ["Market Capitalization", fmtCap(f?.market_cap, ccy)],
+        ["Return on Equity (ROE)", fmtNum(f?.roe, 2, "%")],
+        ["Debt-to-Equity Ratio", fmtNum(f?.debt_to_equity)],
+        ["Face Value", f?.face_value != null ? priceIn(f.face_value, ccy) : "N/A"],
+        ["Book Value", f?.book_value != null ? priceIn(f.book_value, ccy) : "N/A"],
+      ];
 
   return (
     <Section title="Fundamental Data (auto-fetched)">
