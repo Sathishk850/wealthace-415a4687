@@ -962,7 +962,6 @@ type RowLike = {
 function HoldingRow({
   h,
   onView,
-  onViewTransactions,
   onEdit,
   onDelete,
   selected,
@@ -973,7 +972,6 @@ function HoldingRow({
 }: {
   h: RowLike;
   onView?: () => void;
-  onViewTransactions?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   selected: boolean;
