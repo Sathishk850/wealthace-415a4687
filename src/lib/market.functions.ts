@@ -102,9 +102,18 @@ export const getInstrumentFundamentals = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => fundamentalsSchema.parse(input))
   .handler(async ({ data }): Promise<InstrumentFundamentals | null> => {
-    if (data.identifier_type === "mf_in") return null;
-    const { yahooFundamentals } = await import("./market/providers/yahoo-fundamentals.server");
     try {
+      if (data.identifier_type === "mf_in") {
+        const { mfapiFundamentals } = await import(
+          "./market/providers/mfapi-fundamentals.server"
+        );
+        return await mfapiFundamentals({
+          identifier_type: data.identifier_type,
+          identifier: data.identifier,
+          exchange: data.exchange ?? null,
+        });
+      }
+      const { yahooFundamentals } = await import("./market/providers/yahoo-fundamentals.server");
       return await yahooFundamentals({
         identifier_type: data.identifier_type,
         identifier: data.identifier,
