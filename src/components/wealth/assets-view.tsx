@@ -959,7 +959,9 @@ type RowLike = {
   xirr_pct: number;
   currency: string;
   platform: string | null;
+  txn_count?: number;
 };
+
 
 function HoldingRow({
   h,
