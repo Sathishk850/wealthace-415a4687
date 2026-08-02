@@ -58,6 +58,8 @@ import {
   useInvestments,
   inr,
   singleXirr,
+  portfolioXirr,
+  useInvestmentTxnCounts,
 } from "@/lib/wealth-api";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -307,6 +309,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     refetch: refetchQuotes,
   } = useInvestmentQuotes(investments);
   const refreshHoldings = useRefreshHoldings();
+  const { data: txnCounts = {} } = useInvestmentTxnCounts();
 
   const platformLabelById = useMemo(() => {
     const m = new Map<string, string>();
