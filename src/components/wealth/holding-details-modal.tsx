@@ -39,7 +39,7 @@ import {
   type InvestmentTxn,
 } from "@/lib/wealth-api";
 import { deriveHolding } from "@/lib/market/derive";
-import { useInstrumentFundamentals } from "@/lib/market/use-market-data";
+import { useCorporateActions, useInstrumentFundamentals } from "@/lib/market/use-market-data";
 import type { IdentifierType, InstrumentFundamentals, MarketQuote } from "@/lib/market/types";
 import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
 
