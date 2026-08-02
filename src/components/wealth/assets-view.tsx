@@ -395,7 +395,56 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     return out;
   }, [investments, assets, quoteMap, platformLabelById]);
 
-  const tabRows = useMemo(
+  /* Merge duplicate entries of the same instrument into one row */
+  const rows: Holding[] = useMemo(() => {
+    const out: Holding[] = [];
+    const byKey = new Map<string, number>();
+    for (const r of flatRows) {
+      if (r.source !== "investment" || !r.raw_investment) {
+        out.push(r);
+        continue;
+      }
+      const key = [
+        r.tab,
+        (r.symbol ?? r.name).trim().toLowerCase(),
+        r.name.trim().toLowerCase(),
+        r.currency,
+      ].join("|");
+      const at = byKey.get(key);
+      if (at == null) {
+        byKey.set(key, out.length);
+        out.push({ ...r, lots: [r.raw_investment] });
+        continue;
+      }
+      const g = out[at];
+      const lots = [...(g.lots ?? []), r.raw_investment];
+      const quantity = g.quantity + r.quantity;
+      const invested = g.invested + r.invested;
+      const current = g.current + r.current;
+      const pnl = current - invested;
+      out[at] = {
+        ...g,
+        lots,
+        quantity,
+        invested,
+        current,
+        pnl,
+        pnl_pct: invested > 0 ? (pnl / invested) * 100 : 0,
+        avg_price: quantity > 0 ? invested / quantity : g.avg_price,
+        cmp: r.cmp || g.cmp,
+        xirr_pct: portfolioXirr(lots) ?? 0,
+      };
+    }
+    return out.map((r) =>
+      r.lots
+        ? {
+            ...r,
+            txn_count: r.lots.reduce((s, l) => s + (txnCounts[l.id] ?? 0), 0) || r.lots.length,
+          }
+        : r,
+    );
+  }, [flatRows, txnCounts]);
+
     () => (tab === "All Holdings" ? rows : rows.filter((r) => r.tab === tab)),
     [rows, tab],
   );
