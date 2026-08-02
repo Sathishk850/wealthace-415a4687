@@ -227,7 +227,12 @@ type Holding = {
   raw_investment?: Investment;
   raw_asset?: Asset;
   quote?: MarketQuote | null;
+  /** All duplicate entries merged into this row (investments only). */
+  lots?: Investment[];
+  /** Number of recorded buy/sell transactions across the merged entries. */
+  txn_count?: number;
 };
+
 
 type SortKey =
   | "name"
