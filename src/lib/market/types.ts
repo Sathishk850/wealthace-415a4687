@@ -95,3 +95,17 @@ export type InstrumentFundamentals = {
   source: string | null;
   fetched_at: string; // ISO
 };
+
+/* ---------------- Corporate actions (auto-fetched, read-only) ---------------- */
+
+export type CorporateActionType = "dividend" | "split" | "bonus" | "rights" | "merger";
+
+export type CorporateAction = {
+  type: CorporateActionType;
+  date: string; // ISO
+  detail: string;
+  amount: number | null;
+  ratio: string | null;
+  source: string | null;
+};
+

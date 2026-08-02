@@ -45,11 +45,14 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   investment: Investment | null;
+  /** All duplicate entries (lots) merged into this row; defaults to [investment]. */
+  lots?: Investment[] | null;
   quote?: MarketQuote | null;
   platformLabel?: string;
   /** Tab to auto-select when the modal opens. */
   initialTab?: DetailTab;
 };
+
 
 type DetailTab = "fundamental" | "classification" | "history" | "corporate" | "notes";
 
@@ -59,10 +62,12 @@ export function HoldingDetailsModal({
   open,
   onOpenChange,
   investment,
+  lots,
   quote,
   platformLabel,
   initialTab = "fundamental",
 }: Props) {
+
   const [tab, setTab] = useState<DetailTab>(initialTab);
 
   // Re-sync the active tab whenever the modal is (re)opened for a holding.
@@ -102,11 +107,17 @@ export function HoldingDetailsModal({
 
   if (!investment) return null;
   const inv = investment;
+  // Duplicate entries of the same instrument are merged into a single row, so
+  // every headline metric aggregates across all lots.
+  const members: Investment[] = lots && lots.length > 0 ? lots : [inv];
+  const derivedLots = members.map((m) => deriveHolding(m, quote ?? null));
   const d = deriveHolding(inv, quote ?? null);
-  const invested = d.invested;
-  const current = d.current_value;
-  const pnl = d.unrealized_pl;
-  const pnlPct = d.return_pct;
+  const invested = derivedLots.reduce((s, x) => s + x.invested, 0);
+  const current = derivedLots.reduce((s, x) => s + x.current_value, 0);
+  const netQty = members.reduce((s, m) => s + (Number(m.quantity) || 0), 0);
+  const avgBuy = netQty > 0 ? invested / netQty : Number(inv.avg_price) || 0;
+  const pnl = current - invested;
+  const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
   const up = pnl >= 0;
   const ccy = inv.currency || "INR";
 
@@ -119,12 +130,26 @@ export function HoldingDetailsModal({
     { value: "notes", label: "Notes" },
   ];
 
-  const years = inv.purchase_date
-    ? Math.max(0.01, (Date.now() - new Date(inv.purchase_date).getTime()) / (365.25 * 86400000))
+  const firstBuy = members
+    .map((m) => m.purchase_date)
+    .filter(Boolean)
+    .sort()[0] as string | undefined;
+  const years = firstBuy
+    ? Math.max(0.01, (Date.now() - new Date(firstBuy).getTime()) / (365.25 * 86400000))
     : 0;
   const cagr = years > 0 ? cagrPct(invested, current, years) : 0;
-  const xirrVal = singleXirr({ ...inv, current_price: d.current_price, current_value: current });
+  const xirrVal =
+    members.length > 1
+      ? portfolioXirr(
+          members.map((m, i) => ({
+            ...m,
+            current_price: derivedLots[i].current_price,
+            current_value: derivedLots[i].current_value,
+          })),
+        )
+      : singleXirr({ ...inv, current_price: d.current_price, current_value: current });
   const annualized = years > 0 ? cagr : 0;
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : requestClose())}>

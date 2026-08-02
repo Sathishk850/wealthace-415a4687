@@ -1432,3 +1432,46 @@ export function useUpdateInvestmentNotes() {
     onError: (e: Error) => toast.error(e.message || "Failed to save notes"),
   });
 }
+
+/** Transactions for several holdings at once (used by merged / duplicate rows). */
+export function useInvestmentTxnsMulti(ids: string[]) {
+  const key = [...ids].sort().join(",");
+  return useQuery({
+    queryKey: [...wealthKeys.investmentTxns, "multi", key],
+    enabled: ids.length > 0,
+    queryFn: async (): Promise<InvestmentTxn[]> => {
+      const { data, error } = await supabase
+        .from("wealth_investment_txns")
+        .select("*")
+        .in("investment_id", ids)
+        .order("occurred_on", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        quantity: num(r.quantity),
+        price: num(r.price),
+        amount: num(r.amount),
+      })) as InvestmentTxn[];
+    },
+  });
+}
+
+/** Transaction count per investment id — powers the badge on holdings rows. */
+export function useInvestmentTxnCounts() {
+  return useQuery({
+    queryKey: [...wealthKeys.investmentTxns, "counts"],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase
+        .from("wealth_investment_txns")
+        .select("investment_id");
+      if (error) throw error;
+      const out: Record<string, number> = {};
+      for (const r of (data ?? []) as Array<{ investment_id: string }>) {
+        out[r.investment_id] = (out[r.investment_id] ?? 0) + 1;
+      }
+      return out;
+    },
+    staleTime: 60 * 1000,
+  });
+}
