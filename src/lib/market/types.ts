@@ -80,6 +80,18 @@ export type InstrumentFundamentals = {
   sector: string | null;
   industry: string | null;
   segment_type: string | null;
+  /** Fund / ETF specific block (null for equities) */
+  nav_date?: string | null;
+  return_1y?: number | null; // percent, annualized
+  return_3y?: number | null;
+  return_5y?: number | null;
+  category_average?: number | null;
+  expense_ratio?: number | null;
+  exit_load?: string | null;
+  risk_rating?: string | null;
+  fund_manager?: string | null;
+  fund_house?: string | null;
+  scheme_category?: string | null;
   source: string | null;
   fetched_at: string; // ISO
 };
