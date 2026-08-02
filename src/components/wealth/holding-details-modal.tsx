@@ -47,6 +47,8 @@ type Props = {
   investment: Investment | null;
   quote?: MarketQuote | null;
   platformLabel?: string;
+  /** Tab to auto-select when the modal opens. */
+  initialTab?: DetailTab;
 };
 
 type DetailTab = "fundamental" | "classification" | "history" | "corporate" | "notes";
@@ -59,8 +61,15 @@ export function HoldingDetailsModal({
   investment,
   quote,
   platformLabel,
+  initialTab = "fundamental",
 }: Props) {
-  const [tab, setTab] = useState<DetailTab>("fundamental");
+  const [tab, setTab] = useState<DetailTab>(initialTab);
+
+  // Re-sync the active tab whenever the modal is (re)opened for a holding.
+  useEffect(() => {
+    if (open) setTab(initialTab);
+  }, [open, initialTab, investment?.id]);
+
 
   // Back / Esc / Close must return to the exact page + tab the user came from.
   // Pushing a history entry while open makes the browser/device back button

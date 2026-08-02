@@ -17,12 +17,12 @@ import {
   ArrowDown,
   ArrowUpDown,
   Eye,
+  Info,
   Pencil,
   Trash2,
   RefreshCw,
   Plus,
   ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -57,7 +57,6 @@ import {
   useDeleteInvestment,
   useInvestments,
   inr,
-  portfolioXirr,
   singleXirr,
 } from "@/lib/wealth-api";
 import { useNavigate } from "@tanstack/react-router";
@@ -230,26 +229,6 @@ type Holding = {
   quote?: MarketQuote | null;
 };
 
-/** A displayed table row: either a single holding or an aggregate of same-name holdings. */
-type Group = {
-  key: string;
-  name: string;
-  symbol: string | null;
-  segment: string;
-  exchange: string | null;
-  platform: string | null;
-  quantity: number;
-  avg_price: number;
-  cmp: number;
-  invested: number;
-  current: number;
-  pnl: number;
-  pnl_pct: number;
-  xirr_pct: number;
-  currency: string;
-  items: Holding[];
-};
-
 type SortKey =
   | "name"
   | "segment"
@@ -264,64 +243,6 @@ type SortKey =
 
 const DEFAULT_SORT: { key: SortKey; dir: "asc" | "desc" } = { key: "name", dir: "asc" };
 
-function groupHoldings(rows: Holding[]): Group[] {
-  const byName = new Map<string, Holding[]>();
-  for (const r of rows) {
-    const k = `${r.source}|${r.name.trim().toLowerCase()}|${r.currency}`;
-    const arr = byName.get(k);
-    if (arr) arr.push(r);
-    else byName.set(k, [r]);
-  }
-  const out: Group[] = [];
-  for (const [key, items] of byName) {
-    if (items.length === 1) {
-      const h = items[0];
-      out.push({
-        key,
-        name: h.name,
-        symbol: h.symbol,
-        segment: h.segment,
-        exchange: h.exchange,
-        platform: h.platform,
-        quantity: h.quantity,
-        avg_price: h.avg_price,
-        cmp: h.cmp,
-        invested: h.invested,
-        current: h.current,
-        pnl: h.pnl,
-        pnl_pct: h.pnl_pct,
-        xirr_pct: h.xirr_pct,
-        currency: h.currency,
-        items,
-      });
-      continue;
-    }
-    const quantity = items.reduce((s, h) => s + h.quantity, 0);
-    const invested = items.reduce((s, h) => s + h.invested, 0);
-    const current = items.reduce((s, h) => s + h.current, 0);
-    const pnl = current - invested;
-    const invs = items.map((h) => h.raw_investment).filter(Boolean) as Investment[];
-    out.push({
-      key,
-      name: items[0].name,
-      symbol: items[0].symbol,
-      segment: items[0].segment,
-      exchange: items[0].exchange,
-      platform: uniqSorted(items.map((h) => h.platform).filter(Boolean) as string[]).join(", ") || null,
-      quantity,
-      avg_price: quantity > 0 ? invested / quantity : 0,
-      cmp: items[0].cmp,
-      invested,
-      current,
-      pnl,
-      pnl_pct: invested > 0 ? (pnl / invested) * 100 : 0,
-      xirr_pct: invs.length ? portfolioXirr(invs) : 0,
-      currency: items[0].currency,
-      items,
-    });
-  }
-  return out;
-}
 
 /* =========================================================
    Component
@@ -340,8 +261,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [fPlatform, setFPlatform] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(DEFAULT_SORT.dir);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [details, setDetails] = useState<Holding | null>(null);
+  const [detailsTab, setDetailsTab] = useState<"fundamental" | "history">("fundamental");
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [confirm, setConfirm] = useState<Holding | null>(null);
@@ -508,12 +429,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     });
   }, [tabRows, search, fSegment, fSector, fExchange, fPlatform]);
 
-  /* Fix 1: same-name holdings collapse into one expandable row. */
-  const groups = useMemo(() => groupHoldings(filtered), [filtered]);
-
+  /* Individual holdings — one row per holding (no grouping). */
   const sorted = useMemo(() => {
     const dir = sortDir === "asc" ? 1 : -1;
-    const cmp = (a: Group, b: Group): number => {
+    const cmp = (a: Holding, b: Holding): number => {
+
       switch (sortKey) {
         case "name":
           return a.name.localeCompare(b.name) * dir;
@@ -539,8 +459,9 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           return a.name.localeCompare(b.name) * dir;
       }
     };
-    return [...groups].sort(cmp);
-  }, [groups, sortKey, sortDir]);
+    return [...filtered].sort(cmp);
+  }, [filtered, sortKey, sortDir]);
+
 
 
   const totals = useMemo(() => {
@@ -843,61 +764,28 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   </td>
                 </tr>
               ) : (
-                sorted.flatMap((g) => {
-                  if (g.items.length === 1) {
-                    const h = g.items[0];
-                    return [
-                      <HoldingRow
-                        key={rowKey(h)}
-                        h={h}
-                        holdingId={h.id}
-                        highlight={lastTouched === h.id}
-                        selected={sel.isSelected(rowKey(h))}
-                        onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                        onView={() => setDetails(h)}
-                        onEdit={() => openEdit(h)}
-                        onDelete={() => setConfirm(h)}
-                      />,
-                    ];
-                  }
-                  const open = !!expanded[g.key];
-                  const allSel = g.items.every((i) => sel.isSelected(rowKey(i)));
-                  const someSel = !allSel && g.items.some((i) => sel.isSelected(rowKey(i)));
-                  const rowsOut = [
-                    <HoldingRow
-                      key={g.key}
-                      h={g}
-                      lots={g.items.length}
-                      open={open}
-                      onToggle={() => setExpanded((s) => ({ ...s, [g.key]: !s[g.key] }))}
-                      selected={allSel}
-                      indeterminate={someSel}
-                      onSelectChange={(v) =>
-                        g.items.forEach((i) => sel.toggle(rowKey(i), v))
-                      }
-                    />,
-                  ];
-                  if (open) {
-                    for (const h of g.items) {
-                      rowsOut.push(
-                        <HoldingRow
-                          key={rowKey(h)}
-                          h={h}
-                          child
-                          holdingId={h.id}
-                          highlight={lastTouched === h.id}
-                          selected={sel.isSelected(rowKey(h))}
-                          onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                          onView={() => setDetails(h)}
-                          onEdit={() => openEdit(h)}
-                          onDelete={() => setConfirm(h)}
-                        />,
-                      );
-                    }
-                  }
-                  return rowsOut;
-                })
+                sorted.map((h) => (
+                  <HoldingRow
+                    key={rowKey(h)}
+                    h={h}
+                    holdingId={h.id}
+                    highlight={lastTouched === h.id}
+                    selected={sel.isSelected(rowKey(h))}
+                    onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+                    onViewTransactions={() => {
+                      setDetailsTab("history");
+                      setDetails(h);
+                    }}
+                    onView={() => {
+                      setDetailsTab("fundamental");
+                      setDetails(h);
+                    }}
+                    onEdit={() => openEdit(h)}
+                    onDelete={() => setConfirm(h)}
+                  />
+                ))
               )}
+
 
             </tbody>
           </table>
@@ -941,6 +829,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         investment={details?.source === "investment" ? (details.raw_investment ?? null) : null}
         quote={details?.quote ?? null}
         platformLabel={platformLabelFor(details)}
+        initialTab={detailsTab}
       />
 
       {/* Asset details fallback: reuse edit dialog in read/edit mode for now */}
@@ -1016,29 +905,23 @@ type RowLike = {
 function HoldingRow({
   h,
   onView,
+  onViewTransactions,
   onEdit,
   onDelete,
   selected,
   indeterminate,
   onSelectChange,
-  child,
-  lots,
-  open,
-  onToggle,
   holdingId,
   highlight,
 }: {
   h: RowLike;
   onView?: () => void;
+  onViewTransactions?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   selected: boolean;
   indeterminate?: boolean;
   onSelectChange: (v: boolean) => void;
-  child?: boolean;
-  lots?: number;
-  open?: boolean;
-  onToggle?: () => void;
   holdingId?: string;
   highlight?: boolean;
 }) {
@@ -1049,7 +932,7 @@ function HoldingRow({
       data-holding-id={holdingId}
       className={`group border-b border-border/40 last:border-0 hover:bg-surface-2/30 ${
         selected ? "bg-mint/[0.06]" : ""
-      } ${child ? "bg-surface-2/20" : ""} ${highlight ? "ring-1 ring-inset ring-mint/50" : ""}`}
+      } ${highlight ? "ring-1 ring-inset ring-mint/50" : ""}`}
     >
       <td className="w-[44px] px-3 py-3">
         <SelectCheckbox
@@ -1060,44 +943,18 @@ function HoldingRow({
         />
       </td>
       <td className="px-3 py-3">
-        <div className={`flex items-center gap-3 ${child ? "pl-6" : ""}`}>
-          {lots ? (
-            <button
-              onClick={onToggle}
-              aria-label={open ? "Collapse lots" : "Expand lots"}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-mint/10 hover:text-mint"
-            >
-              {open ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
-              )}
-            </button>
-          ) : null}
-          {child ? null : (
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
-              {h.name.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
+            {h.name.slice(0, 1).toUpperCase()}
+          </span>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-foreground">
-              {h.name}
-              {lots ? (
-                <span className="ml-2 rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
-                  ×{lots}
-                </span>
-              ) : null}
-            </div>
-            {lots ? (
-              <div className="text-[11px] text-muted-foreground">
-                {lots} transaction{lots === 1 ? "" : "s"}
-              </div>
-            ) : null}
+            <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
             {h.symbol ? (
               <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
             ) : null}
           </div>
         </div>
+
       </td>
       <td className="px-3 py-3">
         {h.segment ? (
@@ -1152,25 +1009,33 @@ function HoldingRow({
           <span className="text-xs">—</span>
         )}
       </td>
-      <td className="w-[120px] px-3 py-3">
-        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-          {onView ? (
-            <IconBtn label="View Details" onClick={onView}>
+      <td className="w-[150px] px-3 py-3">
+        <div className="flex items-center justify-end gap-1">
+          {onViewTransactions ? (
+            <IconBtn label="View Transactions" onClick={onViewTransactions}>
               <Eye className="h-3.5 w-3.5" />
             </IconBtn>
           ) : null}
-          {onEdit ? (
-            <IconBtn label="Edit" onClick={onEdit}>
-              <Pencil className="h-3.5 w-3.5" />
-            </IconBtn>
-          ) : null}
-          {onDelete ? (
-            <IconBtn label="Delete" onClick={onDelete} tone="rose">
-              <Trash2 className="h-3.5 w-3.5" />
-            </IconBtn>
-          ) : null}
+          <span className="flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+            {onView ? (
+              <IconBtn label="View Details" onClick={onView}>
+                <Info className="h-3.5 w-3.5" />
+              </IconBtn>
+            ) : null}
+            {onEdit ? (
+              <IconBtn label="Edit" onClick={onEdit}>
+                <Pencil className="h-3.5 w-3.5" />
+              </IconBtn>
+            ) : null}
+            {onDelete ? (
+              <IconBtn label="Delete" onClick={onDelete} tone="rose">
+                <Trash2 className="h-3.5 w-3.5" />
+              </IconBtn>
+            ) : null}
+          </span>
         </div>
       </td>
+
     </tr>
   );
 }
