@@ -906,29 +906,23 @@ type RowLike = {
 function HoldingRow({
   h,
   onView,
+  onViewTransactions,
   onEdit,
   onDelete,
   selected,
   indeterminate,
   onSelectChange,
-  child,
-  lots,
-  open,
-  onToggle,
   holdingId,
   highlight,
 }: {
   h: RowLike;
   onView?: () => void;
+  onViewTransactions?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   selected: boolean;
   indeterminate?: boolean;
   onSelectChange: (v: boolean) => void;
-  child?: boolean;
-  lots?: number;
-  open?: boolean;
-  onToggle?: () => void;
   holdingId?: string;
   highlight?: boolean;
 }) {
@@ -939,7 +933,7 @@ function HoldingRow({
       data-holding-id={holdingId}
       className={`group border-b border-border/40 last:border-0 hover:bg-surface-2/30 ${
         selected ? "bg-mint/[0.06]" : ""
-      } ${child ? "bg-surface-2/20" : ""} ${highlight ? "ring-1 ring-inset ring-mint/50" : ""}`}
+      } ${highlight ? "ring-1 ring-inset ring-mint/50" : ""}`}
     >
       <td className="w-[44px] px-3 py-3">
         <SelectCheckbox
@@ -950,44 +944,18 @@ function HoldingRow({
         />
       </td>
       <td className="px-3 py-3">
-        <div className={`flex items-center gap-3 ${child ? "pl-6" : ""}`}>
-          {lots ? (
-            <button
-              onClick={onToggle}
-              aria-label={open ? "Collapse lots" : "Expand lots"}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-mint/10 hover:text-mint"
-            >
-              {open ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
-              )}
-            </button>
-          ) : null}
-          {child ? null : (
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
-              {h.name.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
+            {h.name.slice(0, 1).toUpperCase()}
+          </span>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-foreground">
-              {h.name}
-              {lots ? (
-                <span className="ml-2 rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
-                  ×{lots}
-                </span>
-              ) : null}
-            </div>
-            {lots ? (
-              <div className="text-[11px] text-muted-foreground">
-                {lots} transaction{lots === 1 ? "" : "s"}
-              </div>
-            ) : null}
+            <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
             {h.symbol ? (
               <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
             ) : null}
           </div>
         </div>
+
       </td>
       <td className="px-3 py-3">
         {h.segment ? (
