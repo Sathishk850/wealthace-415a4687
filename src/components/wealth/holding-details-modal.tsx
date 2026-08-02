@@ -202,7 +202,7 @@ export function HoldingDetailsModal({
             {tab === "history" && <HistoryTab investment={inv} />}
             {tab === "fundamental" && <FundamentalTab investment={inv} derived={d} />}
             {tab === "classification" && (
-              <ClassificationTab investment={inv} derived={d} platformLabel={platformLabel} />
+              <ClassificationTab investment={inv} platformLabel={platformLabel} />
             )}
             {tab === "corporate" && showCorporate && <CorporateTab category={inv.category} />}
             {tab === "notes" && <NotesTab investment={inv} />}
