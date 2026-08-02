@@ -1084,10 +1084,15 @@ function HoldingRow({
               {h.name}
               {lots ? (
                 <span className="ml-2 rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
-                  {lots} lots
+                  ×{lots}
                 </span>
               ) : null}
             </div>
+            {lots ? (
+              <div className="text-[11px] text-muted-foreground">
+                {lots} transaction{lots === 1 ? "" : "s"}
+              </div>
+            ) : null}
             {h.symbol ? (
               <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
             ) : null}

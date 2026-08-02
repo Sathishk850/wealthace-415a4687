@@ -188,7 +188,8 @@ export function useInstrumentFundamentals(item: QuoteRequestItem | null) {
       })) as InstrumentFundamentals | null;
     },
     enabled: !!item,
-    staleTime: 15 * 60 * 1000,
+    // Fundamentals change at most daily — cache for a day.
+    staleTime: 24 * 60 * 60 * 1000,
     placeholderData: (prev) => prev,
   });
 }
