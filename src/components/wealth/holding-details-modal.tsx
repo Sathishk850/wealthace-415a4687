@@ -836,32 +836,69 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /* -------------------- Corporate Actions Tab -------------------- */
-function CorporateTab({ category }: { category: string }) {
-  const items =
-    category === "ETFs"
-      ? ["Dividend", "Split"]
-      : ["Dividend", "Bonus", "Split", "Rights Issue", "Merger"];
-  return (
-    <div className="space-y-3">
-      <div className="text-sm text-muted-foreground">
-        Corporate actions history will appear here as it is reported.
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {items.map((t) => (
-          <span
-            key={t}
-            className="rounded-full border border-border bg-surface-2/40 px-3 py-1 text-xs text-muted-foreground"
-          >
-            {t}
-          </span>
-        ))}
-      </div>
+function CorporateTab({ investment }: { investment: Investment }) {
+  const kind = identifierTypeFor(investment);
+  const ccy = investment.currency || "INR";
+  const { data: actions = [], isLoading } = useCorporateActions(
+    kind && investment.identifier
+      ? {
+          identifier_type: kind,
+          identifier: investment.identifier,
+          exchange: investment.exchange ?? null,
+        }
+      : null,
+  );
+
+  if (!investment.identifier) {
+    return (
       <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-        No corporate actions recorded for this holding.
+        Link this holding to a market instrument to see corporate actions.
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <Section title="Corporate Actions (auto-fetched)">
+      {isLoading && actions.length === 0 ? (
+        <div className="py-4 text-sm text-muted-foreground">Fetching corporate actions…</div>
+      ) : actions.length === 0 ? (
+        <div className="py-4 text-sm text-muted-foreground">
+          No dividends or splits reported for this instrument.
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-2/50">
+              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="px-3 py-2 font-medium">Date</th>
+                <th className="px-3 py-2 font-medium">Action</th>
+                <th className="px-3 py-2 text-right font-medium">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {actions.map((a, i) => (
+                <tr key={`${a.type}-${a.date}-${i}`} className="border-t border-border/60">
+                  <td className="px-3 py-2 text-foreground">{formatDate(a.date.slice(0, 10))}</td>
+                  <td className="px-3 py-2">
+                    <span className="rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-mint">
+                      {a.type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium text-foreground">
+                    {a.type === "dividend" && a.amount != null
+                      ? `${priceIn(a.amount, ccy)} / unit`
+                      : (a.ratio ?? a.detail)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
   );
 }
+
 
 /* -------------------- Notes Tab -------------------- */
 function NotesTab({ investment }: { investment: Investment }) {
