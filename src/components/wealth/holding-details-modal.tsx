@@ -660,11 +660,9 @@ function FundamentalTab({
 /* -------------------- Classification Tab -------------------- */
 function ClassificationTab({
   investment,
-  derived,
   platformLabel,
 }: {
   investment: Investment;
-  derived: ReturnType<typeof deriveHolding>;
   platformLabel?: string;
 }) {
   const ccy = investment.currency || "INR";
@@ -680,47 +678,21 @@ function ClassificationTab({
     ["Platform", platformLabel || "—"],
     ["Purchase Date", investment.purchase_date ? formatDate(investment.purchase_date) : "—"],
   ];
-  const summary: [string, string, string?][] = [
-    ["Quantity", String(investment.quantity)],
-    ["Average Buy Price", priceIn(investment.avg_price, ccy)],
-    ["Current Market Price", priceIn(derived.current_price, ccy)],
-    ["Invested Amount", amountIn(derived.invested, ccy)],
-    ["Current Value", amountIn(derived.current_value, ccy)],
-    [
-      "Unrealized P&L",
-      `${derived.unrealized_pl >= 0 ? "+" : ""}${amountIn(derived.unrealized_pl, ccy)}`,
-      derived.unrealized_pl >= 0 ? "text-emerald-500" : "text-rose-500",
-    ],
-    [
-      "Return %",
-      `${derived.return_pct >= 0 ? "+" : ""}${derived.return_pct.toFixed(2)}%`,
-      derived.return_pct >= 0 ? "text-emerald-500" : "text-rose-500",
-    ],
-  ];
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Section title="Classification (auto-fetched)">
-        <dl className="divide-y divide-border/60">
-          {rows.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-3 py-2 text-sm">
-              <dt className="text-muted-foreground">{k}</dt>
-              <dd className="text-right font-medium text-foreground">{v}</dd>
-            </div>
-          ))}
-        </dl>
-        <LastUpdated at={f?.fetched_at} source={f?.source} />
-      </Section>
-      <Section title="Holding Summary">
-        <dl className="divide-y divide-border/60">
-          {summary.map(([k, v, tone]) => (
-            <div key={k} className="flex justify-between gap-3 py-2 text-sm">
-              <dt className="text-muted-foreground">{k}</dt>
-              <dd className={`text-right font-medium ${tone ?? "text-foreground"}`}>{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </Section>
-    </div>
+    <Section title="Classification (auto-fetched)">
+      <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+        {rows.map(([k, v]) => (
+          <div
+            key={k}
+            className="flex justify-between gap-3 border-b border-border/60 py-2 text-sm"
+          >
+            <dt className="text-muted-foreground">{k}</dt>
+            <dd className="text-right font-medium text-foreground">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <LastUpdated at={f?.fetched_at} source={f?.source} />
+    </Section>
   );
 }
 
