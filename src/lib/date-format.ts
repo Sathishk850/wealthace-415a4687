@@ -23,12 +23,24 @@ export function formatDate(input: Date | string | number | null | undefined): st
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
-/** DD/MM/YYYY HH:mm */
+/** DD/MM/YYYY h:mm AM/PM (local region, 12-hour) */
 export function formatDateTime(input: Date | string | number | null | undefined): string {
   const d = toDate(input);
   if (!d) return "";
-  return `${formatDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${formatDate(d)} ${formatTime(d)}`;
 }
+
+/** h:mm AM/PM (local region, 12-hour) */
+export function formatTime(input: Date | string | number | null | undefined): string {
+  const d = toDate(input);
+  if (!d) return "";
+  return d.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 
 /** DD Mon YYYY (e.g. 09 Jul 2026) — for compact chips/labels. */
 export function formatDateShort(input: Date | string | number | null | undefined): string {
