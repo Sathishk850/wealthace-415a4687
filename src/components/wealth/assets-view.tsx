@@ -711,7 +711,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
       {/* ============ TABLE ============ */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="max-h-[65vh] overflow-auto">
+        <div className="overflow-x-auto">
+
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
