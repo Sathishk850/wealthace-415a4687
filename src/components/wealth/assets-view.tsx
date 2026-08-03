@@ -122,9 +122,8 @@ type AssetTab =
   | "Savings"
   | "Other Assets";
 
-/** Tabs shown in the UI. REIT / InvIT holdings surface under "All Holdings". */
+/** Tabs shown in the UI. REIT / InvIT holdings surface under "Other Assets". */
 const ASSET_TABS: AssetTab[] = [
-  "All Holdings",
   "Stocks",
   "Mutual Funds",
   "ETFs",
@@ -134,6 +133,7 @@ const ASSET_TABS: AssetTab[] = [
   "Savings",
   "Other Assets",
 ];
+
 
 const ADD_LABEL: Record<AssetTab, string> = {
   "All Holdings": "Add Investment",
