@@ -460,6 +460,7 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
             {entries.map((r) =>
               r.kind === "lot" ? (
                 <tr key={r.key} className="border-t border-border/60 hover:bg-surface-2/40">
+                  <td className="w-[44px] px-3 py-2" />
                   <td className="px-3 py-2 text-foreground">
                     {r.m.purchase_date ? formatDate(r.m.purchase_date) : "—"}
                   </td>
