@@ -154,8 +154,9 @@ export function HoldingDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : requestClose())}>
-      <DialogContent className="max-w-4xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-card px-6 py-4">
+      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b border-border bg-card px-6 py-4">
+
           <div className="flex items-start gap-4">
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-mint/15 text-base font-bold text-mint">
               {inv.name.slice(0, 1).toUpperCase()}
