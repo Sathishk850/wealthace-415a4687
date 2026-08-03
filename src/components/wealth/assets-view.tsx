@@ -212,6 +212,7 @@ type Holding = {
   type: string; // e.g. "Equity", "Property", "Gold"
   segment: string; // Equity / Debt / Hybrid / Commodity / Real Estate / …
   sector: string | null;
+  market_cap: string | null;
   exchange: string | null;
   platform: string | null;
   platform_id: string | null;
@@ -263,6 +264,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [search, setSearch] = useState("");
   const [fSegment, setFSegment] = useState<string>("all");
   const [fSector, setFSector] = useState<string>("all");
+  const [fMarketCap, setFMarketCap] = useState<string>("all");
   const [fExchange, setFExchange] = useState<string>("all");
   const [fPlatform, setFPlatform] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
@@ -346,7 +348,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         symbol: inv.symbol,
         type: inv.sub_category || inv.category,
         segment: segmentFromNotes(inv.notes) ?? SEGMENT_FALLBACK[inv.category] ?? "",
-        sector: inv.sub_category ?? null,
+        sector: sectorFromNotes(inv.notes),
+        market_cap: marketCapBand({ sub_category: inv.sub_category, notes: inv.notes }),
         exchange: inv.exchange ?? null,
         platform,
         platform_id: inv.payment_account_id ?? null,
@@ -378,7 +381,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         symbol: null,
         type: a.sub_category || a.category,
         segment: SEGMENT_FALLBACK[a.category] ?? "",
-        sector: a.sub_category ?? null,
+        sector: sectorFromNotes(a.notes),
+        market_cap: marketCapBand({ sub_category: a.sub_category, notes: a.notes }),
         exchange: null,
         platform,
         platform_id: a.payment_account_id ?? null,
@@ -462,6 +466,10 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     () => uniqSorted(tabRows.map((r) => r.sector).filter(Boolean) as string[]),
     [tabRows],
   );
+  const marketCapOptions = useMemo(
+    () => uniqSorted(tabRows.map((r) => r.market_cap).filter(Boolean) as string[]),
+    [tabRows],
+  );
   const exchangeOptions = useMemo(
     () => uniqSorted(tabRows.map((r) => r.exchange).filter(Boolean) as string[]),
     [tabRows],
@@ -481,11 +489,12 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       }
       if (fSegment !== "all" && r.segment !== fSegment) return false;
       if (fSector !== "all" && r.sector !== fSector) return false;
+      if (fMarketCap !== "all" && r.market_cap !== fMarketCap) return false;
       if (fExchange !== "all" && r.exchange !== fExchange) return false;
       if (fPlatform !== "all" && r.platform !== fPlatform) return false;
       return true;
     });
-  }, [tabRows, search, fSegment, fSector, fExchange, fPlatform]);
+  }, [tabRows, search, fSegment, fSector, fMarketCap, fExchange, fPlatform]);
 
   /* Individual holdings — one row per holding (no grouping). */
   const sorted = useMemo(() => {
@@ -641,6 +650,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             setSearch("");
             setFSegment("all");
             setFSector("all");
+            setFMarketCap("all");
             setFExchange("all");
             setFPlatform("all");
           }}
@@ -667,6 +677,12 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           options={segmentOptions}
         />
         <FilterMenu label="Sector" value={fSector} onChange={setFSector} options={sectorOptions} />
+        <FilterMenu
+          label="Market Cap"
+          value={fMarketCap}
+          onChange={setFMarketCap}
+          options={marketCapOptions}
+        />
         <FilterMenu
           label="Exchange"
           value={fExchange}
