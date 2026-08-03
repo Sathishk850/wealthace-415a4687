@@ -448,7 +448,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   }, [flatRows, txnCounts]);
 
   const tabRows = useMemo(
-    () => (tab === "All Holdings" ? rows : rows.filter((r) => r.tab === tab)),
+    () => rows.filter((r) => r.tab === tab),
 
     [rows, tab],
   );
