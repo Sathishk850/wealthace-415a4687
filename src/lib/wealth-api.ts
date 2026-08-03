@@ -577,6 +577,45 @@ export type InvestmentInput = {
   currency?: Currency;
 };
 
+/**
+ * Folds recorded buy/sell transactions into a holding so that quantity,
+ * average price and invested value always reflect the *net* position.
+ * Holdings without transactions keep their stored values untouched.
+ */
+export function foldTxnsIntoInvestment(
+  inv: Investment,
+  txns: Array<{ txn_type: string; quantity: number; price: number; occurred_on: string }>,
+): Investment {
+  if (!txns || txns.length === 0) return inv;
+  const sorted = [...txns].sort((a, b) => (a.occurred_on < b.occurred_on ? -1 : 1));
+  let qty = 0;
+  let cost = 0;
+  for (const t of sorted) {
+    const q = num(t.quantity);
+    const p = num(t.price);
+    if (String(t.txn_type).toLowerCase() === "sell") {
+      const avg = qty > 0 ? cost / qty : 0;
+      const sq = Math.min(q, qty);
+      qty -= sq;
+      cost -= avg * sq;
+    } else {
+      qty += q;
+      cost += q * p;
+    }
+  }
+  if (!(qty > 0) || !Number.isFinite(cost)) return inv;
+  const storedQty = num(inv.quantity);
+  const storedCurrent = inv.current_value == null ? null : num(inv.current_value);
+  return {
+    ...inv,
+    quantity: qty,
+    avg_price: cost / qty,
+    invested_value: cost,
+    current_value:
+      storedCurrent != null && storedQty > 0 ? (storedCurrent / storedQty) * qty : storedCurrent,
+  };
+}
+
 export function useInvestments() {
   return useQuery({
     queryKey: wealthKeys.investments,
@@ -587,7 +626,7 @@ export function useInvestments() {
         .order("last_updated", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r: any) => ({
+      const rows = (data ?? []).map((r: any) => ({
         ...r,
         quantity: num(r.quantity),
         avg_price: num(r.avg_price),
@@ -596,9 +635,32 @@ export function useInvestments() {
         current_value: r.current_value == null ? null : num(r.current_value),
         sip_amount: r.sip_amount == null ? null : num(r.sip_amount),
       })) as Investment[];
+
+      // Fold buy/sell transactions so quantity + avg price are always the net
+      // position of every recorded transaction (global rule).
+      const { data: txnRows } = await supabase
+        .from("wealth_investment_txns")
+        .select("investment_id,txn_type,quantity,price,occurred_on");
+      if (!txnRows || txnRows.length === 0) return rows;
+      const byInv = new Map<
+        string,
+        Array<{ txn_type: string; quantity: number; price: number; occurred_on: string }>
+      >();
+      for (const t of txnRows as any[]) {
+        const list = byInv.get(t.investment_id) ?? [];
+        list.push({
+          txn_type: String(t.txn_type),
+          quantity: num(t.quantity),
+          price: num(t.price),
+          occurred_on: String(t.occurred_on ?? ""),
+        });
+        byInv.set(t.investment_id, list);
+      }
+      return rows.map((r) => foldTxnsIntoInvestment(r, byInv.get(r.id) ?? []));
     },
   });
 }
+
 
 function investmentPayload(i: InvestmentInput) {
   const qty = Number(i.quantity) || 0;
@@ -1390,6 +1452,7 @@ export function useUpsertInvestmentTxn() {
     onSuccess: (_d, vars) => {
       toast.success("Transaction saved");
       qc.invalidateQueries({ queryKey: [...wealthKeys.investmentTxns, vars.investment_id] });
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
       qc.invalidateQueries({ queryKey: wealthKeys.investmentTxns });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to save transaction"),
@@ -1410,6 +1473,7 @@ export function useDeleteInvestmentTxn() {
     onSuccess: (p) => {
       toast.success("Transaction deleted");
       qc.invalidateQueries({ queryKey: [...wealthKeys.investmentTxns, p.investment_id] });
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to delete transaction"),
   });

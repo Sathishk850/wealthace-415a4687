@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   PieChart,
@@ -27,6 +27,19 @@ import {
   Info,
   CalendarClock,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AUTO_REFRESH_MS, RefreshIconButton } from "@/components/refresh-icon-button";
+import {
+  AllocationDetailsDialog,
+  type AllocationSlice,
+} from "@/components/wealth/allocation-details-dialog";
+import { marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   cagrPct,
@@ -66,23 +79,70 @@ function segmentOf(cat: string): string {
   return "Others";
 }
 
-/** Best-effort market-cap bucket derived from sub_category/notes text. */
-function marketCapOf(inv: Investment): "Large Cap" | "Mid Cap" | "Small Cap" | "Other" {
-  const s = `${inv.sub_category ?? ""} ${inv.notes ?? ""} ${inv.name ?? ""}`.toLowerCase();
-  if (s.includes("large")) return "Large Cap";
-  if (s.includes("mid")) return "Mid Cap";
-  if (s.includes("small")) return "Small Cap";
-  const cat = (inv.category || "").toLowerCase();
-  if (cat.includes("stock") || cat.includes("etf") || cat.includes("mutual")) return "Large Cap";
-  return "Other";
+/** Market-cap bucket taken from the classification captured on the Add form. */
+function marketCapOf(inv: Investment): string | null {
+  return marketCapBand({ sub_category: inv.sub_category, notes: inv.notes });
 }
 
-export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
+const TREND_PERIODS = ["1M", "3M", "6M", "1Y", "3Y", "5Y", "ALL"] as const;
+type TrendPeriod = (typeof TREND_PERIODS)[number];
+
+const PERIOD_MONTHS: Record<TrendPeriod, number | null> = {
+  "1M": 1,
+  "3M": 3,
+  "6M": 6,
+  "1Y": 12,
+  "3Y": 36,
+  "5Y": 60,
+  ALL: null,
+};
+
+export function WealthOverview({
+  onGoSip,
+  onGoAssets,
+}: {
+  onGoSip: () => void;
+  onGoAssets?: () => void;
+}) {
   const navigate = useNavigate();
-  const { data: assets = [] } = useAssets();
-  const { data: liabilities = [] } = useLiabilities();
-  const { data: rows = [] } = useInvestments();
-  const { quoteMap } = useInvestmentQuotes(rows);
+  const { data: assets = [], refetch: refetchAssets } = useAssets();
+  const { data: liabilities = [], refetch: refetchLiabilities } = useLiabilities();
+  const { data: rows = [], refetch: refetchInvestments } = useInvestments();
+  const { quoteMap, isFetching: quotesFetching, refetch: refetchQuotes } =
+    useInvestmentQuotes(rows);
+
+  const [period, setPeriod] = useState<TrendPeriod>("1Y");
+  const [allocDetail, setAllocDetail] = useState<{
+    title: string;
+    data: AllocationSlice[];
+    total: number;
+  } | null>(null);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshAll = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchInvestments(),
+        refetchAssets(),
+        refetchLiabilities(),
+        refetchQuotes(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Auto refresh every 30 minutes so insights stay reliable.
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      void refreshAll();
+    }, AUTO_REFRESH_MS);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ===== Derived per-holding values (uses existing derive logic) ===== */
   const rich = useMemo(() => {
@@ -98,6 +158,7 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
     });
   }, [rows, quoteMap]);
 
+
   const investmentsCurrent = rich.reduce((s, r) => s + r.cur, 0);
   const investmentsInvested = rich.reduce((s, r) => s + r.inv, 0);
   const totalAssets =
@@ -107,34 +168,67 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
   const overallPct = investmentsInvested > 0 ? (overallPnl / investmentsInvested) * 100 : 0;
   const portXirr = useMemo(() => portfolioXirr(rows), [rows]);
 
-  /* ===== 12-month portfolio trend (investments only) ===== */
+  /* ===== Portfolio trend for the selected period ===== */
   const trend = useMemo(() => {
     if (!rich.length) return [] as { m: string; v: number }[];
     const now = new Date();
-    const months: { key: string; m: string; v: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
+
+    // Window start: fixed months for presets, first purchase for ALL.
+    const months = PERIOD_MONTHS[period];
+    let startYear: number;
+    let startMonth: number;
+    if (months == null) {
+      const dates = rich
+        .map((r) => (r.purchase_date ? new Date(r.purchase_date) : null))
+        .filter((d): d is Date => !!d && !isNaN(d.getTime()))
+        .sort((a, b) => a.getTime() - b.getTime());
+      const first = dates[0] ?? new Date(now.getFullYear() - 1, now.getMonth(), 1);
+      startYear = first.getFullYear();
+      startMonth = first.getMonth();
+    } else {
+      const d = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+      startYear = d.getFullYear();
+      startMonth = d.getMonth();
+    }
+
+    const totalBuckets =
+      (now.getFullYear() - startYear) * 12 + (now.getMonth() - startMonth) + 1;
+    const count = Math.max(2, totalBuckets);
+    // Long windows get quarterly / yearly sampling so the axis stays readable.
+    const step = count > 60 ? 12 : count > 24 ? 3 : 1;
+
+    const points: { key: string; m: string; v: number }[] = [];
+    for (let i = count - 1; i >= 0; i -= step) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
+      points.push({
         key: `${d.getFullYear()}-${d.getMonth()}`,
-        m: d.toLocaleString("en-IN", { month: "short" }) + " '" + String(d.getFullYear()).slice(2),
+        m:
+          step >= 12
+            ? String(d.getFullYear())
+            : d.toLocaleString("en-IN", { month: "short" }) +
+              " '" +
+              String(d.getFullYear()).slice(2),
         v: 0,
       });
     }
     for (const r of rich) {
       const pd = r.purchase_date ? new Date(r.purchase_date) : null;
-      for (const mo of months) {
+      for (const mo of points) {
         const [y, m] = mo.key.split("-").map(Number);
         const moEnd = new Date(y, m + 1, 0);
         if (!pd || pd <= moEnd) mo.v += r.cur;
       }
     }
-    return months;
-  }, [rich]);
+    return points;
+  }, [rich, period]);
 
+  const periodStartValue = trend.length >= 1 ? trend[0].v : 0;
   const prevMonth = trend.length >= 2 ? trend[trend.length - 2].v : 0;
   const currMonth = trend.length >= 1 ? trend[trend.length - 1].v : investmentsCurrent;
   const assetDelta = prevMonth > 0 ? currMonth - prevMonth : 0;
   const assetDeltaPct = prevMonth > 0 ? (assetDelta / prevMonth) * 100 : 0;
+  const periodDelta = periodStartValue > 0 ? currMonth - periodStartValue : 0;
+  const periodDeltaPct = periodStartValue > 0 ? (periodDelta / periodStartValue) * 100 : 0;
 
   /* ===== Allocations ===== */
   const assetAlloc = useMemo(() => {
@@ -165,9 +259,10 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
   }, [rich, assets]);
 
   const sectorAlloc = useMemo(() => {
+    // Sector comes from the "Sector" label captured on the Add Investment form.
     const map = new Map<string, number>();
     for (const r of rich) {
-      const sector = (r.sub_category || r.category || "Others").toString();
+      const sector = sectorFromNotes(r.notes) ?? "Unclassified";
       map.set(sector, (map.get(sector) || 0) + r.cur);
     }
     const total = Array.from(map.values()).reduce((a, b) => a + b, 0) || 1;
@@ -178,19 +273,18 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
         pct: (amt / total) * 100,
         color: PIE[i % PIE.length],
       }))
-      .sort((a, b) => b.pct - a.pct)
-      .slice(0, 7);
+      .sort((a, b) => b.pct - a.pct);
   }, [rich]);
 
   const marketCapAlloc = useMemo(() => {
     const map = new Map<string, number>();
     for (const r of rich) {
       const bucket = marketCapOf(r);
-      if (bucket === "Other") continue;
+      if (!bucket) continue;
       map.set(bucket, (map.get(bucket) || 0) + r.cur);
     }
     const total = Array.from(map.values()).reduce((a, b) => a + b, 0) || 1;
-    const order = ["Large Cap", "Mid Cap", "Small Cap"];
+    const order = ["Large Cap", "Mid Cap", "Small Cap", "Multi Cap", "Flexi Cap"];
     return order
       .filter((k) => map.has(k))
       .map((k, i) => ({
@@ -200,6 +294,7 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
         color: PIE[i % PIE.length],
       }));
   }, [rich]);
+
 
   /* ===== Top Holdings ===== */
   const topHoldings = useMemo(
@@ -299,10 +394,18 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="font-display text-2xl font-bold text-foreground">Overview</h2>
-        <p className="text-sm text-muted-foreground">Your wealth summary at a glance</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-2xl font-bold text-foreground">Overview</h2>
+          <p className="text-sm text-muted-foreground">Your wealth summary at a glance</p>
+        </div>
+        <RefreshIconButton
+          onClick={() => void refreshAll()}
+          busy={refreshing || quotesFetching}
+          label="Refresh overview"
+        />
       </div>
+
 
       {/* ROW 1 — KPI CARDS */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -349,9 +452,43 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
 
       {/* ROW 2 — ALLOCATIONS */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <AllocationCard title="Asset Allocation" centerLabel="Total Assets" centerValue={inrCompact(totalAssets)} data={assetAlloc} onView={() => navigate({ to: "/wealth", search: {} })} />
-        <AllocationCard title="Sector Allocation" data={sectorAlloc} onView={() => navigate({ to: "/wealth", search: {} })} />
-        <AllocationCard title="Market Cap Allocation" data={marketCapAlloc} onView={() => navigate({ to: "/wealth", search: {} })} emptyLabel="Tag holdings as Large / Mid / Small cap in sub-category" />
+        <AllocationCard
+          title="Asset Allocation"
+          centerLabel="Total Assets"
+          centerValue={inrCompact(totalAssets)}
+          data={assetAlloc}
+          onView={() =>
+            setAllocDetail({
+              title: "Asset Allocation",
+              data: assetAlloc,
+              total: assetAlloc.reduce((s, d) => s + d.amt, 0),
+            })
+          }
+        />
+        <AllocationCard
+          title="Sector Allocation"
+          data={sectorAlloc}
+          onView={() =>
+            setAllocDetail({
+              title: "Sector Allocation",
+              data: sectorAlloc,
+              total: sectorAlloc.reduce((s, d) => s + d.amt, 0),
+            })
+          }
+          emptyLabel="Pick a Sector on the Add Investment form to see this split"
+        />
+        <AllocationCard
+          title="Market Cap"
+          data={marketCapAlloc}
+          onView={() =>
+            setAllocDetail({
+              title: "Market Cap",
+              data: marketCapAlloc,
+              total: marketCapAlloc.reduce((s, d) => s + d.amt, 0),
+            })
+          }
+          emptyLabel="Tag holdings as Large / Mid / Small cap on the Add Investment form"
+        />
       </div>
 
       {/* ROW 3 — TREND + TOP HOLDINGS */}
@@ -363,18 +500,24 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
               <div className="mt-2 font-display text-2xl font-bold text-foreground">
                 {inr(currMonth)}
               </div>
-              <div className={`mt-0.5 text-xs font-medium ${overallPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {overallPnl >= 0 ? "+" : ""}
-                {inr(overallPnl)} ({overallPct >= 0 ? "+" : ""}
-                {overallPct.toFixed(2)}%)
+              <div
+                className={`mt-0.5 text-xs font-medium ${periodDelta >= 0 ? "text-emerald-400" : "text-rose-400"}`}
+              >
+                {periodDelta >= 0 ? "+" : ""}
+                {inr(periodDelta)} ({periodDeltaPct >= 0 ? "+" : ""}
+                {periodDeltaPct.toFixed(2)}%)
+                <span className="ml-1 text-muted-foreground">· {period}</span>
               </div>
             </div>
             <div className="flex flex-wrap gap-1">
-              {["1M", "3M", "6M", "1Y", "3Y", "5Y", "ALL"].map((p, i) => (
+              {TREND_PERIODS.map((p) => (
                 <button
                   key={p}
+                  type="button"
+                  aria-pressed={period === p}
+                  onClick={() => setPeriod(p)}
                   className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition ${
-                    i === 3
+                    period === p
                       ? "border-mint/50 bg-mint/10 text-mint"
                       : "border-border bg-surface-2/40 text-muted-foreground hover:text-foreground"
                   }`}
@@ -390,6 +533,7 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
                 Add investments with purchase dates to see growth
               </div>
             ) : (
+
               <ResponsiveContainer>
                 <AreaChart data={trend} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
                   <defs>
@@ -415,7 +559,11 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
         <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Top Holdings</h3>
-            <button className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125">
+            <button
+              type="button"
+              onClick={() => (onGoAssets ? onGoAssets() : navigate({ to: "/wealth" }))}
+              className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125"
+            >
               View All <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -486,7 +634,11 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
             <h3 className="text-sm font-semibold text-foreground">Insights</h3>
             <p className="text-[11px] text-muted-foreground">Smart, dynamic tips from your portfolio</p>
           </div>
-          <button className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125">
+          <button
+            type="button"
+            onClick={() => setInsightsOpen(true)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125"
+          >
             View All Insights <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -521,9 +673,38 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
           SIP Tracker
         </button>
       </div>
+
+      <AllocationDetailsDialog
+        open={!!allocDetail}
+        onOpenChange={(o) => !o && setAllocDetail(null)}
+        title={allocDetail?.title ?? ""}
+        data={allocDetail?.data ?? []}
+        total={allocDetail?.total ?? 0}
+      />
+
+      <Dialog open={insightsOpen} onOpenChange={setInsightsOpen}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>All Insights</DialogTitle>
+            <DialogDescription>Smart, dynamic tips from your portfolio</DialogDescription>
+          </DialogHeader>
+          {insights.length === 0 ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">
+              Add data to see personalized insights.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {insights.map((it, i) => (
+                <InsightCard key={i} {...it} />
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 /* =============== Small pieces =============== */
 
