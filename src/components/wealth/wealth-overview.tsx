@@ -634,7 +634,11 @@ export function WealthOverview({
             <h3 className="text-sm font-semibold text-foreground">Insights</h3>
             <p className="text-[11px] text-muted-foreground">Smart, dynamic tips from your portfolio</p>
           </div>
-          <button className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125">
+          <button
+            type="button"
+            onClick={() => setInsightsOpen(true)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125"
+          >
             View All Insights <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
