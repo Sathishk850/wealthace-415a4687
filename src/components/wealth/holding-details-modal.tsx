@@ -430,6 +430,14 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
         <table className="w-full text-sm">
           <thead className="bg-surface-2/50">
             <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+              <th className="w-[44px] px-3 py-2">
+                <SelectCheckbox
+                  label="Select all transactions"
+                  checked={allSelected}
+                  indeterminate={validSelected.length > 0 && !allSelected}
+                  onChange={toggleAll}
+                />
+              </th>
               <th className="px-3 py-2 font-medium">Date</th>
               <th className="px-3 py-2 font-medium">Type</th>
               <th className="px-3 py-2 text-right font-medium">Qty</th>
@@ -442,11 +450,12 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
           <tbody>
             {entries.length === 0 && !isLoading ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground">
                   No transactions recorded yet.
                 </td>
               </tr>
             ) : null}
+
             {entries.map((r) =>
               r.kind === "lot" ? (
                 <tr key={r.key} className="border-t border-border/60 hover:bg-surface-2/40">
