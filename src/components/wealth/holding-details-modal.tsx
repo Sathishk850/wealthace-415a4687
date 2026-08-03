@@ -288,6 +288,8 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<InvestmentTxn | null>(null);
   const [confirmDel, setConfirmDel] = useState<InvestmentTxn | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmBulk, setConfirmBulk] = useState(false);
   const [lotId, setLotId] = useState<string>(members[0].id);
   const ccy = investment.currency || "INR";
 
