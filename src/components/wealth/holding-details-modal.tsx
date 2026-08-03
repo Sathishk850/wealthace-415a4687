@@ -246,7 +246,7 @@ export function HoldingDetailsModal({
 
         </div>
 
-        <div className="sticky bottom-0 border-t border-border bg-card px-6 py-3 flex justify-end">
+        <div className="shrink-0 border-t border-border bg-card px-6 py-3 flex justify-end">
           <Button variant="outline" onClick={requestClose}>
             Close
           </Button>
