@@ -632,7 +632,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   return (
     <div className="space-y-4">
       {/* ============ ASSET TABS ============ */}
-      <div className="-mx-1 overflow-x-auto">
+      <div className="-mx-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <TextTabs
           items={ASSET_TABS.map((t) => ({ value: t, label: t }))}
           value={tab}
@@ -644,9 +644,10 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             setFExchange("all");
             setFPlatform("all");
           }}
-          className="min-w-max px-1"
+          className="min-w-max flex-nowrap px-1"
         />
       </div>
+
 
       {/* ============ TOOLBAR ============ */}
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
