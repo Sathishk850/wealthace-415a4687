@@ -313,6 +313,18 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const refreshHoldings = useRefreshHoldings();
   const { data: txnCounts = {} } = useInvestmentTxnCounts();
 
+  // Keep holdings (and every insight derived from them) at most 30 minutes old.
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      void refetchQuotes();
+      void refetchInv();
+      void refetchAssets();
+    }, AUTO_REFRESH_MS);
+    return () => clearInterval(t);
+  }, [refetchQuotes, refetchInv, refetchAssets]);
+
+
   const platformLabelById = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of paymentAccounts) {
