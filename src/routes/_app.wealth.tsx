@@ -57,24 +57,25 @@ function Wealth() {
             Track, analyze, and grow your overall financial wealth.
           </p>
         </div>
-        {showAdd ? (
-          <button
-            onClick={() => addRef.current?.()}
-            className="inline-flex items-center gap-2 rounded-xl bg-mint px-4 py-2.5 text-sm font-semibold text-[#04121C] transition hover:brightness-110"
-          >
-            <Plus className="h-4 w-4" /> {addLabel}
-          </button>
-        ) : null}
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <WealthMarketBar />
+          {showAdd ? (
+            <button
+              onClick={() => addRef.current?.()}
+              className="inline-flex items-center gap-2 rounded-xl bg-mint px-4 py-2.5 text-sm font-semibold text-[#04121C] transition hover:brightness-110"
+            >
+              <Plus className="h-4 w-4" /> {addLabel}
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <WealthMarketBar />
-
-      <div className="-mx-1 overflow-x-auto">
+      <div className="-mx-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <TextTabs
           items={TABS}
           value={tab}
           onChange={(v) => setTab(v as TabValue)}
-          className="min-w-max px-1"
+          className="min-w-max flex-nowrap px-1"
         />
       </div>
 
@@ -100,7 +101,11 @@ function Wealth() {
   );
 }
 
-/** Common status bar showing IND + US market state and last price timestamps in IST 12h. */
+/**
+ * Market timings shown at the end of the Wealth title row.
+ * Only markets that are currently open are surfaced; when both are shut a
+ * single compact "Markets closed" chip is shown instead.
+ */
 function WealthMarketBar() {
   const [, force] = useState(0);
   useEffect(() => {
@@ -113,62 +118,39 @@ function WealthMarketBar() {
   const nseSess = getExchangeSessionLabels("NSE");
   const usSess = getExchangeSessionLabels("US");
 
-  const nowIST12 = new Date().toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Kolkata",
-  });
+  const openMarkets = [
+    nse.is_open ? { label: "IND Market", venue: "NSE", stamp: nseSess.close } : null,
+    us.is_open ? { label: "US Market", venue: "NYSE", stamp: usSess.close } : null,
+  ].filter(Boolean) as { label: string; venue: string; stamp: string }[];
 
-  return (
-    <div className="grid grid-cols-1 gap-2 rounded-2xl border border-border bg-card/60 px-4 py-3 text-[11px] sm:grid-cols-2 lg:grid-cols-4">
-      <StatusPill
-        open={nse.is_open}
-        exchange="IND Market"
-        session={`${nse.is_open ? "Open" : "Closed"} · NSE`}
-        stamp={nseSess.close}
-      />
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <span className="text-foreground/70">IND Prices as of</span>
-        <span className="font-medium text-foreground">{nowIST12} IST</span>
-      </div>
-      <StatusPill
-        open={us.is_open}
-        exchange="US Market"
-        session={`${us.is_open ? "Open" : "Closed"} · NYSE`}
-        stamp={usSess.close}
-      />
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <span className="text-foreground/70">US Prices as of</span>
-        <span className="font-medium text-foreground">{nowIST12} IST</span>
-      </div>
-    </div>
-  );
-}
+  const now = formatTime(new Date());
 
-function StatusPill({
-  open,
-  exchange,
-  session,
-  stamp,
-}: {
-  open: boolean;
-  exchange: string;
-  session: string;
-  stamp: string;
-}) {
-  const tone = open ? "text-emerald-500" : "text-rose-500";
+  if (openMarkets.length === 0) {
+    return (
+      <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-[11px]">
+        <Circle className="h-2 w-2 fill-current text-rose-500" strokeWidth={0} />
+        <span className="font-medium text-foreground">Markets closed</span>
+        <span className="text-muted-foreground">· as of {now}</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-        <Circle className={`h-2 w-2 fill-current ${tone}`} strokeWidth={0} />
-        {exchange}
-      </span>
-      <span className="text-muted-foreground">· {session}</span>
-      <span className="text-muted-foreground">· {stamp}</span>
+      {openMarkets.map((m) => (
+        <div
+          key={m.label}
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-[11px]"
+        >
+          <Circle className="h-2 w-2 fill-current text-emerald-500" strokeWidth={0} />
+          <span className="font-medium text-foreground">{m.label} Open</span>
+          <span className="text-muted-foreground">
+            · {m.venue} till {m.stamp}
+          </span>
+          <span className="text-muted-foreground">· prices as of {now}</span>
+        </div>
+      ))}
     </div>
   );
 }
+
