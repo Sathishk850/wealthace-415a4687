@@ -567,7 +567,10 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
               disabled={del.isPending}
               onClick={async () => {
                 if (!confirmDel) return;
-                await del.mutateAsync({ id: confirmDel.id, investment_id: investment.id });
+                await del.mutateAsync({
+                  id: confirmDel.id,
+                  investment_id: confirmDel.investment_id,
+                });
                 setConfirmDel(null);
               }}
             >
@@ -576,6 +579,28 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={confirmBulk} onOpenChange={(v) => !v && setConfirmBulk(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {validSelected.length} transaction{validSelected.length === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={del.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-500 text-white hover:bg-rose-600"
+              disabled={del.isPending}
+              onClick={deleteSelected}
+            >
+              {del.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
