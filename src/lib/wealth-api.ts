@@ -1473,6 +1473,7 @@ export function useDeleteInvestmentTxn() {
     onSuccess: (p) => {
       toast.success("Transaction deleted");
       qc.invalidateQueries({ queryKey: [...wealthKeys.investmentTxns, p.investment_id] });
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to delete transaction"),
   });
