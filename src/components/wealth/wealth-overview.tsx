@@ -394,10 +394,18 @@ export function WealthOverview({
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="font-display text-2xl font-bold text-foreground">Overview</h2>
-        <p className="text-sm text-muted-foreground">Your wealth summary at a glance</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-2xl font-bold text-foreground">Overview</h2>
+          <p className="text-sm text-muted-foreground">Your wealth summary at a glance</p>
+        </div>
+        <RefreshIconButton
+          onClick={() => void refreshAll()}
+          busy={refreshing || quotesFetching}
+          label="Refresh overview"
+        />
       </div>
+
 
       {/* ROW 1 — KPI CARDS */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
