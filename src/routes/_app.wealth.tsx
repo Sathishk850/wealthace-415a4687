@@ -9,7 +9,9 @@ import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insuranc
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { WealthOverview } from "@/components/wealth/wealth-overview";
 import { getExchangeSessionLabels, getMarketStatus } from "@/lib/market/calendar";
+import { formatTime } from "@/lib/date-format";
 import { useEffect } from "react";
+
 
 export const Route = createFileRoute("/_app/wealth")({
   head: () => ({
