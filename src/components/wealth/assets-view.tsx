@@ -169,12 +169,11 @@ function classifyInvestment(cat: string, subCategory?: string | null): AssetTab 
   if (cat === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
   if (cat === "Stocks") return "Stocks";
   if (cat === "Mutual Funds") return "Mutual Funds";
-  if (cat === "REIT" || cat === "REITs") return "REIT";
-  if (cat === "InvIT" || cat === "InvITs") return "InvIT";
   if (cat === "Commodities" || cat === "Commodity" || cat === "Gold" || cat === "Crypto")
     return "Commodities";
   return "Other Assets";
 }
+
 
 function classifyAsset(cat: string): AssetTab {
   if (cat === "Property") return "Real Estate";
