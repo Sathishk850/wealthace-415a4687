@@ -196,7 +196,7 @@ export function HoldingDetailsModal({
           </div>
         </DialogHeader>
 
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
           {/* KPI CARDS */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <KpiCard label="Invested Amount" value={amountIn(invested, ccy)} />
