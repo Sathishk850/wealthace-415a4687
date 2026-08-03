@@ -452,9 +452,43 @@ export function WealthOverview({
 
       {/* ROW 2 — ALLOCATIONS */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <AllocationCard title="Asset Allocation" centerLabel="Total Assets" centerValue={inrCompact(totalAssets)} data={assetAlloc} onView={() => navigate({ to: "/wealth", search: {} })} />
-        <AllocationCard title="Sector Allocation" data={sectorAlloc} onView={() => navigate({ to: "/wealth", search: {} })} />
-        <AllocationCard title="Market Cap Allocation" data={marketCapAlloc} onView={() => navigate({ to: "/wealth", search: {} })} emptyLabel="Tag holdings as Large / Mid / Small cap in sub-category" />
+        <AllocationCard
+          title="Asset Allocation"
+          centerLabel="Total Assets"
+          centerValue={inrCompact(totalAssets)}
+          data={assetAlloc}
+          onView={() =>
+            setAllocDetail({
+              title: "Asset Allocation",
+              data: assetAlloc,
+              total: assetAlloc.reduce((s, d) => s + d.amt, 0),
+            })
+          }
+        />
+        <AllocationCard
+          title="Sector Allocation"
+          data={sectorAlloc}
+          onView={() =>
+            setAllocDetail({
+              title: "Sector Allocation",
+              data: sectorAlloc,
+              total: sectorAlloc.reduce((s, d) => s + d.amt, 0),
+            })
+          }
+          emptyLabel="Pick a Sector on the Add Investment form to see this split"
+        />
+        <AllocationCard
+          title="Market Cap"
+          data={marketCapAlloc}
+          onView={() =>
+            setAllocDetail({
+              title: "Market Cap",
+              data: marketCapAlloc,
+              total: marketCapAlloc.reduce((s, d) => s + d.amt, 0),
+            })
+          }
+          emptyLabel="Tag holdings as Large / Mid / Small cap on the Add Investment form"
+        />
       </div>
 
       {/* ROW 3 — TREND + TOP HOLDINGS */}
@@ -466,18 +500,24 @@ export function WealthOverview({
               <div className="mt-2 font-display text-2xl font-bold text-foreground">
                 {inr(currMonth)}
               </div>
-              <div className={`mt-0.5 text-xs font-medium ${overallPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                {overallPnl >= 0 ? "+" : ""}
-                {inr(overallPnl)} ({overallPct >= 0 ? "+" : ""}
-                {overallPct.toFixed(2)}%)
+              <div
+                className={`mt-0.5 text-xs font-medium ${periodDelta >= 0 ? "text-emerald-400" : "text-rose-400"}`}
+              >
+                {periodDelta >= 0 ? "+" : ""}
+                {inr(periodDelta)} ({periodDeltaPct >= 0 ? "+" : ""}
+                {periodDeltaPct.toFixed(2)}%)
+                <span className="ml-1 text-muted-foreground">· {period}</span>
               </div>
             </div>
             <div className="flex flex-wrap gap-1">
-              {["1M", "3M", "6M", "1Y", "3Y", "5Y", "ALL"].map((p, i) => (
+              {TREND_PERIODS.map((p) => (
                 <button
                   key={p}
+                  type="button"
+                  aria-pressed={period === p}
+                  onClick={() => setPeriod(p)}
                   className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition ${
-                    i === 3
+                    period === p
                       ? "border-mint/50 bg-mint/10 text-mint"
                       : "border-border bg-surface-2/40 text-muted-foreground hover:text-foreground"
                   }`}
@@ -493,6 +533,7 @@ export function WealthOverview({
                 Add investments with purchase dates to see growth
               </div>
             ) : (
+
               <ResponsiveContainer>
                 <AreaChart data={trend} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
                   <defs>
