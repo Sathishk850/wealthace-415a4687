@@ -486,9 +486,19 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
               ) : (
                 <tr
                   key={r.key}
-                  className="group border-t border-border/60 hover:bg-surface-2/40"
+                  className={`group border-t border-border/60 hover:bg-surface-2/40 ${
+                    validSelected.includes(r.t.id) ? "bg-mint/[0.06]" : ""
+                  }`}
                 >
+                  <td className="w-[44px] px-3 py-2">
+                    <SelectCheckbox
+                      label={`Select transaction ${formatDate(r.t.occurred_on)}`}
+                      checked={validSelected.includes(r.t.id)}
+                      onChange={(v) => toggleOne(r.t.id, v)}
+                    />
+                  </td>
                   <td className="px-3 py-2 text-foreground">{formatDate(r.t.occurred_on)}</td>
+
                   <td className="px-3 py-2">
                     <span
                       className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${r.t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}
