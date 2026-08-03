@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 import { formatDate } from "@/lib/date-format";
 import {
   type Investment,
