@@ -122,9 +122,8 @@ type AssetTab =
   | "Savings"
   | "Other Assets";
 
-/** Tabs shown in the UI. REIT / InvIT holdings surface under "All Holdings". */
+/** Tabs shown in the UI. REIT / InvIT holdings surface under "Other Assets". */
 const ASSET_TABS: AssetTab[] = [
-  "All Holdings",
   "Stocks",
   "Mutual Funds",
   "ETFs",
@@ -134,6 +133,7 @@ const ASSET_TABS: AssetTab[] = [
   "Savings",
   "Other Assets",
 ];
+
 
 const ADD_LABEL: Record<AssetTab, string> = {
   "All Holdings": "Add Investment",
@@ -169,12 +169,11 @@ function classifyInvestment(cat: string, subCategory?: string | null): AssetTab 
   if (cat === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
   if (cat === "Stocks") return "Stocks";
   if (cat === "Mutual Funds") return "Mutual Funds";
-  if (cat === "REIT" || cat === "REITs") return "REIT";
-  if (cat === "InvIT" || cat === "InvITs") return "InvIT";
   if (cat === "Commodities" || cat === "Commodity" || cat === "Gold" || cat === "Crypto")
     return "Commodities";
   return "Other Assets";
 }
+
 
 function classifyAsset(cat: string): AssetTab {
   if (cat === "Property") return "Real Estate";
@@ -256,10 +255,11 @@ const DEFAULT_SORT: { key: SortKey; dir: "asc" | "desc" } = { key: "name", dir: 
 
 export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) => void }) {
   const [tab, setTab] = useState<AssetTab>(() => {
-    if (typeof sessionStorage === "undefined") return "All Holdings";
+    if (typeof sessionStorage === "undefined") return "Stocks";
     const saved = sessionStorage.getItem(TAB_STORAGE_KEY) as AssetTab | null;
-    return saved && ASSET_TABS.includes(saved) ? saved : "All Holdings";
+    return saved && ASSET_TABS.includes(saved) ? saved : "Stocks";
   });
+
   const [search, setSearch] = useState("");
   const [fSegment, setFSegment] = useState<string>("all");
   const [fSector, setFSector] = useState<string>("all");
@@ -448,7 +448,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   }, [flatRows, txnCounts]);
 
   const tabRows = useMemo(
-    () => (tab === "All Holdings" ? rows : rows.filter((r) => r.tab === tab)),
+    () => rows.filter((r) => r.tab === tab),
 
     [rows, tab],
   );
@@ -632,7 +632,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   return (
     <div className="space-y-4">
       {/* ============ ASSET TABS ============ */}
-      <div className="-mx-1 overflow-x-auto">
+      <div className="-mx-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <TextTabs
           items={ASSET_TABS.map((t) => ({ value: t, label: t }))}
           value={tab}
@@ -644,9 +644,10 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             setFExchange("all");
             setFPlatform("all");
           }}
-          className="min-w-max px-1"
+          className="min-w-max flex-nowrap px-1"
         />
       </div>
+
 
       {/* ============ TOOLBAR ============ */}
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
@@ -710,7 +711,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
       {/* ============ TABLE ============ */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="max-h-[65vh] overflow-auto">
+        <div className="overflow-x-auto">
+
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">

@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 import { formatDate } from "@/lib/date-format";
 import {
   type Investment,
@@ -154,8 +155,9 @@ export function HoldingDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : requestClose())}>
-      <DialogContent className="max-w-4xl gap-0 overflow-hidden p-0">
-        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-card px-6 py-4">
+      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b border-border bg-card px-6 py-4">
+
           <div className="flex items-start gap-4">
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-mint/15 text-base font-bold text-mint">
               {inv.name.slice(0, 1).toUpperCase()}
@@ -195,7 +197,7 @@ export function HoldingDetailsModal({
           </div>
         </DialogHeader>
 
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
           {/* KPI CARDS */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <KpiCard label="Invested Amount" value={amountIn(invested, ccy)} />
@@ -245,7 +247,7 @@ export function HoldingDetailsModal({
 
         </div>
 
-        <div className="sticky bottom-0 border-t border-border bg-card px-6 py-3 flex justify-end">
+        <div className="shrink-0 border-t border-border bg-card px-6 py-3 flex justify-end">
           <Button variant="outline" onClick={requestClose}>
             Close
           </Button>
@@ -287,6 +289,8 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<InvestmentTxn | null>(null);
   const [confirmDel, setConfirmDel] = useState<InvestmentTxn | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmBulk, setConfirmBulk] = useState(false);
   const [lotId, setLotId] = useState<string>(members[0].id);
   const ccy = investment.currency || "INR";
 
@@ -335,6 +339,22 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
 
   const target = members.find((m) => m.id === lotId) ?? members[0];
 
+  const txnById = useMemo(() => new Map(txns.map((t) => [t.id, t])), [txns]);
+  const validSelected = selected.filter((id) => txnById.has(id));
+  const allSelected = txns.length > 0 && validSelected.length === txns.length;
+  const toggleAll = (v: boolean) => setSelected(v ? txns.map((t) => t.id) : []);
+  const toggleOne = (id: string, v: boolean) =>
+    setSelected((prev) => (v ? [...prev, id] : prev.filter((x) => x !== id)));
+
+  const deleteSelected = async () => {
+    for (const id of validSelected) {
+      const t = txnById.get(id);
+      if (t) await del.mutateAsync({ id: t.id, investment_id: t.investment_id });
+    }
+    setSelected([]);
+    setConfirmBulk(false);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -344,14 +364,28 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
             : `${entries.length} transaction${entries.length === 1 ? "" : "s"}` +
               (members.length > 1 ? ` across ${members.length} entries` : "")}
         </div>
-        <Button
-          size="sm"
-          onClick={() => setAdding(true)}
-          className="bg-mint text-[#04121C] hover:brightness-110"
-        >
-          <Plus className="mr-1 h-3.5 w-3.5" /> Add Transaction
-        </Button>
+        <div className="flex items-center gap-2">
+          {validSelected.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-rose-500/40 text-rose-500 hover:bg-rose-500/10"
+              onClick={() => setConfirmBulk(true)}
+              disabled={del.isPending}
+            >
+              <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete {validSelected.length}
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            onClick={() => setAdding(true)}
+            className="bg-mint text-[#04121C] hover:brightness-110"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" /> Add Transaction
+          </Button>
+        </div>
       </div>
+
 
       {adding && members.length > 1 ? (
         <div className="rounded-xl border border-border bg-surface-2/30 p-3">
@@ -397,6 +431,14 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
         <table className="w-full text-sm">
           <thead className="bg-surface-2/50">
             <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+              <th className="w-[44px] px-3 py-2">
+                <SelectCheckbox
+                  label="Select all transactions"
+                  checked={allSelected}
+                  indeterminate={validSelected.length > 0 && !allSelected}
+                  onChange={toggleAll}
+                />
+              </th>
               <th className="px-3 py-2 font-medium">Date</th>
               <th className="px-3 py-2 font-medium">Type</th>
               <th className="px-3 py-2 text-right font-medium">Qty</th>
@@ -409,14 +451,16 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
           <tbody>
             {entries.length === 0 && !isLoading ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground">
                   No transactions recorded yet.
                 </td>
               </tr>
             ) : null}
+
             {entries.map((r) =>
               r.kind === "lot" ? (
                 <tr key={r.key} className="border-t border-border/60 hover:bg-surface-2/40">
+                  <td className="w-[44px] px-3 py-2" />
                   <td className="px-3 py-2 text-foreground">
                     {r.m.purchase_date ? formatDate(r.m.purchase_date) : "—"}
                   </td>
@@ -442,9 +486,19 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
               ) : (
                 <tr
                   key={r.key}
-                  className="group border-t border-border/60 hover:bg-surface-2/40"
+                  className={`group border-t border-border/60 hover:bg-surface-2/40 ${
+                    validSelected.includes(r.t.id) ? "bg-mint/[0.06]" : ""
+                  }`}
                 >
+                  <td className="w-[44px] px-3 py-2">
+                    <SelectCheckbox
+                      label={`Select transaction ${formatDate(r.t.occurred_on)}`}
+                      checked={validSelected.includes(r.t.id)}
+                      onChange={(v) => toggleOne(r.t.id, v)}
+                    />
+                  </td>
                   <td className="px-3 py-2 text-foreground">{formatDate(r.t.occurred_on)}</td>
+
                   <td className="px-3 py-2">
                     <span
                       className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${r.t.txn_type === "buy" ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}
@@ -465,7 +519,7 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
                     {r.t.notes || "—"}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => setEditing(r.t)}
                         className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-mint"
@@ -513,7 +567,10 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
               disabled={del.isPending}
               onClick={async () => {
                 if (!confirmDel) return;
-                await del.mutateAsync({ id: confirmDel.id, investment_id: investment.id });
+                await del.mutateAsync({
+                  id: confirmDel.id,
+                  investment_id: confirmDel.investment_id,
+                });
                 setConfirmDel(null);
               }}
             >
@@ -522,6 +579,28 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={confirmBulk} onOpenChange={(v) => !v && setConfirmBulk(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {validSelected.length} transaction{validSelected.length === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={del.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-500 text-white hover:bg-rose-600"
+              disabled={del.isPending}
+              onClick={deleteSelected}
+            >
+              {del.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
