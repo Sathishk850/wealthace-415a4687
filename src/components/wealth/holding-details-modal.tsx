@@ -336,6 +336,22 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
 
   const target = members.find((m) => m.id === lotId) ?? members[0];
 
+  const txnById = useMemo(() => new Map(txns.map((t) => [t.id, t])), [txns]);
+  const validSelected = selected.filter((id) => txnById.has(id));
+  const allSelected = txns.length > 0 && validSelected.length === txns.length;
+  const toggleAll = (v: boolean) => setSelected(v ? txns.map((t) => t.id) : []);
+  const toggleOne = (id: string, v: boolean) =>
+    setSelected((prev) => (v ? [...prev, id] : prev.filter((x) => x !== id)));
+
+  const deleteSelected = async () => {
+    for (const id of validSelected) {
+      const t = txnById.get(id);
+      if (t) await del.mutateAsync({ id: t.id, investment_id: t.investment_id });
+    }
+    setSelected([]);
+    setConfirmBulk(false);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -345,14 +361,28 @@ function HistoryTab({ investment, lots }: { investment: Investment; lots?: Inves
             : `${entries.length} transaction${entries.length === 1 ? "" : "s"}` +
               (members.length > 1 ? ` across ${members.length} entries` : "")}
         </div>
-        <Button
-          size="sm"
-          onClick={() => setAdding(true)}
-          className="bg-mint text-[#04121C] hover:brightness-110"
-        >
-          <Plus className="mr-1 h-3.5 w-3.5" /> Add Transaction
-        </Button>
+        <div className="flex items-center gap-2">
+          {validSelected.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-rose-500/40 text-rose-500 hover:bg-rose-500/10"
+              onClick={() => setConfirmBulk(true)}
+              disabled={del.isPending}
+            >
+              <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete {validSelected.length}
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            onClick={() => setAdding(true)}
+            className="bg-mint text-[#04121C] hover:brightness-110"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" /> Add Transaction
+          </Button>
+        </div>
       </div>
+
 
       {adding && members.length > 1 ? (
         <div className="rounded-xl border border-border bg-surface-2/30 p-3">
