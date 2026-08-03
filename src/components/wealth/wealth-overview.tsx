@@ -168,34 +168,70 @@ export function WealthOverview({
   const overallPct = investmentsInvested > 0 ? (overallPnl / investmentsInvested) * 100 : 0;
   const portXirr = useMemo(() => portfolioXirr(rows), [rows]);
 
-  /* ===== 12-month portfolio trend (investments only) ===== */
+  /* ===== Portfolio trend for the selected period ===== */
   const trend = useMemo(() => {
     if (!rich.length) return [] as { m: string; v: number }[];
     const now = new Date();
-    const months: { key: string; m: string; v: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
+
+    // Window start: fixed months for presets, first purchase for ALL.
+    const months = PERIOD_MONTHS[period];
+    let startYear: number;
+    let startMonth: number;
+    if (months == null) {
+      const dates = rich
+        .map((r) => (r.purchase_date ? new Date(r.purchase_date) : null))
+        .filter((d): d is Date => !!d && !isNaN(d.getTime()))
+        .sort((a, b) => a.getTime() - b.getTime());
+      const first = dates[0] ?? new Date(now.getFullYear() - 1, now.getMonth(), 1);
+      startYear = first.getFullYear();
+      startMonth = first.getMonth();
+    } else {
+      const d = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+      startYear = d.getFullYear();
+      startMonth = d.getMonth();
+    }
+
+    const totalBuckets =
+      (now.getFullYear() - startYear) * 12 + (now.getMonth() - startMonth) + 1;
+    const count = Math.max(2, totalBuckets);
+    // Long windows get quarterly / yearly sampling so the axis stays readable.
+    const step = count > 60 ? 12 : count > 24 ? 3 : 1;
+
+    const points: { key: string; m: string; v: number }[] = [];
+    for (let i = count - 1; i >= 0; i -= step) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
+      points.push({
         key: `${d.getFullYear()}-${d.getMonth()}`,
-        m: d.toLocaleString("en-IN", { month: "short" }) + " '" + String(d.getFullYear()).slice(2),
+        m:
+          step >= 12
+            ? String(d.getFullYear())
+            : d.toLocaleString("en-IN", { month: "short" }) +
+              " '" +
+              String(d.getFullYear()).slice(2),
         v: 0,
       });
     }
+    points.reverse();
+    points.reverse(); // keep chronological order after the descending loop
+
     for (const r of rich) {
       const pd = r.purchase_date ? new Date(r.purchase_date) : null;
-      for (const mo of months) {
+      for (const mo of points) {
         const [y, m] = mo.key.split("-").map(Number);
         const moEnd = new Date(y, m + 1, 0);
         if (!pd || pd <= moEnd) mo.v += r.cur;
       }
     }
-    return months;
-  }, [rich]);
+    return points;
+  }, [rich, period]);
 
+  const periodStartValue = trend.length >= 1 ? trend[0].v : 0;
   const prevMonth = trend.length >= 2 ? trend[trend.length - 2].v : 0;
   const currMonth = trend.length >= 1 ? trend[trend.length - 1].v : investmentsCurrent;
   const assetDelta = prevMonth > 0 ? currMonth - prevMonth : 0;
   const assetDeltaPct = prevMonth > 0 ? (assetDelta / prevMonth) * 100 : 0;
+  const periodDelta = periodStartValue > 0 ? currMonth - periodStartValue : 0;
+  const periodDeltaPct = periodStartValue > 0 ? (periodDelta / periodStartValue) * 100 : 0;
 
   /* ===== Allocations ===== */
   const assetAlloc = useMemo(() => {
@@ -226,9 +262,10 @@ export function WealthOverview({
   }, [rich, assets]);
 
   const sectorAlloc = useMemo(() => {
+    // Sector comes from the "Sector" label captured on the Add Investment form.
     const map = new Map<string, number>();
     for (const r of rich) {
-      const sector = (r.sub_category || r.category || "Others").toString();
+      const sector = sectorFromNotes(r.notes) ?? "Unclassified";
       map.set(sector, (map.get(sector) || 0) + r.cur);
     }
     const total = Array.from(map.values()).reduce((a, b) => a + b, 0) || 1;
@@ -239,19 +276,18 @@ export function WealthOverview({
         pct: (amt / total) * 100,
         color: PIE[i % PIE.length],
       }))
-      .sort((a, b) => b.pct - a.pct)
-      .slice(0, 7);
+      .sort((a, b) => b.pct - a.pct);
   }, [rich]);
 
   const marketCapAlloc = useMemo(() => {
     const map = new Map<string, number>();
     for (const r of rich) {
       const bucket = marketCapOf(r);
-      if (bucket === "Other") continue;
+      if (!bucket) continue;
       map.set(bucket, (map.get(bucket) || 0) + r.cur);
     }
     const total = Array.from(map.values()).reduce((a, b) => a + b, 0) || 1;
-    const order = ["Large Cap", "Mid Cap", "Small Cap"];
+    const order = ["Large Cap", "Mid Cap", "Small Cap", "Multi Cap", "Flexi Cap"];
     return order
       .filter((k) => map.has(k))
       .map((k, i) => ({
@@ -261,6 +297,7 @@ export function WealthOverview({
         color: PIE[i % PIE.length],
       }));
   }, [rich]);
+
 
   /* ===== Top Holdings ===== */
   const topHoldings = useMemo(
