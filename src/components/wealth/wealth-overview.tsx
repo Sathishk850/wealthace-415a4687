@@ -559,7 +559,11 @@ export function WealthOverview({
         <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Top Holdings</h3>
-            <button className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125">
+            <button
+              type="button"
+              onClick={() => (onGoAssets ? onGoAssets() : navigate({ to: "/wealth" }))}
+              className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125"
+            >
               View All <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
