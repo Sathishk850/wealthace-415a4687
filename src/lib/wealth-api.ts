@@ -1452,6 +1452,7 @@ export function useUpsertInvestmentTxn() {
     onSuccess: (_d, vars) => {
       toast.success("Transaction saved");
       qc.invalidateQueries({ queryKey: [...wealthKeys.investmentTxns, vars.investment_id] });
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
       qc.invalidateQueries({ queryKey: wealthKeys.investmentTxns });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to save transaction"),
