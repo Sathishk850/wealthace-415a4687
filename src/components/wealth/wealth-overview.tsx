@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   PieChart,
@@ -27,6 +27,19 @@ import {
   Info,
   CalendarClock,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AUTO_REFRESH_MS, RefreshIconButton } from "@/components/refresh-icon-button";
+import {
+  AllocationDetailsDialog,
+  type AllocationSlice,
+} from "@/components/wealth/allocation-details-dialog";
+import { marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   cagrPct,
@@ -66,23 +79,70 @@ function segmentOf(cat: string): string {
   return "Others";
 }
 
-/** Best-effort market-cap bucket derived from sub_category/notes text. */
-function marketCapOf(inv: Investment): "Large Cap" | "Mid Cap" | "Small Cap" | "Other" {
-  const s = `${inv.sub_category ?? ""} ${inv.notes ?? ""} ${inv.name ?? ""}`.toLowerCase();
-  if (s.includes("large")) return "Large Cap";
-  if (s.includes("mid")) return "Mid Cap";
-  if (s.includes("small")) return "Small Cap";
-  const cat = (inv.category || "").toLowerCase();
-  if (cat.includes("stock") || cat.includes("etf") || cat.includes("mutual")) return "Large Cap";
-  return "Other";
+/** Market-cap bucket taken from the classification captured on the Add form. */
+function marketCapOf(inv: Investment): string | null {
+  return marketCapBand({ sub_category: inv.sub_category, notes: inv.notes });
 }
 
-export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
+const TREND_PERIODS = ["1M", "3M", "6M", "1Y", "3Y", "5Y", "ALL"] as const;
+type TrendPeriod = (typeof TREND_PERIODS)[number];
+
+const PERIOD_MONTHS: Record<TrendPeriod, number | null> = {
+  "1M": 1,
+  "3M": 3,
+  "6M": 6,
+  "1Y": 12,
+  "3Y": 36,
+  "5Y": 60,
+  ALL: null,
+};
+
+export function WealthOverview({
+  onGoSip,
+  onGoAssets,
+}: {
+  onGoSip: () => void;
+  onGoAssets?: () => void;
+}) {
   const navigate = useNavigate();
-  const { data: assets = [] } = useAssets();
-  const { data: liabilities = [] } = useLiabilities();
-  const { data: rows = [] } = useInvestments();
-  const { quoteMap } = useInvestmentQuotes(rows);
+  const { data: assets = [], refetch: refetchAssets } = useAssets();
+  const { data: liabilities = [], refetch: refetchLiabilities } = useLiabilities();
+  const { data: rows = [], refetch: refetchInvestments } = useInvestments();
+  const { quoteMap, isFetching: quotesFetching, refetch: refetchQuotes } =
+    useInvestmentQuotes(rows);
+
+  const [period, setPeriod] = useState<TrendPeriod>("1Y");
+  const [allocDetail, setAllocDetail] = useState<{
+    title: string;
+    data: AllocationSlice[];
+    total: number;
+  } | null>(null);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshAll = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchInvestments(),
+        refetchAssets(),
+        refetchLiabilities(),
+        refetchQuotes(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Auto refresh every 30 minutes so insights stay reliable.
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      void refreshAll();
+    }, AUTO_REFRESH_MS);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ===== Derived per-holding values (uses existing derive logic) ===== */
   const rich = useMemo(() => {
@@ -97,6 +157,7 @@ export function WealthOverview({ onGoSip }: { onGoSip: () => void }) {
       return { ...r, inv, cur, pnl, ret };
     });
   }, [rows, quoteMap]);
+
 
   const investmentsCurrent = rich.reduce((s, r) => s + r.cur, 0);
   const investmentsInvested = rich.reduce((s, r) => s + r.inv, 0);
