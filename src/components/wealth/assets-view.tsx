@@ -255,10 +255,11 @@ const DEFAULT_SORT: { key: SortKey; dir: "asc" | "desc" } = { key: "name", dir: 
 
 export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) => void }) {
   const [tab, setTab] = useState<AssetTab>(() => {
-    if (typeof sessionStorage === "undefined") return "All Holdings";
+    if (typeof sessionStorage === "undefined") return "Stocks";
     const saved = sessionStorage.getItem(TAB_STORAGE_KEY) as AssetTab | null;
-    return saved && ASSET_TABS.includes(saved) ? saved : "All Holdings";
+    return saved && ASSET_TABS.includes(saved) ? saved : "Stocks";
   });
+
   const [search, setSearch] = useState("");
   const [fSegment, setFSegment] = useState<string>("all");
   const [fSector, setFSector] = useState<string>("all");
