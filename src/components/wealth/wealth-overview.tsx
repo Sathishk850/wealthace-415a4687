@@ -673,9 +673,38 @@ export function WealthOverview({
           SIP Tracker
         </button>
       </div>
+
+      <AllocationDetailsDialog
+        open={!!allocDetail}
+        onOpenChange={(o) => !o && setAllocDetail(null)}
+        title={allocDetail?.title ?? ""}
+        data={allocDetail?.data ?? []}
+        total={allocDetail?.total ?? 0}
+      />
+
+      <Dialog open={insightsOpen} onOpenChange={setInsightsOpen}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>All Insights</DialogTitle>
+            <DialogDescription>Smart, dynamic tips from your portfolio</DialogDescription>
+          </DialogHeader>
+          {insights.length === 0 ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">
+              Add data to see personalized insights.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {insights.map((it, i) => (
+                <InsightCard key={i} {...it} />
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 /* =============== Small pieces =============== */
 
