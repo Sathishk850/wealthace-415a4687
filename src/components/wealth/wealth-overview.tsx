@@ -211,9 +211,6 @@ export function WealthOverview({
         v: 0,
       });
     }
-    points.reverse();
-    points.reverse(); // keep chronological order after the descending loop
-
     for (const r of rich) {
       const pd = r.purchase_date ? new Date(r.purchase_date) : null;
       for (const mo of points) {
