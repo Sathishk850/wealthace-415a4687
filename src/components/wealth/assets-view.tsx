@@ -44,6 +44,7 @@ import { AssetDialog } from "@/components/wealth/asset-dialog";
 import { HoldingDetailsModal } from "@/components/wealth/holding-details-modal";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
 import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
+import { marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
 import type { MarketQuote } from "@/lib/market/types";
 import { usePaymentAccounts } from "@/lib/payment-accounts-api";
 import {
