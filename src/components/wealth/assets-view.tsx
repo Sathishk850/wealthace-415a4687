@@ -1155,7 +1155,6 @@ function MobileHoldingGroups({
       </div>
       {groups.map((g) => {
         const open = isOpen(g.label);
-        const open = isOpen(g.label);
         const up = g.pct >= 0;
         return (
           <div key={g.label}>
