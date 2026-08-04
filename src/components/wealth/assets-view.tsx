@@ -1078,6 +1078,179 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 }
 
 /* =========================================================
+   Mobile: grouped, compact holding cards with a "…" menu
+========================================================= */
+
+function compactAmount(v: number, currency: string): string {
+  const abs = Math.abs(v);
+  const sym = currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "GBP" ? "£" : "₹";
+  const fmt = (n: number, s: string) => `${sym}${n.toFixed(2)}${s}`;
+  if (currency === "INR") {
+    if (abs >= 1e7) return fmt(v / 1e7, "Cr");
+    if (abs >= 1e5) return fmt(v / 1e5, "L");
+    if (abs >= 1e3) return fmt(v / 1e3, "K");
+  } else {
+    if (abs >= 1e9) return fmt(v / 1e9, "B");
+    if (abs >= 1e6) return fmt(v / 1e6, "M");
+    if (abs >= 1e3) return fmt(v / 1e3, "K");
+  }
+  return `${sym}${v.toFixed(2)}`;
+}
+
+function MobileHoldingGroups({
+  rows,
+  rowKey,
+  isSelected,
+  onSelectChange,
+  onView,
+  onEdit,
+  onDelete,
+}: {
+  rows: Holding[];
+  rowKey: (h: Holding) => string;
+  isSelected: (key: string) => boolean;
+  onSelectChange: (key: string, v: boolean) => void;
+  onView: (h: Holding) => void;
+  onEdit: (h: Holding) => void;
+  onDelete: (h: Holding) => void;
+}) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const groups = useMemo(() => {
+    const m = new Map<string, Holding[]>();
+    for (const r of rows) {
+      const k = r.segment || r.type || "Other";
+      const list = m.get(k);
+      if (list) list.push(r);
+      else m.set(k, [r]);
+    }
+    return [...m.entries()].map(([label, items]) => {
+      const invested = items.reduce((s, i) => s + i.invested, 0);
+      const current = items.reduce((s, i) => s + i.current, 0);
+      return {
+        label,
+        items,
+        current,
+        pct: invested > 0 ? ((current - invested) / invested) * 100 : 0,
+        currency: items[0]?.currency || "INR",
+      };
+    });
+  }, [rows]);
+
+  return (
+    <div className="divide-y divide-border">
+      {groups.map((g) => {
+        const open = !collapsed[g.label];
+        const up = g.pct >= 0;
+        return (
+          <div key={g.label}>
+            <button
+              onClick={() => setCollapsed((c) => ({ ...c, [g.label]: open }))}
+              className="flex w-full items-center gap-2 px-3 py-3 text-left"
+            >
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
+              />
+              <span className="truncate text-sm font-semibold text-foreground">{g.label}</span>
+              <span className="shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                {g.items.length}
+              </span>
+              <span className="ml-auto shrink-0 text-sm font-semibold text-foreground">
+                {compactAmount(g.current, g.currency)}
+              </span>
+              <span
+                className={`shrink-0 text-xs font-medium ${up ? "text-emerald-500" : "text-rose-500"}`}
+              >
+                {up ? "+" : ""}
+                {g.pct.toFixed(1)}%
+              </span>
+            </button>
+
+            {open
+              ? g.items.map((h) => {
+                  const key = rowKey(h);
+                  const rowUp = h.pnl >= 0;
+                  return (
+                    <div
+                      key={key}
+                      data-holding-id={h.id}
+                      className={`flex items-center gap-2 border-t border-border/40 px-3 py-3 ${
+                        isSelected(key) ? "bg-mint/[0.06]" : ""
+                      }`}
+                    >
+                      <SelectCheckbox
+                        label={`Select ${h.name}`}
+                        checked={isSelected(key)}
+                        onChange={(v) => onSelectChange(key, v)}
+                      />
+                      <button
+                        onClick={() => onView(h)}
+                        className="min-w-0 flex-1 text-left"
+                        aria-label={`View ${h.name}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium text-foreground">
+                            {h.name}
+                          </span>
+                          {h.txn_count && h.txn_count > 1 ? (
+                            <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
+                              {h.txn_count}
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {[h.symbol, h.type].filter(Boolean).join(" · ")}
+                        </div>
+                      </button>
+                      <div className="shrink-0 text-right">
+                        <div className="text-sm font-semibold text-foreground">
+                          {compactAmount(h.current, h.currency)}
+                        </div>
+                        <div
+                          className={`text-[11px] font-medium ${rowUp ? "text-emerald-500" : "text-rose-500"}`}
+                        >
+                          {rowUp ? "+" : ""}
+                          {h.pnl_pct.toFixed(2)}%
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            aria-label={`Actions for ${h.name}`}
+                            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => onView(h)}>
+                            <Eye className="mr-2 h-4 w-4" /> View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEdit(h)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onDelete(h)}
+                            className="text-rose-500 focus:text-rose-500"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  );
+                })
+              : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+
+/* =========================================================
    Table row (with hover-reveal actions, no layout shift)
 ========================================================= */
 type RowLike = {
