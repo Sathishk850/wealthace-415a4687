@@ -50,6 +50,8 @@ import { marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
 import { AUTO_REFRESH_MS } from "@/components/refresh-icon-button";
 import type { MarketQuote } from "@/lib/market/types";
 import { usePaymentAccounts } from "@/lib/payment-accounts-api";
+import { useCollapsibleGroups } from "@/lib/use-collapsible-groups";
+
 import {
   type Asset,
   type Investment,
