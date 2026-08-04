@@ -1142,12 +1142,13 @@ function MobileHoldingGroups({
   return (
     <div className="divide-y divide-border">
       {groups.map((g) => {
-        const open = !collapsed[g.label];
+        const open = isOpen(g.label);
         const up = g.pct >= 0;
         return (
           <div key={g.label}>
             <button
-              onClick={() => setCollapsed((c) => ({ ...c, [g.label]: open }))}
+              onClick={() => toggle(g.label)}
+
               className="flex w-full items-center gap-2 px-3 py-3 text-left"
             >
               <ChevronDown
