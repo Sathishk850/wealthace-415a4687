@@ -50,6 +50,8 @@ import { marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
 import { AUTO_REFRESH_MS } from "@/components/refresh-icon-button";
 import type { MarketQuote } from "@/lib/market/types";
 import { usePaymentAccounts } from "@/lib/payment-accounts-api";
+import { useCollapsibleGroups } from "@/lib/use-collapsible-groups";
+
 import {
   type Asset,
   type Investment,
@@ -1116,7 +1118,7 @@ function MobileHoldingGroups({
   onEdit: (h: Holding) => void;
   onDelete: (h: Holding) => void;
 }) {
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const { isOpen, toggle } = useCollapsibleGroups("assets-mobile-groups");
 
   const groups = useMemo(() => {
     const m = new Map<string, Holding[]>();
@@ -1142,12 +1144,13 @@ function MobileHoldingGroups({
   return (
     <div className="divide-y divide-border">
       {groups.map((g) => {
-        const open = !collapsed[g.label];
+        const open = isOpen(g.label);
         const up = g.pct >= 0;
         return (
           <div key={g.label}>
             <button
-              onClick={() => setCollapsed((c) => ({ ...c, [g.label]: open }))}
+              onClick={() => toggle(g.label)}
+
               className="flex w-full items-center gap-2 px-3 py-3 text-left"
             >
               <ChevronDown
