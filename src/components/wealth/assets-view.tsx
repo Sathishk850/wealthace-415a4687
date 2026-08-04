@@ -673,8 +673,88 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       </div>
 
 
-      {/* ============ TOOLBAR ============ */}
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3">
+      {/* ============ TOOLBAR (mobile) ============ */}
+      <div className="space-y-2 md:hidden">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMobileSearch((v) => !v)}
+            aria-label="Search holdings"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          <div className="-mx-1 min-w-0 flex-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-center gap-2">
+              <FilterMenu
+                label="Segment"
+                value={fSegment}
+                onChange={setFSegment}
+                options={segmentOptions}
+              />
+              <FilterMenu
+                label="Sector"
+                value={fSector}
+                onChange={setFSector}
+                options={sectorOptions}
+              />
+              <FilterMenu
+                label="Market Cap"
+                value={fMarketCap}
+                onChange={setFMarketCap}
+                options={marketCapOptions}
+              />
+              <FilterMenu
+                label="Platform"
+                value={fPlatform}
+                onChange={setFPlatform}
+                options={platformOptions}
+              />
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                await refreshHoldings.mutateAsync();
+                await refetchQuotes();
+                await refetchInv();
+                await refetchAssets();
+                toast.success("Prices refreshed");
+              } catch {
+                await refetchQuotes();
+              }
+            }}
+            disabled={quotesFetching || refreshHoldings.isPending}
+            aria-label="Refresh prices"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-mint/40 bg-mint/[0.06] text-mint disabled:opacity-60"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${quotesFetching || refreshHoldings.isPending ? "animate-spin" : ""}`}
+            />
+          </button>
+          <button
+            onClick={openAdd}
+            aria-label={ADD_LABEL[tab]}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-mint text-[#04121C]"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+        {mobileSearch ? (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={SEARCH_PLACEHOLDER[tab]}
+              className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {/* ============ TOOLBAR (desktop) ============ */}
+      <div className="hidden flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 md:flex">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -741,7 +821,32 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
       {/* ============ TABLE ============ */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="overflow-x-auto">
+        {/* Mobile: grouped card list */}
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</div>
+          ) : sorted.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+              No holdings in {tab}. Tap <span className="text-mint">+</span> to add one.
+            </div>
+          ) : (
+            <MobileHoldingGroups
+              rows={sorted}
+              rowKey={rowKey}
+              isSelected={(k) => sel.isSelected(k)}
+              onSelectChange={(k, v) => sel.toggle(k, v)}
+              onView={(h) => {
+                setDetailsTab("fundamental");
+                setDetails(h);
+              }}
+              onEdit={(h) => openEdit(h)}
+              onDelete={(h) => setConfirm(h)}
+            />
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
+
 
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
