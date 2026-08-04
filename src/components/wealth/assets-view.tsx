@@ -1118,7 +1118,7 @@ function MobileHoldingGroups({
   onEdit: (h: Holding) => void;
   onDelete: (h: Holding) => void;
 }) {
-  const { isOpen, toggle, setAll } = useCollapsibleGroups("assets-mobile-groups", false);
+  const { isOpen, toggle, setAll } = useCollapsibleGroups("assets-mobile-groups-v2", false);
 
   const groups = useMemo(() => {
     const m = new Map<string, Holding[]>();
