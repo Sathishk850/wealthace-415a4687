@@ -1141,9 +1141,20 @@ function MobileHoldingGroups({
     });
   }, [rows]);
 
+  const allOpen = groups.length > 0 && groups.every((g) => isOpen(g.label));
+
   return (
     <div className="divide-y divide-border">
+      <div className="flex justify-end px-3 py-2">
+        <button
+          onClick={() => setAll(groups.map((g) => g.label), !allOpen)}
+          className="text-[11px] font-semibold text-mint"
+        >
+          {allOpen ? "Collapse all" : "Expand all"}
+        </button>
+      </div>
       {groups.map((g) => {
+        const open = isOpen(g.label);
         const open = isOpen(g.label);
         const up = g.pct >= 0;
         return (
