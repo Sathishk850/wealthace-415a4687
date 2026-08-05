@@ -18,16 +18,19 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Require a shared secret in the x-webhook-secret header.
-        // Configured via the NOTIFICATION_CRON_SECRET env var.
+        // Accepts either the shared secret (x-webhook-secret) or the project's
+        // publishable key in the `apikey` header (pg_cron pattern).
+        const eq = (a: string, b: string) => {
+          if (!b || a.length !== b.length) return false;
+          return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+        };
         const provided = request.headers.get("x-webhook-secret") ?? "";
-        const expected = process.env.NOTIFICATION_CRON_SECRET ?? "";
-        const providedBuf = Buffer.from(provided);
-        const expectedBuf = Buffer.from(expected);
+        const apiKey = request.headers.get("apikey") ?? "";
         const authorized =
-          expected.length > 0 &&
-          providedBuf.length === expectedBuf.length &&
-          timingSafeEqual(providedBuf, expectedBuf);
+          eq(provided, process.env.NOTIFICATION_CRON_SECRET ?? "") ||
+          eq(apiKey, process.env.SUPABASE_PUBLISHABLE_KEY ?? "") ||
+          eq(apiKey, process.env.SUPABASE_ANON_KEY ?? "");
+
         if (!authorized) {
           // Log without exposing the secret value.
           console.warn("[notification-cron] unauthorized request", {
