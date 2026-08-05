@@ -1,47 +1,31 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
 import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
-
-/** Shared row-id accessor for bulk selection. */
-const getRowId = (r: { id: string }) => r.id;
-
-import { smartXAxisProps } from "@/lib/chart-axis";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { TextTabs } from "@/components/text-tabs";
+import { useCollapsibleGroups } from "@/lib/use-collapsible-groups";
+import { AUTO_REFRESH_MS } from "@/components/refresh-icon-button";
 import {
   CreditCard,
-  TrendingDown,
   Banknote,
-  Percent,
-  Info,
-  ArrowUpRight,
-  ArrowDownRight,
   Search,
   ChevronDown,
   ArrowUpDown,
-  List,
-  LayoutGrid,
-  MoreVertical,
+  ArrowUp,
+  ArrowDown,
   Home,
   Car,
   GraduationCap,
   ShoppingBag,
   Briefcase,
-  ChevronLeft,
-  ChevronRight,
+  Coins,
   Pencil,
   Trash2,
+  Eye,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -54,13 +38,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -68,78 +54,101 @@ import {
   type Liability,
   type LiabilityInput,
   dueSoon,
-  formatDate,
-  groupByCategory,
   inr,
-  inrCompact,
   useBulkInsertLiabilities,
   useDeleteLiability,
   useLiabilities,
   weightedAvgRate,
 } from "@/lib/wealth-api";
+import { formatDate } from "@/lib/date-format";
 import { LiabilityDialog } from "@/components/wealth/liability-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
 import { toast } from "sonner";
 
+/* ---------------------------------------------------------
+   Category meta (icons/tints) — Gold Loan included
+--------------------------------------------------------- */
 const ICONS: Record<string, { Icon: any; tint: string }> = {
   "Home Loan": { Icon: Home, tint: "bg-blue-500/10 text-blue-400" },
   "Car Loan": { Icon: Car, tint: "bg-violet-500/10 text-violet-400" },
   "Personal Loan": { Icon: Banknote, tint: "bg-amber-500/10 text-amber-400" },
+  "Gold Loan": { Icon: Coins, tint: "bg-yellow-500/10 text-yellow-400" },
   "Credit Card": { Icon: CreditCard, tint: "bg-rose-500/10 text-rose-400" },
   "Education Loan": { Icon: GraduationCap, tint: "bg-emerald-500/10 text-emerald-400" },
   "Business Loan": { Icon: Briefcase, tint: "bg-slate-500/10 text-slate-300" },
   Other: { Icon: ShoppingBag, tint: "bg-emerald-500/10 text-emerald-400" },
 };
-const PIE_COLORS = ["#3B82F6", "#F59E0B", "#8B5CF6", "#EF4444", "#10B981", "#14D8CF", "#F97316"];
-const PAGE = 8;
 
-type SortKey = "due_asc" | "name_asc" | "name_desc" | "out_desc" | "out_asc" | "rate_desc";
+const TABS = ["All", ...LIABILITY_CATEGORIES] as const;
+type Tab = (typeof TABS)[number];
+const TAB_STORAGE_KEY = "liabilities:tab";
+
+type SortKey =
+  | "name"
+  | "category"
+  | "lender"
+  | "outstanding"
+  | "emi"
+  | "rate"
+  | "due"
+  | "status";
+
+const getRowId = (r: { id: string }) => r.id;
 
 export function LiabilitiesView({
   registerAdd,
 }: { registerAdd?: (open: () => void) => void }) {
-  const { data: rows = [], isLoading, isError, error, refetch } = useLiabilities();
+  const { data: rows = [], isLoading, isError, error, refetch, isFetching } = useLiabilities();
   const bulkInsert = useBulkInsertLiabilities();
   const del = useDeleteLiability();
 
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "All";
+    const saved = sessionStorage.getItem(TAB_STORAGE_KEY) as Tab | null;
+    return saved && (TABS as readonly string[]).includes(saved) ? saved : "All";
+  });
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(TAB_STORAGE_KEY, tab);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [tab]);
+
   const [search, setSearch] = useState("");
-  const [cat, setCat] = useState("all");
-  const [lender, setLender] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState<SortKey>("due_asc");
-  const [view, setView] = useState<"list" | "grid">("list");
-  const [page, setPage] = useState(1);
+  const [mobileSearch, setMobileSearch] = useState(false);
+  const [fLender, setFLender] = useState("all");
+  const [fStatus, setFStatus] = useState("all");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Liability | null>(null);
   const [confirm, setConfirm] = useState<Liability | null>(null);
+  const [details, setDetails] = useState<Liability | null>(null);
 
-  if (registerAdd) {
-    registerAdd(() => {
-      setEditing(null);
-      setDialogOpen(true);
-    });
-  }
+  const openAdd = () => {
+    setEditing(null);
+    setDialogOpen(true);
+  };
+  if (registerAdd) registerAdd(openAdd);
 
-  const total = useMemo(() => rows.reduce((s, r) => s + r.outstanding, 0), [rows]);
-  const totalEmi = useMemo(() => rows.reduce((s, r) => s + (r.emi ?? 0), 0), [rows]);
-  const avgRate = useMemo(() => weightedAvgRate(rows), [rows]);
+  /* 30-minute auto refresh so figures stay current */
+  useEffect(() => {
+    const t = setInterval(() => {
+      refetch();
+    }, AUTO_REFRESH_MS);
+    return () => clearInterval(t);
+  }, [refetch]);
 
-  const alloc = useMemo(() => {
-    return groupByCategory(rows, (r) => r.outstanding).map((a, i) => ({
-      ...a,
-      color: PIE_COLORS[i % PIE_COLORS.length],
-    }));
-  }, [rows]);
-
-  const trend = useMemo(() => buildMonthlyLiabilityTrend(rows), [rows]);
   const lenders = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.lender).filter(Boolean) as string[])),
+    () => uniqSorted(rows.map((r) => r.lender ?? "").filter(Boolean)),
     [rows],
   );
 
   const filtered = useMemo(() => {
     let r = rows;
+    if (tab !== "All") r = r.filter((x) => x.category === tab);
     if (search.trim()) {
       const q = search.toLowerCase();
       r = r.filter(
@@ -149,37 +158,62 @@ export function LiabilitiesView({
           (x.lender ?? "").toLowerCase().includes(q),
       );
     }
-    if (cat !== "all") r = r.filter((x) => x.category === cat);
-    if (lender !== "all") r = r.filter((x) => x.lender === lender);
-    if (status !== "all") r = r.filter((x) => x.status === status);
-    const sorted = [...r];
-    sorted.sort((a, b) => {
-      switch (sort) {
-        case "name_asc": return a.name.localeCompare(b.name);
-        case "name_desc": return b.name.localeCompare(a.name);
-        case "out_desc": return b.outstanding - a.outstanding;
-        case "out_asc": return a.outstanding - b.outstanding;
-        case "rate_desc": return (b.interest_rate ?? 0) - (a.interest_rate ?? 0);
-        default:
-          return (a.due_date || "9999").localeCompare(b.due_date || "9999");
-      }
-    });
-    return sorted;
-  }, [rows, search, cat, lender, status, sort]);
+    if (fLender !== "all") r = r.filter((x) => x.lender === fLender);
+    if (fStatus !== "all") r = r.filter((x) => x.status === fStatus);
+    return r;
+  }, [rows, tab, search, fLender, fStatus]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
-  const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
-  if (page > pageCount) setTimeout(() => setPage(1), 0);
+  const sorted = useMemo(() => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    const val = (l: Liability): string | number => {
+      switch (sortKey) {
+        case "category": return l.category;
+        case "lender": return l.lender ?? "";
+        case "outstanding": return l.outstanding;
+        case "emi": return l.emi ?? 0;
+        case "rate": return l.interest_rate ?? 0;
+        case "due": return l.due_date || "9999-12-31";
+        case "status": return l.status;
+        default: return l.name.toLowerCase();
+      }
+    };
+    return [...filtered].sort((a, b) => {
+      const x = val(a);
+      const y = val(b);
+      if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
+      return String(x).localeCompare(String(y)) * dir;
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  const toggleSort = (k: SortKey) => {
+    if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(k);
+      setSortDir(k === "name" || k === "category" || k === "lender" ? "asc" : "desc");
+    }
+  };
+
+  const totals = useMemo(() => {
+    const outstanding = sorted.reduce((s, r) => s + (r.outstanding || 0), 0);
+    const principal = sorted.reduce((s, r) => s + (r.principal ?? 0), 0);
+    const emi = sorted.reduce((s, r) => s + (r.emi ?? 0), 0);
+    return {
+      outstanding,
+      principal,
+      emi,
+      rate: weightedAvgRate(sorted),
+      dueSoonCount: sorted.filter((r) => dueSoon(r.due_date)).length,
+    };
+  }, [sorted]);
 
   /* Global bulk selection */
   const sel = useBulkSelection(
-    pageRows,
+    sorted,
     getRowId,
-    useMemo(() => filtered.map((r) => r.id), [filtered]),
+    useMemo(() => sorted.map((r) => r.id), [sorted]),
   );
   const bulkDel = useBulkDeleteRows("wealth_liabilities", "liabilities");
   const bulkUpd = useBulkUpdateRows("wealth_liabilities", "liabilities");
-
 
   const exportCols = [
     { key: "name", label: "Name" },
@@ -235,343 +269,279 @@ export function LiabilitiesView({
         <button
           onClick={() => refetch()}
           className="mt-3 rounded-xl border border-rose-400/40 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-500/10"
-        >Retry</button>
+        >
+          Retry
+        </button>
       </div>
     );
 
   return (
-    <>
-      {/* ============= STAT CARDS ============= */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Liabilities"
-          value={isLoading ? "…" : inr(total)}
-          delta={`${rows.length} item${rows.length === 1 ? "" : "s"}`}
-          icon={CreditCard}
-          tint="bg-rose-500/10 text-rose-400"
-        />
-        <StatCard
-          label="Monthly EMIs"
-          value={isLoading ? "…" : inr(totalEmi)}
-          delta="Across all loans"
-          icon={Banknote}
-          tint="bg-amber-500/10 text-amber-400"
-        />
-        <StatCard
-          label="Weighted Avg Rate"
-          value={isLoading ? "…" : `${avgRate.toFixed(2)}%`}
-          delta="By outstanding balance"
-          icon={Percent}
-          tint="bg-violet-500/10 text-violet-400"
-        />
-        <StatCard
-          label="Due in 7 days"
-          value={String(rows.filter((r) => dueSoon(r.due_date)).length)}
-          delta="Upcoming payments"
-          icon={TrendingDown}
-          tint="bg-emerald-500/10 text-emerald-400"
+    <div className="space-y-4">
+      {/* ============ CATEGORY TABS ============ */}
+      <div className="-mx-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <TextTabs
+          items={TABS.map((t) => ({ value: t, label: t }))}
+          value={tab}
+          onChange={(v) => {
+            setTab(v as Tab);
+            setSearch("");
+            setFLender("all");
+            setFStatus("all");
+          }}
+          className="min-w-max flex-nowrap px-1"
         />
       </div>
 
-      {/* ============= ALLOC + TREND ============= */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-5">
-          <h3 className="text-sm font-semibold text-foreground">Liability Breakdown</h3>
-          {alloc.length === 0 ? (
-            <EmptyMini label="No liabilities yet" />
-          ) : (
-            <div className="mt-4 flex items-center gap-5">
-              <div className="relative h-[180px] w-[180px] shrink-0">
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie data={alloc} dataKey="pct" innerRadius={58} outerRadius={82} paddingAngle={2} stroke="none">
-                      {alloc.map((a) => <Cell key={a.name} fill={a.color} />)}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
-                  <div>
-                    <div className="font-display text-base font-bold text-foreground">{inrCompact(total)}</div>
-                    <div className="text-[10px] text-muted-foreground">Total Liabilities</div>
-                  </div>
-                </div>
-              </div>
-              <div className="min-w-0 flex-1 space-y-2">
-                {alloc.slice(0, 6).map((a) => (
-                  <div key={a.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-xs">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
-                      <span className="truncate text-foreground">{a.name}</span>
-                    </div>
-                    <span className="font-medium text-muted-foreground">{a.pct.toFixed(1)}%</span>
-                    <span className="text-right font-medium text-foreground">{inrCompact(a.amt)}</span>
-                  </div>
-                ))}
-              </div>
+      {/* ============ TOOLBAR (mobile) ============ */}
+      <div className="space-y-2 md:hidden">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMobileSearch((v) => !v)}
+            aria-label="Search liabilities"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          <div className="-mx-1 min-w-0 flex-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-center gap-2">
+              <FilterMenu label="Lender" value={fLender} onChange={setFLender} options={lenders} />
+              <FilterMenu
+                label="Status"
+                value={fStatus}
+                onChange={setFStatus}
+                options={["active", "due_soon", "overdue", "closed"]}
+                formatOption={titleCase}
+              />
             </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-7">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Liability Trend</h3>
-            <button className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-xs text-muted-foreground">
-              6M <ChevronDown className="h-3 w-3" />
-            </button>
           </div>
-          <div className="h-[230px]">
-            {trend.length < 2 ? (
-              <EmptyMini label="Add liabilities to see trend" />
-            ) : (
-              <ResponsiveContainer>
-                <AreaChart data={trend} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="liabGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#EF4444" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="m" tick={{ fill: "#6E8294", fontSize: 11 }} axisLine={false} tickLine={false}  {...smartXAxisProps} />
-                  <YAxis
-                    tick={{ fill: "#6E8294", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v) => inrCompact(v as number)}
-                  />
-                  <Tooltip
-                    contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                    formatter={(v: number) => [inr(v), "Outstanding"]}
-                  />
-                  <Area type="monotone" dataKey="v" stroke="#EF4444" strokeWidth={2.5} fill="url(#liabGrad)" dot={{ r: 2.5, fill: "#EF4444" }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            aria-label="Refresh liabilities"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-mint/40 bg-mint/[0.06] text-mint disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+          </button>
+          <button
+            onClick={openAdd}
+            aria-label="Add liability"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-mint text-[#04121C]"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
         </div>
-      </div>
-
-      {/* ============= TABLE ============= */}
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px]">
+        {mobileSearch ? (
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
+              autoFocus
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search liabilities..."
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search liabilities…"
               className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
             />
           </div>
-          <FilterDropdown
-            label={cat === "all" ? "All Categories" : cat}
-            value={cat}
-            onChange={(v) => { setCat(v); setPage(1); }}
-            options={[{ value: "all", label: "All Categories" }, ...LIABILITY_CATEGORIES.map((c) => ({ value: c, label: c }))]}
+        ) : null}
+      </div>
+
+      {/* ============ TOOLBAR (desktop) ============ */}
+      <div className="hidden flex-wrap items-center gap-2 rounded-2xl border border-border bg-card p-3 md:flex">
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search liabilities…"
+            className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
           />
-          <FilterDropdown
-            label={lender === "all" ? "All Lenders" : lender}
-            value={lender}
-            onChange={(v) => { setLender(v); setPage(1); }}
-            options={[{ value: "all", label: "All Lenders" }, ...lenders.map((l) => ({ value: l, label: l }))]}
-          />
-          <FilterDropdown
-            label={status === "all" ? "All Status" : titleCase(status)}
-            value={status}
-            onChange={(v) => { setStatus(v); setPage(1); }}
-            options={[
-              { value: "all", label: "All Status" },
-              { value: "active", label: "Active" },
-              { value: "due_soon", label: "Due Soon" },
-              { value: "overdue", label: "Overdue" },
-              { value: "closed", label: "Closed" },
-            ]}
-          />
-          <FilterDropdown
-            label={`Sort: ${sortLabel(sort)}`}
-            value={sort}
-            icon={ArrowUpDown}
-            onChange={(v) => setSort(v as SortKey)}
-            options={[
-              { value: "due_asc", label: "Due date (earliest)" },
-              { value: "name_asc", label: "Name (A→Z)" },
-              { value: "name_desc", label: "Name (Z→A)" },
-              { value: "out_desc", label: "Outstanding (high → low)" },
-              { value: "out_asc", label: "Outstanding (low → high)" },
-              { value: "rate_desc", label: "Interest rate (high → low)" },
-            ]}
-          />
-          <IoMenu
-            onImport={handleImport}
-            onExportCsv={() => exportCsv("liabilities", exportCols as any, filtered)}
-            onExportXlsx={() => exportXlsx("liabilities", exportCols as any, filtered)}
-            onExportJson={() => exportJson("liabilities", filtered)}
-            onExportPdf={() =>
-              exportPdf("Liabilities", exportCols as any, filtered, {
-                subtitle: `Total ${inr(total)} · ${filtered.length} items · Weighted Avg ${avgRate.toFixed(2)}%`,
-              })
-            }
-          />
-          <div className="ml-auto flex items-center gap-1 rounded-xl border border-border bg-surface-2 p-1">
-            <button onClick={() => setView("list")} className={`rounded-lg p-1.5 ${view === "list" ? "bg-mint/15 text-mint" : "text-muted-foreground"}`}>
-              <List className="h-4 w-4" />
-            </button>
-            <button onClick={() => setView("grid")} className={`rounded-lg p-1.5 ${view === "grid" ? "bg-mint/15 text-mint" : "text-muted-foreground"}`}>
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-          </div>
+        </div>
+        <FilterMenu label="Lender" value={fLender} onChange={setFLender} options={lenders} />
+        <FilterMenu
+          label="Status"
+          value={fStatus}
+          onChange={setFStatus}
+          options={["active", "due_soon", "overdue", "closed"]}
+          formatOption={titleCase}
+        />
+        <IoMenu
+          onImport={handleImport}
+          onExportCsv={() => exportCsv("liabilities", exportCols as any, sorted)}
+          onExportXlsx={() => exportXlsx("liabilities", exportCols as any, sorted)}
+          onExportJson={() => exportJson("liabilities", sorted)}
+          onExportPdf={() =>
+            exportPdf("Liabilities", exportCols as any, sorted, {
+              subtitle: `Total ${inr(totals.outstanding)} · ${sorted.length} items · Weighted Avg ${totals.rate.toFixed(2)}%`,
+            })
+          }
+        />
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-mint/40 bg-mint/[0.06] px-3 py-2 text-xs font-medium text-mint hover:bg-mint/10 disabled:opacity-60"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            Refresh Now
+          </button>
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] transition hover:brightness-110"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Liability
+          </button>
+        </div>
+      </div>
+
+      {/* ============ LIST ============ */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        {/* Mobile: grouped collapsible cards */}
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</div>
+          ) : sorted.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+              No liabilities in {tab}. Tap <span className="text-mint">+</span> to add one.
+            </div>
+          ) : (
+            <MobileLiabilityGroups
+              rows={sorted}
+              isSelected={(id) => sel.isSelected(id)}
+              onSelectChange={(id, v) => sel.toggle(id, v)}
+              onView={(l) => setDetails(l)}
+              onEdit={(l) => {
+                setEditing(l);
+                setDialogOpen(true);
+              }}
+              onDelete={(l) => setConfirm(l)}
+            />
+          )}
         </div>
 
-        {isLoading ? (
-          <TableSkeleton />
-        ) : filtered.length === 0 ? (
-          <Empty
-            primary={rows.length === 0 ? "No liabilities yet" : "No matches"}
-            secondary={rows.length === 0 ? "Track your first loan or credit balance." : "Try clearing filters or search."}
-            cta={rows.length === 0 ? { label: "Add liability", onClick: () => { setEditing(null); setDialogOpen(true); } } : undefined}
-          />
-        ) : view === "list" ? (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="w-[40px] py-3 pl-2">
-                    <SelectCheckbox
-                      label="Select all liabilities"
-                      checked={sel.allSelected}
-                      indeterminate={sel.someSelected && !sel.allSelected}
-                      onChange={(v) => sel.toggleAll(v)}
-                    />
-                  </th>
-                  <th className="py-3 pl-2 font-medium">Liability Name</th>
-
-                  <th className="py-3 font-medium">Category</th>
-                  <th className="py-3 font-medium">Lender</th>
-                  <th className="py-3 font-medium">Outstanding</th>
-                  <th className="py-3 font-medium">EMI (Monthly)</th>
-                  <th className="py-3 font-medium">Interest Rate</th>
-                  <th className="py-3 font-medium">Due Date</th>
-                  <th className="py-3 font-medium">Status</th>
-                  <th className="py-3 pr-2 font-medium">Actions</th>
+        {/* Desktop: table */}
+        <div className="hidden overflow-x-auto md:block">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-card">
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th className="w-[44px] px-3 py-3">
+                  <SelectCheckbox
+                    label="Select all liabilities"
+                    checked={sel.allSelected}
+                    indeterminate={sel.someSelected && !sel.allSelected}
+                    onChange={(v) => sel.toggleAll(v)}
+                  />
+                </th>
+                <SortHeader label={`Liabilities (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <SortHeader label="Category" col="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <SortHeader label="Lender" col="lender" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <SortHeader label="Outstanding" col="outstanding" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
+                <SortHeader label="EMI" col="emi" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
+                <SortHeader label="Rate" col="rate" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
+                <SortHeader label="Due Date" col="due" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <th className="w-[120px] px-3 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                    Loading…
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((l) => {
+              ) : sorted.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                    No liabilities in {tab}. Click <span className="text-mint">Add Liability</span> to add one.
+                  </td>
+                </tr>
+              ) : (
+                sorted.map((l) => {
                   const meta = ICONS[l.category] ?? ICONS.Other;
                   return (
-                    <tr key={l.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${sel.isSelected(l.id) ? "bg-mint/[0.06]" : ""}`}>
-                      <td className="w-[40px] py-3 pl-2">
+                    <tr
+                      key={l.id}
+                      className={`group border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${
+                        sel.isSelected(l.id) ? "bg-mint/[0.06]" : ""
+                      }`}
+                    >
+                      <td className="px-3 py-3">
                         <SelectCheckbox
                           label={`Select ${l.name}`}
                           checked={sel.isSelected(l.id)}
                           onChange={(v) => sel.toggle(l.id, v)}
                         />
                       </td>
-                      <td className="py-3 pl-2">
-
+                      <td className="px-3 py-3">
                         <div className="flex items-center gap-3">
-                          <div className={`grid h-8 w-8 place-items-center rounded-lg ${meta.tint}`}>
+                          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${meta.tint}`}>
                             <meta.Icon className="h-4 w-4" />
                           </div>
-                          <span className="font-medium text-foreground">{l.name}</span>
+                          <button
+                            onClick={() => setDetails(l)}
+                            className="truncate text-left font-medium text-foreground hover:text-mint"
+                          >
+                            {l.name}
+                          </button>
                         </div>
                       </td>
-                      <td className="py-3 text-muted-foreground">{l.category}</td>
-                      <td className="py-3 text-muted-foreground">{l.lender ?? "—"}</td>
-                      <td className="py-3 font-medium text-foreground">{inr(l.outstanding)}</td>
-                      <td className="py-3 text-foreground">{l.emi != null ? inr(l.emi) : "—"}</td>
-                      <td className="py-3 text-foreground">{l.interest_rate != null ? `${l.interest_rate.toFixed(2)}%` : "—"}</td>
-                      <td className="py-3 text-muted-foreground">{formatDate(l.due_date)}</td>
-                      <td className="py-3">
+                      <td className="px-3 py-3 text-muted-foreground">{l.category}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{l.lender ?? "—"}</td>
+                      <td className="px-3 py-3 text-right font-medium tabular-nums text-foreground">
+                        {inr(l.outstanding)}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+                        {l.emi != null ? inr(l.emi) : "—"}
+                      </td>
+                      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+                        {l.interest_rate != null ? `${l.interest_rate.toFixed(2)}%` : "—"}
+                      </td>
+                      <td className="px-3 py-3 text-muted-foreground">{formatDate(l.due_date) || "—"}</td>
+                      <td className="px-3 py-3">
                         <StatusPill status={l.status} />
                       </td>
-                      <td className="py-3 pr-2">
-                        <RowMenu
-                          onEdit={() => { setEditing(l); setDialogOpen(true); }}
-                          onDelete={() => setConfirm(l)}
-                        />
+                      <td className="px-3 py-3">
+                        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                          <IconBtn label={`View ${l.name}`} onClick={() => setDetails(l)} Icon={Eye} />
+                          <IconBtn
+                            label={`Edit ${l.name}`}
+                            onClick={() => {
+                              setEditing(l);
+                              setDialogOpen(true);
+                            }}
+                            Icon={Pencil}
+                          />
+                          <IconBtn
+                            label={`Delete ${l.name}`}
+                            onClick={() => setConfirm(l)}
+                            Icon={Trash2}
+                            danger
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {pageRows.map((l) => {
-              const meta = ICONS[l.category] ?? ICONS.Other;
-              return (
-                <div key={l.id} className="rounded-xl border border-border bg-surface-2/40 p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${meta.tint}`}>
-                        <meta.Icon className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate font-medium text-foreground">{l.name}</div>
-                        <div className="text-[11px] text-muted-foreground">{l.category} · {l.lender ?? "—"}</div>
-                      </div>
-                    </div>
-                    <RowMenu
-                      onEdit={() => { setEditing(l); setDialogOpen(true); }}
-                      onDelete={() => setConfirm(l)}
-                    />
-                  </div>
-                  <div className="mt-3 font-display text-lg font-bold text-foreground">{inr(l.outstanding)}</div>
-                  <div className="text-[11px] text-muted-foreground">
-                    EMI {l.emi != null ? inr(l.emi) : "—"} · Due {formatDate(l.due_date)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {filtered.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 text-xs">
-            <div className="flex flex-wrap gap-x-8 gap-y-2">
-              <span className="text-muted-foreground">
-                Total Liabilities <span className="ml-2 font-semibold text-rose-400">{inr(total)}</span>
-              </span>
-              <span className="text-muted-foreground">
-                Total EMIs <span className="ml-2 font-semibold text-foreground">{inr(totalEmi)}</span>
-              </span>
-              <span className="text-muted-foreground">
-                Weighted Avg Interest <span className="ml-2 font-semibold text-foreground">{avgRate.toFixed(2)}%</span>
-              </span>
+        {sorted.length > 0 && (
+          <div className="border-t border-border px-3 py-3 sm:px-4">
+            <div className="mb-2 text-xs text-muted-foreground">
+              All {sorted.length} liabilit{sorted.length === 1 ? "y" : "ies"} visible on this page
+              {totals.dueSoonCount > 0 ? ` · ${totals.dueSoonCount} due in 7 days` : ""}
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted-foreground disabled:opacity-40"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-              {Array.from({ length: pageCount }).slice(0, 6).map((_, i) => {
-                const p = i + 1;
-                return (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`h-7 min-w-7 rounded-md border border-border px-2 ${p === page ? "bg-mint/15 text-mint" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                disabled={page >= pageCount}
-                className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted-foreground disabled:opacity-40"
-              >
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <LiabilitySummaryRow
+              outstanding={totals.outstanding}
+              emi={totals.emi}
+              rate={totals.rate}
+            />
           </div>
         )}
       </div>
 
+      {/* ============ GLOBAL BULK ACTION BAR ============ */}
       <BulkActionBar
         count={sel.selectedCount}
         entityLabel="liability"
@@ -592,7 +562,10 @@ export function LiabilitiesView({
           },
           {
             label: "Change Status",
-            options: ["Active", "Closed"].map((s) => ({ value: s, label: s })),
+            options: [
+              { value: "active", label: "Active" },
+              { value: "closed", label: "Closed" },
+            ],
             onSelect: async (value) => {
               await bulkUpd.mutateAsync({ ids: sel.selectedIds, patch: { status: value } });
               sel.clear();
@@ -601,12 +574,23 @@ export function LiabilitiesView({
         ]}
       />
 
-
-
       <LiabilityDialog
         open={dialogOpen}
-        onOpenChange={(v) => { setDialogOpen(v); if (!v) setEditing(null); }}
+        onOpenChange={(v) => {
+          setDialogOpen(v);
+          if (!v) setEditing(null);
+        }}
         existing={editing}
+      />
+
+      <LiabilityDetailsModal
+        liability={details}
+        onClose={() => setDetails(null)}
+        onEdit={(l) => {
+          setDetails(null);
+          setEditing(l);
+          setDialogOpen(true);
+        }}
       />
 
       <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
@@ -633,30 +617,266 @@ export function LiabilitiesView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }
 
-/* ----- shared sub-components ----- */
-function StatCard({
-  label, value, delta, icon: Icon, tint,
-}: { label: string; value: string; delta: string; icon: any; tint: string }) {
+/* =========================================================
+   Mobile: grouped, compact liability cards with a "…" menu
+========================================================= */
+function compactInr(v: number): string {
+  const abs = Math.abs(v);
+  const f = (n: number, s: string) => `₹${n.toFixed(2)}${s}`;
+  if (abs >= 1e7) return f(v / 1e7, "Cr");
+  if (abs >= 1e5) return f(v / 1e5, "L");
+  if (abs >= 1e3) return f(v / 1e3, "K");
+  return `₹${v.toFixed(2)}`;
+}
+
+function MobileLiabilityGroups({
+  rows,
+  isSelected,
+  onSelectChange,
+  onView,
+  onEdit,
+  onDelete,
+}: {
+  rows: Liability[];
+  isSelected: (id: string) => boolean;
+  onSelectChange: (id: string, v: boolean) => void;
+  onView: (l: Liability) => void;
+  onEdit: (l: Liability) => void;
+  onDelete: (l: Liability) => void;
+}) {
+  const { isOpen, toggle, setAll } = useCollapsibleGroups("liabilities-mobile-groups-v1", false);
+
+  const groups = useMemo(() => {
+    const m = new Map<string, Liability[]>();
+    for (const r of rows) {
+      const k = r.category || "Other";
+      const list = m.get(k);
+      if (list) list.push(r);
+      else m.set(k, [r]);
+    }
+    return [...m.entries()].map(([label, items]) => ({
+      label,
+      items,
+      outstanding: items.reduce((s, i) => s + (i.outstanding || 0), 0),
+      emi: items.reduce((s, i) => s + (i.emi ?? 0), 0),
+    }));
+  }, [rows]);
+
+  const allOpen = groups.length > 0 && groups.every((g) => isOpen(g.label));
+
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-start gap-3">
-        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${tint}`}>
-          <Icon className="h-5 w-5" />
+    <div className="divide-y divide-border">
+      <div className="flex justify-end px-3 py-2">
+        <button
+          onClick={() => setAll(groups.map((g) => g.label), !allOpen)}
+          className="text-[11px] font-semibold text-mint"
+        >
+          {allOpen ? "Collapse all" : "Expand all"}
+        </button>
+      </div>
+      {groups.map((g) => {
+        const open = isOpen(g.label);
+        const meta = ICONS[g.label] ?? ICONS.Other;
+        return (
+          <div key={g.label}>
+            <button
+              onClick={() => toggle(g.label)}
+              className="flex w-full items-center gap-2 px-3 py-3 text-left"
+            >
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
+              />
+              <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${meta.tint}`}>
+                <meta.Icon className="h-3.5 w-3.5" />
+              </div>
+              <span className="truncate text-sm font-semibold text-foreground">{g.label}</span>
+              <span className="shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                {g.items.length}
+              </span>
+              <span className="ml-auto shrink-0 text-sm font-semibold text-foreground">
+                {compactInr(g.outstanding)}
+              </span>
+            </button>
+
+            {open
+              ? g.items.map((l) => (
+                  <div
+                    key={l.id}
+                    className={`flex items-center gap-2 border-t border-border/40 px-3 py-3 ${
+                      isSelected(l.id) ? "bg-mint/[0.06]" : ""
+                    }`}
+                  >
+                    <SelectCheckbox
+                      label={`Select ${l.name}`}
+                      checked={isSelected(l.id)}
+                      onChange={(v) => onSelectChange(l.id, v)}
+                    />
+                    <button
+                      onClick={() => onView(l)}
+                      className="min-w-0 flex-1 text-left"
+                      aria-label={`View ${l.name}`}
+                    >
+                      <div className="truncate text-sm font-medium text-foreground">{l.name}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {[l.lender, l.due_date ? `Due ${formatDate(l.due_date)}` : null]
+                          .filter(Boolean)
+                          .join(" · ") || titleCase(l.status)}
+                      </div>
+                    </button>
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-semibold tabular-nums text-foreground">
+                        {compactInr(l.outstanding)}
+                      </div>
+                      <div className="text-[11px] font-medium text-muted-foreground">
+                        {l.emi != null ? `EMI ${compactInr(l.emi)}` : "—"}
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          aria-label={`Actions for ${l.name}`}
+                          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={() => onView(l)}>
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(l)}>
+                          <Pencil className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onDelete(l)}
+                          className="text-rose-500 focus:text-rose-500"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))
+              : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* =========================================================
+   Details modal
+========================================================= */
+function LiabilityDetailsModal({
+  liability,
+  onClose,
+  onEdit,
+}: {
+  liability: Liability | null;
+  onClose: () => void;
+  onEdit: (l: Liability) => void;
+}) {
+  const l = liability;
+  return (
+    <Dialog open={!!l} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-base">{l?.name}</DialogTitle>
+        </DialogHeader>
+        {l ? (
+          <div className="space-y-4">
+            <LiabilitySummaryRow
+              outstanding={l.outstanding}
+              emi={l.emi ?? 0}
+              rate={l.interest_rate ?? 0}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <MiniStat label="Category" value={l.category} />
+              <MiniStat label="Lender" value={l.lender ?? "—"} />
+              <MiniStat label="Principal" value={l.principal != null ? inr(l.principal) : "—"} />
+              <MiniStat
+                label="Tenure"
+                value={l.tenure_months != null ? `${l.tenure_months} mo` : "—"}
+              />
+              <MiniStat label="Start Date" value={formatDate(l.start_date) || "—"} />
+              <MiniStat label="Due Date" value={formatDate(l.due_date) || "—"} />
+              <MiniStat label="End Date" value={formatDate(l.end_date) || "—"} />
+              <MiniStat label="Status" value={titleCase(l.status)} />
+            </div>
+            {l.notes ? (
+              <div className="rounded-xl border border-border bg-surface-2/40 p-3 text-xs text-muted-foreground whitespace-pre-wrap">
+                {l.notes}
+              </div>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={onClose}
+                className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => onEdit(l)}
+                className="rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] hover:brightness-110"
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* =========================================================
+   Shared bits
+========================================================= */
+function LiabilitySummaryRow({
+  outstanding,
+  emi,
+  rate,
+}: { outstanding: number; emi: number; rate: number }) {
+  return (
+    <div className="grid grid-cols-3 items-end gap-2 rounded-xl border border-border bg-surface-2/40 px-3 py-3 sm:gap-4 sm:px-4">
+      <div className="min-w-0">
+        <div className="truncate text-[9px] font-medium uppercase leading-tight tracking-wide text-muted-foreground sm:text-[11px] sm:tracking-wider">
+          Total Outstanding
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {label} <Info className="h-3 w-3 opacity-60" />
-          </div>
-          <div className="mt-1 font-display text-xl font-bold text-foreground">{value}</div>
-          <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-            {delta}
-          </div>
+        <div className="mt-0.5 font-display text-[15px] font-bold tabular-nums text-rose-400 sm:text-2xl">
+          {inr(outstanding)}
         </div>
       </div>
+      <div className="min-w-0">
+        <div className="truncate text-[9px] font-medium uppercase leading-tight tracking-wide text-muted-foreground sm:text-[11px] sm:tracking-wider">
+          Monthly EMI
+        </div>
+        <div className="mt-0.5 font-display text-[15px] font-bold tabular-nums text-foreground sm:text-2xl">
+          {inr(emi)}
+        </div>
+      </div>
+      <div className="min-w-0 text-right sm:text-left">
+        <div className="truncate text-[9px] font-medium uppercase leading-tight tracking-wide text-muted-foreground sm:text-[11px] sm:tracking-wider">
+          Avg Interest
+        </div>
+        <div className="mt-0.5 font-display text-[15px] font-bold tabular-nums text-foreground sm:text-2xl">
+          {rate.toFixed(2)}%
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-surface-2/40 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-sm font-medium text-foreground">{value}</div>
     </div>
   );
 }
@@ -669,133 +889,107 @@ function StatusPill({ status }: { status: string }) {
     closed: "bg-slate-500/10 text-slate-300 border-slate-500/30",
   };
   return (
-    <span className={`inline-block rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${map[status] ?? map.active}`}>
+    <span
+      className={`inline-block rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${map[status] ?? map.active}`}
+    >
       {titleCase(status)}
     </span>
   );
 }
 
-function FilterDropdown({
-  label, value, onChange, options, icon: Icon,
+function IconBtn({
+  label,
+  onClick,
+  Icon,
+  danger,
+}: { label: string; onClick: () => void; Icon: any; danger?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={`grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface-2 transition hover:bg-surface-2/70 ${
+        danger ? "text-rose-400" : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function SortHeader({
+  label,
+  col,
+  sortKey,
+  sortDir,
+  onClick,
+  align,
+}: {
+  label: string;
+  col: SortKey;
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  onClick: (c: SortKey) => void;
+  align: "left" | "right";
+}) {
+  const active = sortKey === col;
+  const Arrow = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className={`px-3 py-3 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+      <button
+        onClick={() => onClick(col)}
+        className={`inline-flex items-center gap-1 transition-colors ${
+          active ? "text-mint" : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        {label}
+        <Arrow className="h-3 w-3" />
+      </button>
+    </th>
+  );
+}
+
+function FilterMenu({
+  label,
+  value,
+  onChange,
+  options,
+  formatOption,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  icon?: any;
+  options: string[];
+  formatOption?: (v: string) => string;
 }) {
+  const fmt = formatOption ?? ((v: string) => v);
+  const display = value === "all" ? label : fmt(value);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-2.5 text-xs text-foreground hover:bg-surface-2/80">
-          {Icon && <Icon className="h-3.5 w-3.5" />}
-          {label} <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+        <button className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs text-foreground hover:bg-surface-2/80">
+          {display} <ChevronDown className="h-3 w-3" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs">{label}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
-          {options.map((o) => (
-            <DropdownMenuRadioItem key={o.value} value={o.value} className="text-sm">
-              {o.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+      <DropdownMenuContent className="max-h-[280px] overflow-y-auto">
+        <DropdownMenuItem onSelect={() => onChange("all")}>
+          All {label.toLowerCase()}s
+        </DropdownMenuItem>
+        {options.map((o) => (
+          <DropdownMenuItem key={o} onSelect={() => onChange(o)}>
+            {fmt(o)}
+          </DropdownMenuItem>
+        ))}
+        {options.length === 0 && <DropdownMenuItem disabled>No options</DropdownMenuItem>}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
-          <MoreVertical className="h-4 w-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-36">
-        <DropdownMenuItem onClick={onEdit} className="gap-2 text-sm">
-          <Pencil className="h-4 w-4" /> Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onDelete} className="gap-2 text-sm text-rose-400 focus:text-rose-400">
-          <Trash2 className="h-4 w-4" /> Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function TableSkeleton() {
-  return (
-    <div className="mt-4 space-y-2">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="h-12 animate-pulse rounded-lg bg-surface-2/60" />
-      ))}
-    </div>
-  );
-}
-
-function Empty({
-  primary, secondary, cta,
-}: { primary: string; secondary: string; cta?: { label: string; onClick: () => void } }) {
-  return (
-    <div className="mt-4 grid place-items-center rounded-xl border border-dashed border-border bg-surface-2/30 px-6 py-12 text-center">
-      <div className="text-sm font-medium text-foreground">{primary}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{secondary}</div>
-      {cta && (
-        <button
-          onClick={cta.onClick}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-mint px-3.5 py-2 text-xs font-semibold text-[#04121C] hover:brightness-110"
-        >
-          {cta.label}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function EmptyMini({ label }: { label: string }) {
-  return (
-    <div className="mt-4 grid h-[180px] place-items-center text-xs text-muted-foreground">
-      {label}
-    </div>
-  );
-}
-
-function sortLabel(s: SortKey) {
-  switch (s) {
-    case "name_asc": return "Name ↑";
-    case "name_desc": return "Name ↓";
-    case "out_desc": return "Outstanding ↓";
-    case "out_asc": return "Outstanding ↑";
-    case "rate_desc": return "Rate ↓";
-    default: return "Due date";
-  }
-}
 function titleCase(s: string) {
   return s.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
-function buildMonthlyLiabilityTrend(rows: Liability[]) {
-  if (!rows.length) return [];
-  const now = new Date();
-  const months: { key: string; m: string; v: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({
-      key: `${d.getFullYear()}-${d.getMonth()}`,
-      m: d.toLocaleString("en-IN", { month: "short" }) + " '" + String(d.getFullYear()).slice(2),
-      v: 0,
-    });
-  }
-  for (const r of rows) {
-    const start = r.start_date ? new Date(r.start_date) : null;
-    for (const mo of months) {
-      const [y, m] = mo.key.split("-").map(Number);
-      const moEnd = new Date(y, m + 1, 0);
-      if (!start || start <= moEnd) mo.v += r.outstanding;
-    }
-  }
-  return months;
+
+function uniqSorted(arr: string[]): string[] {
+  return [...new Set(arr)].sort((a, b) => a.localeCompare(b));
 }
