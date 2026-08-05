@@ -18,16 +18,19 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Require a shared secret in the x-webhook-secret header.
-        // Configured via the NOTIFICATION_CRON_SECRET env var.
+        // Accepts either the shared secret (x-webhook-secret) or the project's
+        // publishable key in the `apikey` header (pg_cron pattern).
+        const eq = (a: string, b: string) => {
+          if (!b || a.length !== b.length) return false;
+          return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+        };
         const provided = request.headers.get("x-webhook-secret") ?? "";
-        const expected = process.env.NOTIFICATION_CRON_SECRET ?? "";
-        const providedBuf = Buffer.from(provided);
-        const expectedBuf = Buffer.from(expected);
+        const apiKey = request.headers.get("apikey") ?? "";
         const authorized =
-          expected.length > 0 &&
-          providedBuf.length === expectedBuf.length &&
-          timingSafeEqual(providedBuf, expectedBuf);
+          eq(provided, process.env.NOTIFICATION_CRON_SECRET ?? "") ||
+          eq(apiKey, process.env.SUPABASE_PUBLISHABLE_KEY ?? "") ||
+          eq(apiKey, process.env.SUPABASE_ANON_KEY ?? "");
+
         if (!authorized) {
           // Log without exposing the secret value.
           console.warn("[notification-cron] unauthorized request", {
@@ -57,50 +60,89 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
           dispatch_sent: 0,
         };
 
-        /* ===== 1. Due reminders ===== */
+        const addDays = (n: number) => {
+          const d = new Date(now);
+          d.setDate(d.getDate() + n);
+          return d.toISOString().slice(0, 10);
+        };
+        const dayDiff = (iso: string) =>
+          Math.round(
+            (new Date(iso + "T00:00:00").getTime() -
+              new Date(today + "T00:00:00").getTime()) / 86400000,
+          );
+        const dueLabelFor = (days: number) =>
+          days < 0 ? `${-days}d overdue` : days === 0 ? "due today" : `due in ${days}d`;
+        const inr = (n: number) => "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
+
+        /** Create an in-app notification unless an identical one already exists. */
+        async function notifyOnce(opts: {
+          userId: string;
+          title: string;
+          body: string;
+          category: string;
+          priority: string;
+          link: string;
+          metadata: Record<string, unknown>;
+          dedupe: Record<string, unknown>;
+        }) {
+          const { count } = await admin
+            .from("notifications")
+            .select("id", { head: true, count: "exact" })
+            .eq("user_id", opts.userId)
+            .eq("category", opts.category)
+            .contains("metadata", opts.dedupe);
+          if ((count ?? 0) > 0) return false;
+          await admin.from("notifications").insert({
+            user_id: opts.userId,
+            title: opts.title,
+            body: opts.body,
+            category: opts.category,
+            priority: opts.priority,
+            link: opts.link,
+            metadata: opts.metadata,
+          });
+          result.notifications_created += 1;
+          return true;
+        }
+
+        /* ===== 1. Due reminders (honours notify_days_before lead time) ===== */
         const { data: reminders } = await admin
           .from("tools_reminders")
           .select("*")
           .eq("status", "upcoming")
           .eq("notify_enabled", true)
-          .lte("due_date", today);
+          .lte("due_date", addDays(60));
 
         for (const r of reminders ?? []) {
+          const row = r as any;
+          const dueDays = dayDiff(row.due_date);
+          const lead = Number(row.notify_days_before ?? 1);
+          if (dueDays > lead) continue; // not yet inside the notification window
+
           result.reminders_processed += 1;
-          const userId = (r as any).user_id as string;
-          const dueDays = Math.round(
-            (new Date((r as any).due_date + "T00:00:00").getTime() - now.getTime()) / 86400000,
-          );
-          const dueLabel = dueDays < 0 ? `${-dueDays}d overdue` : dueDays === 0 ? "due today" : `due in ${dueDays}d`;
-          const title = `${(r as any).title} ${dueLabel}`;
-          const body = `Amount: ₹${Number((r as any).amount).toLocaleString("en-IN")}`;
-
-          // Dedupe: skip if a notification for this reminder+due_date already exists
-          const { count } = await admin
-            .from("notifications")
-            .select("id", { head: true, count: "exact" })
-            .eq("user_id", userId)
-            .eq("category", "reminder")
-            .contains("metadata", { reminder_id: (r as any).id, due_date: (r as any).due_date });
-
-          if ((count ?? 0) > 0) continue;
+          const userId = row.user_id as string;
+          const title = `${row.title} ${dueLabelFor(dueDays)}`;
+          const body = `Amount: ${inr(row.amount)}`;
 
           // Preferences gate
           const prefs = await loadPrefs(admin, userId);
-          const typeOverride = (prefs?.per_type ?? {})[(r as any).kind] ?? {};
+          const typeOverride = (prefs?.per_type ?? {})[row.kind] ?? {};
           const wantInApp = typeOverride.in_app ?? prefs?.channels?.in_app ?? true;
           const wantEmail = typeOverride.email ?? prefs?.channels?.email ?? true;
 
+          let created = false;
           if (wantInApp) {
-            await admin.from("notifications").insert({
-              user_id: userId,
-              title, body,
+            created = await notifyOnce({
+              userId,
+              title,
+              body,
               category: "reminder",
               priority: dueDays < 0 ? "high" : "normal",
               link: "/tools",
-              metadata: { reminder_id: (r as any).id, due_date: (r as any).due_date, kind: (r as any).kind },
+              metadata: { reminder_id: row.id, due_date: row.due_date, kind: row.kind },
+              dedupe: { reminder_id: row.id, due_date: row.due_date },
             });
-            result.notifications_created += 1;
+            if (!created) continue; // already notified for this due date
           }
           if (wantEmail) {
             const email = await lookupEmail(admin, userId);
@@ -110,15 +152,87 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
               template: "reminder.due",
               recipient: email,
               subject: title,
-              payload: { reminder: r, body },
+              payload: { reminder: row, body },
               status: "pending",
               related_kind: "reminder",
-              related_id: (r as any).id,
+              related_id: row.id,
               scheduled_for: now.toISOString(),
             });
             result.deliveries_enqueued += 1;
           }
         }
+
+        /* ===== 1b. Derived dues: SIPs, loan EMIs, insurance renewals =====
+         * Users expect alerts for things they already track in Wealth without
+         * having to hand-create a reminder for each one. */
+
+        // Active SIPs coming up within 3 days (or overdue)
+        const { data: sips } = await admin
+          .from("wealth_investments")
+          .select("id, user_id, name, sip_amount, sip_next_date, sip_active, status")
+          .eq("sip_active", true)
+          .not("sip_next_date", "is", null)
+          .lte("sip_next_date", addDays(3));
+        for (const s of sips ?? []) {
+          const row = s as any;
+          if (row.status && row.status !== "active") continue;
+          const days = dayDiff(row.sip_next_date);
+          await notifyOnce({
+            userId: row.user_id,
+            title: `SIP ${dueLabelFor(days)}: ${row.name}`,
+            body: row.sip_amount ? `Installment ${inr(row.sip_amount)}` : "SIP installment upcoming",
+            category: "reminder",
+            priority: days < 0 ? "high" : "normal",
+            link: "/wealth",
+            metadata: { kind: "sip", investment_id: row.id, due_date: row.sip_next_date },
+            dedupe: { investment_id: row.id, due_date: row.sip_next_date },
+          });
+        }
+
+        // Loan / liability EMIs due within 7 days
+        const { data: liabs } = await admin
+          .from("wealth_liabilities")
+          .select("id, user_id, name, emi, due_date, status")
+          .not("due_date", "is", null)
+          .lte("due_date", addDays(7));
+        for (const l of liabs ?? []) {
+          const row = l as any;
+          if (row.status && !["active", "open", "ongoing"].includes(String(row.status))) continue;
+          const days = dayDiff(row.due_date);
+          await notifyOnce({
+            userId: row.user_id,
+            title: `EMI ${dueLabelFor(days)}: ${row.name}`,
+            body: row.emi ? `EMI ${inr(row.emi)}` : "Payment upcoming",
+            category: "reminder",
+            priority: days < 0 ? "high" : "normal",
+            link: "/wealth",
+            metadata: { kind: "emi", liability_id: row.id, due_date: row.due_date },
+            dedupe: { liability_id: row.id, due_date: row.due_date },
+          });
+        }
+
+        // Insurance renewals within 15 days
+        const { data: policies } = await admin
+          .from("wealth_insurance")
+          .select("id, user_id, policy_name, premium_amount, renewal_date, status")
+          .not("renewal_date", "is", null)
+          .lte("renewal_date", addDays(15));
+        for (const p of policies ?? []) {
+          const row = p as any;
+          if (row.status && !["active", "in_force"].includes(String(row.status))) continue;
+          const days = dayDiff(row.renewal_date);
+          await notifyOnce({
+            userId: row.user_id,
+            title: `Policy renewal ${dueLabelFor(days)}: ${row.policy_name}`,
+            body: row.premium_amount ? `Premium ${inr(row.premium_amount)}` : "Renewal upcoming",
+            category: "reminder",
+            priority: days < 0 ? "high" : "normal",
+            link: "/wealth",
+            metadata: { kind: "insurance", insurance_id: row.id, due_date: row.renewal_date },
+            dedupe: { insurance_id: row.id, due_date: row.renewal_date },
+          });
+        }
+
 
         /* ===== 2. Scheduled reports ===== */
         const { data: schedules } = await admin

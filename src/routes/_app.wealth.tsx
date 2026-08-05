@@ -41,14 +41,15 @@ function Wealth() {
   const [tab, setTab] = useState<TabValue>("overview");
   const addRef = useRef<(() => void) | null>(null);
 
-  // Assets tab renders its own contextual Add button in its toolbar.
-  const showAdd = tab !== "overview" && tab !== "assets";
+  // Views that render their own contextual "+" button in their toolbar don't
+  // need a duplicate labelled button in the page header (mobile + desktop).
+  const showAdd = tab !== "overview" && tab !== "assets" && tab !== "liabilities";
   const addLabel =
-    tab === "liabilities" ? "Add Liability"
-    : tab === "insurance" ? "Add Policy"
+    tab === "insurance" ? "Add Policy"
     : tab === "accounts" ? "Add Account"
     : tab === "sip-tracker" ? "Add Investment"
     : "Add Asset";
+
 
   return (
     <div className="space-y-5">
