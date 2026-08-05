@@ -418,11 +418,11 @@ export function LiabilitiesView({
         </div>
 
         {/* Desktop: table */}
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-sm">
+        <div className="hidden md:block">
+          <table className="w-full table-fixed text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="w-[44px] px-3 py-3">
+                <th className="w-[40px] px-2 py-3">
                   <SelectCheckbox
                     label="Select all liabilities"
                     checked={sel.allSelected}
@@ -431,15 +431,16 @@ export function LiabilitiesView({
                   />
                 </th>
                 <SortHeader label={`Liabilities (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Category" col="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Lender" col="lender" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Outstanding" col="outstanding" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="EMI" col="emi" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Rate" col="rate" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Due Date" col="due" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <th className="w-[120px] px-3 py-3"></th>
+                <SortHeader label="Category" col="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[130px] xl:table-cell" />
+                <SortHeader label="Lender" col="lender" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[120px] lg:table-cell" />
+                <SortHeader label="Outstanding" col="outstanding" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[120px]" />
+                <SortHeader label="EMI" col="emi" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[100px]" />
+                <SortHeader label="Rate" col="rate" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[72px]" />
+                <SortHeader label="Due Date" col="due" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[110px] lg:table-cell" />
+                <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="w-[92px]" />
+                <th className="w-[52px] px-2 py-3"></th>
               </tr>
+
             </thead>
             <tbody>
               {isLoading ? (
@@ -464,60 +465,75 @@ export function LiabilitiesView({
                         sel.isSelected(l.id) ? "bg-mint/[0.06]" : ""
                       }`}
                     >
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-3">
                         <SelectCheckbox
                           label={`Select ${l.name}`}
                           checked={sel.isSelected(l.id)}
                           onChange={(v) => sel.toggle(l.id, v)}
                         />
                       </td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-3">
+                      <td className="px-2 py-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
                           <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${meta.tint}`}>
                             <meta.Icon className="h-4 w-4" />
                           </div>
                           <button
                             onClick={() => setDetails(l)}
-                            className="truncate text-left font-medium text-foreground hover:text-mint"
+                            className="min-w-0 truncate text-left font-medium text-foreground hover:text-mint"
                           >
                             {l.name}
                           </button>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-muted-foreground">{l.category}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{l.lender ?? "—"}</td>
-                      <td className="px-3 py-3 text-right font-medium tabular-nums text-foreground">
+                      <td className="hidden truncate px-2 py-3 text-muted-foreground xl:table-cell">{l.category}</td>
+                      <td className="hidden truncate px-2 py-3 text-muted-foreground lg:table-cell">{l.lender ?? "—"}</td>
+                      <td className="px-2 py-3 text-right font-medium tabular-nums text-foreground">
                         {inr(l.outstanding)}
                       </td>
-                      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+                      <td className="px-2 py-3 text-right tabular-nums text-foreground">
                         {l.emi != null ? inr(l.emi) : "—"}
                       </td>
-                      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+                      <td className="px-2 py-3 text-right tabular-nums text-foreground">
                         {l.interest_rate != null ? `${l.interest_rate.toFixed(2)}%` : "—"}
                       </td>
-                      <td className="px-3 py-3 text-muted-foreground">{formatDate(l.due_date) || "—"}</td>
-                      <td className="px-3 py-3">
+                      <td className="hidden px-2 py-3 text-muted-foreground lg:table-cell">{formatDate(l.due_date) || "—"}</td>
+                      <td className="px-2 py-3">
                         <StatusPill status={l.status} />
                       </td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                          <IconBtn label={`View ${l.name}`} onClick={() => setDetails(l)} Icon={Eye} />
-                          <IconBtn
-                            label={`Edit ${l.name}`}
-                            onClick={() => {
-                              setEditing(l);
-                              setDialogOpen(true);
-                            }}
-                            Icon={Pencil}
-                          />
-                          <IconBtn
-                            label={`Delete ${l.name}`}
-                            onClick={() => setConfirm(l)}
-                            Icon={Trash2}
-                            danger
-                          />
+                      <td className="px-2 py-3">
+                        <div className="flex justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                aria-label={`Actions for ${l.name}`}
+                                className="grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface-2 text-muted-foreground transition hover:text-foreground"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => setDetails(l)}>
+                                <Eye className="mr-2 h-4 w-4" /> View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditing(l);
+                                  setDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setConfirm(l)}
+                                className="text-rose-500 focus:text-rose-500"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
+
                     </tr>
                   );
                 })
@@ -924,6 +940,7 @@ function SortHeader({
   sortDir,
   onClick,
   align,
+  className,
 }: {
   label: string;
   col: SortKey;
@@ -931,11 +948,15 @@ function SortHeader({
   sortDir: "asc" | "desc";
   onClick: (c: SortKey) => void;
   align: "left" | "right";
+  className?: string;
 }) {
   const active = sortKey === col;
   const Arrow = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <th className={`px-3 py-3 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+    <th
+      className={`px-2 py-3 font-medium ${align === "right" ? "text-right" : "text-left"} ${className ?? ""}`}
+    >
+
       <button
         onClick={() => onClick(col)}
         className={`inline-flex items-center gap-1 transition-colors ${

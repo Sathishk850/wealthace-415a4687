@@ -408,7 +408,7 @@ export function WealthOverview({
 
 
       {/* ROW 1 — KPI CARDS */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <KpiCard
           label="Total Assets"
           value={inr(totalAssets)}
@@ -527,7 +527,7 @@ export function WealthOverview({
               ))}
             </div>
           </div>
-          <div className="mt-4 h-[260px]">
+          <div className="mt-3 h-[170px] sm:h-[200px]">
             {trend.length < 2 ? (
               <div className="grid h-full place-items-center text-xs text-muted-foreground">
                 Add investments with purchase dates to see growth
@@ -775,7 +775,7 @@ function AllocationCard({
 }) {
   const hasData = data.length > 0 && data.some((d) => d.amt > 0);
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div className="rounded-2xl border border-border bg-card p-4">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         <button
@@ -786,19 +786,19 @@ function AllocationCard({
         </button>
       </div>
       {!hasData ? (
-        <div className="grid h-40 place-items-center px-4 text-center text-xs text-muted-foreground">
+        <div className="grid h-28 place-items-center px-4 text-center text-xs text-muted-foreground">
           {emptyLabel ?? "No data yet"}
         </div>
       ) : (
-        <div className="flex items-center gap-4">
-          <div className="relative h-[150px] w-[150px] shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="relative h-[112px] w-[112px] shrink-0">
             <ResponsiveContainer>
               <PieChart>
                 <Pie
                   data={data}
                   dataKey="amt"
-                  innerRadius={50}
-                  outerRadius={72}
+                  innerRadius={36}
+                  outerRadius={54}
                   paddingAngle={2}
                   stroke="none"
                 >
