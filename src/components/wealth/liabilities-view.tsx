@@ -418,11 +418,11 @@ export function LiabilitiesView({
         </div>
 
         {/* Desktop: table */}
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-sm">
+        <div className="hidden md:block">
+          <table className="w-full table-fixed text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="w-[44px] px-3 py-3">
+                <th className="w-[40px] px-2 py-3">
                   <SelectCheckbox
                     label="Select all liabilities"
                     checked={sel.allSelected}
@@ -431,15 +431,16 @@ export function LiabilitiesView({
                   />
                 </th>
                 <SortHeader label={`Liabilities (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Category" col="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Lender" col="lender" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Outstanding" col="outstanding" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="EMI" col="emi" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Rate" col="rate" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" />
-                <SortHeader label="Due Date" col="due" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
-                <th className="w-[120px] px-3 py-3"></th>
+                <SortHeader label="Category" col="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[130px] xl:table-cell" />
+                <SortHeader label="Lender" col="lender" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[120px] lg:table-cell" />
+                <SortHeader label="Outstanding" col="outstanding" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[120px]" />
+                <SortHeader label="EMI" col="emi" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[100px]" />
+                <SortHeader label="Rate" col="rate" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[72px]" />
+                <SortHeader label="Due Date" col="due" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[110px] lg:table-cell" />
+                <SortHeader label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="w-[92px]" />
+                <th className="w-[52px] px-2 py-3"></th>
               </tr>
+
             </thead>
             <tbody>
               {isLoading ? (
