@@ -38,6 +38,7 @@ export const LIABILITY_CATEGORIES: LiabilityCategory[] = [
   "Home Loan",
   "Car Loan",
   "Personal Loan",
+  "Gold Loan",
   "Credit Card",
   "Education Loan",
   "Business Loan",
