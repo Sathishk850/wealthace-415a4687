@@ -17,6 +17,7 @@ export type LiabilityCategory =
   | "Home Loan"
   | "Car Loan"
   | "Personal Loan"
+  | "Gold Loan"
   | "Credit Card"
   | "Education Loan"
   | "Business Loan"
@@ -37,6 +38,7 @@ export const LIABILITY_CATEGORIES: LiabilityCategory[] = [
   "Home Loan",
   "Car Loan",
   "Personal Loan",
+  "Gold Loan",
   "Credit Card",
   "Education Loan",
   "Business Loan",
