@@ -527,7 +527,7 @@ export function WealthOverview({
               ))}
             </div>
           </div>
-          <div className="mt-4 h-[260px]">
+          <div className="mt-3 h-[170px] sm:h-[200px]">
             {trend.length < 2 ? (
               <div className="grid h-full place-items-center text-xs text-muted-foreground">
                 Add investments with purchase dates to see growth
