@@ -17,6 +17,7 @@ export type LiabilityCategory =
   | "Home Loan"
   | "Car Loan"
   | "Personal Loan"
+  | "Gold Loan"
   | "Credit Card"
   | "Education Loan"
   | "Business Loan"
