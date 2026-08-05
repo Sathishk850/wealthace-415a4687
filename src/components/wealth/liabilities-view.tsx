@@ -925,6 +925,7 @@ function SortHeader({
   sortDir,
   onClick,
   align,
+  className,
 }: {
   label: string;
   col: SortKey;
@@ -932,11 +933,15 @@ function SortHeader({
   sortDir: "asc" | "desc";
   onClick: (c: SortKey) => void;
   align: "left" | "right";
+  className?: string;
 }) {
   const active = sortKey === col;
   const Arrow = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <th className={`px-3 py-3 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+    <th
+      className={`px-2 py-3 font-medium ${align === "right" ? "text-right" : "text-left"} ${className ?? ""}`}
+    >
+
       <button
         onClick={() => onClick(col)}
         className={`inline-flex items-center gap-1 transition-colors ${
