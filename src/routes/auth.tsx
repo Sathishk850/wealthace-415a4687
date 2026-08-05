@@ -27,9 +27,11 @@ function applyRememberDevice(_remember: boolean) {
 }
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { mode: "signin" | "signup"; redirect?: string } => ({
     mode: (s.mode === "signup" ? "signup" : "signin") as "signin" | "signup",
-    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
+    ...(typeof s.redirect === "string" ? { redirect: s.redirect } : {}),
   }),
   head: () => ({
     meta: [
