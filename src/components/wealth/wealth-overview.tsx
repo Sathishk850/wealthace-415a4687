@@ -408,7 +408,7 @@ export function WealthOverview({
 
 
       {/* ROW 1 — KPI CARDS */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <KpiCard
           label="Total Assets"
           value={inr(totalAssets)}
