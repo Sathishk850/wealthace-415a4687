@@ -139,7 +139,43 @@ function ChartCard({
   );
 }
 
+function TopCategoryCard({
+  name,
+  amount,
+  share,
+  color,
+}: {
+  name: string;
+  amount: number;
+  share: number;
+  color: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
+      <div className="flex items-start gap-2.5 sm:gap-3">
+        <span
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full sm:h-11 sm:w-11"
+          style={{ background: `${color}22`, color }}
+        >
+          <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[11px] text-muted-foreground sm:text-xs">Top Spend Category</div>
+          <div className="mt-0.5 truncate font-display text-base font-bold tracking-tight text-foreground sm:mt-1 sm:text-2xl">
+            {name}
+          </div>
+        </div>
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-muted-foreground sm:mt-2 sm:text-[11px]">
+        <span className="font-semibold text-foreground tabular-nums">{inrCompact(amount)}</span>
+        <span className="tabular-nums">{share.toFixed(1)}% of spend</span>
+      </div>
+    </div>
+  );
+}
+
 function KpiCard({
+
   icon: Icon,
   label,
   value,
