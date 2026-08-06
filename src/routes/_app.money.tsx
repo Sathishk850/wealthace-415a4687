@@ -161,18 +161,19 @@ function KpiCard({
   const p = palette[tone];
   const up = (delta?.pct ?? 0) >= 0;
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-start gap-3">
-        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${p.bg} ${p.fg}`}>
-          <Icon className="h-5 w-5" />
+    <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
+      <div className="flex items-start gap-2.5 sm:gap-3">
+        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full sm:h-11 sm:w-11 ${p.bg} ${p.fg}`}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-xs text-muted-foreground">{label}</div>
-          <div className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
+          <div className="truncate text-[11px] text-muted-foreground sm:text-xs">{label}</div>
+          <div className="mt-0.5 truncate font-display text-base font-bold tracking-tight text-foreground tabular-nums sm:mt-1 sm:text-2xl">
             {value}
           </div>
         </div>
       </div>
+
       {delta && (
         <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>{delta.label}</span>
