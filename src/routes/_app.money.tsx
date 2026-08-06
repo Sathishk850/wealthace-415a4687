@@ -175,7 +175,7 @@ function KpiCard({
       </div>
 
       {delta && (
-        <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-muted-foreground sm:mt-2 sm:gap-2 sm:text-[11px]">
           <span>{delta.label}</span>
           <span className={`font-semibold ${up ? "text-success" : "text-destructive"}`}>
             {up ? "↑" : "↓"} {Math.abs(delta.pct).toFixed(1)}%
