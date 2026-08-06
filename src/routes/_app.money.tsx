@@ -695,15 +695,23 @@ function TransactionsTable({
   onEdit: (tx: Transaction) => void;
 }) {
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+  const isMobile = useIsMobile();
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
+  const [period, setPeriod] = useState<PeriodKey>("this_month");
+  const [from, setFrom] = useState<string>("");
+  const [to, setTo] = useState<string>("");
   const [sort, setSort] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = isMobile ? 5 : 8;
+
+  const range = useMemo(() => periodRange(period, from, to), [period, from, to]);
 
   const filtered = useMemo(() => {
     let arr = rows;
     if (catFilter !== "all") arr = arr.filter((r) => r.category_id === catFilter);
+    if (range.from) arr = arr.filter((r) => r.occurred_on >= range.from!);
+    if (range.to) arr = arr.filter((r) => r.occurred_on <= range.to!);
     const term = q.trim().toLowerCase();
     if (term) {
       arr = arr.filter(
@@ -727,7 +735,7 @@ function TransactionsTable({
       }
     });
     return sorted;
-  }, [rows, q, catFilter, sort]);
+  }, [rows, q, catFilter, sort, range]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -740,51 +748,122 @@ function TransactionsTable({
 
   return (
     <div className="rounded-2xl border border-border bg-card">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
-        <div className="relative flex-1 min-w-[180px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search merchant, note, account…"
-            className="h-9 pl-8 text-xs"
-          />
+      <div className="space-y-2 border-b border-border p-3">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[180px] flex-1">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Search</div>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search merchant, note…"
+                className="h-9 pl-8 text-xs"
+              />
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Period</div>
+            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPage(1); }}>
+              <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PERIOD_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Category</div>
+            <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); setPage(1); }}>
+              <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {filteredCats.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Sort</div>
+            <Select value={sort} onValueChange={(v) => setSort(v as any)}>
+              <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date_desc">Newest first</SelectItem>
+                <SelectItem value="date_asc">Oldest first</SelectItem>
+                <SelectItem value="amount_desc">Amount: high → low</SelectItem>
+                <SelectItem value="amount_asc">Amount: low → high</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); setPage(1); }}>
-          <SelectTrigger className="h-9 w-[170px] text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
-            {filteredCats.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={sort} onValueChange={(v) => setSort(v as any)}>
-          <SelectTrigger className="h-9 w-[160px] text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="date_desc">Newest first</SelectItem>
-            <SelectItem value="date_asc">Oldest first</SelectItem>
-            <SelectItem value="amount_desc">Amount: high → low</SelectItem>
-            <SelectItem value="amount_asc">Amount: low → high</SelectItem>
-          </SelectContent>
-        </Select>
+        {period === "custom" && (
+          <div className="flex flex-wrap items-end gap-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">From</div>
+              <DatePicker value={from} onChange={(v) => { setFrom(v); setPage(1); }} placeholder="Start date" className="h-9 w-[150px] text-xs" />
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">To</div>
+              <DatePicker value={to} onChange={(v) => { setTo(v); setPage(1); }} placeholder="End date" className="h-9 w-[150px] text-xs" />
+            </div>
+          </div>
+        )}
       </div>
 
       {filtered.length === 0 ? (
         <EmptyState icon={Inbox} title="No transactions found" description={rows.length === 0 ? "Click Add to create your first one." : "Try adjusting your filters."} />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Mobile: compact rows, no horizontal scrolling */}
+          <ul className="divide-y divide-border md:hidden">
+            {pageRows.map((r) => {
+              const cat = r.category_id ? catMap.get(r.category_id) : null;
+              return (
+                <li key={r.id} className="flex items-center gap-2 px-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-medium text-foreground">{r.merchant || cat?.name || "—"}</div>
+                    <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+                      <span>{formatDateLabel(r.occurred_on)}</span>
+                      {cat && (
+                        <>
+                          <span>·</span>
+                          <span className="inline-flex items-center gap-1 truncate">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: cat.color }} />
+                            {cat.name}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`shrink-0 text-[13px] font-semibold tabular-nums ${r.kind === "income" ? "text-success" : "text-destructive"}`}>
+                    {r.kind === "income" ? "+" : "-"}{inrCompact(r.amount)}
+                  </div>
+                  <div className="flex shrink-0 items-center">
+                    <button onClick={() => onEdit(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground active:bg-surface" aria-label="Edit">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => setConfirmDel(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground active:bg-destructive/15" aria-label="Delete">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="hidden md:block">
             <table className="w-full text-sm">
               <thead className="bg-surface/50 text-xs text-muted-foreground">
                 <tr>
                   <th className="px-4 py-2.5 text-left font-medium">Date</th>
                   <th className="px-4 py-2.5 text-left font-medium">Merchant</th>
                   <th className="px-4 py-2.5 text-left font-medium">Category</th>
-                  <th className="px-4 py-2.5 text-left font-medium">Account</th>
+                  <th className="hidden px-4 py-2.5 text-left font-medium lg:table-cell">Account</th>
                   <th className="px-4 py-2.5 text-right font-medium">Amount</th>
                   <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
@@ -794,12 +873,12 @@ function TransactionsTable({
                   const cat = r.category_id ? catMap.get(r.category_id) : null;
                   return (
                     <tr key={r.id} className="hover:bg-surface/40">
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{formatDateLabel(r.occurred_on)}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-foreground">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">{formatDateLabel(r.occurred_on)}</td>
+                      <td className="px-4 py-2.5 text-sm font-medium text-foreground">
                         {r.merchant}
                         {r.note && <div className="text-[11px] text-muted-foreground">{r.note}</div>}
                       </td>
-                      <td className="px-4 py-3 text-xs">
+                      <td className="px-4 py-2.5 text-xs">
                         {cat ? (
                           <span className="inline-flex items-center gap-1.5">
                             <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
@@ -809,11 +888,11 @@ function TransactionsTable({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{r.account ?? "—"}</td>
-                      <td className={`whitespace-nowrap px-4 py-3 text-right text-sm font-semibold tabular-nums ${r.kind === "income" ? "text-success" : "text-destructive"}`}>
+                      <td className="hidden px-4 py-2.5 text-xs text-muted-foreground lg:table-cell">{r.account ?? "—"}</td>
+                      <td className={`whitespace-nowrap px-4 py-2.5 text-right text-sm font-semibold tabular-nums ${r.kind === "income" ? "text-success" : "text-destructive"}`}>
                         {r.kind === "income" ? "+" : "-"}{inrCompact(r.amount)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-right">
                         <div className="inline-flex items-center gap-1">
                           <button onClick={() => onEdit(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface hover:text-foreground" aria-label="Edit">
                             <Pencil className="h-3.5 w-3.5" />
@@ -829,6 +908,7 @@ function TransactionsTable({
               </tbody>
             </table>
           </div>
+
 
           <div className="flex items-center justify-between gap-2 border-t border-border p-3 text-xs text-muted-foreground">
             <div>Showing {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} of {filtered.length}</div>
