@@ -479,7 +479,7 @@ function Money() {
               {txThisMonth.length === 0 ? (
                 <EmptyState icon={Inbox} title="No transactions this month" description="Add income or an expense to see your trend." />
               ) : (
-                <div className="h-64">
+                <div className="h-40 sm:h-48">
                   <ResponsiveContainer>
                     <LineChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
