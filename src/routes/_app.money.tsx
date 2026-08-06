@@ -499,11 +499,12 @@ function Money() {
                 <EmptyState icon={Inbox} title="No expenses yet" description="Your category split will appear here." />
               ) : (
                 <>
-                  <div className="grid grid-cols-[150px_minmax(0,1fr)] items-center gap-4">
-                    <div className="relative h-[150px]">
+                  <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-3 sm:gap-4">
+                    <div className="relative h-[112px]">
                       <ResponsiveContainer>
                         <PieChart>
-                          <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={48} outerRadius={72} paddingAngle={2} stroke="none">
+                          <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={36} outerRadius={54} paddingAngle={2} stroke="none">
+
                             {expenseCats.map((s) => <Cell key={s.name} fill={s.color} />)}
                           </Pie>
                         </PieChart>
