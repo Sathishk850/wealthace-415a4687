@@ -681,9 +681,54 @@ function EmptyState({
 }
 
 /* ============================================================
+ * Period filter helpers
+ * ========================================================== */
+type PeriodKey = "this_month" | "last_month" | "last_3m" | "last_6m" | "ytd" | "all" | "custom";
+
+const PERIOD_OPTIONS: { value: PeriodKey; label: string }[] = [
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "last_3m", label: "Last 3 months" },
+  { value: "last_6m", label: "Last 6 months" },
+  { value: "ytd", label: "Year to date" },
+  { value: "all", label: "All time" },
+  { value: "custom", label: "Custom range" },
+];
+
+function iso(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function periodRange(
+  period: PeriodKey,
+  from: string,
+  to: string
+): { from?: string; to?: string } {
+  const now = new Date();
+  const startOfMonth = (offset: number) => new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  switch (period) {
+    case "this_month":
+      return { from: iso(startOfMonth(0)), to: iso(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
+    case "last_month":
+      return { from: iso(startOfMonth(-1)), to: iso(new Date(now.getFullYear(), now.getMonth(), 0)) };
+    case "last_3m":
+      return { from: iso(startOfMonth(-2)), to: iso(now) };
+    case "last_6m":
+      return { from: iso(startOfMonth(-5)), to: iso(now) };
+    case "ytd":
+      return { from: `${now.getFullYear()}-01-01`, to: iso(now) };
+    case "custom":
+      return { from: from || undefined, to: to || undefined };
+    default:
+      return {};
+  }
+}
+
+/* ============================================================
  * Transactions table (used by Transactions/Income/Expenses tabs)
  * ========================================================== */
 function TransactionsTable({
+
   rows,
   categories,
   kindFilter,
