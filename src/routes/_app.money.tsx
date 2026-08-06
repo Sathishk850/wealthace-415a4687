@@ -413,12 +413,19 @@ function Money() {
       ) : tab === "Overview" ? (
         <>
           {/* KPI cards */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
             <KpiCard icon={TrendingUp} label="Total Income" value={inr(income)} delta={{ pct: pctDelta(income, prevIncome), label: deltaLabel }} tone="positive" />
             <KpiCard icon={ArrowDownRight} label="Total Expenses" value={inr(expense)} delta={{ pct: pctDelta(expense, prevExpense), label: deltaLabel }} tone="negative" />
             <KpiCard icon={PiggyBank} label="Net Savings" value={inr(savings)} delta={{ pct: pctDelta(savings, prevSavings), label: deltaLabel }} tone="mint" />
             <KpiCard icon={Percent} label="Savings Rate" value={`${savingsRate.toFixed(2)}%`} delta={{ pct: savingsRate - prevSavingsRate, label: deltaLabel }} tone="violet" />
+            <TopCategoryCard
+              name={expenseCats[0]?.name ?? "—"}
+              amount={expenseCats[0]?.value ?? 0}
+              share={totalExpense > 0 ? ((expenseCats[0]?.value ?? 0) / totalExpense) * 100 : 0}
+              color={expenseCats[0]?.color ?? "#6E8294"}
+            />
           </div>
+
 
           {/* Trend + Breakdown */}
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-5">
