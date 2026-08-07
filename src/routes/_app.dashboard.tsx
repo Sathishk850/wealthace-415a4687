@@ -933,10 +933,6 @@ function SnapCard({
         )}
         <span className="truncate">{delta}</span>
       </div>
-      <div className="mt-2">
-        <KpiSparkline series={series} positive={polarity} height={28} placeholder={!hasHistory} />
-      </div>
-
     </div>
   );
 }
