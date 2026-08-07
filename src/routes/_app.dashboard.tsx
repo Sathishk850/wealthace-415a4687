@@ -758,12 +758,19 @@ function RangeChart({
   data,
   height,
   compact,
+  range: rangeProp,
+  onRangeChange,
 }: {
   data: { i: number; v: number; label?: string }[];
   height: number;
   compact?: boolean;
+  /** When provided, the period dropdown is controlled/rendered by the parent. */
+  range?: ChartRangeValue;
+  onRangeChange?: (v: ChartRangeValue) => void;
 }) {
-  const [range, setRange] = useState<ChartRangeValue>(() => defaultChartRange("1M"));
+  const [localRange, setLocalRange] = useState<ChartRangeValue>(() => defaultChartRange("1M"));
+  const range = rangeProp ?? localRange;
+  const setRange = onRangeChange ?? setLocalRange;
   const id = `g-${Math.random().toString(36).slice(2, 8)}`;
   const labels = useMemo(() => data.map((s) => s.label ?? null), [data]);
   const series = useMemo(
@@ -788,9 +795,11 @@ function RangeChart({
   );
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-2 flex justify-end">
-        <ChartRangeSelector value={range} onChange={setRange} />
-      </div>
+      {rangeProp ? null : (
+        <div className="mb-2 flex justify-end">
+          <ChartRangeSelector value={range} onChange={setRange} />
+        </div>
+      )}
       <div style={{ height: compact ? height : height }} className="flex-1">
         {series.length === 0 ? (
           <div className="grid h-full place-items-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
