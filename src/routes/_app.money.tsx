@@ -279,6 +279,20 @@ function Money() {
 
   const deltaLabel = `vs ${prevMonth.toLocaleString("en-IN", { month: "short", year: "numeric" })}`;
 
+  // Monthly average spend across all recorded months
+  const avgMonthlySpend = useMemo(() => {
+    const months = new Map<string, number>();
+    for (const t of transactions) {
+      if (t.kind !== "expense") continue;
+      const k = t.occurred_on.slice(0, 7);
+      months.set(k, (months.get(k) ?? 0) + Number(t.amount || 0));
+    }
+    if (months.size === 0) return 0;
+    let total = 0;
+    for (const v of months.values()) total += v;
+    return total / months.size;
+  }, [transactions]);
+
   // Trend across active month (weekly buckets)
   const trend = useMemo(() => {
     const days = new Date(activeMonth.getFullYear(), activeMonth.getMonth() + 1, 0).getDate();
