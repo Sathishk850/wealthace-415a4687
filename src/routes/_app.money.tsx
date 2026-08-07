@@ -408,7 +408,6 @@ function Money() {
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
-              <span className="min-w-[110px] text-center">{activeMonthLabel}</span>
               <button
                 onClick={() => setMonthOffset((m) => Math.min(0, m + 1))}
                 disabled={monthOffset >= 0}
