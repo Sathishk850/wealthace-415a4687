@@ -71,13 +71,18 @@ export function KpiSparkline({
     const vals = data.map((p) => p.v);
     const min = Math.min(...vals);
     const max = Math.max(...vals);
-    const span = max - min || 1;
+    const rawSpan = max - min;
+    // Flat / near-flat series: draw a centred line instead of pinning it to
+    // the bottom edge (which made the chart look like two stray dots).
+    const isFlat = !Number.isFinite(rawSpan) || Math.abs(rawSpan) < Math.max(1e-9, Math.abs(max) * 1e-6);
+    const span = isFlat ? 1 : rawSpan;
     const n = data.length;
     const pts = data.map((p, idx) => {
       const x = n === 1 ? w / 2 : pad + (idx / (n - 1)) * (w - pad * 2);
-      const y = pad + (1 - (p.v - min) / span) * (h - pad * 2);
+      const y = isFlat ? h / 2 : pad + (1 - (p.v - min) / span) * (h - pad * 2);
       return { x, y, v: p.v };
     });
+
 
     // Connected polyline with visible data points
     const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
