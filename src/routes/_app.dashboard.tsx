@@ -61,7 +61,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
-import { KpiSparkline } from "@/components/kpi-sparkline";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
