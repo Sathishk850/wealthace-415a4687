@@ -717,26 +717,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
               />
             </div>
           </div>
-          <button
-            onClick={async () => {
-              try {
-                await refreshHoldings.mutateAsync();
-                await refetchQuotes();
-                await refetchInv();
-                await refetchAssets();
-                toast.success("Prices refreshed");
-              } catch {
-                await refetchQuotes();
-              }
-            }}
-            disabled={quotesFetching || refreshHoldings.isPending}
-            aria-label="Refresh prices"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-mint/40 bg-mint/[0.06] text-mint disabled:opacity-60"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${quotesFetching || refreshHoldings.isPending ? "animate-spin" : ""}`}
-            />
-          </button>
+          {/* Price refresh lives in the Wealth header, beside market timings. */}
           <button
             onClick={openAdd}
             aria-label={ADD_LABEL[tab]}
@@ -796,26 +777,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           options={platformOptions}
         />
         <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={async () => {
-              try {
-                await refreshHoldings.mutateAsync();
-                await refetchQuotes();
-                await refetchInv();
-                await refetchAssets();
-                toast.success("Prices refreshed");
-              } catch {
-                await refetchQuotes();
-              }
-            }}
-            disabled={quotesFetching || refreshHoldings.isPending}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-mint/40 bg-mint/[0.06] px-3 py-2 text-xs font-medium text-mint hover:bg-mint/10 disabled:opacity-60"
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${quotesFetching || refreshHoldings.isPending ? "animate-spin" : ""}`}
-            />
-            Refresh Now
-          </button>
+          {/* Price refresh lives in the Wealth header, beside market timings. */}
           <button
             onClick={openAdd}
             className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] transition hover:brightness-110"

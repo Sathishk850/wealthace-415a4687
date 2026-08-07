@@ -61,7 +61,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
-import { KpiSparkline } from "@/components/kpi-sparkline";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -891,7 +890,7 @@ function SnapCard({
   const flat = hasHistory && Math.abs(last - first) < 1e-6;
   const polarity: boolean | null = !hasHistory || flat || neutral ? null : up;
   return (
-    <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
+    <div className="rounded-2xl border border-border bg-card p-3">
       <div className="flex items-start justify-between gap-1">
         <div className="inline-flex min-w-0 items-center gap-1.5 text-[11px] font-semibold text-muted-foreground sm:text-xs">
           <span
@@ -933,10 +932,6 @@ function SnapCard({
         )}
         <span className="truncate">{delta}</span>
       </div>
-      <div className="mt-2">
-        <KpiSparkline series={series} positive={polarity} height={28} placeholder={!hasHistory} />
-      </div>
-
     </div>
   );
 }
