@@ -425,7 +425,7 @@ function Money() {
         <div className="flex h-64 items-center justify-center text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading…
         </div>
-      ) : tab === "Overview" ? (
+      ) : tab === "Transactions" ? (
         <>
           {/* KPI cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
