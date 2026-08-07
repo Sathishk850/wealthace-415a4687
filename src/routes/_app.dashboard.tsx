@@ -1019,7 +1019,7 @@ function ScoreGauge({ score, size = "md" }: { score: number | null; size?: "sm" 
   const needleBase = needleAngle !== null ? polar(needleAngle, R - SW / 2 - 4) : null;
 
   return (
-    <div className="w-full max-w-[320px]">
+    <div className={size === "sm" ? "w-full max-w-[220px]" : "w-full max-w-[320px]"}>
       <svg viewBox="0 0 200 120" className="block w-full" aria-hidden>
         {score === null ? (
           <path
