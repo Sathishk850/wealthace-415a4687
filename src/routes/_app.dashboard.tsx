@@ -505,6 +505,7 @@ function Dashboard() {
         <Card className="col-span-12 p-6 lg:col-span-6">
           <div className="flex items-start justify-between gap-3">
             <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
+            <ChartRangeSelector value={portfolioRange} onChange={setPortfolioRange} />
           </div>
           <div className="mt-2 flex items-end justify-between gap-4">
             <div>
@@ -521,7 +522,13 @@ function Dashboard() {
           </div>
           <div className="mt-3 h-[180px]">
             {portfolioSeries.length >= 2 ? (
-              <RangeChart data={portfolioSeries} height={180} compact />
+              <RangeChart
+                data={portfolioSeries}
+                height={180}
+                compact
+                range={portfolioRange}
+                onRangeChange={setPortfolioRange}
+              />
             ) : (
               <EmptyChart height={180} message="No portfolio snapshots yet." />
             )}
@@ -534,14 +541,14 @@ function Dashboard() {
         </Card>
 
         {/* Financial Score + Goal Progress */}
-        <Card className="col-span-12 p-6 lg:col-span-6">
+        <Card className="col-span-12 p-5 lg:col-span-6">
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-4 flex flex-col items-center gap-6">
-            <ScoreGauge score={score.total} />
-            <div className="w-full space-y-2.5 text-sm">
+          <div className="mt-3 flex flex-col items-center gap-4">
+            <ScoreGauge score={score.total} size="sm" />
+            <div className="w-full space-y-2 text-sm">
               {score.rows.map((row) => (
                 <div key={row.k} className="flex items-center gap-2 sm:gap-3">
-                  <span className="w-24 shrink-0 truncate text-xs text-muted-foreground sm:w-32 sm:text-sm">{row.k}</span>
+                  <span className="w-24 shrink-0 truncate text-[11px] text-muted-foreground sm:w-32 sm:text-xs">{row.k}</span>
                   <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                     {row.v !== null && (
                       <div
@@ -550,7 +557,7 @@ function Dashboard() {
                       />
                     )}
                   </div>
-                  <span className="w-8 shrink-0 text-right text-xs font-semibold text-foreground sm:text-sm">
+                  <span className="w-8 shrink-0 text-right text-[11px] font-semibold text-foreground sm:text-xs">
                     {row.v === null ? "—" : row.v}
                   </span>
                 </div>
@@ -558,13 +565,13 @@ function Dashboard() {
             </div>
           </div>
           {!score.hasAny && (
-            <p className="mt-4 text-center text-xs text-muted-foreground">
+            <p className="mt-3 text-center text-[11px] text-muted-foreground">
               Add more financial data to calculate your Financial Score.
             </p>
           )}
         </Card>
 
-        <Card className="col-span-12 p-6 lg:col-span-6">
+        <Card className="col-span-12 p-5 lg:col-span-6">
           <div className="flex items-center justify-between">
             <CardHeader title="Goal Progress" tip="Progress toward your active financial goals." />
             <Link to="/planner" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
@@ -574,26 +581,43 @@ function Dashboard() {
           {goals.length === 0 ? (
             <EmptyState className="mt-4" title="No goals yet" body="Create goals in Planner to track progress here." />
           ) : (
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mt-3 space-y-3">
               {goals.slice(0, 3).map((g, idx) => {
                 const pct = g.target_amount > 0 ? Math.min(100, Math.round((g.saved_amount / g.target_amount) * 100)) : 0;
                 const color = ALLOC_COLORS[idx % ALLOC_COLORS.length];
                 return (
-                  <GoalCard
-                    key={g.id}
-                    icon={Target}
-                    color={color}
-                    name={g.name}
-                    pct={pct}
-                    saved={`₹${fmt(g.saved_amount)}`}
-                    target={`₹${fmt(g.target_amount)}`}
-                    eta={g.target_date ? new Date(g.target_date).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "—"}
-                  />
+                  <div key={g.id}>
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="truncate font-medium text-foreground">{g.name}</span>
+                      <span className="shrink-0 tabular-nums font-semibold" style={{ color }}>
+                        {pct}%
+                      </span>
+                    </div>
+                    {/* target = full track, achieved = coloured line */}
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: color }}
+                      />
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span className="tabular-nums">
+                        ₹{fmt(g.saved_amount)} / ₹{fmt(g.target_amount)}
+                      </span>
+                      <span>
+                        Target:{" "}
+                        {g.target_date
+                          ? new Date(g.target_date).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
                 );
               })}
             </div>
           )}
         </Card>
+
 
         {/* Financial Insights — full width */}
         <Card className="col-span-12 p-6">
