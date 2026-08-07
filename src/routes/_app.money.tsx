@@ -514,41 +514,8 @@ function Money() {
           </div>
 
           {/* Bottom row */}
-          <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-            <ChartCard
-              title="Recent Transactions"
-              action={<button onClick={() => setTab("Transactions")} className="text-xs font-semibold text-mint hover:underline">View All</button>}
-            >
-              {transactions.length === 0 ? (
-                <EmptyState icon={Inbox} title="No transactions" description="Add your first transaction to get started." />
-              ) : (
-                <ul className="divide-y divide-border">
-                  {transactions.slice(0, 5).map((r) => {
-                    const cat = r.category_id ? catMap.get(r.category_id) : null;
-                    const color = cat?.color ?? (r.kind === "income" ? "#22C55E" : "#6E8294");
-                    return (
-                      <li key={r.id} className="flex items-center justify-between gap-3 py-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: `${color}22`, color }}>
-                            <Wallet className="h-4 w-4" />
-                          </span>
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-foreground">{r.merchant}</div>
-                            <div className="truncate text-xs text-muted-foreground">{cat?.name ?? (r.account ?? "—")}</div>
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <div className={`text-sm font-semibold tabular-nums ${r.kind === "income" ? "text-success" : "text-destructive"}`}>
-                            {r.kind === "income" ? "+" : "-"}{inrCompact(r.amount)}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">{formatDateLabel(r.occurred_on)}</div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </ChartCard>
+          <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+
 
             <ChartCard
               title={`Budget Status (${activeMonth.toLocaleString("en-IN", { month: "short" })})`}
