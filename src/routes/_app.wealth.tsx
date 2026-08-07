@@ -162,3 +162,24 @@ function WealthMarketBar() {
   );
 }
 
+
+/** Manual price refresh, sitting right after the market timing chip. */
+function WealthRefreshButton() {
+  const refreshHoldings = useRefreshHoldings();
+  const refreshAll = useGlobalRefresh();
+  return (
+    <RefreshIconButton
+      busy={refreshHoldings.isPending}
+      label="Refresh prices"
+      onClick={async () => {
+        try {
+          await refreshHoldings.mutateAsync();
+          toast.success("Prices refreshed");
+        } catch {
+          /* fall through to a cache refresh */
+        }
+        await refreshAll();
+      }}
+    />
+  );
+}
