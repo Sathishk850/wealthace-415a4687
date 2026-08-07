@@ -189,7 +189,7 @@ function KpiCard({
 }
 
 function Money() {
-  const [tab, setTab] = useState<Tab>("Overview");
+  const [tab, setTab] = useState<Tab>("Transactions");
   const [monthOffset, setMonthOffset] = useState(0); // 0 = current month
 
   const categoriesQ = useCategories();
