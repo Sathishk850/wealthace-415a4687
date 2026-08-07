@@ -658,7 +658,7 @@ export function WealthOverview({
         )}
       </div>
 
-      </div>
+
 
       <AllocationDetailsDialog
         open={!!allocDetail}
