@@ -970,7 +970,7 @@ function SnapCard({
 }
 
 
-function ScoreGauge({ score }: { score: number | null }) {
+function ScoreGauge({ score, size = "md" }: { score: number | null; size?: "sm" | "md" }) {
   const band =
     score === null
       ? { label: "Not Available", color: "var(--muted-foreground)", hint: "Add more financial data to calculate your Financial Score." }
