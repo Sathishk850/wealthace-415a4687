@@ -909,13 +909,19 @@ function SnapCard({
       <div className="mt-3 font-display text-xl font-bold tracking-tight text-foreground">
         {value}
       </div>
-      <div className={cn("mt-1 inline-flex items-center gap-1 text-[11px] font-semibold", up ? "text-success" : "text-danger")}>
-        {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+      <div
+        className={cn(
+          "mt-1 inline-flex items-center gap-1 text-[11px] font-semibold",
+          polarity === null ? "text-muted-foreground" : up ? "text-success" : "text-danger",
+        )}
+      >
+        {polarity === null ? <Minus className="h-3 w-3" /> : up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
         {delta}
       </div>
       <div className="mt-2">
         <KpiSparkline series={series} positive={polarity} height={36} placeholder={!hasHistory} />
       </div>
+
     </div>
   );
 }
