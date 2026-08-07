@@ -865,6 +865,7 @@ function SnapCard({
   series,
   tip,
   muted,
+  neutral,
 }: {
   label: string;
   value: string;
@@ -875,6 +876,7 @@ function SnapCard({
   series: { i: number; v: number }[];
   tip?: string;
   muted?: boolean;
+  neutral?: boolean;
 }) {
   // Sparkline polarity — `up` already encodes "is this movement good?"
   // (LiveSnap flips it for inverse metrics like Liabilities / Debt Ratio).
@@ -882,23 +884,23 @@ function SnapCard({
   const first = hasHistory ? series[0].v : 0;
   const last = hasHistory ? series[series.length - 1].v : 0;
   const flat = hasHistory && Math.abs(last - first) < 1e-6;
-  const polarity: boolean | null = !hasHistory ? null : flat ? null : up;
+  const polarity: boolean | null = !hasHistory || flat || neutral ? null : up;
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-start justify-between">
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+    <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-1">
+        <div className="inline-flex min-w-0 items-center gap-1.5 text-[11px] font-semibold text-muted-foreground sm:text-xs">
           <span
-            className="grid h-7 w-7 place-items-center rounded-lg"
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-lg sm:h-7 sm:w-7"
             style={{ background: `${accent}1f`, color: accent }}
           >
             <Icon className="h-3.5 w-3.5" />
           </span>
-          {label}
+          <span className="truncate">{label}</span>
         </div>
         {tip && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <button type="button" aria-label={`About ${label}`} className="text-muted-foreground hover:text-foreground">
+              <button type="button" aria-label={`About ${label}`} className="shrink-0 text-muted-foreground hover:text-foreground">
                 <Info className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
@@ -908,25 +910,32 @@ function SnapCard({
           </Tooltip>
         )}
       </div>
-      <div className="mt-3 font-display text-xl font-bold tracking-tight text-foreground">
+      <div className="mt-2 truncate font-display text-base font-bold tabular-nums tracking-tight text-foreground sm:text-xl">
         {value}
       </div>
       <div
         className={cn(
-          "mt-1 inline-flex items-center gap-1 text-[11px] font-semibold",
+          "mt-0.5 flex items-center gap-1 truncate text-[10px] font-semibold sm:text-[11px]",
           polarity === null ? "text-muted-foreground" : up ? "text-success" : "text-danger",
         )}
       >
-        {polarity === null ? <Minus className="h-3 w-3" /> : up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-        {delta}
+        {polarity === null ? (
+          <Minus className="h-3 w-3 shrink-0" />
+        ) : up ? (
+          <ArrowUp className="h-3 w-3 shrink-0" />
+        ) : (
+          <ArrowDown className="h-3 w-3 shrink-0" />
+        )}
+        <span className="truncate">{delta}</span>
       </div>
       <div className="mt-2">
-        <KpiSparkline series={series} positive={polarity} height={36} placeholder={!hasHistory} />
+        <KpiSparkline series={series} positive={polarity} height={28} placeholder={!hasHistory} />
       </div>
 
     </div>
   );
 }
+
 
 function ScoreGauge({ score }: { score: number | null }) {
   const band =
