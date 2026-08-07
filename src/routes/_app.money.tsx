@@ -105,7 +105,7 @@ export const Route = createFileRoute("/_app/money")({
   component: Money,
 });
 
-const tabs = ["Overview", "Income", "Expenses", "Transactions", "Budgets"] as const;
+const tabs = ["Transactions", "Income", "Expenses", "Budgets"] as const;
 type Tab = (typeof tabs)[number];
 
 function ChartCard({
