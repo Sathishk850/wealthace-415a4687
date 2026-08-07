@@ -8,6 +8,7 @@ import {
   Percent,
   Wallet,
   ArrowDownRight,
+  ArrowUpDown,
   PiggyBank,
   CalendarDays,
   CalendarRange,
@@ -135,41 +136,6 @@ function ChartCard({
         {action}
       </div>
       {children}
-    </div>
-  );
-}
-
-function TopCategoryCard({
-  name,
-  amount,
-  share,
-  color,
-}: {
-  name: string;
-  amount: number;
-  share: number;
-  color: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
-      <div className="flex items-start gap-2.5 sm:gap-3">
-        <span
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full sm:h-11 sm:w-11"
-          style={{ background: `${color}22`, color }}
-        >
-          <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[11px] text-muted-foreground sm:text-xs">Top Spend Category</div>
-          <div className="mt-0.5 truncate font-display text-base font-bold tracking-tight text-foreground sm:mt-1 sm:text-2xl">
-            {name}
-          </div>
-        </div>
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-muted-foreground sm:mt-2 sm:text-[11px]">
-        <span className="font-semibold text-foreground tabular-nums">{inrCompact(amount)}</span>
-        <span className="tabular-nums">{share.toFixed(1)}% of spend</span>
-      </div>
     </div>
   );
 }
@@ -487,7 +453,7 @@ function Money() {
               {txThisMonth.length === 0 ? (
                 <EmptyState icon={Inbox} title="No transactions this month" description="Add income or an expense to see your trend." />
               ) : (
-                <div className="h-40 sm:h-48">
+                <div className="h-32 sm:h-40">
                   <ResponsiveContainer>
                     <LineChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
@@ -507,11 +473,11 @@ function Money() {
                 <EmptyState icon={Inbox} title="No expenses yet" description="Your category split will appear here." />
               ) : (
                 <>
-                  <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-3 sm:gap-4">
-                    <div className="relative h-[112px]">
+                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 sm:gap-4">
+                    <div className="relative h-[96px]">
                       <ResponsiveContainer>
                         <PieChart>
-                          <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={36} outerRadius={54} paddingAngle={2} stroke="none">
+                          <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={30} outerRadius={46} paddingAngle={2} stroke="none">
 
                             {expenseCats.map((s) => <Cell key={s.name} fill={s.color} />)}
                           </Pie>
@@ -889,9 +855,10 @@ function TransactionsTable({
             </Select>
           </div>
           <div>
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Sort</div>
             <Select value={sort} onValueChange={(v) => setSort(v as any)}>
-              <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Sort" className="h-9 w-9 justify-center px-0 text-xs [&>svg:last-child]:hidden">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="date_desc">Newest first</SelectItem>
                 <SelectItem value="date_asc">Oldest first</SelectItem>
