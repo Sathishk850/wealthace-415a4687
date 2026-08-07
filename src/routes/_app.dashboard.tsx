@@ -428,8 +428,9 @@ function Dashboard() {
                   <SnapCard
                     label="Savings Rate"
                     value={`${savingsRate.toFixed(1)}%`}
-                    delta={hasRateHistory ? `${rateDelta >= 0 ? "+" : ""}${rateDelta.toFixed(1)} pts vs last month` : "No history yet"}
+                    delta={hasRateHistory ? `${rateDelta >= 0 ? "+" : ""}${rateDelta.toFixed(1)} pts vs prev` : "No history yet"}
                     up={rateDelta >= 0}
+                    neutral={Math.abs(rateDelta) < 0.05}
                     icon={Percent}
                     accent={savingsAccent}
                     series={hasRateHistory ? [{ i: 0, v: lastSavingsRate }, { i: 1, v: savingsRate }] : []}
@@ -439,8 +440,9 @@ function Dashboard() {
                   <SnapCard
                     label="Debt Ratio"
                     value={`${debtRatio.toFixed(1)}%`}
-                    delta={hasDebtHistory ? `${debtDelta >= 0 ? "+" : ""}${debtDelta.toFixed(1)} pts vs last snapshot` : "No history yet"}
+                    delta={hasDebtHistory ? `${debtDelta >= 0 ? "+" : ""}${debtDelta.toFixed(1)} pts vs prev` : "No history yet"}
                     up={debtDelta <= 0}
+                    neutral={Math.abs(debtDelta) < 0.05}
                     icon={Scale}
                     accent={debtAccent}
                     series={debtSeries.length ? debtSeries : [{ i: 0, v: debtRatio }, { i: 1, v: debtRatio }]}
