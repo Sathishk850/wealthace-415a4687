@@ -30,5 +30,5 @@ export function RefreshIconButton({
   );
 }
 
-/** Auto-refresh cadence used across the app. */
-export const AUTO_REFRESH_MS = 30 * 60 * 1000;
+/** Auto-refresh cadence used across the app (5 minutes). */
+export const AUTO_REFRESH_MS = 5 * 60 * 1000;

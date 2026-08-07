@@ -900,14 +900,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   onClick={toggleSort}
                   align="right"
                 />
-                <SortHeader
-                  label="Platform"
-                  col="platform"
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onClick={toggleSort}
-                  align="left"
-                />
+                {/* Platform is available under the Platform filter, not as a column. */}
                 {/* reserved actions column, no header */}
                 <th className="w-[120px] px-3 py-3"></th>
               </tr>
@@ -1355,15 +1348,7 @@ function HoldingRow({
           <span className="text-xs text-muted-foreground">—</span>
         )}
       </td>
-      <td className="px-3 py-3 text-muted-foreground">
-        {h.platform ? (
-          <span className="inline-block max-w-[190px] truncate rounded-full border border-border bg-surface-2/60 px-2.5 py-1 text-xs font-medium text-foreground">
-            {h.platform}
-          </span>
-        ) : (
-          <span className="text-xs">—</span>
-        )}
-      </td>
+      {/* Platform column removed — it stays available via the Platform filter. */}
       <td className="w-[150px] px-3 py-3">
         <div className="flex items-center justify-end gap-1">
           <span className="flex items-center gap-1 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">

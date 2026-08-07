@@ -399,12 +399,8 @@ export function WealthOverview({
           <h2 className="font-display text-2xl font-bold text-foreground">Overview</h2>
           <p className="text-sm text-muted-foreground">Your wealth summary at a glance</p>
         </div>
-        <RefreshIconButton
-          onClick={() => void refreshAll()}
-          busy={refreshing || quotesFetching}
-          label="Refresh overview"
-        />
       </div>
+
 
 
       {/* ROW 1 — KPI CARDS */}
@@ -629,18 +625,25 @@ export function WealthOverview({
 
       {/* ROW 4 — INSIGHTS */}
       <div className="rounded-2xl border border-border bg-card p-5">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Insights</h3>
             <p className="text-[11px] text-muted-foreground">Smart, dynamic tips from your portfolio</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setInsightsOpen(true)}
-            className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125"
-          >
-            View All Insights <ChevronRight className="h-3.5 w-3.5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setInsightsOpen(true)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-mint hover:brightness-125"
+            >
+              View All Insights <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+            <RefreshIconButton
+              onClick={() => void refreshAll()}
+              busy={refreshing || quotesFetching}
+              label="Refresh insights"
+            />
+          </div>
         </div>
         {insights.length === 0 ? (
           <div className="grid h-24 place-items-center text-xs text-muted-foreground">
@@ -655,24 +658,7 @@ export function WealthOverview({
         )}
       </div>
 
-      {/* BOTTOM */}
-      <div className="flex flex-col items-start gap-3 rounded-2xl border border-mint/30 bg-mint/5 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-mint/15 text-mint">
-            <ShieldCheck className="h-4 w-4" />
-          </span>
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            Track all your assets, liabilities and SIPs in one place and grow your wealth with confidence.
-          </p>
-        </div>
-        <button
-          onClick={onGoSip}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-mint px-4 py-2 text-xs font-semibold text-[#04121C] transition hover:brightness-110 sm:text-sm"
-        >
-          <TrendingUp className="h-3.5 w-3.5" />
-          SIP Tracker
-        </button>
-      </div>
+
 
       <AllocationDetailsDialog
         open={!!allocDetail}

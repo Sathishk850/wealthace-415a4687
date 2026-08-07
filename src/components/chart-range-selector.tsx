@@ -188,12 +188,12 @@ export function ChartRangeSelector({
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Custom range
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex min-w-0 flex-col gap-1 text-[11px] text-muted-foreground">
                   Start date
                   <DatePicker value={startStr} onChange={(v) => setStartStr(v)} />
                 </label>
-                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                <label className="flex min-w-0 flex-col gap-1 text-[11px] text-muted-foreground">
                   End date
                   <DatePicker value={endStr} onChange={(v) => setEndStr(v)} />
                 </label>
