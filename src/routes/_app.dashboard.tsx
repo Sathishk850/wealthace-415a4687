@@ -700,12 +700,14 @@ function LiveSnap({
   const pct = computedBase > 0 ? (computedDelta / computedBase) * 100 : 0;
   const isUpVisual = computedDelta >= 0;
   const isGood = goodIsDown ? !isUpVisual : isUpVisual;
+  const isFlat = Math.abs(pct) < 0.005;
   return (
     <SnapCard
       label={label}
       value={`₹ ${fmt(value)}`}
-      delta={hasHistory ? `${isUpVisual ? "+" : ""}${pct.toFixed(2)}% vs last snapshot` : "No history yet"}
+      delta={hasHistory ? (isFlat ? "No change vs prev" : `${isUpVisual ? "+" : ""}${pct.toFixed(2)}% vs prev`) : "No history yet"}
       up={isGood}
+      neutral={isFlat}
       icon={icon}
       accent={accent}
       series={computedSeries.length ? computedSeries : [{ i: 0, v: value }, { i: 1, v: value }]}
@@ -714,6 +716,7 @@ function LiveSnap({
     />
   );
 }
+
 
 /* ---------- Building blocks ---------- */
 
