@@ -777,26 +777,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           options={platformOptions}
         />
         <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={async () => {
-              try {
-                await refreshHoldings.mutateAsync();
-                await refetchQuotes();
-                await refetchInv();
-                await refetchAssets();
-                toast.success("Prices refreshed");
-              } catch {
-                await refetchQuotes();
-              }
-            }}
-            disabled={quotesFetching || refreshHoldings.isPending}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-mint/40 bg-mint/[0.06] px-3 py-2 text-xs font-medium text-mint hover:bg-mint/10 disabled:opacity-60"
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${quotesFetching || refreshHoldings.isPending ? "animate-spin" : ""}`}
-            />
-            Refresh Now
-          </button>
+          {/* Price refresh lives in the Wealth header, beside market timings. */}
           <button
             onClick={openAdd}
             className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] transition hover:brightness-110"
