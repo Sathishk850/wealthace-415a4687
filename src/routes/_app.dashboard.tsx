@@ -340,6 +340,9 @@ function Dashboard() {
   };
 
   const loading = assetsQ.isLoading || liabilitiesQ.isLoading || investmentsQ.isLoading;
+  const [portfolioRange, setPortfolioRange] = useState<ChartRangeValue>(() =>
+    defaultChartRange("1M"),
+  );
 
   return (
     <TooltipProvider delayDuration={150}>
