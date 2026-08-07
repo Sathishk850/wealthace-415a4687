@@ -134,89 +134,81 @@ export function ChartRangeSelector({
 
   return (
     <div className={cn("inline-flex flex-col items-end gap-1", className)} title={activeRangeLabel}>
-      <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-surface-2 p-0.5">
-        {PRESET_BUTTONS.map((b) => (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
           <button
-            key={b.key}
             type="button"
-            onClick={() => onChange(computeRange(b.key))}
-            className={cn(
-              "rounded-md px-2 py-0.5 text-[11px] font-semibold transition",
-              value.key === b.key
-                ? "border border-mint/50 bg-mint/10 text-mint"
-                : "text-muted-foreground hover:text-foreground",
-            )}
+            aria-label="Select period"
+            title={activeRangeLabel}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-[11px] font-semibold text-foreground transition hover:border-mint/50"
           >
-            {b.label}
+            <CalendarIcon className="h-3.5 w-3.5 text-mint" />
+            <span>{value.key === "CUSTOM" ? value.label : value.label}</span>
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
-        ))}
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label="Custom date range"
-              title={activeRangeLabel}
-              className={cn(
-                "ml-0.5 grid h-6 w-7 place-items-center rounded-md transition",
-                value.key === "CUSTOM"
-                  ? "border border-mint/50 bg-mint/10 text-mint"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <CalendarIcon className="h-3.5 w-3.5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-[320px] border-border bg-popover p-3">
-            <div className="space-y-3">
-              <div>
-                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Quick presets
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {QUICK_PRESETS.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => applyPreset(p.id)}
-                      className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] font-medium text-foreground hover:border-mint/50 hover:text-mint"
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[320px] border-border bg-popover p-3">
+          <div className="space-y-3">
+            <div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Period
               </div>
-              <div className="space-y-1.5">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Custom range
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                    Start date
-                    <DatePicker
-                      value={startStr}
-                      onChange={(v) => setStartStr(v)}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                    End date
-                    <DatePicker
-                      value={endStr}
-                      onChange={(v) => setEndStr(v)}
-                    />
-                  </label>
-                </div>
-                <button
-                  type="button"
-                  onClick={applyCustom}
-                  className="mt-1 w-full rounded-md bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground hover:bg-[var(--primary-hover)]"
-                >
-                  Apply
-                </button>
+              <div className="flex flex-wrap gap-1.5">
+                {PRESET_BUTTONS.map((b) => (
+                  <button
+                    key={b.key}
+                    type="button"
+                    onClick={() => {
+                      onChange(computeRange(b.key));
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "rounded-md border px-2 py-1 text-[11px] font-semibold transition",
+                      value.key === b.key
+                        ? "border-mint/50 bg-mint/10 text-mint"
+                        : "border-border bg-surface-2 text-foreground hover:border-mint/50 hover:text-mint",
+                    )}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+                {QUICK_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => applyPreset(p.id)}
+                    className="rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] font-medium text-foreground hover:border-mint/50 hover:text-mint"
+                  >
+                    {p.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Custom range
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                  Start date
+                  <DatePicker value={startStr} onChange={(v) => setStartStr(v)} />
+                </label>
+                <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                  End date
+                  <DatePicker value={endStr} onChange={(v) => setEndStr(v)} />
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={applyCustom}
+                className="mt-1 w-full rounded-md bg-mint px-3 py-1.5 text-xs font-semibold text-mint-foreground hover:bg-[var(--primary-hover)]"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
       <span className="text-[10px] font-medium text-muted-foreground">{activeRangeLabel}</span>
     </div>
   );
