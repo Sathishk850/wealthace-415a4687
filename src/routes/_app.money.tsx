@@ -591,13 +591,16 @@ function Money() {
               </ul>
             </ChartCard>
           </div>
+
+          {/* All transactions */}
+          <div className="mt-5">
+            <TransactionsTable
+              rows={transactions}
+              categories={categories}
+              onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+            />
+          </div>
         </>
-      ) : tab === "Transactions" ? (
-        <TransactionsTable
-          rows={transactions}
-          categories={categories}
-          onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
-        />
       ) : tab === "Income" ? (
         <TransactionsTable
           rows={transactions.filter((t) => t.kind === "income")}
