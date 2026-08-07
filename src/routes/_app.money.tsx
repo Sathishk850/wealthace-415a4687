@@ -8,6 +8,7 @@ import {
   Percent,
   Wallet,
   ArrowDownRight,
+  ArrowUpDown,
   PiggyBank,
   CalendarDays,
   CalendarRange,
@@ -139,41 +140,6 @@ function ChartCard({
   );
 }
 
-function TopCategoryCard({
-  name,
-  amount,
-  share,
-  color,
-}: {
-  name: string;
-  amount: number;
-  share: number;
-  color: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-3 sm:p-4">
-      <div className="flex items-start gap-2.5 sm:gap-3">
-        <span
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full sm:h-11 sm:w-11"
-          style={{ background: `${color}22`, color }}
-        >
-          <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[11px] text-muted-foreground sm:text-xs">Top Spend Category</div>
-          <div className="mt-0.5 truncate font-display text-base font-bold tracking-tight text-foreground sm:mt-1 sm:text-2xl">
-            {name}
-          </div>
-        </div>
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-muted-foreground sm:mt-2 sm:text-[11px]">
-        <span className="font-semibold text-foreground tabular-nums">{inrCompact(amount)}</span>
-        <span className="tabular-nums">{share.toFixed(1)}% of spend</span>
-      </div>
-    </div>
-  );
-}
-
 function KpiCard({
 
   icon: Icon,
@@ -278,6 +244,20 @@ function Money() {
     prev === 0 ? (cur === 0 ? 0 : 100) : ((cur - prev) / Math.abs(prev)) * 100;
 
   const deltaLabel = `vs ${prevMonth.toLocaleString("en-IN", { month: "short", year: "numeric" })}`;
+
+  // Monthly average spend across all recorded months
+  const avgMonthlySpend = useMemo(() => {
+    const months = new Map<string, number>();
+    for (const t of transactions) {
+      if (t.kind !== "expense") continue;
+      const k = t.occurred_on.slice(0, 7);
+      months.set(k, (months.get(k) ?? 0) + Number(t.amount || 0));
+    }
+    if (months.size === 0) return 0;
+    let total = 0;
+    for (const v of months.values()) total += v;
+    return total / months.size;
+  }, [transactions]);
 
   // Trend across active month (weekly buckets)
   const trend = useMemo(() => {
@@ -408,7 +388,6 @@ function Money() {
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
-              <span className="min-w-[110px] text-center">{activeMonthLabel}</span>
               <button
                 onClick={() => setMonthOffset((m) => Math.min(0, m + 1))}
                 disabled={monthOffset >= 0}
@@ -454,12 +433,7 @@ function Money() {
             <KpiCard icon={ArrowDownRight} label="Total Expenses" value={inr(expense)} delta={{ pct: pctDelta(expense, prevExpense), label: deltaLabel }} tone="negative" />
             <KpiCard icon={PiggyBank} label="Net Savings" value={inr(savings)} delta={{ pct: pctDelta(savings, prevSavings), label: deltaLabel }} tone="mint" />
             <KpiCard icon={Percent} label="Savings Rate" value={`${savingsRate.toFixed(2)}%`} delta={{ pct: savingsRate - prevSavingsRate, label: deltaLabel }} tone="violet" />
-            <TopCategoryCard
-              name={expenseCats[0]?.name ?? "—"}
-              amount={expenseCats[0]?.value ?? 0}
-              share={totalExpense > 0 ? ((expenseCats[0]?.value ?? 0) / totalExpense) * 100 : 0}
-              color={expenseCats[0]?.color ?? "#6E8294"}
-            />
+            <KpiCard icon={Wallet} label="Monthly Avg Spend" value={inr(avgMonthlySpend)} tone="violet" />
           </div>
 
 
@@ -479,7 +453,7 @@ function Money() {
               {txThisMonth.length === 0 ? (
                 <EmptyState icon={Inbox} title="No transactions this month" description="Add income or an expense to see your trend." />
               ) : (
-                <div className="h-40 sm:h-48">
+                <div className="h-32 sm:h-40">
                   <ResponsiveContainer>
                     <LineChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
@@ -499,11 +473,11 @@ function Money() {
                 <EmptyState icon={Inbox} title="No expenses yet" description="Your category split will appear here." />
               ) : (
                 <>
-                  <div className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-3 sm:gap-4">
-                    <div className="relative h-[112px]">
+                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 sm:gap-4">
+                    <div className="relative h-[96px]">
                       <ResponsiveContainer>
                         <PieChart>
-                          <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={36} outerRadius={54} paddingAngle={2} stroke="none">
+                          <Pie data={expenseCats} dataKey="value" nameKey="name" innerRadius={30} outerRadius={46} paddingAngle={2} stroke="none">
 
                             {expenseCats.map((s) => <Cell key={s.name} fill={s.color} />)}
                           </Pie>
@@ -881,9 +855,10 @@ function TransactionsTable({
             </Select>
           </div>
           <div>
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Sort</div>
             <Select value={sort} onValueChange={(v) => setSort(v as any)}>
-              <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label="Sort" className="h-9 w-9 justify-center px-0 text-xs [&>svg:last-child]:hidden">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="date_desc">Newest first</SelectItem>
                 <SelectItem value="date_asc">Oldest first</SelectItem>
