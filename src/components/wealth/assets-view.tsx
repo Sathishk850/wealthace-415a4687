@@ -900,14 +900,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   onClick={toggleSort}
                   align="right"
                 />
-                <SortHeader
-                  label="Platform"
-                  col="platform"
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onClick={toggleSort}
-                  align="left"
-                />
+                {/* Platform is available under the Platform filter, not as a column. */}
                 {/* reserved actions column, no header */}
                 <th className="w-[120px] px-3 py-3"></th>
               </tr>
