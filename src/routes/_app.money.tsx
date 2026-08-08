@@ -9,6 +9,8 @@ import {
   Wallet,
   ArrowDownRight,
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   PiggyBank,
   CalendarDays,
   CalendarRange,
