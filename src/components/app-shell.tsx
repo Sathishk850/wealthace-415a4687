@@ -117,9 +117,17 @@ const MOBILE_TABS: NavItem[] = [
 
 function Brand() {
   return (
-    <BrandMark to="/dashboard" size="md" tagline />
+    <>
+      <Link to="/dashboard" aria-label="Wealth Ace" className="sm:hidden">
+        <BrandIcon className="h-9 w-9" />
+      </Link>
+      <span className="hidden sm:block">
+        <BrandMark to="/dashboard" size="md" />
+      </span>
+    </>
   );
 }
+
 
 function TopBar() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
