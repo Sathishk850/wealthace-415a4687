@@ -1,21 +1,44 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import logoAsset from "@/assets/wealth-ace-logo.png.asset.json";
-import iconAsset from "@/assets/wealth-ace-icon.png.asset.json";
+import logoDarkAsset from "@/assets/wealth-ace-logo-dark.png.asset.json";
+import logoLightAsset from "@/assets/wealth-ace-logo-light.png.asset.json";
+import iconAsset from "@/assets/wealth-ace-icon-t.png.asset.json";
 
-export const BRAND_LOGO_URL = logoAsset.url;
+/** Dark-mode lockup (original gold/teal on transparent). */
+export const BRAND_LOGO_URL = logoDarkAsset.url;
+/** Light-mode lockup (ink wordmark + deepened teal on transparent). */
+export const BRAND_LOGO_LIGHT_URL = logoLightAsset.url;
 export const BRAND_ICON_URL = iconAsset.url;
 
 const LOGO_ALT = "Wealth Ace — Track. Nurture. Prosper.";
 
 /**
- * The source artwork is a premium lockup rendered on its own near-black
- * canvas. It is used untouched in both themes; in light mode it sits inside a
- * rounded dark plaque (its own canvas, framed) so contrast stays perfect
- * without redrawing or recoloring the brand.
+ * The lockup ships as two transparent variants of the same artwork: the
+ * original gold/teal lockup for dark surfaces, and an ink-wordmark version
+ * for light surfaces. No plaque, no shadow — it sits directly on the surface.
  */
-const PLAQUE =
-  "rounded-xl bg-[#07090B] ring-1 ring-black/5 dark:ring-0 dark:bg-transparent shadow-sm dark:shadow-none";
+const PLAQUE = "";
+
+/** Renders the theme-correct lockup (light variant by default, dark under `.dark`). */
+function LogoImg({ alt = "", className = "" }: { alt?: string; className?: string }) {
+  return (
+    <>
+      <img
+        src={BRAND_LOGO_LIGHT_URL}
+        alt={alt}
+        draggable={false}
+        className={`block h-auto w-full select-none dark:hidden ${className}`}
+      />
+      <img
+        src={BRAND_LOGO_URL}
+        alt=""
+        draggable={false}
+        className={`hidden h-auto w-full select-none dark:block ${className}`}
+      />
+    </>
+  );
+}
+
 
 /**
  * BrandIcon — the compact brand mark (square emblem asset).
@@ -70,7 +93,7 @@ function AnimatedLogo() {
   return (
     <span className="relative block w-full">
       {/* Sizing ghost — keeps layout identical to the static logo */}
-      <img src={BRAND_LOGO_URL} alt={LOGO_ALT} className="block h-auto w-full opacity-0" />
+      <img src={BRAND_LOGO_LIGHT_URL} alt={LOGO_ALT} className="block h-auto w-full opacity-0" />
       {BANDS.map((b) => (
         <span
           key={b.key}
@@ -78,7 +101,7 @@ function AnimatedLogo() {
           style={{ clipPath: `inset(${b.top}% 0% ${b.bottom}% 0%)` }}
           aria-hidden
         >
-          <img src={BRAND_LOGO_URL} alt="" className="block h-auto w-full" draggable={false} />
+          <LogoImg />
         </span>
       ))}
       {/* Gold arrow sweep + closing teal shimmer */}
@@ -133,12 +156,7 @@ export function BrandMark({
   const inner = animated ? (
     <AnimatedLogo />
   ) : (
-    <img
-      src={BRAND_LOGO_URL}
-      alt={LOGO_ALT}
-      draggable={false}
-      className="block h-auto w-full select-none"
-    />
+    <LogoImg alt={LOGO_ALT} />
   );
   if (to) {
     return (
