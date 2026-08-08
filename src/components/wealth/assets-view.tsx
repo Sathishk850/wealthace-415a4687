@@ -870,7 +870,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   align="right"
                 />
                 <SortHeader
-                  label="CMP"
+                  label={tab === "Mutual Funds" ? "NAV" : "CMP"}
                   col="cmp"
                   sortKey={sortKey}
                   sortDir={sortDir}
@@ -1236,6 +1236,7 @@ type RowLike = {
   name: string;
   symbol: string | null;
   segment: string;
+  market_cap?: string | null;
   quantity: number;
   avg_price: number;
   cmp: number;
@@ -1305,8 +1306,12 @@ function HoldingRow({
                 </span>
               ) : null}
             </div>
-            {h.symbol ? (
-              <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
+            {(h.symbol || h.market_cap) ? (
+              <div className="truncate text-[11px] text-muted-foreground">
+                {h.symbol ? <span className="uppercase">{h.symbol}</span> : null}
+                {h.symbol && h.market_cap ? " · " : ""}
+                {h.market_cap ?? ""}
+              </div>
             ) : null}
           </div>
 
