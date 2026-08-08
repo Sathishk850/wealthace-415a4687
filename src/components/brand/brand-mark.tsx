@@ -93,7 +93,7 @@ function AnimatedLogo() {
   return (
     <span className="relative block w-full">
       {/* Sizing ghost — keeps layout identical to the static logo */}
-      <img src={BRAND_LOGO_URL} alt={LOGO_ALT} className="block h-auto w-full opacity-0" />
+      <img src={BRAND_LOGO_LIGHT_URL} alt={LOGO_ALT} className="block h-auto w-full opacity-0" />
       {BANDS.map((b) => (
         <span
           key={b.key}
@@ -101,7 +101,7 @@ function AnimatedLogo() {
           style={{ clipPath: `inset(${b.top}% 0% ${b.bottom}% 0%)` }}
           aria-hidden
         >
-          <img src={BRAND_LOGO_URL} alt="" className="block h-auto w-full" draggable={false} />
+          <LogoImg />
         </span>
       ))}
       {/* Gold arrow sweep + closing teal shimmer */}
@@ -156,12 +156,7 @@ export function BrandMark({
   const inner = animated ? (
     <AnimatedLogo />
   ) : (
-    <img
-      src={BRAND_LOGO_URL}
-      alt={LOGO_ALT}
-      draggable={false}
-      className="block h-auto w-full select-none"
-    />
+    <LogoImg alt={LOGO_ALT} />
   );
   if (to) {
     return (
