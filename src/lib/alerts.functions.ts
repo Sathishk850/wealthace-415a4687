@@ -61,7 +61,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         category: "reminder",
         priority: opts.priority ?? "normal",
         link: opts.link,
-        metadata: { ...opts.dedupe, ...(opts.metadata ?? {}) },
+        metadata: { ...opts.dedupe, ...(opts.metadata ?? {}) } as never,
       });
       if (!error) created += 1;
     }
@@ -206,10 +206,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
     let portfolio = 0;
     const { data: allInv } = await supabase
       .from("wealth_investments")
-      .select("category, current_value, invested_amount, status");
+      .select("category, current_value, invested_value, status");
     for (const i of allInv ?? []) {
       if ((i.status ?? "active") !== "active") continue;
-      const v = Number(i.current_value ?? i.invested_amount ?? 0);
+      const v = Number(i.current_value ?? i.invested_value ?? 0);
+
       if (!Number.isFinite(v) || v <= 0) continue;
       const key = String(i.category ?? "Other");
       totals.set(key, (totals.get(key) ?? 0) + v);
