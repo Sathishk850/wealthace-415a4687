@@ -769,6 +769,39 @@ function periodRange(
   }
 }
 
+type TxSortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
+
+function SortHeader({
+  label,
+  sortKey,
+  onClick,
+  asc,
+  desc,
+  align = "left",
+}: {
+  label: string;
+  sortKey: TxSortKey;
+  onClick: (v: TxSortKey) => void;
+  asc: TxSortKey;
+  desc: TxSortKey;
+  align?: "left" | "right";
+}) {
+  const active = sortKey === asc || sortKey === desc;
+  const dir: "asc" | "desc" = sortKey === asc ? "asc" : "desc";
+  const Arrow = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className={`px-4 py-2.5 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+      <button
+        onClick={() => onClick(active && dir === "desc" ? asc : desc)}
+        className={`inline-flex items-center gap-1 transition-colors ${active ? "text-mint" : "text-muted-foreground hover:text-foreground"}`}
+      >
+        {label}
+        <Arrow className="h-3 w-3" />
+      </button>
+    </th>
+  );
+}
+
 /* ============================================================
  * Transactions table (used by Transactions/Income/Expenses tabs)
  * ========================================================== */
@@ -878,19 +911,6 @@ function TransactionsTable({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Select value={sort} onValueChange={(v) => setSort(v as any)}>
-              <SelectTrigger aria-label="Sort" className="h-9 w-9 justify-center px-0 text-xs [&>svg:last-child]:hidden">
-                <ArrowUpDown className="h-3.5 w-3.5" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date_desc">Newest first</SelectItem>
-                <SelectItem value="date_asc">Oldest first</SelectItem>
-                <SelectItem value="amount_desc">Amount: high → low</SelectItem>
-                <SelectItem value="amount_asc">Amount: low → high</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         {period === "custom" && (
           <div className="flex flex-wrap items-end gap-2">
@@ -951,11 +971,11 @@ function TransactionsTable({
             <table className="w-full text-sm">
               <thead className="bg-surface/50 text-xs text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-2.5 text-left font-medium">Date</th>
+                  <SortHeader label="Date" sortKey={sort} onClick={setSort} asc="date_asc" desc="date_desc" />
                   <th className="px-4 py-2.5 text-left font-medium">Merchant</th>
                   <th className="px-4 py-2.5 text-left font-medium">Category</th>
                   <th className="hidden px-4 py-2.5 text-left font-medium lg:table-cell">Account</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Amount</th>
+                  <SortHeader label="Amount" sortKey={sort} onClick={setSort} asc="amount_asc" desc="amount_desc" align="right" />
                   <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
               </thead>
