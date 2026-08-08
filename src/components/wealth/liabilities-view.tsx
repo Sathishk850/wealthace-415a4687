@@ -5,7 +5,7 @@ import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 import { TextTabs } from "@/components/text-tabs";
 import { useCollapsibleGroups } from "@/lib/use-collapsible-groups";
-import { AUTO_REFRESH_MS } from "@/components/refresh-icon-button";
+import { AUTO_REFRESH_MS, RefreshIconButton } from "@/components/refresh-icon-button";
 import {
   CreditCard,
   Banknote,
@@ -363,6 +363,7 @@ export function LiabilitiesView({
           options={["active", "due_soon", "overdue", "closed"]}
           formatOption={titleCase}
         />
+        <RefreshIconButton busy={isFetching} label="Refresh liabilities" onClick={() => refetch()} />
         <IoMenu
           onImport={handleImport}
           onExportCsv={() => exportCsv("liabilities", exportCols as any, sorted)}
@@ -423,7 +424,7 @@ export function LiabilitiesView({
                     onChange={(v) => sel.toggleAll(v)}
                   />
                 </th>
-                <SortHeader label={`Liabilities (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <SortHeader label={`Liabilities (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="w-[200px]" />
                 <SortHeader label="Category" col="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[130px] xl:table-cell" />
                 <SortHeader label="Lender" col="lender" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[120px] lg:table-cell" />
                 <SortHeader label="Outstanding" col="outstanding" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[120px]" />
