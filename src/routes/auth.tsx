@@ -293,7 +293,7 @@ function AuthPage() {
       <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-2 lg:gap-16 lg:px-12">
         {/* Left: brand + tagline */}
         <div className="flex flex-col justify-between gap-10">
-          <BrandMark to="/" size="xl" tagline />
+          <BrandMark to="/" size="xl" animated />
 
           <div className="hidden lg:block">
             <h1 className="font-display text-4xl font-bold leading-tight tracking-tight xl:text-5xl">
