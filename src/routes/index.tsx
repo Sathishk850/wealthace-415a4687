@@ -139,7 +139,7 @@ function Splash({ leaving }: { leaving: boolean }) {
       <div className="relative flex flex-col items-center gap-8">
         {/* Master logo (icon + wordmark + tagline in one image) */}
         <div className="fv-splash-step" style={{ animationDelay: "0ms" }}>
-          <BrandMark size="xl" tagline />
+          <BrandMark size="xl" animated />
         </div>
 
         {/* Wealth view loading state */}

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { BrandMark, BrandIcon } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
@@ -117,9 +117,17 @@ const MOBILE_TABS: NavItem[] = [
 
 function Brand() {
   return (
-    <BrandMark to="/dashboard" size="md" tagline />
+    <>
+      <Link to="/dashboard" aria-label="Wealth Ace" className="sm:hidden">
+        <BrandIcon className="h-9 w-9" />
+      </Link>
+      <span className="hidden sm:block">
+        <BrandMark to="/dashboard" size="md" />
+      </span>
+    </>
   );
 }
+
 
 function TopBar() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
