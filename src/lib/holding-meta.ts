@@ -32,5 +32,19 @@ export function marketCapBand(input: {
   if (s.includes("small")) return "Small Cap";
   if (s.includes("multi")) return "Multi Cap";
   if (s.includes("flexi")) return "Flexi Cap";
+  if (s.includes("index")) return "Index";
   return null;
+}
+
+/**
+ * Fund category for a Mutual Fund holding (Large Cap / Mid Cap / Small Cap /
+ * Index / Multicap / …), shown under the fund name on holding rows. Falls
+ * back to the sub-category label captured on the Add form when no band can
+ * be inferred.
+ */
+export function fundCategory(input: {
+  sub_category?: string | null;
+  notes?: string | null;
+}): string | null {
+  return marketCapBand(input) ?? input.sub_category ?? null;
 }
