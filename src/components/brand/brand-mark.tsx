@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import logoAsset from "@/assets/wealth-ace-logo.png.asset.json";
-import iconAsset from "@/assets/wealth-ace-icon.png.asset.json";
+import logoDarkAsset from "@/assets/wealth-ace-logo-dark.png.asset.json";
+import logoLightAsset from "@/assets/wealth-ace-logo-light.png.asset.json";
+import iconAsset from "@/assets/wealth-ace-icon-t.png.asset.json";
 
-export const BRAND_LOGO_URL = logoAsset.url;
+/** Dark-mode lockup (original gold/teal on transparent). */
+export const BRAND_LOGO_URL = logoDarkAsset.url;
+/** Light-mode lockup (ink wordmark + deepened teal on transparent). */
+export const BRAND_LOGO_LIGHT_URL = logoLightAsset.url;
 export const BRAND_ICON_URL = iconAsset.url;
 
 const LOGO_ALT = "Wealth Ace — Track. Nurture. Prosper.";
@@ -14,8 +18,7 @@ const LOGO_ALT = "Wealth Ace — Track. Nurture. Prosper.";
  * rounded dark plaque (its own canvas, framed) so contrast stays perfect
  * without redrawing or recoloring the brand.
  */
-const PLAQUE =
-  "rounded-xl bg-[#07090B] ring-1 ring-black/5 dark:ring-0 dark:bg-transparent shadow-sm dark:shadow-none";
+const PLAQUE = "";
 
 /**
  * BrandIcon — the compact brand mark (square emblem asset).
