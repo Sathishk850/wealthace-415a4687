@@ -124,7 +124,7 @@ function HomeRoute() {
 function Splash({ leaving }: { leaving: boolean }) {
   return (
     <div
-      className={`fixed inset-0 z-[100] grid place-items-center bg-[#050505] transition-opacity duration-700 ${
+      className={`dark fixed inset-0 z-[100] grid place-items-center bg-[#050505] transition-opacity duration-700 ${
         leaving ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
 
@@ -231,7 +231,7 @@ function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-foreground">
+    <div className="dark min-h-screen bg-black text-foreground">
       {/* Ambient animated background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.22),transparent_65%)] blur-3xl" />
