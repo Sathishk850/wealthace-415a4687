@@ -495,7 +495,15 @@ export function LiabilitiesView({
                         <StatusPill status={l.status} />
                       </td>
                       <td className="px-2 py-3">
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setDetails(l)}
+                            aria-label={`View ${l.name}`}
+                            title="View"
+                            className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground opacity-0 transition hover:bg-mint/10 hover:text-mint group-hover:opacity-100 group-focus-within:opacity-100"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -506,9 +514,6 @@ export function LiabilitiesView({
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem onClick={() => setDetails(l)}>
-                                <Eye className="mr-2 h-4 w-4" /> View
-                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
                                   setEditing(l);
