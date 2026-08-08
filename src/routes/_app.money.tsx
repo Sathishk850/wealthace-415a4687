@@ -31,8 +31,8 @@ import { TextTabs } from "@/components/text-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -457,14 +457,48 @@ function Money() {
               ) : (
                 <div className="h-32 sm:h-40">
                   <ResponsiveContainer>
-                    <LineChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+                    <AreaChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="moneyIncomeGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#14D8CF" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#14D8CF" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="moneyExpenseGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
                       <XAxis dataKey="d" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false}  {...smartXAxisProps} />
                       <YAxis stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${Math.round(v / 1000)}k`} />
                       <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1C3850", borderRadius: 12, fontSize: 12 }} formatter={(v: number) => inr(v)} />
-                      <Line type="monotone" dataKey="income" stroke="#14D8CF" strokeWidth={2.5} dot={{ r: 4, fill: "#14D8CF" }} activeDot={{ r: 5 }} />
-                      <Line type="monotone" dataKey="expense" stroke="#3B82F6" strokeWidth={2.5} dot={{ r: 4, fill: "#3B82F6" }} activeDot={{ r: 5 }} />
-                    </LineChart>
+                      <Area
+                        type="monotone"
+                        dataKey="income"
+                        stroke="#14D8CF"
+                        strokeWidth={2.5}
+                        fill="url(#moneyIncomeGradient)"
+                        dot={(props: any) => {
+                          const { key, ...rest } = props;
+                          if (rest.index !== trend.length - 1) return <g key={key} />;
+                          return <circle key={key} cx={rest.cx} cy={rest.cy} r={4} fill="#14D8CF" stroke="none" />;
+                        }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="expense"
+                        stroke="#3B82F6"
+                        strokeWidth={2.5}
+                        fill="url(#moneyExpenseGradient)"
+                        dot={(props: any) => {
+                          const { key, ...rest } = props;
+                          if (rest.index !== trend.length - 1) return <g key={key} />;
+                          return <circle key={key} cx={rest.cx} cy={rest.cy} r={4} fill="#3B82F6" stroke="none" />;
+                        }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
               )}

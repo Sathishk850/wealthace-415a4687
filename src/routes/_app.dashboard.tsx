@@ -20,6 +20,8 @@ import {
   Sparkles,
   Calendar,
   BadgeIndianRupee,
+  RefreshCw,
+  Bell,
 } from "lucide-react";
 import {
   Area,
@@ -224,6 +226,28 @@ function Dashboard() {
     () => snaps.map((s, i) => ({ i, v: s.investments_total, label: s.snapshot_date })),
     [snaps],
   );
+
+  // Portfolio performance series derived from holdings — never depends on
+  // net-worth snapshot history. Falls back to a synthesized series built
+  // from invested vs. current value when there is no historical data.
+  const portfolioPerformanceSeries = useMemo(() => {
+    if (!investments.length) return [] as { i: number; v: number; label: string }[];
+    if (portfolioSeries.length >= 2) return portfolioSeries;
+    const totalInvested = investments.reduce(
+      (s, i) => s + (i.invested_value ?? i.current_value ?? 0),
+      0,
+    );
+    const totalCurrent = totals.investmentsTotal;
+    const dates = investments.map((i) => i.purchase_date).filter(Boolean) as string[];
+    const today = new Date().toISOString().slice(0, 10);
+    const fallbackStart = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    let earliest = dates.length ? [...dates].sort()[0] : fallbackStart;
+    if (earliest >= today) earliest = fallbackStart;
+    return [
+      { i: 0, v: totalInvested || totalCurrent, label: earliest },
+      { i: 1, v: totalCurrent, label: today },
+    ];
+  }, [investments, portfolioSeries, totals.investmentsTotal]);
 
   // Net worth deltas from snapshot history
   const netDelta = useMemo(() => {
