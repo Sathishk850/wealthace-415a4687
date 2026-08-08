@@ -5,7 +5,7 @@ import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 import { TextTabs } from "@/components/text-tabs";
 import { useCollapsibleGroups } from "@/lib/use-collapsible-groups";
-import { AUTO_REFRESH_MS } from "@/components/refresh-icon-button";
+import { AUTO_REFRESH_MS, RefreshIconButton } from "@/components/refresh-icon-button";
 import {
   CreditCard,
   Banknote,
@@ -363,6 +363,7 @@ export function LiabilitiesView({
           options={["active", "due_soon", "overdue", "closed"]}
           formatOption={titleCase}
         />
+        <RefreshIconButton busy={isFetching} label="Refresh liabilities" onClick={() => refetch()} />
         <IoMenu
           onImport={handleImport}
           onExportCsv={() => exportCsv("liabilities", exportCols as any, sorted)}
@@ -423,7 +424,7 @@ export function LiabilitiesView({
                     onChange={(v) => sel.toggleAll(v)}
                   />
                 </th>
-                <SortHeader label={`Liabilities (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" />
+                <SortHeader label={`Liabilities (${sorted.length})`} col="name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="w-[200px]" />
                 <SortHeader label="Category" col="category" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[130px] xl:table-cell" />
                 <SortHeader label="Lender" col="lender" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="left" className="hidden w-[120px] lg:table-cell" />
                 <SortHeader label="Outstanding" col="outstanding" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} align="right" className="w-[120px]" />
@@ -494,7 +495,15 @@ export function LiabilitiesView({
                         <StatusPill status={l.status} />
                       </td>
                       <td className="px-2 py-3">
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setDetails(l)}
+                            aria-label={`View ${l.name}`}
+                            title="View"
+                            className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground opacity-0 transition hover:bg-mint/10 hover:text-mint group-hover:opacity-100 group-focus-within:opacity-100"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -505,9 +514,6 @@ export function LiabilitiesView({
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem onClick={() => setDetails(l)}>
-                                <Eye className="mr-2 h-4 w-4" /> View
-                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
                                   setEditing(l);

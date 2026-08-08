@@ -39,7 +39,7 @@ import {
   AllocationDetailsDialog,
   type AllocationSlice,
 } from "@/components/wealth/allocation-details-dialog";
-import { marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
+import { marketCapBand, sectorFromNotes, segmentFromNotes } from "@/lib/holding-meta";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   cagrPct,
@@ -260,9 +260,19 @@ export function WealthOverview({
 
   const sectorAlloc = useMemo(() => {
     // Sector comes from the "Sector" label captured on the Add Investment form.
+    // Mutual funds without an explicit sector fall back to a fund-category
+    // style bucket (e.g. "Mutual Funds (Equity)") instead of "Unclassified".
+    const mfSectorLabel = (r: Investment): string => {
+      const seg = (segmentFromNotes(r.notes) || r.sub_category || "").toLowerCase();
+      if (seg.includes("debt")) return "Mutual Funds (Debt)";
+      if (seg.includes("hybrid")) return "Mutual Funds (Hybrid)";
+      if (seg.includes("index")) return "Mutual Funds (Index)";
+      return "Mutual Funds (Equity)";
+    };
     const map = new Map<string, number>();
     for (const r of rich) {
-      const sector = sectorFromNotes(r.notes) ?? "Unclassified";
+      const isMf = /mutual/i.test(r.category);
+      const sector = sectorFromNotes(r.notes) ?? (isMf ? mfSectorLabel(r) : "Unclassified");
       map.set(sector, (map.get(sector) || 0) + r.cur);
     }
     const total = Array.from(map.values()).reduce((a, b) => a + b, 0) || 1;

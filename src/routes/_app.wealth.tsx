@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Circle, Plus } from "lucide-react";
+import { Circle } from "lucide-react";
 import { TextTabs } from "@/components/text-tabs";
 import { AssetsView } from "@/components/wealth/assets-view";
 import { LiabilitiesView as LiveLiabilitiesView } from "@/components/wealth/liabilities-view";
@@ -11,10 +11,6 @@ import { WealthOverview } from "@/components/wealth/wealth-overview";
 import { getExchangeSessionLabels, getMarketStatus } from "@/lib/market/calendar";
 import { formatTime } from "@/lib/date-format";
 import { useEffect } from "react";
-import { toast } from "sonner";
-import { useRefreshHoldings } from "@/lib/market/use-market-data";
-import { useGlobalRefresh } from "@/lib/bulk/global-refresh";
-import { RefreshIconButton } from "@/components/refresh-icon-button";
 
 
 export const Route = createFileRoute("/_app/wealth")({
@@ -45,16 +41,6 @@ function Wealth() {
   const [tab, setTab] = useState<TabValue>("overview");
   const addRef = useRef<(() => void) | null>(null);
 
-  // Views that render their own contextual "+" button in their toolbar don't
-  // need a duplicate labelled button in the page header (mobile + desktop).
-  const showAdd = tab !== "overview" && tab !== "assets" && tab !== "liabilities";
-  const addLabel =
-    tab === "insurance" ? "Add Policy"
-    : tab === "accounts" ? "Add Account"
-    : tab === "sip-tracker" ? "Add Investment"
-    : "Add Asset";
-
-
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -64,18 +50,7 @@ function Wealth() {
             Track, analyze, and grow your overall financial wealth.
           </p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <WealthMarketBar />
-          <WealthRefreshButton />
-          {showAdd ? (
-            <button
-              onClick={() => addRef.current?.()}
-              className="inline-flex items-center gap-2 rounded-xl bg-mint px-4 py-2.5 text-sm font-semibold text-[#04121C] transition hover:brightness-110"
-            >
-              <Plus className="h-4 w-4" /> {addLabel}
-            </button>
-          ) : null}
-        </div>
+        <WealthMarketBar />
       </div>
 
       <div className="-mx-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -162,24 +137,3 @@ function WealthMarketBar() {
   );
 }
 
-
-/** Manual price refresh, sitting right after the market timing chip. */
-function WealthRefreshButton() {
-  const refreshHoldings = useRefreshHoldings();
-  const refreshAll = useGlobalRefresh();
-  return (
-    <RefreshIconButton
-      busy={refreshHoldings.isPending}
-      label="Refresh prices"
-      onClick={async () => {
-        try {
-          await refreshHoldings.mutateAsync();
-          toast.success("Prices refreshed");
-        } catch {
-          /* fall through to a cache refresh */
-        }
-        await refreshAll();
-      }}
-    />
-  );
-}

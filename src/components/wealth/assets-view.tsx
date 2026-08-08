@@ -46,8 +46,8 @@ import { AssetDialog } from "@/components/wealth/asset-dialog";
 import { HoldingDetailsModal } from "@/components/wealth/holding-details-modal";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
 import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
-import { marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
-import { AUTO_REFRESH_MS } from "@/components/refresh-icon-button";
+import { fundCategory, marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
+import { AUTO_REFRESH_MS, RefreshIconButton } from "@/components/refresh-icon-button";
 import type { MarketQuote } from "@/lib/market/types";
 import { usePaymentAccounts } from "@/lib/payment-accounts-api";
 import { useCollapsibleGroups } from "@/lib/use-collapsible-groups";
@@ -319,6 +319,15 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   } = useInvestmentQuotes(investments);
   const refreshHoldings = useRefreshHoldings();
   const { data: txnCounts = {} } = useInvestmentTxnCounts();
+
+  const refreshAll = async () => {
+    try {
+      await refreshHoldings.mutateAsync();
+    } catch {
+      /* fall through to a cache refresh */
+    }
+    await Promise.all([refetchQuotes(), refetchInv(), refetchAssets()]);
+  };
 
   // Keep holdings (and every insight derived from them) at most 30 minutes old.
   useEffect(() => {
@@ -717,7 +726,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
               />
             </div>
           </div>
-          {/* Price refresh lives in the Wealth header, beside market timings. */}
+          <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
           <button
             onClick={openAdd}
             aria-label={ADD_LABEL[tab]}
@@ -776,8 +785,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           onChange={setFPlatform}
           options={platformOptions}
         />
+        <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
         <div className="ml-auto flex items-center gap-2">
-          {/* Price refresh lives in the Wealth header, beside market timings. */}
           <button
             onClick={openAdd}
             className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] transition hover:brightness-110"
@@ -861,7 +870,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   align="right"
                 />
                 <SortHeader
-                  label="CMP"
+                  label={tab === "Mutual Funds" ? "NAV" : "CMP"}
                   col="cmp"
                   sortKey={sortKey}
                   sortDir={sortDir}
@@ -1227,6 +1236,7 @@ type RowLike = {
   name: string;
   symbol: string | null;
   segment: string;
+  market_cap?: string | null;
   quantity: number;
   avg_price: number;
   cmp: number;
@@ -1296,8 +1306,12 @@ function HoldingRow({
                 </span>
               ) : null}
             </div>
-            {h.symbol ? (
-              <div className="truncate text-[11px] uppercase text-muted-foreground">{h.symbol}</div>
+            {(h.symbol || h.market_cap) ? (
+              <div className="truncate text-[11px] text-muted-foreground">
+                {h.symbol ? <span className="uppercase">{h.symbol}</span> : null}
+                {h.symbol && h.market_cap ? " · " : ""}
+                {h.market_cap ?? ""}
+              </div>
             ) : null}
           </div>
 

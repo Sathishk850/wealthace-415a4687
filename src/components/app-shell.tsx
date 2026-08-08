@@ -25,6 +25,8 @@ import { NotificationBell } from "@/components/notification-bell";
 import { usePrivacy } from "@/lib/privacy";
 import { SessionExpiredDialog, markIntentionalSignOut } from "@/lib/session-expired";
 import { PinReminder } from "@/components/pin-reminder";
+import { AlertsDigest } from "@/components/alerts-digest";
+
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { PwaProvider } from "@/components/pwa/pwa-provider";
 import {
@@ -266,6 +268,8 @@ export function AppShell() {
       <Toaster />
       <SessionExpiredDialog />
       <PinReminder />
+      <AlertsDigest />
+
       <PwaProvider />
     </div>
   );

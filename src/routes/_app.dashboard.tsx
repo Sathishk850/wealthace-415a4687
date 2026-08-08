@@ -20,6 +20,7 @@ import {
   Sparkles,
   Calendar,
   BadgeIndianRupee,
+  RefreshCw,
 } from "lucide-react";
 import {
   Area,
@@ -225,6 +226,28 @@ function Dashboard() {
     [snaps],
   );
 
+  // Portfolio performance series derived from holdings — never depends on
+  // net-worth snapshot history. Falls back to a synthesized series built
+  // from invested vs. current value when there is no historical data.
+  const portfolioPerformanceSeries = useMemo(() => {
+    if (!investments.length) return [] as { i: number; v: number; label: string }[];
+    if (portfolioSeries.length >= 2) return portfolioSeries;
+    const totalInvested = investments.reduce(
+      (s, i) => s + (i.invested_value ?? i.current_value ?? 0),
+      0,
+    );
+    const totalCurrent = totals.investmentsTotal;
+    const dates = investments.map((i) => i.purchase_date).filter(Boolean) as string[];
+    const today = new Date().toISOString().slice(0, 10);
+    const fallbackStart = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    let earliest = dates.length ? [...dates].sort()[0] : fallbackStart;
+    if (earliest >= today) earliest = fallbackStart;
+    return [
+      { i: 0, v: totalInvested || totalCurrent, label: earliest },
+      { i: 1, v: totalCurrent, label: today },
+    ];
+  }, [investments, portfolioSeries, totals.investmentsTotal]);
+
   // Net worth deltas from snapshot history
   const netDelta = useMemo(() => {
     const safe = (n: unknown) => (Number.isFinite(Number(n)) ? Number(n) : 0);
@@ -328,6 +351,60 @@ function Dashboard() {
     }
     return list.slice(0, 4);
   }, [totals, investments, goals]);
+
+  const [isRefreshingInsights, setIsRefreshingInsights] = useState(false);
+  const qcRef = useQueryClient();
+  const onRefreshInsights = async () => {
+    setIsRefreshingInsights(true);
+    try {
+      await Promise.all([
+        qcRef.invalidateQueries({ queryKey: ["assets"] }),
+        qcRef.invalidateQueries({ queryKey: ["liabilities"] }),
+        qcRef.invalidateQueries({ queryKey: ["investments"] }),
+        qcRef.invalidateQueries({ queryKey: ["transactions"] }),
+        qcRef.invalidateQueries({ queryKey: ["goals"] }),
+      ]);
+      toast.success("Insights refreshed");
+    } finally {
+      setIsRefreshingInsights(false);
+    }
+  };
+
+  // Upcoming reminders — SIPs due soon, goal deadlines, and liabilities.
+  const reminders = useMemo(() => {
+    const list: { icon: any; tint: string; title: string; body: string }[] = [];
+    const upcomingSips = investments
+      .filter((i) => i.is_sip && i.sip_active && i.sip_next_date)
+      .sort((a, b) => (a.sip_next_date! < b.sip_next_date! ? -1 : 1));
+    for (const sip of upcomingSips.slice(0, 2)) {
+      list.push({
+        icon: Calendar,
+        tint: "#3b82f6",
+        title: `SIP of ₹${fmt(sip.sip_amount ?? 0)} due`,
+        body: `${sip.name} · ${new Date(sip.sip_next_date!).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}.`,
+      });
+    }
+    const upcomingGoals = goals
+      .filter((g) => g.target_date)
+      .sort((a, b) => (a.target_date! < b.target_date! ? -1 : 1));
+    for (const g of upcomingGoals.slice(0, 2)) {
+      list.push({
+        icon: Target,
+        tint: "#a855f7",
+        title: `${g.name} target approaching`,
+        body: `Due ${new Date(g.target_date!).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}.`,
+      });
+    }
+    if (liabilities.length > 0) {
+      list.push({
+        icon: Banknote,
+        tint: "#ff4d4d",
+        title: `${liabilities.length} active liabilit${liabilities.length === 1 ? "y" : "ies"}`,
+        body: "Review upcoming EMI payments in Wealth.",
+      });
+    }
+    return list.slice(0, 4);
+  }, [investments, goals, liabilities]);
 
   const onSnapshot = () => {
     createSnap.mutate({
@@ -458,7 +535,7 @@ function Dashboard() {
         </div>
 
         {/* Asset Allocation + Portfolio Performance */}
-        <Card className="col-span-12 p-6 lg:col-span-6">
+        <Card className="col-span-12 flex h-auto flex-col p-5 lg:col-span-6 lg:h-[300px]">
           <CardHeader title="Asset Allocation" tip="Breakdown of your investments by asset class." />
           {allocation.length === 0 ? (
             <EmptyState
@@ -467,76 +544,78 @@ function Dashboard() {
               body="Add investments in Wealth to see your allocation breakdown."
             />
           ) : (
-            <div className="mt-4 grid grid-cols-1 items-center gap-4 sm:grid-cols-[180px_1fr]">
-              <div className="relative mx-auto h-[180px] w-[180px]">
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie data={allocation} dataKey="value" innerRadius={58} outerRadius={86} paddingAngle={2} stroke="none">
-                      {allocation.map((a) => (
-                        <Cell key={a.name} fill={a.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                  <div className="text-center">
-                    <div className="text-[11px] text-muted-foreground">Total</div>
-                    <div className="font-display text-base font-bold text-foreground">₹{fmt(totals.investmentsTotal)}</div>
+            <div className="mt-3 flex flex-1 flex-col overflow-hidden">
+              <div className="grid flex-1 grid-cols-1 items-center gap-3 overflow-hidden sm:grid-cols-[130px_1fr]">
+                <div className="relative mx-auto h-[130px] w-[130px] shrink-0">
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie data={allocation} dataKey="value" innerRadius={42} outerRadius={62} paddingAngle={2} stroke="none">
+                        {allocation.map((a) => (
+                          <Cell key={a.name} fill={a.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 grid place-items-center">
+                    <div className="text-center">
+                      <div className="text-[10px] text-muted-foreground">Total</div>
+                      <div className="font-display text-xs font-bold text-foreground">₹{fmt(totals.investmentsTotal)}</div>
+                    </div>
                   </div>
+                </div>
+                <div className="space-y-1.5 overflow-y-auto text-sm">
+                  {allocation.map((a) => (
+                    <div key={a.name} className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-2 truncate text-xs text-muted-foreground">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
+                        <span className="truncate">{a.name}</span>
+                      </span>
+                      <span className="shrink-0 text-xs font-semibold text-foreground">{a.pct.toFixed(1)}%</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="space-y-2.5 text-sm">
-                {allocation.map((a) => (
-                  <div key={a.name} className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-2 text-muted-foreground">
-                      <span className="h-2 w-2 rounded-full" style={{ background: a.color }} />
-                      {a.name}
-                    </span>
-                    <span className="font-semibold text-foreground">{a.pct.toFixed(1)}%</span>
-                  </div>
-                ))}
-                <div className="pt-2 text-right">
-                  <Link to="/wealth" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
-                    View Details <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
+              <div className="mt-2 shrink-0 text-right">
+                <Link to="/wealth" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
+                  View Details <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
             </div>
           )}
         </Card>
 
-        <Card className="col-span-12 p-6 lg:col-span-6">
+        <Card className="col-span-12 flex h-auto flex-col p-5 lg:col-span-6 lg:h-[300px]">
           <div className="flex items-start justify-between gap-3">
-            <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time." />
+            <CardHeader title="Portfolio Performance" tip="Investment portfolio value over time, derived from your holdings." />
             <ChartRangeSelector value={portfolioRange} onChange={setPortfolioRange} />
           </div>
           <div className="mt-2 flex items-end justify-between gap-4">
             <div>
               <div className="text-xs text-muted-foreground">Current Value</div>
-              <div className="mt-1 font-display text-2xl font-bold text-foreground">
+              <div className="mt-1 font-display text-xl font-bold text-foreground">
                 ₹ {fmt(totals.investmentsTotal)}
               </div>
-              {portfolioSeries.length >= 2 ? (
-                <PortfolioDelta series={portfolioSeries} />
+              {portfolioPerformanceSeries.length >= 2 ? (
+                <PortfolioDelta series={portfolioPerformanceSeries} />
               ) : (
-                <div className="mt-1 text-xs text-muted-foreground">No history yet</div>
+                <div className="mt-1 text-xs text-muted-foreground">No holdings yet</div>
               )}
             </div>
           </div>
-          <div className="mt-3 h-[180px]">
-            {portfolioSeries.length >= 2 ? (
+          <div className="mt-2 min-h-0 flex-1">
+            {portfolioPerformanceSeries.length >= 2 ? (
               <RangeChart
-                data={portfolioSeries}
-                height={180}
+                data={portfolioPerformanceSeries}
+                height={120}
                 compact
                 range={portfolioRange}
                 onRangeChange={setPortfolioRange}
               />
             ) : (
-              <EmptyChart height={180} message="No portfolio snapshots yet." />
+              <EmptyChart height={120} message="Add investments to see portfolio performance." />
             )}
           </div>
-          <div className="mt-2 text-right">
+          <div className="mt-2 shrink-0 text-right">
             <Link to="/wealth" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
               View Portfolio <ArrowRight className="h-3 w-3" />
             </Link>
@@ -544,14 +623,16 @@ function Dashboard() {
         </Card>
 
         {/* Financial Score + Goal Progress */}
-        <Card className="col-span-12 p-5 lg:col-span-6">
+        <Card className="col-span-12 flex h-auto flex-col p-5 lg:col-span-6 lg:h-[300px]">
           <CardHeader title="Financial Score" tip="Composite score of your overall financial health." />
-          <div className="mt-3 flex flex-col items-center gap-4">
-            <ScoreGauge score={score.total} size="sm" />
-            <div className="w-full space-y-2 text-sm">
+          <div className="mt-2 flex flex-1 flex-col items-center gap-2 overflow-hidden sm:flex-row sm:items-center">
+            <div className="w-full shrink-0 sm:w-[42%]">
+              <ScoreGauge score={score.total} size="xs" />
+            </div>
+            <div className="w-full flex-1 space-y-1.5 overflow-y-auto text-sm">
               {score.rows.map((row) => (
                 <div key={row.k} className="flex items-center gap-2 sm:gap-3">
-                  <span className="w-24 shrink-0 truncate text-[11px] text-muted-foreground sm:w-32 sm:text-xs">{row.k}</span>
+                  <span className="w-20 shrink-0 truncate text-[10px] text-muted-foreground sm:w-28 sm:text-[11px]">{row.k}</span>
                   <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                     {row.v !== null && (
                       <div
@@ -560,7 +641,7 @@ function Dashboard() {
                       />
                     )}
                   </div>
-                  <span className="w-8 shrink-0 text-right text-[11px] font-semibold text-foreground sm:text-xs">
+                  <span className="w-7 shrink-0 text-right text-[10px] font-semibold text-foreground sm:text-[11px]">
                     {row.v === null ? "—" : row.v}
                   </span>
                 </div>
@@ -568,13 +649,13 @@ function Dashboard() {
             </div>
           </div>
           {!score.hasAny && (
-            <p className="mt-3 text-center text-[11px] text-muted-foreground">
+            <p className="mt-2 shrink-0 text-center text-[11px] text-muted-foreground">
               Add more financial data to calculate your Financial Score.
             </p>
           )}
         </Card>
 
-        <Card className="col-span-12 p-5 lg:col-span-6">
+        <Card className="col-span-12 flex h-auto flex-col p-5 lg:col-span-6 lg:h-[300px]">
           <div className="flex items-center justify-between">
             <CardHeader title="Goal Progress" tip="Progress toward your active financial goals." />
             <Link to="/planner" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
@@ -584,7 +665,7 @@ function Dashboard() {
           {goals.length === 0 ? (
             <EmptyState className="mt-4" title="No goals yet" body="Create goals in Planner to track progress here." />
           ) : (
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 flex-1 space-y-2.5 overflow-y-auto">
               {goals.slice(0, 3).map((g, idx) => {
                 const pct = g.target_amount > 0 ? Math.min(100, Math.round((g.saved_amount / g.target_amount) * 100)) : 0;
                 const color = ALLOC_COLORS[idx % ALLOC_COLORS.length];
@@ -622,21 +703,55 @@ function Dashboard() {
         </Card>
 
 
-        {/* Financial Insights — full width */}
-        <Card className="col-span-12 p-6">
-          <div className="flex items-center justify-between">
-            <CardHeader title="Financial Insights" tip="Smart, personalized observations about your finances." />
-          </div>
-          {insights.length === 0 ? (
-            <EmptyState className="mt-4" title="No insights yet" body="Add transactions and goals to see personalized insights." />
-          ) : (
-            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {insights.map((it, idx) => (
-                <Insight key={idx} icon={it.icon} tint={it.tint} title={it.title} body={it.body} />
-              ))}
+        {/* Upcoming Reminders + Financial Insights */}
+        <div className="col-span-12 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Card className="p-6">
+            <CardHeader title="Upcoming Reminders" tip="SIPs, EMIs and goal deadlines coming up soon." />
+            {reminders.length === 0 ? (
+              <EmptyState className="mt-4" title="No upcoming reminders" body="SIPs, EMIs and goal deadlines will show up here." />
+            ) : (
+              <div className="mt-4 space-y-3">
+                {reminders.map((r, idx) => (
+                  <div key={idx} className="flex items-start gap-3 rounded-xl border border-border bg-surface-2 p-3.5">
+                    <span
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
+                      style={{ background: `${r.tint}1f`, color: r.tint }}
+                    >
+                      <r.icon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-foreground">{r.title}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">{r.body}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <CardHeader title="Financial Insights" tip="Smart, personalized observations about your finances." />
+              <button
+                type="button"
+                onClick={onRefreshInsights}
+                disabled={isRefreshingInsights}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface/60 px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-surface disabled:opacity-60"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", isRefreshingInsights && "animate-spin")} /> Refresh
+              </button>
             </div>
-          )}
-        </Card>
+            {insights.length === 0 ? (
+              <EmptyState className="mt-4" title="No insights yet" body="Add transactions and goals to see personalized insights." />
+            ) : (
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                {insights.map((it, idx) => (
+                  <Insight key={idx} icon={it.icon} tint={it.tint} title={it.title} body={it.body} />
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
 
       <SnapshotHistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
@@ -973,7 +1088,7 @@ function SnapCard({
 }
 
 
-function ScoreGauge({ score, size = "md" }: { score: number | null; size?: "sm" | "md" }) {
+function ScoreGauge({ score, size = "md" }: { score: number | null; size?: "sm" | "md" | "xs" }) {
   const band =
     score === null
       ? { label: "Not Available", color: "var(--muted-foreground)", hint: "Add more financial data to calculate your Financial Score." }
@@ -1015,11 +1130,11 @@ function ScoreGauge({ score, size = "md" }: { score: number | null; size?: "sm" 
   };
 
   const needleAngle = score === null ? null : pctToAngle(Math.max(0, Math.min(100, score)));
-  const needleTip = needleAngle !== null ? polar(needleAngle, R + 6) : null;
-  const needleBase = needleAngle !== null ? polar(needleAngle, R - SW / 2 - 4) : null;
+  const needleTip = needleAngle !== null ? polar(needleAngle, R - SW / 2 - 2) : null;
+  const needleBase = needleAngle !== null ? polar(needleAngle, 14) : null;
 
   return (
-    <div className={size === "sm" ? "w-full max-w-[220px]" : "w-full max-w-[320px]"}>
+    <div className={size === "xs" ? "w-full max-w-[160px]" : size === "sm" ? "w-full max-w-[220px]" : "w-full max-w-[320px]"}>
       <svg viewBox="0 0 200 120" className="block w-full" aria-hidden>
         {score === null ? (
           <path
@@ -1051,10 +1166,12 @@ function ScoreGauge({ score, size = "md" }: { score: number | null; size?: "sm" 
               x2={needleTip.x}
               y2={needleTip.y}
               stroke="var(--foreground)"
-              strokeWidth={3}
+              strokeWidth={3.5}
               strokeLinecap="round"
+              style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.5))" }}
             />
-            <circle cx={cx} cy={cy} r={4} fill="var(--foreground)" />
+            <circle cx={needleTip.x} cy={needleTip.y} r={3.5} fill="var(--foreground)" />
+            <circle cx={cx} cy={cy} r={6} fill="var(--foreground)" stroke="var(--card)" strokeWidth={2} />
           </>
         )}
       </svg>

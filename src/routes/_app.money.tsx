@@ -9,6 +9,8 @@ import {
   Wallet,
   ArrowDownRight,
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   PiggyBank,
   CalendarDays,
   CalendarRange,
@@ -29,8 +31,8 @@ import { TextTabs } from "@/components/text-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -388,6 +390,7 @@ function Money() {
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
+              <span className="min-w-[7.5rem] px-1 text-center tabular-nums">{activeMonthLabel}</span>
               <button
                 onClick={() => setMonthOffset((m) => Math.min(0, m + 1))}
                 disabled={monthOffset >= 0}
@@ -455,14 +458,48 @@ function Money() {
               ) : (
                 <div className="h-32 sm:h-40">
                   <ResponsiveContainer>
-                    <LineChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+                    <AreaChart data={trend} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="moneyIncomeGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#14D8CF" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#14D8CF" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="moneyExpenseGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
                       <XAxis dataKey="d" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false}  {...smartXAxisProps} />
                       <YAxis stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${Math.round(v / 1000)}k`} />
                       <Tooltip contentStyle={{ background: "#102634", border: "1px solid #1C3850", borderRadius: 12, fontSize: 12 }} formatter={(v: number) => inr(v)} />
-                      <Line type="monotone" dataKey="income" stroke="#14D8CF" strokeWidth={2.5} dot={{ r: 4, fill: "#14D8CF" }} activeDot={{ r: 5 }} />
-                      <Line type="monotone" dataKey="expense" stroke="#3B82F6" strokeWidth={2.5} dot={{ r: 4, fill: "#3B82F6" }} activeDot={{ r: 5 }} />
-                    </LineChart>
+                      <Area
+                        type="monotone"
+                        dataKey="income"
+                        stroke="#14D8CF"
+                        strokeWidth={2.5}
+                        fill="url(#moneyIncomeGradient)"
+                        dot={(props: any) => {
+                          const { key, ...rest } = props;
+                          if (rest.index !== trend.length - 1) return <g key={key} />;
+                          return <circle key={key} cx={rest.cx} cy={rest.cy} r={4} fill="#14D8CF" stroke="none" />;
+                        }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="expense"
+                        stroke="#3B82F6"
+                        strokeWidth={2.5}
+                        fill="url(#moneyExpenseGradient)"
+                        dot={(props: any) => {
+                          const { key, ...rest } = props;
+                          if (rest.index !== trend.length - 1) return <g key={key} />;
+                          return <circle key={key} cx={rest.cx} cy={rest.cy} r={4} fill="#3B82F6" stroke="none" />;
+                        }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
               )}
@@ -483,6 +520,10 @@ function Money() {
                           </Pie>
                         </PieChart>
                       </ResponsiveContainer>
+                      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground">Total</span>
+                        <span className="text-[11px] font-bold leading-tight text-foreground tabular-nums">₹{inrCompact(totalExpense)}</span>
+                      </div>
                     </div>
                     <ul className="space-y-1.5 text-xs">
                       {expenseCats.slice(0, 7).map((c) => {
@@ -504,10 +545,23 @@ function Money() {
                       })}
                     </ul>
                   </div>
-                  <div className="mt-3 border-t border-border pt-3">
-                    <div className="text-[11px] text-muted-foreground">Total Expenses</div>
-                    <div className="mt-0.5 font-display text-lg font-bold text-foreground">₹{totalExpense.toLocaleString("en-IN")}</div>
-                  </div>
+                  {expenseCats[0] && (
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: expenseCats[0].color }} />
+                        <div className="min-w-0">
+                          <div className="text-[11px] text-muted-foreground">Top Category</div>
+                          <div className="truncate text-xs font-semibold text-foreground">{expenseCats[0].name}</div>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right text-xs font-semibold text-foreground tabular-nums">
+                        ₹{expenseCats[0].value.toLocaleString("en-IN")}
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          ({totalExpense > 0 ? ((expenseCats[0].value / totalExpense) * 100).toFixed(1) : "0.0"}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </ChartCard>
@@ -715,6 +769,39 @@ function periodRange(
   }
 }
 
+type TxSortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
+
+function SortHeader({
+  label,
+  sortKey,
+  onClick,
+  asc,
+  desc,
+  align = "left",
+}: {
+  label: string;
+  sortKey: TxSortKey;
+  onClick: (v: TxSortKey) => void;
+  asc: TxSortKey;
+  desc: TxSortKey;
+  align?: "left" | "right";
+}) {
+  const active = sortKey === asc || sortKey === desc;
+  const dir: "asc" | "desc" = sortKey === asc ? "asc" : "desc";
+  const Arrow = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className={`px-4 py-2.5 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+      <button
+        onClick={() => onClick(active && dir === "desc" ? asc : desc)}
+        className={`inline-flex items-center gap-1 transition-colors ${active ? "text-mint" : "text-muted-foreground hover:text-foreground"}`}
+      >
+        {label}
+        <Arrow className="h-3 w-3" />
+      </button>
+    </th>
+  );
+}
+
 /* ============================================================
  * Transactions table (used by Transactions/Income/Expenses tabs)
  * ========================================================== */
@@ -824,19 +911,6 @@ function TransactionsTable({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Select value={sort} onValueChange={(v) => setSort(v as any)}>
-              <SelectTrigger aria-label="Sort" className="h-9 w-9 justify-center px-0 text-xs [&>svg:last-child]:hidden">
-                <ArrowUpDown className="h-3.5 w-3.5" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date_desc">Newest first</SelectItem>
-                <SelectItem value="date_asc">Oldest first</SelectItem>
-                <SelectItem value="amount_desc">Amount: high → low</SelectItem>
-                <SelectItem value="amount_asc">Amount: low → high</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         {period === "custom" && (
           <div className="flex flex-wrap items-end gap-2">
@@ -897,11 +971,11 @@ function TransactionsTable({
             <table className="w-full text-sm">
               <thead className="bg-surface/50 text-xs text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-2.5 text-left font-medium">Date</th>
+                  <SortHeader label="Date" sortKey={sort} onClick={setSort} asc="date_asc" desc="date_desc" />
                   <th className="px-4 py-2.5 text-left font-medium">Merchant</th>
                   <th className="px-4 py-2.5 text-left font-medium">Category</th>
                   <th className="hidden px-4 py-2.5 text-left font-medium lg:table-cell">Account</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Amount</th>
+                  <SortHeader label="Amount" sortKey={sort} onClick={setSort} asc="amount_asc" desc="amount_desc" align="right" />
                   <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
               </thead>
