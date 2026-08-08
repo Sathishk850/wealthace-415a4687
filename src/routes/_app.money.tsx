@@ -390,6 +390,7 @@ function Money() {
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
+              <span className="min-w-[7.5rem] px-1 text-center tabular-nums">{activeMonthLabel}</span>
               <button
                 onClick={() => setMonthOffset((m) => Math.min(0, m + 1))}
                 disabled={monthOffset >= 0}
@@ -519,6 +520,10 @@ function Money() {
                           </Pie>
                         </PieChart>
                       </ResponsiveContainer>
+                      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground">Total</span>
+                        <span className="text-[11px] font-bold leading-tight text-foreground tabular-nums">₹{inrCompact(totalExpense)}</span>
+                      </div>
                     </div>
                     <ul className="space-y-1.5 text-xs">
                       {expenseCats.slice(0, 7).map((c) => {
@@ -540,10 +545,23 @@ function Money() {
                       })}
                     </ul>
                   </div>
-                  <div className="mt-3 border-t border-border pt-3">
-                    <div className="text-[11px] text-muted-foreground">Total Expenses</div>
-                    <div className="mt-0.5 font-display text-lg font-bold text-foreground">₹{totalExpense.toLocaleString("en-IN")}</div>
-                  </div>
+                  {expenseCats[0] && (
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: expenseCats[0].color }} />
+                        <div className="min-w-0">
+                          <div className="text-[11px] text-muted-foreground">Top Category</div>
+                          <div className="truncate text-xs font-semibold text-foreground">{expenseCats[0].name}</div>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right text-xs font-semibold text-foreground tabular-nums">
+                        ₹{expenseCats[0].value.toLocaleString("en-IN")}
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          ({totalExpense > 0 ? ((expenseCats[0].value / totalExpense) * 100).toFixed(1) : "0.0"}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </ChartCard>
