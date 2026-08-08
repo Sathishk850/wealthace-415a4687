@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { BrandMark, BrandIcon } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
