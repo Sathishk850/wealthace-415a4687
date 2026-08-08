@@ -13,12 +13,32 @@ export const BRAND_ICON_URL = iconAsset.url;
 const LOGO_ALT = "Wealth Ace — Track. Nurture. Prosper.";
 
 /**
- * The source artwork is a premium lockup rendered on its own near-black
- * canvas. It is used untouched in both themes; in light mode it sits inside a
- * rounded dark plaque (its own canvas, framed) so contrast stays perfect
- * without redrawing or recoloring the brand.
+ * The lockup ships as two transparent variants of the same artwork: the
+ * original gold/teal lockup for dark surfaces, and an ink-wordmark version
+ * for light surfaces. No plaque, no shadow — it sits directly on the surface.
  */
 const PLAQUE = "";
+
+/** Renders the theme-correct lockup (light variant by default, dark under `.dark`). */
+function LogoImg({ alt = "", className = "" }: { alt?: string; className?: string }) {
+  return (
+    <>
+      <img
+        src={BRAND_LOGO_LIGHT_URL}
+        alt={alt}
+        draggable={false}
+        className={`block h-auto w-full select-none dark:hidden ${className}`}
+      />
+      <img
+        src={BRAND_LOGO_URL}
+        alt=""
+        draggable={false}
+        className={`hidden h-auto w-full select-none dark:block ${className}`}
+      />
+    </>
+  );
+}
+
 
 /**
  * BrandIcon — the compact brand mark (square emblem asset).
