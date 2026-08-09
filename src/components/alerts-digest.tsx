@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { BellRing, Check } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { sweepAlerts } from "@/lib/alerts.functions";
+import { useAlertSweep, useInsights } from "@/lib/insights";
 import { useMarkRead, type Notification } from "@/lib/notifications-api";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,13 +19,11 @@ const SESSION_KEY = "alerts-digest-shown-v1";
  * Login-time alert digest.
  *
  * On every sign-in we re-derive every actionable alert (bills, SIPs, EMIs,
- * insurance renewals, corporate actions, allocation drift, overdue items) and
- * surface everything still unread. Items keep coming back on each login until
- * the user actually reads them.
+ * insurance renewals, maturities, goal reviews, corporate actions, allocation
+ * drift, overdue items) and surface everything still unread. The sweep also
+ * re-runs daily and whenever module data changes, so the list stays current.
  */
 export function AlertsDigest() {
-  const qc = useQueryClient();
-  const sweep = useServerFn(sweepAlerts);
   const markRead = useMarkRead();
   const [open, setOpen] = useState(false);
 
@@ -35,17 +32,9 @@ export function AlertsDigest() {
     queryFn: async () => (await supabase.auth.getSession()).data.session?.user.id ?? null,
   });
 
-  // Derive alerts once per login session.
-  const sweepQ = useQuery({
-    queryKey: ["alerts-sweep", sessionQ.data],
-    enabled: !!sessionQ.data,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      const res = await sweep({ data: undefined });
-      await qc.invalidateQueries({ queryKey: ["notifications"] });
-      return res;
-    },
-  });
+  const { fingerprint, isLoading } = useInsights();
+  const sweepQ = useAlertSweep(fingerprint, !!sessionQ.data && !isLoading);
+
 
   const unreadQ = useQuery({
     queryKey: ["notifications", "unread-reminders", sessionQ.data],
