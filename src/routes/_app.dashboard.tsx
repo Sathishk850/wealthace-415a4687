@@ -159,11 +159,9 @@ function Dashboard() {
   const snaps = snapsQ.data ?? [];
 
   const totals = useMemo(() => {
-    const assetsTotal = assets.reduce((s, a) => s + (a.current_value || 0), 0);
-    const investmentsTotal = investments.reduce((s, i) => s + (i.current_value ?? 0), 0);
-    const liabilitiesTotal = liabilities.reduce((s, l) => s + (l.outstanding || 0), 0);
-    const totalAssets = assetsTotal + investmentsTotal;
-    const netWorth = totalAssets - liabilitiesTotal;
+    // Net worth always comes from the shared calculator so the dashboard KPI,
+    // the Net Worth page and snapshots can never disagree.
+    const nw = computeNetWorth({ assets, investments, accounts, liabilities });
 
     // This month income / expense
     const now = new Date();
@@ -181,11 +179,13 @@ function Dashboard() {
     const lastNetCashFlow = lastIncome - lastExpense;
 
     return {
-      assetsTotal: totalAssets,
-      assetsOnlyTotal: assetsTotal,
-      investmentsTotal,
-      liabilitiesTotal,
-      netWorth,
+      breakdown: nw,
+      assetsTotal: nw.totalAssets,
+      assetsOnlyTotal: nw.assetsTotal,
+      investmentsTotal: nw.investmentsTotal,
+      cashTotal: nw.cashTotal,
+      liabilitiesTotal: nw.liabilitiesTotal,
+      netWorth: nw.netWorth,
       savings,
       netCashFlow,
       lastSavings,
@@ -195,7 +195,11 @@ function Dashboard() {
       lastIncome,
       lastExpense,
     };
-  }, [assets, liabilities, investments, txns]);
+  }, [assets, liabilities, investments, accounts, txns]);
+
+  // Capture one snapshot per day automatically so history accrues on its own.
+  useDailySnapshotCapture(totals.breakdown, !snapsQ.isLoading);
+
 
   // Allocation: group investments by category
   const allocation = useMemo(() => {
