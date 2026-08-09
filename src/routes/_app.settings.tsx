@@ -669,7 +669,7 @@ function ExportBackupCard() {
     try {
       const data = await fetchAllUserData();
       const payload = { version: 1, exported_at: new Date().toISOString(), data };
-      downloadBlob(`finvista-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      downloadBlob(`wealth-ace-backup-${new Date().toISOString().slice(0, 10)}.json`,
         JSON.stringify(payload, null, 2), "application/json");
       toast.success("Backup downloaded");
     } catch (e) {

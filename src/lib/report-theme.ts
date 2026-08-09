@@ -88,7 +88,7 @@ export function hexToRgb(hex: string): [number, number, number] {
  */
 // Reports render on a white background regardless of app theme, so we
 // always use the light-theme (charcoal wordmark) master logo variant.
-import brandMarkAsset from "@/assets/finvista-logo-light.png.asset.json";
+import brandMarkAsset from "@/assets/wealth-ace-logo-light.png.asset.json";
 
 let brandMarkPromise: Promise<string | null> | null = null;
 export function loadBrandMark(): Promise<string | null> {

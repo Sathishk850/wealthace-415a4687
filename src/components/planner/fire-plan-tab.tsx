@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, type CSSProperties } from "react";
 import { C, useThemeVersion } from "./palette";
 import InfoTooltip from "./info-tooltip";
 import { WEALTH_PLANNER_TOOLTIPS, type TooltipEntry } from "./tooltips";
-import fingerprintAsset from "@/assets/finvista-fingerprint.png.asset.json";
+import fingerprintAsset from "@/assets/wealth-ace-icon-t.png.asset.json";
 
 const FT = WEALTH_PLANNER_TOOLTIPS.fire;
 
