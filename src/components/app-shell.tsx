@@ -4,6 +4,7 @@ import {
   Wallet,
   Coins,
   Wrench,
+  Lightbulb,
   Eye,
   EyeOff,
   Sun,
