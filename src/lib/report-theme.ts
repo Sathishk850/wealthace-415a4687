@@ -113,8 +113,8 @@ export function loadBrandMark(): Promise<string | null> {
 export const BRAND_MARK_ASPECT = 462 / 582; // width / height of the fingerprint png
 
 /**
- * Premium banking-style header. Left: FV mark + wordmark. Center: FINVISTA
- * / DIRECT YOUR WEALTH. Right: Generated On + Report ID. Thin brand divider.
+ * Premium banking-style header. Left: FV mark + wordmark. Center: WEALTH ACE
+ * / MASTER YOUR FINANCES. Right: Generated On + Report ID. Thin brand divider.
  * Backwards compatible: `title` / `subtitle` still supported for older callers.
  */
 export function drawReportHeader(
@@ -162,7 +162,7 @@ export function drawReportHeader(
   doc.setFont(font.family, "bold");
   doc.setFontSize(20);
   doc.setTextColor(...color.primaryDeep);
-  doc.text("FINVISTA", pageW / 2, top + 14, { align: "center" });
+  doc.text("WEALTH ACE", pageW / 2, top + 14, { align: "center" });
   doc.setFont(font.family, "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...color.muted);
@@ -408,7 +408,7 @@ export function measureDisclaimer(doc: JsPDFLike, text: string): number {
   return 10 + lines.length * 9;
 }
 
-/** Closing block: divider + centered FINVISTA / DIRECT YOUR WEALTH. Tight. */
+/** Closing block: divider + centered WEALTH ACE / MASTER YOUR FINANCES. Tight. */
 export const CLOSING_BLOCK_HEIGHT = 30;
 export function drawClosing(doc: JsPDFLike, y: number) {
   const { color, layout, font } = REPORT_THEME;
@@ -419,7 +419,7 @@ export function drawClosing(doc: JsPDFLike, y: number) {
   doc.setFont(font.family, "bold");
   doc.setFontSize(13);
   doc.setTextColor(...color.primaryDeep);
-  doc.text("FINVISTA", pageW / 2, y + 14, { align: "center" });
+  doc.text("WEALTH ACE", pageW / 2, y + 14, { align: "center" });
   doc.setFont(font.family, "normal");
   doc.setFontSize(7);
   doc.setTextColor(...color.muted);
