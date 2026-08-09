@@ -216,33 +216,33 @@ export function useCreateSnapshot() {
 export function useDailySnapshotCapture(breakdown: NetWorthBreakdown, enabled: boolean) {
   const snapsQ = useSnapshots();
   const create = useCreateSnapshot();
-  const today = new Date().toISOString().slice(0, 10);
   const snaps = snapsQ.data;
+  const { netWorth, totalAssets, liabilitiesTotal, investmentsTotal, cashTotal } = breakdown;
 
-  const alreadyToday = !!snaps?.some((s) => s.snapshot_date === today);
-  const shouldCapture =
-    enabled &&
-    !!snaps &&
-    !alreadyToday &&
-    !create.isPending &&
-    breakdown.totalAssets + breakdown.liabilitiesTotal > 0;
-
-  if (typeof window !== "undefined" && shouldCapture && !captureInFlight.has(today)) {
+  useEffect(() => {
+    if (!enabled || !snaps) return;
+    if (totalAssets + liabilitiesTotal <= 0) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (snaps.some((s) => s.snapshot_date === today)) return;
+    if (captureInFlight.has(today)) return;
     captureInFlight.add(today);
     create.mutate(
       {
-        net_worth: breakdown.netWorth,
-        assets_total: breakdown.totalAssets,
-        liabilities_total: breakdown.liabilitiesTotal,
-        investments_total: breakdown.investmentsTotal,
-        savings_total: breakdown.cashTotal,
+        net_worth: netWorth,
+        assets_total: totalAssets,
+        liabilities_total: liabilitiesTotal,
+        investments_total: investmentsTotal,
+        savings_total: cashTotal,
       },
       { onSettled: () => captureInFlight.delete(today) },
     );
-  }
+    // `create` is a stable mutation object from React Query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, snaps, netWorth, totalAssets, liabilitiesTotal, investmentsTotal, cashTotal]);
 }
 
 const captureInFlight = new Set<string>();
+
 
 /** Month-over-month trend stats derived from snapshot history. */
 export function snapshotTrend(snaps: Snapshot[]) {
