@@ -136,7 +136,7 @@ export function ScheduledReportDialog({
         <DialogHeader>
           <DialogTitle>{initial?.id ? "Edit schedule" : "Schedule a report"}</DialogTitle>
           <DialogDescription>
-            FinVista will generate and deliver these reports automatically.
+            Wealth Ace will generate and deliver these reports automatically.
           </DialogDescription>
         </DialogHeader>
 

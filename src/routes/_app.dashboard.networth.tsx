@@ -6,7 +6,7 @@ import { useAssets, useLiabilities, inr } from "@/lib/wealth-api";
 export const Route = createFileRoute("/_app/dashboard/networth")({
   head: () => ({
     meta: [
-      { title: "Net Worth · FinVista" },
+      { title: "Net Worth · Wealth Ace" },
       { name: "description", content: "Net worth history and snapshots over time." },
     ],
   }),

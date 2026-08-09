@@ -1,5 +1,5 @@
 /**
- * FinVista Premium Light Theme — shared brand tokens for exported reports
+ * Wealth Ace Premium Light Theme — shared brand tokens for exported reports
  * (PDF, XLSX print layout). Reports ALWAYS render in this light theme
  * regardless of the app's runtime theme (light / dark / system).
  */
@@ -7,7 +7,7 @@ import { formatDate, formatDateTime } from "@/lib/date-format";
 
 export const REPORT_THEME = {
   brand: {
-    name: "FinVista",
+    name: "Wealth Ace",
     tagline: "Direct Your Wealth",
   },
   color: {
@@ -82,7 +82,7 @@ export function hexToRgb(hex: string): [number, number, number] {
 }
 
 /**
- * Load the official FinVista fingerprint mark once and cache it as a
+ * Load the official Wealth Ace fingerprint mark once and cache it as a
  * PNG data URL so jsPDF can embed it via addImage. Resolves to null when
  * the network fetch fails so the header falls back to the text tile.
  */
@@ -132,7 +132,7 @@ export function drawReportHeader(
   const x = layout.marginX;
   const top = layout.marginY - 20;
 
-  // Left brand mark — official FinVista fingerprint logo when available,
+  // Left brand mark — official Wealth Ace fingerprint logo when available,
   // otherwise fall back to the mint "FV" tile.
   const markSize = 32;
   if (opts.brandMark) {
@@ -219,7 +219,7 @@ export function drawReportHeader(
 }
 
 /**
- * Footer: Page X of Y left, © YEAR FinVista (+ optional Confidential) right.
+ * Footer: Page X of Y left, © YEAR Wealth Ace (+ optional Confidential) right.
  * Never contains app version, build number, or "All Rights Reserved".
  */
 export function drawReportFooter(
@@ -505,7 +505,7 @@ export function drawDonut(
   return y + h + 14;
 }
 
-/** Shared jspdf-autotable style bundle in FinVista brand. */
+/** Shared jspdf-autotable style bundle in Wealth Ace brand. */
 export const REPORT_TABLE_STYLES = {
   styles: {
     font: REPORT_THEME.font.family,

@@ -7,7 +7,7 @@ import fingerprintAsset from "@/assets/finvista-fingerprint.png.asset.json";
 const RT = WEALTH_PLANNER_TOOLTIPS.retirement;
 
 const BrandIcon = ({ size = 22 }: { size?: number }) => (
-  <img src={fingerprintAsset.url} alt="FinVista" width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", objectFit: "contain" }} />
+  <img src={fingerprintAsset.url} alt="Wealth Ace" width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", objectFit: "contain" }} />
 );
 
 

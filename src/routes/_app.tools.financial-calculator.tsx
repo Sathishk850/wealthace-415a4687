@@ -33,7 +33,7 @@ import { formatDate } from "@/lib/date-format";
 export const Route = createFileRoute("/_app/tools/financial-calculator")({
   head: () => ({
     meta: [
-      { title: "Financial Calculators · FinVista" },
+      { title: "Financial Calculators · Wealth Ace" },
       { name: "description", content: "Plan investments, loans, retirement and more with 12 financial calculators." },
     ],
   }),

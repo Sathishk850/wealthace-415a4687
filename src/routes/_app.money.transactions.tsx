@@ -14,7 +14,7 @@ const getRowId = (r: { id: string }) => r.id;
 export const Route = createFileRoute("/_app/money/transactions")({
   head: () => ({
     meta: [
-      { title: "Transactions · FinVista" },
+      { title: "Transactions · Wealth Ace" },
       { name: "description", content: "All your income and expense transactions in one place." },
     ],
   }),

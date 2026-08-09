@@ -9,7 +9,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_app/wealth_/add-investment")({
   head: () => ({
     meta: [
-      { title: "Add Investment · FinVista" },
+      { title: "Add Investment · Wealth Ace" },
       {
         name: "description",
         content:

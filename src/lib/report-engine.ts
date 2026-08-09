@@ -1,5 +1,5 @@
 /**
- * FinVista Master Report Engine — single source of truth for every export.
+ * Wealth Ace Master Report Engine — single source of truth for every export.
  *
  * All PDF and Excel exports (Report Center scheduled reports, Wealth module
  * views, and any future report) route through here so they inherit the same
@@ -106,7 +106,7 @@ export const DEFAULT_EXPORT_OPTIONS: Required<
 };
 
 const DEFAULT_DISCLAIMER =
-  "This report is generated automatically from data available in your FinVista account as of the report generation date and time. Please verify the information before using it for financial, taxation or legal purposes.";
+  "This report is generated automatically from data available in your Wealth Ace account as of the report generation date and time. Please verify the information before using it for financial, taxation or legal purposes.";
 
 const LANDSCAPE_CATS = new Set<ReportCategory>([
   "transactions",
@@ -156,7 +156,7 @@ export function buildFilename(doc: ReportDoc, opts: ExportOptions): string {
     const base = opts.filename.trim().replace(/\.[^.]+$/, "");
     return `${safeName(base)}.${opts.format}`;
   }
-  const parts: string[] = ["FinVista", safeName(doc.name)];
+  const parts: string[] = ["Wealth Ace", safeName(doc.name)];
   if (doc.period?.start && doc.period?.end) {
     parts.push(isoDate(doc.period.start), "to", isoDate(doc.period.end));
   } else if (doc.period?.start) {
@@ -204,10 +204,10 @@ export async function renderReportPdf(doc: ReportDoc, opts: ExportOptions) {
 
   pdf.setProperties({
     title: doc.name,
-    author: "FinVista",
-    creator: "FinVista",
+    author: "Wealth Ace",
+    creator: "Wealth Ace",
     subject: "Personal Finance Report",
-    keywords: ["FinVista", doc.category ?? "report", doc.name].join(","),
+    keywords: ["Wealth Ace", doc.category ?? "report", doc.name].join(","),
   });
 
   const reportId = reportIdFor(doc);
@@ -330,14 +330,14 @@ export async function renderReportXlsx(doc: ReportDoc, opts: ExportOptions) {
   const wb = XLSX.utils.book_new();
   wb.Props = {
     Title: doc.name,
-    Author: "FinVista",
-    Company: "FinVista",
+    Author: "Wealth Ace",
+    Company: "Wealth Ace",
     Subject: "Personal Finance Report",
     CreatedDate: new Date(),
   };
 
   const meta: any[][] = [
-    ["FinVista", "Direct Your Wealth"],
+    ["Wealth Ace", "Direct Your Wealth"],
     [doc.name],
   ];
   if (doc.period) {

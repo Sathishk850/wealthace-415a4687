@@ -29,13 +29,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FinVista — Direct Your Wealth | Personal Finance Dashboard" },
+      { title: "Wealth Ace — Direct Your Wealth | Personal Finance Dashboard" },
       {
         name: "description",
         content:
           "Track net worth, cashflow, investments and goals in one secure, intelligent dashboard. Start free — no credit card required.",
       },
-      { property: "og:title", content: "FinVista — Direct Your Wealth | Personal Finance Dashboard" },
+      { property: "og:title", content: "Wealth Ace — Direct Your Wealth | Personal Finance Dashboard" },
       {
         property: "og:description",
         content:
@@ -43,10 +43,10 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "/" },
-      { property: "og:site_name", content: "FinVista" },
+      { property: "og:site_name", content: "Wealth Ace" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@FinVista" },
-      { name: "twitter:title", content: "FinVista — Direct Your Wealth | Personal Finance Dashboard" },
+      { name: "twitter:site", content: "@Wealth Ace" },
+      { name: "twitter:title", content: "Wealth Ace — Direct Your Wealth | Personal Finance Dashboard" },
       {
         name: "twitter:description",
         content:
@@ -60,13 +60,13 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
-          name: "FinVista",
+          name: "Wealth Ace",
           url: "/",
           description:
-            "FinVista is your all-in-one personal finance dashboard — net worth, cashflow, investments and goals in one place.",
+            "Wealth Ace is your all-in-one personal finance dashboard — net worth, cashflow, investments and goals in one place.",
           publisher: {
             "@type": "Organization",
-            name: "FinVista",
+            name: "Wealth Ace",
             url: "/",
           },
         }),
@@ -384,7 +384,7 @@ function Landing() {
           <div aria-hidden className="pointer-events-none absolute left-[16%] right-[16%] top-[54px] hidden border-t border-dashed border-mint/30 md:block" />
           {[
             { n: 1, icon: Landmark, title: "Add Your Accounts", desc: "Connect or manually add your assets, investments, liabilities and bank balances." },
-            { n: 2, icon: Monitor, title: "Track Your Net Worth", desc: "FinVista automatically organizes your finances into one beautiful dashboard." },
+            { n: 2, icon: Monitor, title: "Track Your Net Worth", desc: "Wealth Ace automatically organizes your finances into one beautiful dashboard." },
             { n: 3, icon: CircleCheck, title: "Grow With Confidence", desc: "Monitor your progress, achieve financial goals and make smarter financial decisions." },
           ].map((s) => (
             <div key={s.n} className="relative">
@@ -439,10 +439,10 @@ function Landing() {
           </div>
 
           <div>
-            <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">About FinVista</h2>
+            <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">About Wealth Ace</h2>
             <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Direct Your Wealth.</p>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
-              FinVista is a modern personal finance platform that helps you track, organize and grow your wealth in one secure, intelligent dashboard. From assets and investments to expenses and financial goals, everything is designed to give you complete financial clarity.
+              Wealth Ace is a modern personal finance platform that helps you track, organize and grow your wealth in one secure, intelligent dashboard. From assets and investments to expenses and financial goals, everything is designed to give you complete financial clarity.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -465,7 +465,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} FinVista · Direct your wealth
+        © {new Date().getFullYear()} Wealth Ace · Direct your wealth
       </footer>
 
       <style>{`

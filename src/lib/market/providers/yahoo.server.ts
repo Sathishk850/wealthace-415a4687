@@ -7,7 +7,7 @@ import { fetchWithTimeout, normalizeCurrency, normalizePrice } from "../normaliz
 const QUOTE_URL = "https://query1.finance.yahoo.com/v7/finance/quote";
 const CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart";
 const SEARCH_URL = "https://query2.finance.yahoo.com/v1/finance/search";
-const UA = "Mozilla/5.0 (compatible; FinVista/1.0)";
+const UA = "Mozilla/5.0 (compatible; Wealth Ace/1.0)";
 const TIMEOUT_MS = 15_000;
 
 function toYahooSymbol(item: QuoteRequestItem): string {

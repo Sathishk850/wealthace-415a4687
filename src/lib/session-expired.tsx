@@ -147,7 +147,7 @@ export function SessionExpiredDialog() {
           <DialogTitle>Session Expired</DialogTitle>
           <DialogDescription>
             Your session has expired for security reasons. Please sign in again
-            to continue using FinVista.
+            to continue using Wealth Ace.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-2 flex-col-reverse gap-2 sm:flex-row">

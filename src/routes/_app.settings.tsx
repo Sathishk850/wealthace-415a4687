@@ -32,7 +32,7 @@ import {
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({
     meta: [
-      { title: "Settings · FinVista" },
+      { title: "Settings · Wealth Ace" },
       { name: "description", content: "Manage your account and preferences." },
     ],
   }),
@@ -321,7 +321,7 @@ function AppearanceTab() {
       <Card className="glass-card border-[var(--border)] p-6">
         <div className="mb-5">
           <h3 className="text-sm font-semibold text-foreground">Theme</h3>
-          <p className="text-xs text-muted-foreground">Choose how FinVista looks on this account.</p>
+          <p className="text-xs text-muted-foreground">Choose how Wealth Ace looks on this account.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {(["system", "light", "dark"] as const).map((t) => (
@@ -757,7 +757,7 @@ function RestoreCard() {
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-foreground">Restore from backup</h3>
         <p className="text-xs text-muted-foreground">
-          Upload a JSON backup previously exported from FinVista.
+          Upload a JSON backup previously exported from Wealth Ace.
         </p>
       </div>
       <div className="mb-4 grid gap-3 sm:grid-cols-2">

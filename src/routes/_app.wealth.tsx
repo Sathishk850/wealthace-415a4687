@@ -16,7 +16,7 @@ import { useEffect } from "react";
 export const Route = createFileRoute("/_app/wealth")({
   head: () => ({
     meta: [
-      { title: "Wealth · FinVista" },
+      { title: "Wealth · Wealth Ace" },
       {
         name: "description",
         content: "Premium wealth dashboard — assets, liabilities, insurance, accounts and SIPs.",

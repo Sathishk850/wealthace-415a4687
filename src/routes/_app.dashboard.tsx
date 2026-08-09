@@ -66,7 +66,7 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard · FinVista" },
+      { title: "Dashboard · Wealth Ace" },
       {
         name: "description",
         content:
