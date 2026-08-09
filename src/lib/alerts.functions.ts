@@ -232,6 +232,100 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       }
     }
 
+    /* ---- 7. Goal reviews (quarterly) + goals falling behind ---- */
+    const quarter = `${now.getFullYear()}Q${Math.floor(now.getMonth() / 3) + 1}`;
+    const { data: goals } = await supabase
+      .from("planner_goals")
+      .select("id, name, target_amount, saved_amount, target_date, monthly_contribution");
+    for (const g of goals ?? []) {
+      const target = Number(g.target_amount ?? 0);
+      if (target <= 0) continue;
+      const saved = Number(g.saved_amount ?? 0);
+      const progress = Math.min(100, (saved / target) * 100);
+
+      await notifyOnce({
+        title: `Review goal: ${g.name}`,
+        body: `${progress.toFixed(0)}% funded (${inr(saved)} of ${inr(target)}). Check whether your monthly contribution still fits.`,
+        priority: "low",
+        link: "/planner",
+        dedupe: { goal_review: `${g.id}:${quarter}` },
+        metadata: { kind: "goal_review" },
+      });
+
+      if (!g.target_date) continue;
+      const monthsLeft = Math.max(
+        0,
+        (new Date(String(g.target_date)).getTime() - now.getTime()) / (30 * DAY),
+      );
+      const shortfall = target - saved;
+      if (shortfall <= 0) continue;
+      const needed = monthsLeft > 0 ? shortfall / monthsLeft : shortfall;
+      const contributing = Number(g.monthly_contribution ?? 0);
+      if (contributing >= needed) continue;
+      await notifyOnce({
+        title: `Goal behind schedule: ${g.name}`,
+        body: `Needs ${inr(needed)}/month to land on time — currently ${inr(contributing)}/month.`,
+        priority: monthsLeft <= 3 ? "high" : "normal",
+        link: "/planner",
+        dedupe: { goal_behind: `${g.id}:${now.toISOString().slice(0, 7)}` },
+        metadata: { kind: "goal_behind" },
+      });
+    }
+
+    /* ---- 8. Quarterly investment review ---- */
+    if (portfolio > 0) {
+      await notifyOnce({
+        title: "Quarterly portfolio review due",
+        body: `Portfolio value ${inr(portfolio)}. Check performance, allocation drift and any dormant SIPs.`,
+        priority: "low",
+        link: "/wealth",
+        dedupe: { investment_review: quarter },
+        metadata: { kind: "investment_review" },
+      });
+    }
+
+    /* ---- 9. Maturity dates (loans closing, policies maturing) ---- */
+    const { data: maturingLiabs } = await supabase
+      .from("wealth_liabilities")
+      .select("id, name, outstanding, end_date, status")
+      .not("end_date", "is", null)
+      .lte("end_date", addDaysISO(now, 30));
+    for (const l of maturingLiabs ?? []) {
+      const status = String(l.status ?? "active");
+      if (!["active", "open", "ongoing"].includes(status)) continue;
+      const days = dayDiff(l.end_date as string, now);
+      if (days < -7) continue;
+      await notifyOnce({
+        title: `Loan closure ${dueLabel(days)}: ${l.name}`,
+        body: `Outstanding ${inr(l.outstanding)}. Confirm the final payment and collect the no-dues certificate.`,
+        priority: days <= 7 ? "high" : "normal",
+        link: "/wealth",
+        dedupe: { liability_maturity: `${l.id}:${l.end_date}` },
+        metadata: { kind: "maturity" },
+      });
+    }
+
+    const { data: maturingPolicies } = await supabase
+      .from("wealth_insurance")
+      .select("id, policy_name, coverage_amount, end_date, status")
+      .not("end_date", "is", null)
+      .lte("end_date", addDaysISO(now, 30));
+    for (const p of maturingPolicies ?? []) {
+      const status = String(p.status ?? "active");
+      if (!["active", "in_force"].includes(status)) continue;
+      const days = dayDiff(p.end_date as string, now);
+      if (days < -7) continue;
+      await notifyOnce({
+        title: `Policy maturity ${dueLabel(days)}: ${p.policy_name}`,
+        body: `Cover ${inr(p.coverage_amount)} ends. Plan the payout or a replacement policy.`,
+        priority: days <= 7 ? "high" : "normal",
+        link: "/wealth",
+        dedupe: { insurance_maturity: `${p.id}:${p.end_date}` },
+        metadata: { kind: "maturity" },
+      });
+    }
+
+
     const { count: unread } = await supabase
       .from("notifications")
       .select("id", { head: true, count: "exact" })
