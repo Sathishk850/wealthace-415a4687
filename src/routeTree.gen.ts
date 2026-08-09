@@ -21,6 +21,7 @@ import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppPlannerRouteImport } from './routes/_app.planner'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
+import { Route as AppInsightsRouteImport } from './routes/_app.insights'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
@@ -93,6 +94,11 @@ const AppMoneyRoute = AppMoneyRouteImport.update({
   path: '/money',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInsightsRoute = AppInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFeedbackRoute = AppFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
+  '/insights': typeof AppInsightsRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
   '/feedback': typeof AppFeedbackRoute
+  '/insights': typeof AppInsightsRoute
   '/money': typeof AppMoneyRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/planner': typeof AppPlannerRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_app/dashboard': typeof AppDashboardRouteWithChildren
   '/_app/feedback': typeof AppFeedbackRoute
+  '/_app/insights': typeof AppInsightsRoute
   '/_app/money': typeof AppMoneyRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/planner': typeof AppPlannerRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/dashboard'
     | '/feedback'
+    | '/insights'
     | '/money'
     | '/notifications'
     | '/planner'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/dashboard'
     | '/feedback'
+    | '/insights'
     | '/money'
     | '/notifications'
     | '/planner'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_app/dashboard'
     | '/_app/feedback'
+    | '/_app/insights'
     | '/_app/money'
     | '/_app/notifications'
     | '/_app/planner'
@@ -404,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/money'
       fullPath: '/money'
       preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/insights': {
+      id: '/_app/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AppInsightsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/feedback': {
@@ -534,6 +553,7 @@ const AppToolsRouteWithChildren = AppToolsRoute._addFileChildren(
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
   AppFeedbackRoute: typeof AppFeedbackRoute
+  AppInsightsRoute: typeof AppInsightsRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPlannerRoute: typeof AppPlannerRoute
@@ -551,6 +571,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRouteWithChildren,
   AppFeedbackRoute: AppFeedbackRoute,
+  AppInsightsRoute: AppInsightsRoute,
   AppMoneyRoute: AppMoneyRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPlannerRoute: AppPlannerRoute,
@@ -578,13 +599,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
