@@ -55,7 +55,15 @@ import {
   dateToAxisTime,
   timeXAxisPadding,
 } from "@/lib/chart-axis";
-import { useAssets, useLiabilities, useInvestments, inr as inrW } from "@/lib/wealth-api";
+import { useAssets, useLiabilities, useInvestments, useAccounts, inr as inrW } from "@/lib/wealth-api";
+import {
+  computeNetWorth,
+  useCreateSnapshot,
+  useDailySnapshotCapture,
+  useSnapshots,
+  type Snapshot,
+} from "@/lib/networth";
+
 import { useTransactions } from "@/lib/money-api";
 import { useGoals } from "@/lib/planner-api";
 import { supabase } from "@/integrations/supabase/client";
