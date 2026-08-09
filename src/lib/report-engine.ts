@@ -337,7 +337,7 @@ export async function renderReportXlsx(doc: ReportDoc, opts: ExportOptions) {
   };
 
   const meta: any[][] = [
-    ["Wealth Ace", "Direct Your Wealth"],
+    ["Wealth Ace", "Master Your Finances"],
     [doc.name],
   ];
   if (doc.period) {

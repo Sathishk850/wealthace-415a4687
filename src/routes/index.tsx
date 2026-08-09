@@ -29,13 +29,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Wealth Ace — Direct Your Wealth | Personal Finance Dashboard" },
+      { title: "Wealth Ace — Master Your Finances | Personal Finance Dashboard" },
       {
         name: "description",
         content:
           "Track net worth, cashflow, investments and goals in one secure, intelligent dashboard. Start free — no credit card required.",
       },
-      { property: "og:title", content: "Wealth Ace — Direct Your Wealth | Personal Finance Dashboard" },
+      { property: "og:title", content: "Wealth Ace — Master Your Finances | Personal Finance Dashboard" },
       {
         property: "og:description",
         content:
@@ -46,7 +46,7 @@ export const Route = createFileRoute("/")({
       { property: "og:site_name", content: "Wealth Ace" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Wealth Ace" },
-      { name: "twitter:title", content: "Wealth Ace — Direct Your Wealth | Personal Finance Dashboard" },
+      { name: "twitter:title", content: "Wealth Ace — Master Your Finances | Personal Finance Dashboard" },
       {
         name: "twitter:description",
         content:
@@ -280,7 +280,7 @@ function Landing() {
             </span>
 
             <h1 className="load-headline mt-5 font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[64px]">
-              Direct Your Wealth.<br />
+              Master Your Finances.<br />
               Grow Your{" "}
               <span className="gradient-shimmer bg-gradient-to-r from-mint via-cyan-300 to-accent bg-clip-text text-transparent">
                 Wealth.
@@ -440,7 +440,7 @@ function Landing() {
 
           <div>
             <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">About Wealth Ace</h2>
-            <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Direct Your Wealth.</p>
+            <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Master Your Finances.</p>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
               Wealth Ace is a modern personal finance platform that helps you track, organize and grow your wealth in one secure, intelligent dashboard. From assets and investments to expenses and financial goals, everything is designed to give you complete financial clarity.
             </p>
@@ -465,7 +465,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Wealth Ace · Direct your wealth
+        © {new Date().getFullYear()} Wealth Ace · Master your finances
       </footer>
 
       <style>{`

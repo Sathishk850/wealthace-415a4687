@@ -8,7 +8,7 @@ import { formatDate, formatDateTime } from "@/lib/date-format";
 export const REPORT_THEME = {
   brand: {
     name: "Wealth Ace",
-    tagline: "Direct Your Wealth",
+    tagline: "Master Your Finances",
   },
   color: {
     background: [255, 255, 255] as [number, number, number],
