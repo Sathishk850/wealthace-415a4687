@@ -21,7 +21,7 @@ export function PwaUpdatePrompt() {
         </div>
         <div className="flex-1">
           <p className="text-sm font-semibold text-foreground">
-            A new version of FinVista is available.
+            A new version of Wealth Ace is available.
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Refresh to get the latest updates.

@@ -108,7 +108,7 @@ import FIREPlanTab from "@/components/planner/fire-plan-tab";
 export const Route = createFileRoute("/_app/planner")({
   head: () => ({
     meta: [
-      { title: "Planner · FinVista" },
+      { title: "Planner · Wealth Ace" },
       { name: "description", content: "Set goals, budgets and your FIRE roadmap." },
     ],
   }),

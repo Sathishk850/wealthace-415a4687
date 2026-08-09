@@ -1,7 +1,7 @@
 /**
  * Report Center adapter — turns a stored `GeneratedReport` into a
  * ReportDoc and delegates to the master engine (see report-engine.ts).
- * All PDF/XLSX/CSV exports share the same premium FinVista template.
+ * All PDF/XLSX/CSV exports share the same premium Wealth Ace template.
  */
 import type { GeneratedReport, ReportSection } from "@/lib/notifications-api";
 import {
@@ -73,7 +73,7 @@ export function reportToDoc(report: GeneratedReport): ReportDoc {
     tables,
     notes: [
       "Generated using selected filters.",
-      "Values as available in your FinVista account at the report generation time.",
+      "Values as available in your Wealth Ace account at the report generation time.",
     ],
     sensitive: category === "tax",
   };

@@ -76,7 +76,7 @@ export function InstallAppButton() {
         type="button"
         onClick={handleClick}
         className="hidden md:inline-flex items-center gap-1.5 rounded-lg border border-[#21DBD2]/40 bg-[rgba(33,219,210,0.10)] px-2.5 py-1.5 text-xs font-semibold text-[#21DBD2] transition hover:bg-[rgba(33,219,210,0.18)]"
-        aria-label="Install FinVista"
+        aria-label="Install Wealth Ace"
       >
         <Download className="h-3.5 w-3.5" />
         Install App
@@ -84,9 +84,9 @@ export function InstallAppButton() {
       <Dialog open={showIOSHelp} onOpenChange={setShowIOSHelp}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add FinVista to Home Screen</DialogTitle>
+            <DialogTitle>Add Wealth Ace to Home Screen</DialogTitle>
             <DialogDescription>
-              iOS doesn't allow automatic install prompts. To install FinVista:
+              iOS doesn't allow automatic install prompts. To install Wealth Ace:
             </DialogDescription>
           </DialogHeader>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">

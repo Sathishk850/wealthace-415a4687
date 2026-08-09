@@ -10,7 +10,7 @@ export const BRAND_LOGO_URL = logoDarkAsset.url;
 export const BRAND_LOGO_LIGHT_URL = logoLightAsset.url;
 export const BRAND_ICON_URL = iconAsset.url;
 
-const LOGO_ALT = "Wealth Ace — Track. Nurture. Prosper.";
+const LOGO_ALT = "Wealth Ace — Master Your Finances";
 
 /**
  * The lockup ships as two transparent variants of the same artwork: the

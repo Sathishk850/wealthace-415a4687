@@ -1,5 +1,5 @@
 /**
- * FinVista Premium Light Theme — shared brand tokens for exported reports
+ * Wealth Ace Premium Light Theme — shared brand tokens for exported reports
  * (PDF, XLSX print layout). Reports ALWAYS render in this light theme
  * regardless of the app's runtime theme (light / dark / system).
  */
@@ -7,8 +7,8 @@ import { formatDate, formatDateTime } from "@/lib/date-format";
 
 export const REPORT_THEME = {
   brand: {
-    name: "FinVista",
-    tagline: "Direct Your Wealth",
+    name: "Wealth Ace",
+    tagline: "Master Your Finances",
   },
   color: {
     background: [255, 255, 255] as [number, number, number],
@@ -82,13 +82,13 @@ export function hexToRgb(hex: string): [number, number, number] {
 }
 
 /**
- * Load the official FinVista fingerprint mark once and cache it as a
+ * Load the official Wealth Ace fingerprint mark once and cache it as a
  * PNG data URL so jsPDF can embed it via addImage. Resolves to null when
  * the network fetch fails so the header falls back to the text tile.
  */
 // Reports render on a white background regardless of app theme, so we
 // always use the light-theme (charcoal wordmark) master logo variant.
-import brandMarkAsset from "@/assets/finvista-logo-light.png.asset.json";
+import brandMarkAsset from "@/assets/wealth-ace-logo-light.png.asset.json";
 
 let brandMarkPromise: Promise<string | null> | null = null;
 export function loadBrandMark(): Promise<string | null> {
@@ -113,8 +113,8 @@ export function loadBrandMark(): Promise<string | null> {
 export const BRAND_MARK_ASPECT = 462 / 582; // width / height of the fingerprint png
 
 /**
- * Premium banking-style header. Left: FV mark + wordmark. Center: FINVISTA
- * / DIRECT YOUR WEALTH. Right: Generated On + Report ID. Thin brand divider.
+ * Premium banking-style header. Left: FV mark + wordmark. Center: WEALTH ACE
+ * / MASTER YOUR FINANCES. Right: Generated On + Report ID. Thin brand divider.
  * Backwards compatible: `title` / `subtitle` still supported for older callers.
  */
 export function drawReportHeader(
@@ -132,7 +132,7 @@ export function drawReportHeader(
   const x = layout.marginX;
   const top = layout.marginY - 20;
 
-  // Left brand mark — official FinVista fingerprint logo when available,
+  // Left brand mark — official Wealth Ace fingerprint logo when available,
   // otherwise fall back to the mint "FV" tile.
   const markSize = 32;
   if (opts.brandMark) {
@@ -162,7 +162,7 @@ export function drawReportHeader(
   doc.setFont(font.family, "bold");
   doc.setFontSize(20);
   doc.setTextColor(...color.primaryDeep);
-  doc.text("FINVISTA", pageW / 2, top + 14, { align: "center" });
+  doc.text("WEALTH ACE", pageW / 2, top + 14, { align: "center" });
   doc.setFont(font.family, "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...color.muted);
@@ -219,7 +219,7 @@ export function drawReportHeader(
 }
 
 /**
- * Footer: Page X of Y left, © YEAR FinVista (+ optional Confidential) right.
+ * Footer: Page X of Y left, © YEAR Wealth Ace (+ optional Confidential) right.
  * Never contains app version, build number, or "All Rights Reserved".
  */
 export function drawReportFooter(
@@ -408,7 +408,7 @@ export function measureDisclaimer(doc: JsPDFLike, text: string): number {
   return 10 + lines.length * 9;
 }
 
-/** Closing block: divider + centered FINVISTA / DIRECT YOUR WEALTH. Tight. */
+/** Closing block: divider + centered WEALTH ACE / MASTER YOUR FINANCES. Tight. */
 export const CLOSING_BLOCK_HEIGHT = 30;
 export function drawClosing(doc: JsPDFLike, y: number) {
   const { color, layout, font } = REPORT_THEME;
@@ -419,7 +419,7 @@ export function drawClosing(doc: JsPDFLike, y: number) {
   doc.setFont(font.family, "bold");
   doc.setFontSize(13);
   doc.setTextColor(...color.primaryDeep);
-  doc.text("FINVISTA", pageW / 2, y + 14, { align: "center" });
+  doc.text("WEALTH ACE", pageW / 2, y + 14, { align: "center" });
   doc.setFont(font.family, "normal");
   doc.setFontSize(7);
   doc.setTextColor(...color.muted);
@@ -505,7 +505,7 @@ export function drawDonut(
   return y + h + 14;
 }
 
-/** Shared jspdf-autotable style bundle in FinVista brand. */
+/** Shared jspdf-autotable style bundle in Wealth Ace brand. */
 export const REPORT_TABLE_STYLES = {
   styles: {
     font: REPORT_THEME.font.family,

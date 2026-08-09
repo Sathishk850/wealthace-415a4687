@@ -10,7 +10,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * FinVista design system.
+ * Wealth Ace design system.
  *
  * Tokens provided by the user:
  * --bg-primary:   #020d17  (main background)
@@ -372,7 +372,7 @@ html:not(.privacy-on) body {
 }
 
 /* ============================================================
-   FinVista Brand — precision underline, hover & shine animations
+   Wealth Ace Brand — precision underline, hover & shine animations
    ============================================================ */
 
 /* Needle-sharp teal underline. Tapered ends via mask so both tips

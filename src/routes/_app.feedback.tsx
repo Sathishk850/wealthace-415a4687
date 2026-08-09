@@ -15,7 +15,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/feedback")({
   head: () => ({
     meta: [
-      { title: "Feedback · FinVista" },
+      { title: "Feedback · Wealth Ace" },
       { name: "description", content: "Share feedback, report bugs, or request features." },
     ],
   }),

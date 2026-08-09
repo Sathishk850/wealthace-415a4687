@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password · FinVista" },
-      { name: "description", content: "Set a new password for your FinVista account." },
+      { title: "Reset password · Wealth Ace" },
+      { name: "description", content: "Set a new password for your Wealth Ace account." },
     ],
   }),
   component: ResetPasswordPage,

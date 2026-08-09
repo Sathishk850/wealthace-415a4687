@@ -123,7 +123,7 @@ export function PinReminder() {
           <DialogHeader>
             <DialogTitle className="text-center">Secure Your Account</DialogTitle>
             <DialogDescription className="text-center">
-              Create a 4-digit PIN for faster and secure access to FinVista.
+              Create a 4-digit PIN for faster and secure access to Wealth Ace.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-2 flex-col-reverse gap-2 sm:flex-row">

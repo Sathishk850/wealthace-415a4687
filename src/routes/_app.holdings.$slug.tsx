@@ -6,7 +6,7 @@ import { useInvestments, useUpsertInvestment, useDeleteInvestment, formatDate, a
 export const Route = createFileRoute("/_app/holdings/$slug")({
   head: () => ({
     meta: [
-      { title: "Holding · FinVista" },
+      { title: "Holding · Wealth Ace" },
       { name: "description", content: "View and edit holding details." },
     ],
   }),

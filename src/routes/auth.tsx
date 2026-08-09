@@ -35,8 +35,8 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in · FinVista" },
-      { name: "description", content: "Sign in or create your FinVista account." },
+      { title: "Sign in · Wealth Ace" },
+      { name: "description", content: "Sign in or create your Wealth Ace account." },
     ],
   }),
   component: AuthPage,

@@ -21,7 +21,7 @@ import { FileDown, Trash2, Inbox, CheckCircle2 } from "lucide-react";
 export const Route = createFileRoute("/_app/reports/")({
   head: () => ({
     meta: [
-      { title: "Report Center · FinVista" },
+      { title: "Report Center · Wealth Ace" },
       { name: "description", content: "Download generated reports in PDF, Excel or CSV." },
     ],
   }),

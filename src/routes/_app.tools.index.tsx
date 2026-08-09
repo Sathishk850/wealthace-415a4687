@@ -93,7 +93,7 @@ import {
 export const Route = createFileRoute("/_app/tools/")({
   head: () => ({
     meta: [
-      { title: "Tools · FinVista" },
+      { title: "Tools · Wealth Ace" },
       { name: "description", content: "Reports, financial calculators and AI insights." },
     ],
   }),
@@ -820,7 +820,7 @@ function reportToDoc(report: ReportData): ReportDoc {
     kpis: report.summary?.map((s) => ({ label: s.label, value: s.value })),
     tables: [{ columns, rows }],
     notes: [
-      "Generated from data available in your FinVista account.",
+      "Generated from data available in your Wealth Ace account.",
       "Figures are rounded and may differ slightly from module views.",
     ],
   };

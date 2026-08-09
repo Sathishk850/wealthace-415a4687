@@ -14,7 +14,7 @@ import { Pencil, Upload, Trash2, X, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({
     meta: [
-      { title: "My Profile · FinVista" },
+      { title: "My Profile · Wealth Ace" },
       { name: "description", content: "View and edit your profile information." },
     ],
   }),

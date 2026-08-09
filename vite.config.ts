@@ -26,8 +26,8 @@ export default defineConfig({
         "icons/*.png",
       ],
       manifest: {
-        name: "FinVista",
-        short_name: "FinVista",
+        name: "Wealth Ace",
+        short_name: "Wealth Ace",
         description: "Direct Your Wealth",
         start_url: "/",
         scope: "/",

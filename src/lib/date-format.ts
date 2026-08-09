@@ -1,5 +1,5 @@
 /**
- * Central user-facing date formatters. FinVista standardises all displayed
+ * Central user-facing date formatters. Wealth Ace standardises all displayed
  * dates to DD/MM/YYYY. Storage/ISO values are unchanged — only presentation.
  *
  * Sorting and filtering must continue to use raw ISO/Date values; only pass

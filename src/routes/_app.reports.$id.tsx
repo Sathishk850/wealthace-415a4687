@@ -14,7 +14,7 @@ import { ArrowLeft, FileDown, Loader2 } from "lucide-react";
 import { formatDate, formatDateTime } from "@/lib/date-format";
 
 export const Route = createFileRoute("/_app/reports/$id")({
-  head: () => ({ meta: [{ title: "Report · FinVista" }] }),
+  head: () => ({ meta: [{ title: "Report · Wealth Ace" }] }),
   component: ReportDetail,
 });
 

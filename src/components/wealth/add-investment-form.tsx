@@ -1,4 +1,4 @@
-// Add Investment — single-page template matching FinVista reference design.
+// Add Investment — single-page template matching Wealth Ace reference design.
 // Two-column desktop layout: Sections 1–3 on the left, Payment sidebar on the
 // right, and a single bottom action bar. Uses existing Market Data server fns,
 // wealth-api mutations, and shared PaymentFields component.
