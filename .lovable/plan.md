@@ -1,119 +1,80 @@
-# Market Data Service — Implementation Plan
+# Wealth Ace — 6-issue implementation plan
 
-## Defaults I'll use (tell me if you want otherwise)
+## What already exists (so we don't rebuild it)
 
-- **Stocks provider**: Yahoo Finance active by default (no API key needed). Twelve Data provider file scaffolded — set `TWELVE_DATA_API_KEY` secret later and it becomes primary automatically.
-- **Mutual Funds**: MFAPI (keyless).
-- **Refresh model**: Client-side per open tab (matches your spec — pause on background, resume on focus, 5/10/15 min interval, immediate refresh on Dashboard/Wealth/Investments open).
-- **CORS**: Provider calls go through a TanStack server function (`getMarketQuotes`) — never from the browser to Yahoo/Twelve/MFAPI directly. This is what makes it "one centralized service".
+- **Reminder engine is real**: `alerts.functions.ts` derives bills, SIPs, EMIs, insurance renewals, corporate actions and rebalance alerts into the notifications table; `alerts-digest.tsx` shows them on sign-in; an hourly cron worker re-derives them server-side.
+- **Reminders CRUD UI exists** with Upcoming / Completed / All tabs — but it is buried inside the Tools page, not its own page.
+- **Reports are already extensive**: 18 report types with PDF / Excel / CSV export through a shared report engine, with period ranges. The `/reports` page itself is an empty stub — the real catalogue renders inside Tools.
+- **Net worth page exists** at `/dashboard/networth`, but its snapshot button does nothing and the history chart is a placeholder box.
+- **Wealth CSV/XLSX/JSON import exists**; the Money "Import" button is inert.
 
-## Deliverables
+## Assumptions
 
-### 1. Database (one migration)
+- Tagline becomes **"Master Your Finances"** everywhere (replacing both "Direct Your Wealth" and the unused "Track. Nurture. Prosper." alt text). The logo artwork itself is unchanged — it already reads Wealth Ace.
+- The 6 report types you listed (Summary, Net Worth, Portfolio, Expense, Investment, Tax) map onto existing report types; I'll surface them as a curated "core reports" set rather than deleting the other 12.
+- Bank import writes into the existing money transactions table and reuses existing categories; no new schema.
 
-Add to `wealth_investments` (all nullable, no data touched):
-- `identifier_type` text
-- `identifier` text
-- `exchange` text
-- `price_source` text
-- `price_updated_at` timestamptz
-- `previous_close` numeric
+---
 
-New table `market_price_cache`:
-- `id`, `identifier_type`, `identifier`, `latest_price`, `previous_close`, `currency`, `source`, `fetched_at`, `expires_at`
-- Unique index on (`identifier_type`, `identifier`)
-- RLS: `SELECT` for `authenticated` (shared price data); writes only via service role
-- GRANTs per project rules
+## Phase 0 — Rebranding
 
-Cache is user-agnostic (prices are public); server function uses service role to upsert.
+- Replace every user-visible "FinVista" with "Wealth Ace": ~20 route `head()` titles, landing page copy + OG/Twitter meta, settings/PIN/PWA/session strings, scheduled-report copy.
+- Update the report engine + report theme branding strings, PDF author/creator/keywords and footer.
+- Set tagline to "Master Your Finances" in landing hero, meta, footer, logo alt text, report header.
+- Point favicon / apple-touch-icon / PWA manifest at the existing Wealth Ace emblem asset; retire the `finvista-*` asset pointers still referenced by the planner tabs.
 
-### 2. Provider layer — `src/lib/market/`
+## Phase 1 — Net worth (Issue 3)
 
-```
-market/
-├── types.ts              # Provider, Quote, SearchResult interfaces
-├── providers/
-│   ├── yahoo.ts          # Stocks (primary until Twelve Data key added)
-│   ├── twelvedata.ts     # Activates when TWELVE_DATA_API_KEY set
-│   └── mfapi.ts          # Mutual funds (search + NAV)
-├── calendar.ts           # Market calendar (NSE/BSE/US) — extensible
-├── registry.ts           # Provider selection (primary + fallback chain)
-└── service.ts            # Public API: getQuotes(), search(), refreshAll()
-```
+- Add a single source of truth `computeNetWorth()` in `wealth-api.ts`: assets (investment current value, cash/bank accounts, other assets) minus liabilities (loans, EMIs, credit cards). Both the dashboard and the net worth page consume it instead of duplicating the math.
+- Wire the dead "Snap" button to the existing create-snapshot mutation.
+- Daily automatic snapshot: extend the existing cron worker to upsert one snapshot per user per day (idempotent on user + date), so history builds without user action.
+- Build out `/dashboard/networth`: current value with assets/liabilities breakdown, 12-month line chart from snapshots, composition pie, and a simple trend summary (change vs last month, best/worst month).
 
-New provider = one new file in `providers/`, register in `registry.ts`. No module changes.
+## Phase 2 — Insights & reminders surfacing (Issue 1)
 
-### 3. Server functions — `src/lib/market.functions.ts`
+- New `/insights` route: insight cards persisted per day, regenerated when the day rolls over (24h cadence) and invalidated immediately whenever wealth/money/planner data changes, so edits reflect instantly.
+- New `/reminders` route with **All / Pending / Completed** tabs, reusing the existing reminders view rather than rewriting it.
+- Add a dismissible high-priority **RemindersBanner** at the top of the dashboard, driven by unread urgent/high notifications (the sign-in digest modal stays as-is).
+- Extend the alert sweep with goal-review and investment-review reminders on top of the existing bill/SIP/EMI/insurance/corporate-action coverage.
 
-- `searchInstrument({ query, kind })` — proxies to Yahoo search or MFAPI search
-- `getMarketQuotes({ items })` — batch fetch; reads cache first, refreshes stale entries, upserts cache, returns quotes
-- `refreshUserHoldings()` — refresh all active holdings for current user (excludes sold/archived/deleted flag if present, else all)
+## Phase 3 — Maturity dates (Issue 2)
 
-All authenticated via `requireSupabaseAuth`. Server-only imports (fetch to providers, `supabaseAdmin` for cache upserts) stay inside handlers.
+- Migration: add a maturity date column to investments.
+- In the investment forms, when category is FD default maturity to today + 3 years; Bonds default to today + 5 years. Value stays editable and is never overwritten once the user touches it.
+- Show maturity date on investment rows / holding detail.
+- Alert sweep: reminder 30 days before maturity, escalated to high priority inside 7 days.
 
-### 4. Client hooks — `src/lib/market/use-market-data.ts`
+## Phase 4 — Shortcut routing (Issue 4)
 
-- `useMarketQuotes(items)` — TanStack Query, staleTime keyed to market status (5 min open / until NAV update for MFs / until market open for closed stocks)
-- `useMarketStatus(exchange)` — 🟢/🔴 + last updated
-- `useAutoRefresh(interval)` — visibility API pause/resume, focus refresh
-- Never overwrites cached quote with 0/NaN/null
+- Add real pages where content is missing: `/goals`, `/goals/add`, `/goals/progress`, `/money/add`, `/money/budget`, `/money/accounts`, `/help`.
+- Add thin alias routes that redirect to canonical existing pages, so every shortcut works without duplicating UI:
+  - `/investments` → `/wealth`, `/investments/add` → `/wealth/add-investment`, `/investments/holdings` and `/investments/portfolio` → `/wealth` (holdings tab), `/tools/reports` → `/reports`, `/wealth/networth` → `/dashboard/networth`.
+- Add a **quick-nav widget** in the header: a keyboard-openable command palette listing all shortcuts with fuzzy search.
 
-### 5. Investment identification UI
+## Phase 5 — Reports (Issue 5)
 
-Non-invasive additions to `investment-dialog.tsx`:
-- New "Search instrument" combobox above the existing Name field
-- On select: auto-fills `name`, `identifier`, `identifier_type`, `exchange`, `symbol`
-- Purely additive — existing manual entry still works for offline/custom holdings
+- Make `/reports` render a real report centre instead of a metadata-only stub: the 6 core report types front and centre, remaining types grouped below.
+- Period selector: Monthly / Quarterly / Yearly (plus the existing custom range).
+- Report layout pass in the engine: teal Wealth Ace header, summary block, detailed breakdown table, charts, disclaimer footer.
+- Export row per report: PDF download, Excel with one sheet per section, and Print (print stylesheet + browser print).
 
-New `link-investment-button.tsx` shown on rows/cards where `identifier` is null in `investments-view.tsx` — opens the same search dialog scoped to that holding. Plus one "Link All" action in the view header that walks unlinked holdings.
+## Phase 6 — Bank statement import (Issue 6)
 
-### 6. Portfolio value derivation
+- New importer component reachable from the Money transactions "Import" button.
+- Five parser profiles — HDFC, ICICI, Axis, SBI, Generic CSV — detected from header row with manual profile override.
+- Auto-derive per row: merchant name from the narration, Income / Expense / Transfer classification from debit/credit columns, and category via a keyword ruleset covering Food, Transport, Shopping, Utilities, Entertainment, Healthcare, EMI, Insurance, Travel, Education, Subscriptions, Investment.
+- Preview table before commit: editable category/type per row, duplicate detection against existing transactions, per-row include/exclude.
+- On save: bulk insert, global cache refresh so KPIs/charts recompute, and an insights regeneration trigger.
 
-New helper `src/lib/market/derive.ts` — takes investment + latest cache row, returns `{ current_price, current_value, day_change, unrealized_pl, return_pct }`. `investments-view.tsx`, dashboard net-worth panels, and reports read via this helper. Existing DB values remain the fallback when no identifier is linked.
-
-**No writes to `wealth_investments.current_price` from refresh** — spec says cache-only. Values are computed at render time from holding + cached price.
-
-### 7. Settings — Market Data panel
-
-Section in `_app.settings.tsx`:
-- Provider status (Stocks primary/fallback, MF)
-- Refresh interval selector (5/10/15 min)
-- Auto-refresh toggle
-- Last successful refresh timestamp
-- "Refresh Now" button
-
-Preferences stored in existing `user_preferences` JSON store.
-
-### 8. Market status badge
-
-Small `<MarketStatus />` component used on Dashboard/Wealth/Investments headers and Reports meta. Uses `calendar.ts` — no hardcoded timings inline.
-
-### 9. Reports
-
-`report-engine.ts` gets a `marketAsOf` field on `ReportDoc`. When present, renders "Market Price As Of DD/MM/YYYY HH:MM • Source" under the report header. Wealth/Investment reports populated from latest cache timestamp.
+---
 
 ## Technical notes
 
-- Yahoo endpoints: `query1.finance.yahoo.com/v8/finance/chart/{symbol}` (quote), `query2.../v1/finance/search` (search). No key.
-- Twelve Data: `api.twelvedata.com/quote?symbol=X&apikey=...`. Scaffolded, inactive until secret exists.
-- MFAPI: `api.mfapi.in/mf/search?q=X` and `/mf/{scheme_code}` — returns latest NAV.
-- All provider fetches server-side (CORS + key protection).
-- Batching: server function accepts up to 50 identifiers per call, dedupes.
-- Cache TTL: stocks 5 min during market hours, until next open when closed. MFs until next NAV publish (~7 PM IST).
+- Data reads stay on the existing React Query + server-function pattern; insights/net-worth derivations go in `src/lib`, not in route components.
+- New DB work is limited to: maturity date column on investments, and an insights cache table keyed by user + generated date. Both get RLS policies and grants scoped to `auth.uid()`.
+- Daily snapshot and reminder generation extend the existing public cron hook — no new scheduling infrastructure.
+- Alias routes use router redirects, so there is exactly one implementation per screen.
 
-## Non-goals (per your "Do NOT modify" list)
+## Sequencing
 
-- No changes to existing CRUD, calculations, RLS, theme, auth.
-- No overwriting of purchase history, avg_price, quantity, or invested totals.
-- No changes to how existing reports compute totals — they'll just prefer cached market price when a linked identifier exists.
-
-## Verification
-
-- `tsgo` clean.
-- Migration runs.
-- Add one Indian stock via search → identifier stored, quote shows.
-- Add one MF via search → scheme code stored, NAV shows.
-- Kill network → cached values persist, "Using cached market data" banner appears.
-- Toggle refresh interval → next refresh honors it.
-
-**Ready to proceed with these defaults?** If you want Twelve Data live at ship, say so and I'll request the key first. Otherwise I'll build against Yahoo + MFAPI and Twelve Data auto-activates when you drop in the key later.
+Phases are independent enough to ship in order: 0 (branding) → 1 (net worth) → 2 (insights/reminders) → 3 (maturity) → 4 (routing) → 5 (reports) → 6 (import). I'll report back after each phase rather than at the very end.
