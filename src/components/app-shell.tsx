@@ -26,6 +26,7 @@ import { usePrivacy } from "@/lib/privacy";
 import { SessionExpiredDialog, markIntentionalSignOut } from "@/lib/session-expired";
 import { PinReminder } from "@/components/pin-reminder";
 import { AlertsDigest } from "@/components/alerts-digest";
+import { RemindersBanner } from "@/components/reminders-banner";
 
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { PwaProvider } from "@/components/pwa/pwa-provider";
@@ -104,6 +105,7 @@ const TOP_TABS: NavItem[] = [
   { to: "/wealth", label: "Wealth", icon: Wallet },
   { to: "/money", label: "Money", icon: Coins },
   { to: "/planner", label: "Planner", icon: CalendarClock },
+  { to: "/insights", label: "Insights", icon: Lightbulb },
   { to: "/tools", label: "Tools", icon: Wrench },
 ];
 
@@ -269,6 +271,7 @@ export function AppShell() {
       <TopBar />
       <main className="pb-24 lg:pb-0">
         <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+          <RemindersBanner />
           <Outlet />
         </div>
       </main>
