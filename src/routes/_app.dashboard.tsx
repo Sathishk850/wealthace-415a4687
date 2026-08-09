@@ -84,72 +84,19 @@ function fmt(n: number) {
 
 const ALLOC_COLORS = ["#14d8cf", "#3b82f6", "#d9b800", "#ff8a3c", "#a855f7", "#00c896", "#ff4d4d", "#7c3aed"];
 
-type Snapshot = {
-  id: string;
-  snapshot_date: string;
-  net_worth: number;
-  assets_total: number;
-  liabilities_total: number;
-  investments_total: number;
-  savings_total: number;
-};
-
-function useSnapshots() {
-  return useQuery({
-    queryKey: ["wealth", "snapshots"] as const,
-    queryFn: async (): Promise<Snapshot[]> => {
-      const { data, error } = await supabase
-        .from("wealth_snapshots" as never)
-        .select("*")
-        .order("snapshot_date", { ascending: true });
-      if (error) throw error;
-      return (data ?? []).map((r: any) => ({
-        id: r.id,
-        snapshot_date: r.snapshot_date,
-        net_worth: Number(r.net_worth ?? 0),
-        assets_total: Number(r.assets_total ?? 0),
-        liabilities_total: Number(r.liabilities_total ?? 0),
-        investments_total: Number(r.investments_total ?? 0),
-        savings_total: Number(r.savings_total ?? 0),
-      }));
-    },
-  });
-}
-
-function useCreateSnapshot() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: Omit<Snapshot, "id" | "snapshot_date"> & { snapshot_date?: string }) => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Not signed in");
-      const { error } = await supabase.from("wealth_snapshots" as never).insert({
-        user_id: u.user.id,
-        snapshot_date: payload.snapshot_date ?? new Date().toISOString().slice(0, 10),
-        net_worth: payload.net_worth,
-        assets_total: payload.assets_total,
-        liabilities_total: payload.liabilities_total,
-        investments_total: payload.investments_total,
-        savings_total: payload.savings_total,
-      } as never);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Snapshot saved");
-      qc.invalidateQueries({ queryKey: ["wealth", "snapshots"] });
-    },
-    onError: (e: Error) => toast.error(e.message || "Failed to save snapshot"),
-  });
-}
-
 function Dashboard() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const assetsQ = useAssets();
   const liabilitiesQ = useLiabilities();
   const investmentsQ = useInvestments();
+  const accountsQ = useAccounts();
   const txnsQ = useTransactions();
   const goalsQ = useGoals();
   const snapsQ = useSnapshots();
   const createSnap = useCreateSnapshot();
+
+  const accounts = accountsQ.data ?? [];
+
 
   const assets = assetsQ.data ?? [];
   const liabilities = liabilitiesQ.data ?? [];
