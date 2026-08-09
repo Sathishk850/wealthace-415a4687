@@ -140,15 +140,16 @@ function InsightsPage() {
             ) : null}
           </h2>
           <div className="flex items-center gap-2">
-            <TextTabs
+            <TextTabs<ReminderFilter>
               value={tab}
-              onChange={(v) => setTab(v as ReminderFilter)}
-              tabs={[
+              onChange={setTab}
+              items={[
                 { value: "all", label: "All" },
                 { value: "pending", label: "Pending" },
                 { value: "completed", label: "Completed" },
               ]}
             />
+
             {pendingCount > 0 ? (
               <button
                 type="button"
