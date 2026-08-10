@@ -897,6 +897,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       avg_price: avg,
       current_price: livePrice ?? avg,
       purchase_date: form.purchase_date || null,
+      maturity_date: isTerm
+        ? form.maturity_date || defaultMaturityDate(form.category, form.purchase_date)
+        : null,
       notes: noteLines.join("\n"),
       status: form.status || "active",
       is_sip: form.is_sip,
