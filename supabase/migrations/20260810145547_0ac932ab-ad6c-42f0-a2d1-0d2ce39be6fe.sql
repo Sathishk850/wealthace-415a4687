@@ -1,0 +1,2 @@
+ALTER TABLE public.wealth_investments ADD COLUMN IF NOT EXISTS maturity_date date;
+CREATE INDEX IF NOT EXISTS wealth_investments_maturity_date_idx ON public.wealth_investments (user_id, maturity_date) WHERE maturity_date IS NOT NULL;

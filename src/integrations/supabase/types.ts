@@ -1286,6 +1286,7 @@ export type Database = {
           invested_value: number | null
           is_sip: boolean
           last_updated: string
+          maturity_date: string | null
           name: string
           notes: string | null
           owner_member_id: string | null
@@ -1322,6 +1323,7 @@ export type Database = {
           invested_value?: number | null
           is_sip?: boolean
           last_updated?: string
+          maturity_date?: string | null
           name: string
           notes?: string | null
           owner_member_id?: string | null
@@ -1358,6 +1360,7 @@ export type Database = {
           invested_value?: number | null
           is_sip?: boolean
           last_updated?: string
+          maturity_date?: string | null
           name?: string
           notes?: string | null
           owner_member_id?: string | null
