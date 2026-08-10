@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
@@ -23,6 +23,7 @@ import {
   Inbox,
   ChevronLeft,
   ChevronRight,
+  Upload,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -195,6 +196,10 @@ function KpiCard({
 function Money() {
   const [tab, setTab] = useTabParam<Tab>("Transactions", tabs);
   const [importOpen, setImportOpen] = useState(false);
+  const locationHash = useRouterState({ select: (st) => st.location.hash });
+  useEffect(() => {
+    if (locationHash === "import" || locationHash === "#import") setImportOpen(true);
+  }, [locationHash]);
   const [monthOffset, setMonthOffset] = useState(0); // 0 = current month
 
   const categoriesQ = useCategories();
@@ -704,6 +709,7 @@ function Money() {
         expenseCategories={categories.filter((c) => c.kind === "expense")}
         activeMonthKey={activeMonthKey}
       />
+      <BankStatementImporter open={importOpen} onOpenChange={setImportOpen} />
     </>
   );
 }
