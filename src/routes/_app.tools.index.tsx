@@ -101,6 +101,8 @@ export const Route = createFileRoute("/_app/tools/")({
   component: ToolsPage,
 });
 
+const TOOLS_TABS = ["overview", "reports", "calculators", "reminders", "insights"] as const;
+
 function ToolsPage() {
   const [tab, setTab] = useTabParam("overview", TOOLS_TABS);
   return (

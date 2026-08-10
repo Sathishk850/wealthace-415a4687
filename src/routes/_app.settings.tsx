@@ -40,6 +40,16 @@ export const Route = createFileRoute("/_app/settings")({
   component: Settings,
 });
 
+const SETTINGS_TABS = [
+  "general",
+  "payments",
+  "notifications",
+  "appearance",
+  "security",
+  "data",
+  "whats-new",
+] as const;
+
 function Settings() {
   const [tab, setTab] = useTabParam("general", SETTINGS_TABS);
   return (
