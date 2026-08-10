@@ -195,7 +195,7 @@ function OverviewView({ onPick }: { onPick: (v: string) => void }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MiniStat label="Reports Available" value="18" icon={FileText} onClick={() => onPick("reports")} />
+        <MiniStat label="Reports Available" value="20" icon={FileText} onClick={() => onPick("reports")} />
         <MiniStat label="Calculators Available" value="12" icon={Calculator} onClick={() => onPick("calculators")} />
         <MiniStat label="AI Insights Available" value={String(allInsights.length)} icon={Sparkles} onClick={() => onPick("insights")} />
         <MiniStat label="Upcoming Reminders" value={String(upcoming.length)} icon={Bell} onClick={() => onPick("reminders")} />
