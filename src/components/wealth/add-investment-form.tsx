@@ -599,6 +599,7 @@ function investmentToForm(inv: Investment): FormState {
     sector: "",
     platform,
     purchase_date: inv.purchase_date ?? todayISO(),
+    maturity_date: inv.maturity_date ?? "",
     quantity: String(inv.quantity ?? ""),
     avg_price: String(inv.avg_price ?? ""),
     notes: rest,
