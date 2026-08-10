@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatDateShort } from "@/lib/date-format";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
 import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
@@ -1248,6 +1249,7 @@ type RowLike = {
   currency: string;
   platform: string | null;
   txn_count?: number;
+  raw_investment?: { maturity_date?: string | null } | null;
 };
 
 
@@ -1297,6 +1299,14 @@ function HoldingRow({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
+              {h.raw_investment?.maturity_date ? (
+                <span
+                  title="Maturity date"
+                  className="shrink-0 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+                >
+                  Matures {formatDateShort(h.raw_investment.maturity_date)}
+                </span>
+              ) : null}
               {h.txn_count && h.txn_count > 1 ? (
                 <span
                   title={`${h.txn_count} transactions`}

@@ -24,6 +24,8 @@ import type { IdentifierType, MarketQuote, SearchResult } from "@/lib/market/typ
 import { curatedKindFor, searchIndiaListed } from "@/lib/market/india-listed";
 import {
   CURRENCY_SYMBOL,
+  defaultMaturityDate,
+  isTermCategory,
   useInvestments,
   useUpsertInvestment,
   type Currency,
@@ -99,6 +101,7 @@ const CATEGORY_OPTIONS = [
   "REIT",
   "InvIT",
   "Bonds",
+  "Fixed Deposit",
   "Crypto",
 ];
 
@@ -110,6 +113,7 @@ const SEGMENT_BY_CATEGORY: Record<string, string[]> = {
   REIT: ["Real Estate"],
   InvIT: ["Infrastructure"],
   Bonds: ["Debt"],
+  "Fixed Deposit": ["Debt"],
   Crypto: ["Crypto"],
 };
 
@@ -170,6 +174,7 @@ const CURRENCY_BY_CATEGORY: Record<string, Currency[]> = {
   REIT: ["INR"],
   InvIT: ["INR"],
   Bonds: ["INR", "USD"],
+  "Fixed Deposit": ["INR", "USD"],
   Crypto: ["INR", "USD"],
 };
 
@@ -515,6 +520,7 @@ type FormState = {
 
   platform: string;
   purchase_date: string;
+  maturity_date: string;
   quantity: string;
   avg_price: string;
   notes: string;
@@ -548,6 +554,7 @@ const EMPTY: FormState = {
   sector: "",
   platform: "",
   purchase_date: todayISO(),
+  maturity_date: "",
   quantity: "",
   avg_price: "",
   notes: "",
@@ -592,6 +599,7 @@ function investmentToForm(inv: Investment): FormState {
     sector: "",
     platform,
     purchase_date: inv.purchase_date ?? todayISO(),
+    maturity_date: inv.maturity_date ?? "",
     quantity: String(inv.quantity ?? ""),
     avg_price: String(inv.avg_price ?? ""),
     notes: rest,
@@ -808,6 +816,22 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     return out;
   }, [customPlatforms]);
 
+  /**
+   * Term products auto-complete their maturity date (FD +3y, Bonds +5y) from the
+   * purchase date. Users can still override it; switching to a non-term
+   * category clears it.
+   */
+  const isTerm = isTermCategory(form.category);
+  useEffect(() => {
+    if (!isTerm) {
+      setForm((f) => (f.maturity_date ? { ...f, maturity_date: "" } : f));
+      return;
+    }
+    const auto = defaultMaturityDate(form.category, form.purchase_date || null);
+    if (!auto) return;
+    setForm((f) => (f.maturity_date ? f : { ...f, maturity_date: auto }));
+  }, [isTerm, form.category, form.purchase_date]);
+
   const canSave =
     !!form.platform.trim() && qty > 0 && avg > 0 && !!form.purchase_date && !!form.name.trim();
 
@@ -873,6 +897,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       avg_price: avg,
       current_price: livePrice ?? avg,
       purchase_date: form.purchase_date || null,
+      maturity_date: isTerm
+        ? form.maturity_date || defaultMaturityDate(form.category, form.purchase_date)
+        : null,
       notes: noteLines.join("\n"),
       status: form.status || "active",
       is_sip: form.is_sip,
@@ -1290,6 +1317,22 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))}
                   />
                 </div>
+
+                {isTerm && (
+                  <div>
+                    <label className={labelCls}>Maturity Date</label>
+                    <input
+                      type="date"
+                      className={inputCls}
+                      value={form.maturity_date}
+                      onChange={(e) => setForm((f) => ({ ...f, maturity_date: e.target.value }))}
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Auto-set to purchase date +{form.category === "Bonds" ? "5" : "3"} years —
+                      reminders start 30 days before maturity.
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <label className={labelCls}>
