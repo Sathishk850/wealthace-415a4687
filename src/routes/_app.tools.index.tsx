@@ -111,7 +111,7 @@ function ToolsPage() {
         title="Tools"
         description="Reports, financial calculators and AI-powered insights."
       />
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as (typeof TOOLS_TABS)[number])} className="w-full">
         <TextTabs
           items={[
             { value: "overview", label: "Overview" },
@@ -121,11 +121,11 @@ function ToolsPage() {
             { value: "insights", label: "AI Insights" },
           ]}
           value={tab}
-          onChange={setTab}
+          onChange={(v) => setTab(v as (typeof TOOLS_TABS)[number])}
         />
 
         <TabsContent value="overview" className="mt-4">
-          <OverviewView onPick={setTab} />
+          <OverviewView onPick={(v) => setTab(v as (typeof TOOLS_TABS)[number])} />
         </TabsContent>
         <TabsContent value="reports" className="mt-4">
           <ReportsView />

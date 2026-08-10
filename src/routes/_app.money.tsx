@@ -404,6 +404,12 @@ function Money() {
               </button>
             </div>
             <button
+              onClick={() => setImportOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
+            >
+              <Upload className="h-3.5 w-3.5" /> Import
+            </button>
+            <button
               onClick={handleAdd}
               className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-mint-foreground hover:opacity-90"
             >

@@ -29,7 +29,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: "income", label: "Income", group: "Money", path: "/money#income", keywords: "salary earnings" },
   { id: "expenses", label: "Expenses", group: "Money", path: "/money#expenses", keywords: "spending outflow" },
   { id: "budgets", label: "Budgets", group: "Money", path: "/money#budgets", keywords: "limit category budget" },
-  { id: "import", label: "Import Bank Statement", group: "Money", path: "/money#transactions?import=1", keywords: "csv excel hdfc sbi icici upload" },
+  { id: "import", label: "Import Bank Statement", group: "Money", path: "/money#import", keywords: "csv excel hdfc sbi icici upload" },
 
   { id: "planner", label: "Planner Overview", group: "Planner", path: "/planner#overview", keywords: "plan" },
   { id: "goals", label: "Goals", group: "Planner", path: "/planner#goals", keywords: "goal target saving" },
