@@ -816,6 +816,22 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     return out;
   }, [customPlatforms]);
 
+  /**
+   * Term products auto-complete their maturity date (FD +3y, Bonds +5y) from the
+   * purchase date. Users can still override it; switching to a non-term
+   * category clears it.
+   */
+  const isTerm = isTermCategory(form.category);
+  useEffect(() => {
+    if (!isTerm) {
+      setForm((f) => (f.maturity_date ? { ...f, maturity_date: "" } : f));
+      return;
+    }
+    const auto = defaultMaturityDate(form.category, form.purchase_date || null);
+    if (!auto) return;
+    setForm((f) => (f.maturity_date ? f : { ...f, maturity_date: auto }));
+  }, [isTerm, form.category, form.purchase_date]);
+
   const canSave =
     !!form.platform.trim() && qty > 0 && avg > 0 && !!form.purchase_date && !!form.name.trim();
 
