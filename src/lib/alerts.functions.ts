@@ -325,6 +325,27 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       });
     }
 
+    /* ---- 10. Investment maturities (FDs, bonds and other term products) ---- */
+    const { data: maturingInv } = await supabase
+      .from("wealth_investments")
+      .select("id, name, category, current_value, invested_value, maturity_date, status")
+      .not("maturity_date", "is", null)
+      .lte("maturity_date", addDaysISO(now, 30));
+    for (const i of maturingInv ?? []) {
+      if ((i.status ?? "active") !== "active") continue;
+      const days = dayDiff(i.maturity_date as string, now);
+      if (days < -7) continue;
+      const value = Number(i.current_value ?? i.invested_value ?? 0);
+      await notifyOnce({
+        title: `${i.category ?? "Investment"} maturity ${dueLabel(days)}: ${i.name}`,
+        body: `${value > 0 ? `Value ${inr(value)}. ` : ""}Plan the reinvestment or withdrawal before it matures.`,
+        priority: days <= 7 ? "high" : "normal",
+        link: "/wealth",
+        dedupe: { investment_maturity: `${i.id}:${i.maturity_date}` },
+        metadata: { kind: "maturity", investment_id: i.id },
+      });
+    }
+
 
     const { count: unread } = await supabase
       .from("notifications")
