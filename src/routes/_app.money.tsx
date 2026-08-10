@@ -28,6 +28,8 @@ import { PageHeader } from "@/components/page-header";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { TextTabs } from "@/components/text-tabs";
+import { useTabParam } from "@/lib/use-tab-param";
+import { BankStatementImporter } from "@/components/money/bank-statement-importer";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
@@ -191,7 +193,8 @@ function KpiCard({
 }
 
 function Money() {
-  const [tab, setTab] = useState<Tab>("Transactions");
+  const [tab, setTab] = useTabParam<Tab>("Transactions", tabs);
+  const [importOpen, setImportOpen] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0); // 0 = current month
 
   const categoriesQ = useCategories();

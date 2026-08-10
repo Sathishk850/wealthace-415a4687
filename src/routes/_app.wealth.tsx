@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Circle } from "lucide-react";
 import { TextTabs } from "@/components/text-tabs";
+import { useTabParam } from "@/lib/use-tab-param";
 import { AssetsView } from "@/components/wealth/assets-view";
 import { LiabilitiesView as LiveLiabilitiesView } from "@/components/wealth/liabilities-view";
 import { InvestmentsView as LiveInvestmentsView } from "@/components/wealth/investments-view";
@@ -37,8 +38,10 @@ const TABS: { value: TabValue; label: string }[] = [
   { value: "sip-tracker", label: "SIP Tracker" },
 ];
 
+const TAB_VALUES = TABS.map((t) => t.value);
+
 function Wealth() {
-  const [tab, setTab] = useState<TabValue>("overview");
+  const [tab, setTab] = useTabParam<TabValue>("overview", TAB_VALUES);
   const addRef = useRef<(() => void) | null>(null);
 
   return (

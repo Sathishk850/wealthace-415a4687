@@ -34,6 +34,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { TextTabs } from "@/components/text-tabs";
+import { useTabParam } from "@/lib/use-tab-param";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -101,7 +102,7 @@ export const Route = createFileRoute("/_app/tools/")({
 });
 
 function ToolsPage() {
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useTabParam("overview", TOOLS_TABS);
   return (
     <>
       <PageHeader

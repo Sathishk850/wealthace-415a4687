@@ -43,6 +43,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TextTabs } from "@/components/text-tabs";
+import { useTabParam } from "@/lib/use-tab-param";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -126,9 +127,14 @@ const ICON_BY_TYPE: Record<GoalType, React.ComponentType<{ className?: string }>
   custom: Target,
 };
 
+const PLANNER_TABS = ["overview", "goals", "retirement", "fire"] as const;
+
 function Planner() {
   const [goalDialog, setGoalDialog] = useState<{ open: boolean; goal?: Goal }>({ open: false });
-  const [tab, setTab] = useState<"overview" | "goals" | "retirement" | "fire">("overview");
+  const [tab, setTab] = useTabParam<"overview" | "goals" | "retirement" | "fire">(
+    "overview",
+    PLANNER_TABS,
+  );
 
   return (
     <TooltipProvider>

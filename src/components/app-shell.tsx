@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
+import { QuickNav } from "@/components/quick-nav";
 import { usePrivacy } from "@/lib/privacy";
 import { SessionExpiredDialog, markIntentionalSignOut } from "@/lib/session-expired";
 import { PinReminder } from "@/components/pin-reminder";
@@ -192,6 +193,7 @@ function TopBar() {
         })}
       </nav>
       <div className="ml-auto flex items-center gap-2 lg:ml-0">
+        <QuickNav />
         <InstallAppButton />
         <button
           type="button"
