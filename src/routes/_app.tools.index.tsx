@@ -71,6 +71,14 @@ import {
 } from "@/lib/money-api";
 import { useGoals, usePlannerSettings } from "@/lib/planner-api";
 import {
+  useAccounts,
+  useAssets,
+  useFamily,
+  useInsurance,
+  useInvestments,
+  useLiabilities,
+} from "@/lib/wealth-api";
+import {
   useReminders,
   useToolsActivity,
   logToolsActivity,
@@ -359,20 +367,61 @@ type ReportData = {
   summary?: { label: string; value: string }[];
 };
 
+type PeriodPreset = "all" | "month" | "quarter" | "fy" | "year" | "custom";
+
+const PERIOD_LABEL: Record<PeriodPreset, string> = {
+  all: "All time",
+  month: "This month",
+  quarter: "This quarter",
+  fy: "This financial year",
+  year: "This calendar year",
+  custom: "Custom range",
+};
+
+function periodRange(preset: PeriodPreset): { from: string; to: string } | null {
+  const now = new Date();
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  if (preset === "month") return { from: iso(new Date(y, m, 1)), to: iso(new Date(y, m + 1, 0)) };
+  if (preset === "quarter") {
+    const qs = Math.floor(m / 3) * 3;
+    return { from: iso(new Date(y, qs, 1)), to: iso(new Date(y, qs + 3, 0)) };
+  }
+  if (preset === "year") return { from: `${y}-01-01`, to: `${y}-12-31` };
+  if (preset === "fy") {
+    const start = m >= 3 ? y : y - 1; // Indian FY: Apr - Mar
+    return { from: `${start}-04-01`, to: `${start + 1}-03-31` };
+  }
+  return null;
+}
+
 function ReportsView() {
   const tx = useTransactions();
   const cats = useCategories();
   const budgets = useBudgets();
   const goals = useGoals();
   const settings = usePlannerSettings();
+  const assetsQ = useAssets();
+  const liabilitiesQ = useLiabilities();
+  const investmentsQ = useInvestments();
+  const insuranceQ = useInsurance();
+  const accountsQ = useAccounts();
+  const familyQ = useFamily();
 
   const loading = tx.isLoading || cats.isLoading || budgets.isLoading || goals.isLoading || settings.isLoading;
   const error = tx.error || cats.error || budgets.error || goals.error || settings.error;
   const [moduleTab, setModuleTab] = useState<"all" | ReportModule>("all");
   const [preview, setPreview] = useState<ReportData | null>(null);
   const [search, setSearch] = useState("");
-  const [fromDate, setFromDate] = useState<string>("");
-  const [toDate, setToDate] = useState<string>("");
+  const [period, setPeriod] = useState<PeriodPreset>("all");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
+  const range = period === "custom" ? { from: customFrom, to: customTo } : periodRange(period);
+  const fromDate = range?.from ?? "";
+  const toDate = range?.to ?? "";
+  const setFromDate = setCustomFrom;
+  const setToDate = setCustomTo;
   const [sortBy, setSortBy] = useState<"title-asc" | "title-desc" | "rows-desc" | "module">("module");
 
   const reports = useMemo(() => {
@@ -396,6 +445,29 @@ function ReportsView() {
     const totalTarget = goalsList.reduce((s, g) => s + Number(g.target_amount), 0);
     const corpus = Number(settings.data?.current_corpus ?? 0);
     const monthlySIP = Number(settings.data?.monthly_sip ?? 0);
+
+    const assetList = assetsQ.data ?? [];
+    const liabilityList = liabilitiesQ.data ?? [];
+    const investmentList = investmentsQ.data ?? [];
+    const insuranceList = insuranceQ.data ?? [];
+    const accountList = accountsQ.data ?? [];
+    const familyList = familyQ.data ?? [];
+    const memberName = new Map(familyList.map((f) => [f.id, f.name]));
+    const assetsTotal = assetList.reduce((s2, a) => s2 + Number(a.current_value || 0), 0);
+    const investedTotal = investmentList.reduce(
+      (s2, i) => s2 + Number(i.invested_value ?? Number(i.quantity) * Number(i.avg_price) || 0),
+      0,
+    );
+    const investmentsTotal = investmentList.reduce(
+      (s2, i) => s2 + Number(i.current_value ?? Number(i.quantity) * Number(i.current_price) || 0),
+      0,
+    );
+    const accountsTotal = accountList.reduce((s2, a) => s2 + Number(a.balance || 0), 0);
+    const liabilitiesTotal = liabilityList.reduce((s2, l) => s2 + Number(l.outstanding || 0), 0);
+    const emiTotal = liabilityList.reduce((s2, l) => s2 + Number(l.emi || 0), 0);
+    const coverageTotal = insuranceList.reduce((s2, p) => s2 + Number(p.coverage_amount || 0), 0);
+    const premiumTotal = insuranceList.reduce((s2, p) => s2 + Number(p.premium_amount || 0), 0);
+    const netWorth = assetsTotal + investmentsTotal + accountsTotal - liabilitiesTotal;
 
     const byMonth = new Map<string, { inc: number; exp: number }>();
     for (const t of transactions) {
@@ -430,63 +502,141 @@ function ReportsView() {
         description: "Snapshot of total assets minus liabilities.",
         columns: ["Component", "Amount (₹)"],
         rows: [
-          ["Cash Savings (Income − Expense)", Math.round(savings)],
-          ["Goal Savings", Math.round(totalSaved)],
-          ["Planner Corpus", Math.round(corpus)],
+          ["Investments (market value)", Math.round(investmentsTotal)],
+          ["Manual Assets", Math.round(assetsTotal)],
+          ["Bank & Wallet Balances", Math.round(accountsTotal)],
+          ["Liabilities (outstanding)", -Math.round(liabilitiesTotal)],
         ],
-        summary: [{ label: "Estimated Net Worth", value: inr(savings + totalSaved + corpus) }],
+        summary: [
+          { label: "Net Worth", value: inr(netWorth) },
+          { label: "Total Assets", value: inr(assetsTotal + investmentsTotal + accountsTotal) },
+          { label: "Total Liabilities", value: inr(liabilitiesTotal) },
+        ],
       },
       {
         slug: "assets", module: "wealth", title: "Assets Report",
         description: "All asset holdings with current value.",
-        columns: ["Asset", "Value (₹)"],
-        rows: [
-          ["Cash Savings", Math.round(Math.max(0, savings))],
-          ["Investment Corpus", Math.round(corpus)],
-          ["Goal Savings", Math.round(totalSaved)],
-        ],
-        summary: [{ label: "Total Assets", value: inr(Math.max(0, savings) + corpus + totalSaved) }],
+        columns: ["Asset", "Category", "Quantity", "Purchase Value (₹)", "Current Value (₹)", "Owner"],
+        rows: assetList.map((a) => [
+          a.name,
+          String(a.category ?? "—"),
+          a.quantity != null ? Number(a.quantity) : "—",
+          a.purchase_value != null ? Math.round(Number(a.purchase_value)) : "—",
+          Math.round(Number(a.current_value || 0)),
+          a.owner_member_id ? (memberName.get(a.owner_member_id) ?? "—") : "—",
+        ]),
+        summary: [{ label: "Total Assets", value: inr(assetsTotal) }],
       },
       {
         slug: "liabilities", module: "wealth", title: "Liabilities Report",
         description: "Loans, EMIs and outstanding dues.",
-        columns: ["Liability", "Outstanding (₹)", "EMI (₹)"],
-        rows: [],
-      },
-      {
-        slug: "investments", module: "wealth", title: "Investment Report",
-        description: "Portfolio holdings and SIP contributions.",
-        columns: ["Goal", "Type", "Target (₹)", "Saved (₹)", "Monthly SIP (₹)", "Target Date"],
-        rows: goalsList.map((g) => [
-          g.name, g.goal_type,
-          Math.round(Number(g.target_amount)),
-          Math.round(Number(g.saved_amount)),
-          Math.round(Number(g.monthly_contribution)),
-          g.target_date ?? "—",
+        columns: ["Liability", "Category", "Lender", "Outstanding (₹)", "EMI (₹)", "Interest %", "Due"],
+        rows: liabilityList.map((l) => [
+          l.name,
+          String(l.category ?? "—"),
+          l.lender ?? "—",
+          Math.round(Number(l.outstanding || 0)),
+          l.emi != null ? Math.round(Number(l.emi)) : "—",
+          l.interest_rate != null ? `${Number(l.interest_rate)}%` : "—",
+          l.due_date ?? l.end_date ?? "—",
         ]),
         summary: [
-          { label: "Total Target", value: inr(totalTarget) },
-          { label: "Total Saved", value: inr(totalSaved) },
-          { label: "Monthly SIP", value: inr(monthlySIP) },
+          { label: "Total Outstanding", value: inr(liabilitiesTotal) },
+          { label: "Monthly EMI", value: inr(emiTotal) },
+        ],
+      },
+      {
+        slug: "investments", module: "wealth", title: "Portfolio Report",
+        description: "Holdings with invested value, market value and gain/loss.",
+        columns: ["Holding", "Category", "Qty", "Avg Price", "Current Price", "Invested (₹)", "Current (₹)", "P&L (₹)"],
+        rows: investmentList.map((i) => {
+          const invested = Number(i.invested_value ?? Number(i.quantity) * Number(i.avg_price) || 0);
+          const current = Number(i.current_value ?? Number(i.quantity) * Number(i.current_price) || 0);
+          return [
+            i.name,
+            i.category,
+            Number(i.quantity),
+            Number(i.avg_price),
+            Number(i.current_price),
+            Math.round(invested),
+            Math.round(current),
+            Math.round(current - invested),
+          ];
+        }),
+        summary: [
+          { label: "Invested", value: inr(investedTotal) },
+          { label: "Current Value", value: inr(investmentsTotal) },
+          { label: "Unrealised P&L", value: inr(investmentsTotal - investedTotal) },
+        ],
+      },
+      {
+        slug: "sip", module: "wealth", title: "SIP Report",
+        description: "Active systematic investment plans and instalments.",
+        columns: ["Holding", "SIP Amount (₹)", "Frequency", "Next Date", "Active"],
+        rows: investmentList
+          .filter((i) => i.is_sip)
+          .map((i) => [
+            i.name,
+            i.sip_amount != null ? Math.round(Number(i.sip_amount)) : "—",
+            i.sip_frequency ?? "—",
+            i.sip_next_date ?? "—",
+            i.sip_active === false ? "Paused" : "Yes",
+          ]),
+        summary: [
+          {
+            label: "Monthly SIP Outflow",
+            value: inr(
+              investmentList
+                .filter((i) => i.is_sip && i.sip_active !== false)
+                .reduce((s2, i) => s2 + Number(i.sip_amount || 0), 0),
+            ),
+          },
         ],
       },
       {
         slug: "insurance", module: "wealth", title: "Insurance Report",
         description: "Policies, premiums and coverage.",
-        columns: ["Policy", "Type", "Sum Assured (₹)", "Premium (₹)", "Renewal"],
-        rows: [],
+        columns: ["Policy", "Type", "Provider", "Sum Assured (₹)", "Premium (₹)", "Renewal", "Nominee"],
+        rows: insuranceList.map((p) => [
+          p.policy_name,
+          p.policy_type,
+          p.provider ?? "—",
+          Math.round(Number(p.coverage_amount || 0)),
+          p.premium_amount != null ? Math.round(Number(p.premium_amount)) : "—",
+          p.renewal_date ?? "—",
+          p.nominee_member_id ? (memberName.get(p.nominee_member_id) ?? "—") : "—",
+        ]),
+        summary: [
+          { label: "Total Coverage", value: inr(coverageTotal) },
+          { label: "Total Premium", value: inr(premiumTotal) },
+        ],
       },
       {
         slug: "accounts", module: "wealth", title: "Accounts Report",
         description: "Bank, demat and wallet accounts.",
-        columns: ["Account", "Type", "Balance (₹)", "Nominee"],
-        rows: [],
+        columns: ["Account", "Type", "Provider", "Number", "Balance (₹)", "Status"],
+        rows: accountList.map((a) => [
+          a.name,
+          a.account_type,
+          a.provider ?? "—",
+          a.account_number_masked ?? "—",
+          Math.round(Number(a.balance || 0)),
+          a.status,
+        ]),
+        summary: [{ label: "Total Balance", value: inr(accountsTotal) }],
       },
       {
         slug: "family", module: "wealth", title: "Family Report",
-        description: "Family members and dependents.",
-        columns: ["Name", "Relation", "DOB", "Nominee Of"],
-        rows: [],
+        description: "Family members, dependents and nominees.",
+        columns: ["Name", "Relation", "Date of Birth", "Dependent", "Nominee"],
+        rows: familyList.map((f) => [
+          f.name,
+          f.relationship,
+          f.date_of_birth ?? "—",
+          f.is_dependent ? "Yes" : "No",
+          f.is_nominee ? "Yes" : "No",
+        ]),
+        summary: [{ label: "Members", value: String(familyList.length) }],
       },
       {
         slug: "income", module: "money", title: "Income Report",
@@ -624,7 +774,21 @@ function ReportsView() {
       },
     ];
     return list;
-  }, [tx.data, cats.data, budgets.data, goals.data, settings.data, fromDate, toDate]);
+  }, [
+    tx.data,
+    cats.data,
+    budgets.data,
+    goals.data,
+    settings.data,
+    assetsQ.data,
+    liabilitiesQ.data,
+    investmentsQ.data,
+    insuranceQ.data,
+    accountsQ.data,
+    familyQ.data,
+    fromDate,
+    toDate,
+  ]);
 
   if (loading)
     return (
