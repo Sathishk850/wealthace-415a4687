@@ -846,14 +846,30 @@ function ReportsView() {
               className="h-8 pl-8 bg-[var(--bg-primary)]/40 text-xs"
             />
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[11px] text-[var(--text-muted)]">From</span>
-            <DatePicker value={fromDate} onChange={(v) => setFromDate(v)} className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs" />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[11px] text-[var(--text-muted)]">To</span>
-            <DatePicker value={toDate} onChange={(v) => setToDate(v)} className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs" />
-          </div>
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodPreset)}>
+            <SelectTrigger className="h-8 w-[190px] bg-[var(--bg-primary)]/40 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(PERIOD_LABEL) as PeriodPreset[]).map((p) => (
+                <SelectItem key={p} value={p}>
+                  Period: {PERIOD_LABEL[p]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {period === "custom" && (
+            <>
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] text-[var(--text-muted)]">From</span>
+                <DatePicker value={fromDate} onChange={(v) => setFromDate(v)} className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs" />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] text-[var(--text-muted)]">To</span>
+                <DatePicker value={toDate} onChange={(v) => setToDate(v)} className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs" />
+              </div>
+            </>
+          )}
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
             <SelectTrigger className="h-8 w-[160px] bg-[var(--bg-primary)]/40 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -863,16 +879,17 @@ function ReportsView() {
               <SelectItem value="rows-desc">Most Data</SelectItem>
             </SelectContent>
           </Select>
-          {(search || fromDate || toDate) && (
+          {(search || period !== "all") && (
             <Button
               size="sm"
               variant="ghost"
               className="h-8 text-xs"
-              onClick={() => { setSearch(""); setFromDate(""); setToDate(""); }}
+              onClick={() => { setSearch(""); setPeriod("all"); setFromDate(""); setToDate(""); }}
             >
               Clear
             </Button>
           )}
+
         </div>
       </Card>
       <Card className="glass-card border-[var(--border)] divide-y divide-[var(--border)]">
