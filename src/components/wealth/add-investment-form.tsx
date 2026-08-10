@@ -520,6 +520,7 @@ type FormState = {
 
   platform: string;
   purchase_date: string;
+  maturity_date: string;
   quantity: string;
   avg_price: string;
   notes: string;
