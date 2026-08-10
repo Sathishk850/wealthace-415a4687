@@ -528,6 +528,7 @@ export type Investment = {
   invested_value: number | null;
   current_value: number | null;
   purchase_date: string | null;
+  maturity_date: string | null;
   account_id: string | null;
   owner_member_id: string | null;
   is_sip: boolean;
