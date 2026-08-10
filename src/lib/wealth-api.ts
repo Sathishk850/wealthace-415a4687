@@ -563,6 +563,7 @@ export type InvestmentInput = {
   avg_price: number;
   current_price: number;
   purchase_date?: string | null;
+  maturity_date?: string | null;
   is_sip?: boolean;
   sip_amount?: number | null;
   sip_frequency?: string | null;
