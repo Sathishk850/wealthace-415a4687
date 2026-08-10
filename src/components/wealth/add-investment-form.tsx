@@ -554,6 +554,7 @@ const EMPTY: FormState = {
   sector: "",
   platform: "",
   purchase_date: todayISO(),
+  maturity_date: "",
   quantity: "",
   avg_price: "",
   notes: "",
