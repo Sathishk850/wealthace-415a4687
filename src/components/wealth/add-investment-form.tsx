@@ -101,6 +101,7 @@ const CATEGORY_OPTIONS = [
   "REIT",
   "InvIT",
   "Bonds",
+  "Fixed Deposit",
   "Crypto",
 ];
 
