@@ -44,7 +44,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PaymentFields } from "@/components/payment/payment-fields";
 import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import {
