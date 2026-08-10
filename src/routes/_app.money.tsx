@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
@@ -23,11 +23,14 @@ import {
   Inbox,
   ChevronLeft,
   ChevronRight,
+  Upload,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { TextTabs } from "@/components/text-tabs";
+import { useTabParam } from "@/lib/use-tab-param";
+import { BankStatementImporter } from "@/components/money/bank-statement-importer";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ResponsiveContainer,
@@ -41,7 +44,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PaymentFields } from "@/components/payment/payment-fields";
 import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import {
@@ -191,7 +194,12 @@ function KpiCard({
 }
 
 function Money() {
-  const [tab, setTab] = useState<Tab>("Transactions");
+  const [tab, setTab] = useTabParam<Tab>("Transactions", tabs);
+  const [importOpen, setImportOpen] = useState(false);
+  const locationHash = useRouterState({ select: (st) => st.location.hash });
+  useEffect(() => {
+    if (locationHash === "import" || locationHash === "#import") setImportOpen(true);
+  }, [locationHash]);
   const [monthOffset, setMonthOffset] = useState(0); // 0 = current month
 
   const categoriesQ = useCategories();
@@ -400,6 +408,12 @@ function Money() {
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
+            <button
+              onClick={() => setImportOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
+            >
+              <Upload className="h-3.5 w-3.5" /> Import
+            </button>
             <button
               onClick={handleAdd}
               className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-mint-foreground hover:opacity-90"
@@ -695,6 +709,7 @@ function Money() {
         expenseCategories={categories.filter((c) => c.kind === "expense")}
         activeMonthKey={activeMonthKey}
       />
+      <BankStatementImporter open={importOpen} onOpenChange={setImportOpen} />
     </>
   );
 }

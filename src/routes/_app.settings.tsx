@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/page-header";
 import { TextTabs } from "@/components/text-tabs";
+import { useTabParam } from "@/lib/use-tab-param";
 import { NotificationPreferencesForm } from "@/components/notification-preferences-form";
 import { PaymentAccountsPanel } from "@/components/payment/payment-accounts-panel";
 import { WhatsNewPage } from "@/components/settings/whats-new-page";
@@ -39,8 +40,18 @@ export const Route = createFileRoute("/_app/settings")({
   component: Settings,
 });
 
+const SETTINGS_TABS = [
+  "general",
+  "payments",
+  "notifications",
+  "appearance",
+  "security",
+  "data",
+  "whats-new",
+] as const;
+
 function Settings() {
-  const [tab, setTab] = useState("general");
+  const [tab, setTab] = useTabParam("general", SETTINGS_TABS);
   return (
     <>
       <PageHeader title="Settings" description="Manage your account and preferences." />

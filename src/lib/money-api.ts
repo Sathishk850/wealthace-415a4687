@@ -222,6 +222,48 @@ export function useDeleteTransaction() {
   });
 }
 
+/** Bulk create — used by the bank statement importer. */
+export function useBulkInsertTransactions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      rows: {
+        kind: Kind;
+        amount: number;
+        occurred_on: string;
+        category_id: string | null;
+        merchant: string;
+        note?: string | null;
+      }[],
+    ) => {
+      if (rows.length === 0) return 0;
+      const user_id = await uid();
+      const payload = rows.map((r) => ({
+        user_id,
+        kind: r.kind,
+        amount: r.amount,
+        occurred_on: r.occurred_on,
+        category_id: r.category_id,
+        merchant: r.merchant.trim() || "Bank Transaction",
+        note: r.note?.trim() || null,
+      }));
+      // chunk to stay well within request limits
+      for (let i = 0; i < payload.length; i += 200) {
+        const { error } = await supabase
+          .from("money_transactions")
+          .insert(payload.slice(i, i + 200) as never);
+        if (error) throw error;
+      }
+      return payload.length;
+    },
+    onSuccess: (n) => {
+      if (n) toast.success(`${n} transaction${n === 1 ? "" : "s"} imported`);
+      qc.invalidateQueries({ queryKey: keys.transactions });
+    },
+    onError: (e: Error) => toast.error(e.message || "Import failed"),
+  });
+}
+
 /* ---------- BUDGETS ---------- */
 export function useBudgets() {
   return useQuery({
