@@ -883,6 +883,9 @@ function ClassificationTab({
     ["Currency", ccy],
     ["Platform", platformLabel || "—"],
     ["Purchase Date", investment.purchase_date ? formatDate(investment.purchase_date) : "—"],
+    ...(investment.maturity_date
+      ? ([["Maturity Date", formatDate(investment.maturity_date)]] as [string, string][])
+      : []),
   ];
   return (
     <Section title="Classification (auto-fetched)">
