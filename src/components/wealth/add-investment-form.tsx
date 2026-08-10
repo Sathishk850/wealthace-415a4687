@@ -174,6 +174,7 @@ const CURRENCY_BY_CATEGORY: Record<string, Currency[]> = {
   REIT: ["INR"],
   InvIT: ["INR"],
   Bonds: ["INR", "USD"],
+  "Fixed Deposit": ["INR", "USD"],
   Crypto: ["INR", "USD"],
 };
 
