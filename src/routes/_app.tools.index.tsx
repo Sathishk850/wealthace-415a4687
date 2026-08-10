@@ -455,11 +455,11 @@ function ReportsView() {
     const memberName = new Map(familyList.map((f) => [f.id, f.name]));
     const assetsTotal = assetList.reduce((s2, a) => s2 + Number(a.current_value || 0), 0);
     const investedTotal = investmentList.reduce(
-      (s2, i) => s2 + Number(i.invested_value ?? Number(i.quantity) * Number(i.avg_price) || 0),
+      (s2, i) => s2 + Number(i.invested_value ?? (Number(i.quantity) * Number(i.avg_price) || 0)),
       0,
     );
     const investmentsTotal = investmentList.reduce(
-      (s2, i) => s2 + Number(i.current_value ?? Number(i.quantity) * Number(i.current_price) || 0),
+      (s2, i) => s2 + Number(i.current_value ?? (Number(i.quantity) * Number(i.current_price) || 0)),
       0,
     );
     const accountsTotal = accountList.reduce((s2, a) => s2 + Number(a.balance || 0), 0);
@@ -550,8 +550,8 @@ function ReportsView() {
         description: "Holdings with invested value, market value and gain/loss.",
         columns: ["Holding", "Category", "Qty", "Avg Price", "Current Price", "Invested (₹)", "Current (₹)", "P&L (₹)"],
         rows: investmentList.map((i) => {
-          const invested = Number(i.invested_value ?? Number(i.quantity) * Number(i.avg_price) || 0);
-          const current = Number(i.current_value ?? Number(i.quantity) * Number(i.current_price) || 0);
+          const invested = Number(i.invested_value ?? (Number(i.quantity) * Number(i.avg_price) || 0));
+          const current = Number(i.current_value ?? (Number(i.quantity) * Number(i.current_price) || 0));
           return [
             i.name,
             i.category,
