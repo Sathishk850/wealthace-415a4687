@@ -1248,6 +1248,7 @@ type RowLike = {
   currency: string;
   platform: string | null;
   txn_count?: number;
+  raw_investment?: { maturity_date?: string | null } | null;
 };
 
 
