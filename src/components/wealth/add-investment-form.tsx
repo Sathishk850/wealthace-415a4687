@@ -24,6 +24,8 @@ import type { IdentifierType, MarketQuote, SearchResult } from "@/lib/market/typ
 import { curatedKindFor, searchIndiaListed } from "@/lib/market/india-listed";
 import {
   CURRENCY_SYMBOL,
+  defaultMaturityDate,
+  isTermCategory,
   useInvestments,
   useUpsertInvestment,
   type Currency,
