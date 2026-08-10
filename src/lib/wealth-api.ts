@@ -679,6 +679,7 @@ function investmentPayload(i: InvestmentInput) {
     avg_price: avg,
     current_price: cur,
     purchase_date: i.purchase_date || null,
+    maturity_date: i.maturity_date || null,
     is_sip: !!i.is_sip,
     sip_amount: numOrNull(i.sip_amount),
     sip_frequency: i.sip_frequency || null,
