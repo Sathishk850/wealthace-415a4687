@@ -113,6 +113,7 @@ const SEGMENT_BY_CATEGORY: Record<string, string[]> = {
   REIT: ["Real Estate"],
   InvIT: ["Infrastructure"],
   Bonds: ["Debt"],
+  "Fixed Deposit": ["Debt"],
   Crypto: ["Crypto"],
 };
 
