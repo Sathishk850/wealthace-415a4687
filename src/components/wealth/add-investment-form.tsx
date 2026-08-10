@@ -1315,6 +1315,22 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   />
                 </div>
 
+                {isTerm && (
+                  <div>
+                    <label className={labelCls}>Maturity Date</label>
+                    <input
+                      type="date"
+                      className={inputCls}
+                      value={form.maturity_date}
+                      onChange={(e) => setForm((f) => ({ ...f, maturity_date: e.target.value }))}
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Auto-set to purchase date +{form.category === "Bonds" ? "5" : "3"} years —
+                      reminders start 30 days before maturity.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className={labelCls}>
                     Quantity <span className="text-rose-500">*</span>
