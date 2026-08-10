@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 
 /**
  * Deep-linkable tab state.
  *
- * Reads the initial tab from the URL hash (e.g. `/wealth#assets`) and keeps the
+ * Reads the active tab from the URL hash (e.g. `/wealth#assets`) and keeps the
  * hash in sync as the user switches tabs, so every tab in the app can be
  * reached from a shortcut link, bookmark or the quick-nav palette.
  *
- * Matching is case/format insensitive: `#sip-tracker`, `#SIP Tracker` and
+ * Matching is format insensitive: `#sip-tracker`, `#SIP Tracker` and
  * `#siptracker` all resolve to the tab whose value is `SIP Tracker`.
  */
 function slug(v: string) {
@@ -15,38 +16,34 @@ function slug(v: string) {
 }
 
 export function useTabParam<T extends string>(defaultTab: T, valid: readonly T[]) {
+  const navigate = useNavigate();
+  const hash = useRouterState({ select: (s) => s.location.hash });
+
   const resolve = useCallback(
-    (hash: string): T | null => {
-      const h = slug(hash.replace(/^#/, ""));
+    (raw: string | undefined): T | null => {
+      const h = slug((raw ?? "").replace(/^#/, ""));
       if (!h) return null;
       return valid.find((v) => slug(v) === h) ?? null;
     },
     [valid],
   );
 
-  const [tab, setTabState] = useState<T>(() => {
-    if (typeof window === "undefined") return defaultTab;
-    return resolve(window.location.hash) ?? defaultTab;
-  });
+  const [tab, setTabState] = useState<T>(() => resolve(hash) ?? defaultTab);
 
-  // React to external hash changes (shortcut links to the current page).
+  // React to hash changes coming from links / back-forward navigation.
   useEffect(() => {
-    const onHash = () => {
-      const next = resolve(window.location.hash);
-      if (next) setTabState(next);
-    };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, [resolve]);
+    const next = resolve(hash);
+    if (next && next !== tab) setTabState(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hash]);
 
-  const setTab = useCallback((next: T) => {
-    setTabState(next);
-    if (typeof window === "undefined") return;
-    const hash = `#${slug(next)}`;
-    if (window.location.hash !== hash) {
-      window.history.replaceState(null, "", window.location.pathname + window.location.search + hash);
-    }
-  }, []);
+  const setTab = useCallback(
+    (next: T) => {
+      setTabState(next);
+      navigate({ to: ".", hash: slug(next), replace: true } as never);
+    },
+    [navigate],
+  );
 
   return [tab, setTab] as const;
 }
