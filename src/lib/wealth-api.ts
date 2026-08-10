@@ -467,6 +467,7 @@ export type InvestmentCategory =
   | "InvIT"
   | "Gold"
   | "Bonds"
+  | "Fixed Deposit"
   | "Crypto"
   | "Others";
 
@@ -479,9 +480,41 @@ export const INVESTMENT_CATEGORIES: InvestmentCategory[] = [
   "InvIT",
   "Gold",
   "Bonds",
+  "Fixed Deposit",
   "Crypto",
   "Others",
 ];
+
+/** Term products carry a maturity date; everything else is open-ended. */
+export const TERM_CATEGORIES = ["Fixed Deposit", "Bonds"] as const;
+
+/** Default tenure applied when a term investment has no maturity date yet. */
+export const DEFAULT_TENURE_YEARS: Record<string, number> = {
+  "Fixed Deposit": 3,
+  Bonds: 5,
+};
+
+export function isTermCategory(category: string | null | undefined) {
+  return !!category && category in DEFAULT_TENURE_YEARS;
+}
+
+/**
+ * Auto-completes the maturity date for term products:
+ * FD = purchase date + 3 years, Bonds = purchase date + 5 years.
+ */
+export function defaultMaturityDate(
+  category: string | null | undefined,
+  fromISO?: string | null,
+): string | null {
+  const years = category ? DEFAULT_TENURE_YEARS[category] : undefined;
+  if (!years) return null;
+  const base = fromISO ? new Date(fromISO) : new Date();
+  if (Number.isNaN(base.getTime())) return null;
+  const d = new Date(base);
+  d.setFullYear(d.getFullYear() + years);
+  return d.toISOString().slice(0, 10);
+}
+
 
 export type SipFrequency = "monthly" | "weekly" | "quarterly" | "yearly";
 
