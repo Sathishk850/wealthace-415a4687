@@ -189,7 +189,7 @@ export function Lockup({
           <span className={`${tagSize} shrink-0 whitespace-nowrap font-medium uppercase tracking-[0.28em] opacity-70`}>
             Track · Nurture · Prosper
           </span>
-          <span className="h-px w-4 shrink-0 bg-current opacity-30" />
+          {vertical && <span className="h-px w-4 shrink-0 bg-current opacity-30" />}
         </div>
       </div>
     </div>
