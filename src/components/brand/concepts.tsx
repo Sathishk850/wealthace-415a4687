@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 /**
  * WEALTH ACE — logo concept exploration.
  *
@@ -124,7 +125,7 @@ export type Concept = {
   id: string;
   name: string;
   idea: string;
-  Mark: (p: MarkProps) => JSX.Element;
+  Mark: (p: MarkProps) => ReactElement;
 };
 
 export const CONCEPTS: Concept[] = [
@@ -162,7 +163,7 @@ export function Lockup({
   textClass = "",
   size = "md",
 }: {
-  Mark: (p: MarkProps) => JSX.Element;
+  Mark: (p: MarkProps) => ReactElement;
   tone?: MarkTone;
   vertical?: boolean;
   textClass?: string;
