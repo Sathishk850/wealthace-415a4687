@@ -185,11 +185,11 @@ export function Lockup({
           className={`mt-2 flex items-center gap-2 ${vertical ? "justify-center" : ""}`}
           aria-hidden
         >
-          <span className="h-px w-6 bg-current opacity-30" />
-          <span className={`${tagSize} font-medium uppercase tracking-[0.34em] opacity-70`}>
+          <span className="h-px w-4 shrink-0 bg-current opacity-30" />
+          <span className={`${tagSize} whitespace-nowrap font-medium uppercase tracking-[0.28em] opacity-70`}>
             Track · Nurture · Prosper
           </span>
-          <span className="h-px w-6 bg-current opacity-30" />
+          <span className="h-px w-4 shrink-0 bg-current opacity-30" />
         </div>
       </div>
     </div>
