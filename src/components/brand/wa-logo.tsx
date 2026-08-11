@@ -5,16 +5,12 @@
  * Teal gradient: #0BD4C0 → #06B3A4   Gold gradient: #FFE08A → #D4A017
  */
 
-let uid = 0;
-function useIds() {
-  // Stable per-instance gradient ids (SSR-safe: incremented at render time).
-  const n = ++uid;
-  return { teal: `wa-teal-${n}`, gold: `wa-gold-${n}` };
-}
+// Fixed gradient ids — every instance renders identical gradients, so sharing
+// the ids keeps SSR and client markup byte-identical.
+const id = { teal: "wa-grad-teal", gold: "wa-grad-gold" } as const;
 
 /** The WA monogram only — square-ish emblem, ideal for icons/favicons. */
 export function WAMonogram({ className = "" }: { className?: string }) {
-  const id = useIds();
   return (
     <svg viewBox="0 0 240 150" className={className} role="img" aria-label="Wealth Ace">
       <defs>
