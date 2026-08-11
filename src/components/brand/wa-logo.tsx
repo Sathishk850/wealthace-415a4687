@@ -12,7 +12,7 @@ const id = { teal: "wa-grad-teal", gold: "wa-grad-gold" } as const;
 /** The WA monogram only — square-ish emblem, ideal for icons/favicons. */
 export function WAMonogram({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 240 150" className={className} role="img" aria-label="Wealth Ace">
+    <svg viewBox="-6 -6 252 162" className={className} role="img" aria-label="Wealth Ace">
       <defs>
         <linearGradient id={id.teal} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#0BD4C0" />
