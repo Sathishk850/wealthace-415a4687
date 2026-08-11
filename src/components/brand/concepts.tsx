@@ -182,11 +182,11 @@ export function Lockup({
           WEALTH<span className="font-light"> ACE</span>
         </div>
         <div
-          className={`mt-2 flex items-center gap-2 ${vertical ? "justify-center" : ""}`}
+          className={`mt-2 flex flex-nowrap items-center gap-2 ${vertical ? "justify-center" : ""}`}
           aria-hidden
         >
           <span className="h-px w-4 shrink-0 bg-current opacity-30" />
-          <span className={`${tagSize} whitespace-nowrap font-medium uppercase tracking-[0.28em] opacity-70`}>
+          <span className={`${tagSize} shrink-0 whitespace-nowrap font-medium uppercase tracking-[0.28em] opacity-70`}>
             Track · Nurture · Prosper
           </span>
           <span className="h-px w-4 shrink-0 bg-current opacity-30" />
