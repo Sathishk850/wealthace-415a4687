@@ -20,9 +20,12 @@ export default defineConfig({
       filename: "sw.js",
       devOptions: { enabled: false },
       includeAssets: [
+        "favicon.ico",
         "favicon.png",
-
+        "favicon-*.png",
+        "apple-icon.png",
         "apple-touch-icon.png",
+        "logo-*.png",
         "icons/*.png",
       ],
       manifest: {

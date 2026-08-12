@@ -87,15 +87,15 @@ export function hexToRgb(hex: string): [number, number, number] {
  * the network fetch fails so the header falls back to the text tile.
  */
 // Reports render on a white background regardless of app theme, so we
-// always use the light-theme (charcoal wordmark) master logo variant.
-import brandMarkAsset from "@/assets/wealth-ace-logo-light.png.asset.json";
+// always use the light-surface variant of the official WA mark.
+const BRAND_MARK_SRC = "/logo-icon-light.png";
 
 let brandMarkPromise: Promise<string | null> | null = null;
 export function loadBrandMark(): Promise<string | null> {
   if (brandMarkPromise) return brandMarkPromise;
   brandMarkPromise = (async () => {
     try {
-      const res = await fetch(brandMarkAsset.url);
+      const res = await fetch(BRAND_MARK_SRC);
       if (!res.ok) return null;
       const blob = await res.blob();
       return await new Promise<string>((resolve, reject) => {
@@ -110,7 +110,7 @@ export function loadBrandMark(): Promise<string | null> {
   })();
   return brandMarkPromise;
 }
-export const BRAND_MARK_ASPECT = 462 / 582; // width / height of the fingerprint png
+export const BRAND_MARK_ASPECT = 942 / 999; // width / height of the WA mark png
 
 /**
  * Premium banking-style header. Left: FV mark + wordmark. Center: WEALTH ACE

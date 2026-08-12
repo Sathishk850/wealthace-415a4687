@@ -3,13 +3,10 @@ import type { ReactNode } from "react";
 import { WALockup, WAMonogram } from "./wa-logo";
 
 /** Kept for consumers (reports, meta) that need a raster URL. */
-import logoDarkAsset from "@/assets/wealth-ace-logo-dark.png.asset.json";
-import logoLightAsset from "@/assets/wealth-ace-logo-light.png.asset.json";
-import iconAsset from "@/assets/wealth-ace-icon-t.png.asset.json";
-
-export const BRAND_LOGO_URL = logoDarkAsset.url;
-export const BRAND_LOGO_LIGHT_URL = logoLightAsset.url;
-export const BRAND_ICON_URL = iconAsset.url;
+export const BRAND_LOGO_URL = "/logo-full-dark.png";
+export const BRAND_LOGO_LIGHT_URL = "/logo-full-light.png";
+export const BRAND_ICON_URL = "/logo-icon-dark.png";
+export const BRAND_ICON_LIGHT_URL = "/logo-icon-light.png";
 
 /**
  * BrandIcon — the compact WA monogram.
