@@ -48,7 +48,7 @@ export function WALockup({
 }) {
   return (
     <span className={`@container flex w-full items-center gap-[5cqw] ${className}`}>
-      <WAMonogram className="h-[22cqw] w-[22cqw] shrink-0" />
+      <WAMonogram className="h-[27cqw] w-[27cqw] shrink-0" />
       <span className="flex min-w-0 flex-col justify-center">
         <span className="font-display text-[13cqw] leading-none font-semibold tracking-[0.14em] whitespace-nowrap text-[#0B1E2D] dark:text-white">
           WEALTH<span className="text-[#B0842A] dark:text-[#E2B75E]"> ACE</span>
