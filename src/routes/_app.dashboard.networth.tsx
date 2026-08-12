@@ -137,7 +137,7 @@ function NetWorth() {
               </div>
             ) : (
               <div className="mt-1 text-xs text-muted-foreground">
-                History builds up as daily snapshots accrue.
+                History builds up each time you take a snapshot.
               </div>
             )}
           </div>
@@ -169,7 +169,7 @@ function NetWorth() {
             </div>
           ) : series.length < 2 ? (
             <div className="grid h-full place-items-center rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
-              Only one snapshot so far — the trend line appears from tomorrow.
+              Only one snapshot so far — take another to see the trend line.
             </div>
           ) : (
             <ResponsiveContainer>

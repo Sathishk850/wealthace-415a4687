@@ -41,8 +41,8 @@ export const SHORTCUTS: Shortcut[] = [
   { id: "report-center", label: "Report Center", group: "Tools", path: "/reports", keywords: "generated reports download" },
   { id: "calculators", label: "Financial Calculators", group: "Tools", path: "/tools#calculators", keywords: "sip emi lumpsum calculator" },
   { id: "reminders", label: "Reminders", group: "Tools", path: "/tools#reminders", keywords: "due bills alerts" },
-  { id: "ai-insights", label: "AI Insights", group: "Tools", path: "/tools#insights", keywords: "tips recommendations" },
-  { id: "insights-page", label: "Insights & Alerts", group: "Tools", path: "/insights", keywords: "observations reminders banner" },
+  { id: "ai-insights", label: "AI Insights", group: "Tools", path: "/tools#ai-insights", keywords: "tips recommendations" },
+  { id: "insights-page", label: "Insights & Alerts", group: "Tools", path: "/tools#insights", keywords: "observations reminders banner" },
 
   { id: "notifications", label: "Notifications", group: "Account", path: "/notifications", keywords: "alerts inbox" },
   { id: "profile", label: "My Profile", group: "Account", path: "/profile", keywords: "name avatar" },

@@ -4,7 +4,6 @@ import {
   Wallet,
   Coins,
   Wrench,
-  Lightbulb,
   Eye,
   EyeOff,
   Sun,
@@ -107,7 +106,7 @@ const TOP_TABS: NavItem[] = [
   { to: "/wealth", label: "Wealth", icon: Wallet },
   { to: "/money", label: "Money", icon: Coins },
   { to: "/planner", label: "Planner", icon: CalendarClock },
-  { to: "/insights", label: "Insights", icon: Lightbulb },
+  
   { to: "/tools", label: "Tools", icon: Wrench },
 ];
 
