@@ -89,6 +89,7 @@ import {
   computePortfolioHealth,
 } from "@/lib/tools-api";
 import { RemindersView } from "@/components/reminders-view";
+import { InsightsRemindersPanel } from "@/components/insights-panel";
 import { ScheduledReportsPanel } from "@/components/scheduled-reports-panel";
 import { FinCalculators } from "./_app.tools.financial-calculator";
 import { toast } from "sonner";
@@ -109,7 +110,7 @@ export const Route = createFileRoute("/_app/tools/")({
   component: ToolsPage,
 });
 
-const TOOLS_TABS = ["overview", "reports", "calculators", "reminders", "insights"] as const;
+const TOOLS_TABS = ["overview", "reports", "calculators", "reminders", "insights", "ai-insights"] as const;
 
 function ToolsPage() {
   const [tab, setTab] = useTabParam("overview", TOOLS_TABS);
@@ -126,7 +127,8 @@ function ToolsPage() {
             { value: "reports", label: "Reports" },
             { value: "calculators", label: "Financial Calculators" },
             { value: "reminders", label: "Reminders" },
-            { value: "insights", label: "AI Insights" },
+            { value: "insights", label: "Insights & Reminders" },
+            { value: "ai-insights", label: "AI Insights" },
           ]}
           value={tab}
           onChange={(v) => setTab(v as (typeof TOOLS_TABS)[number])}
@@ -145,6 +147,9 @@ function ToolsPage() {
           <RemindersView />
         </TabsContent>
         <TabsContent value="insights" className="mt-4">
+          <InsightsRemindersPanel />
+        </TabsContent>
+        <TabsContent value="ai-insights" className="mt-4">
           <InsightsView />
         </TabsContent>
       </Tabs>
@@ -197,7 +202,7 @@ function OverviewView({ onPick }: { onPick: (v: string) => void }) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MiniStat label="Reports Available" value="20" icon={FileText} onClick={() => onPick("reports")} />
         <MiniStat label="Calculators Available" value="12" icon={Calculator} onClick={() => onPick("calculators")} />
-        <MiniStat label="AI Insights Available" value={String(allInsights.length)} icon={Sparkles} onClick={() => onPick("insights")} />
+        <MiniStat label="AI Insights Available" value={String(allInsights.length)} icon={Sparkles} onClick={() => onPick("ai-insights")} />
         <MiniStat label="Upcoming Reminders" value={String(upcoming.length)} icon={Bell} onClick={() => onPick("reminders")} />
       </div>
 
@@ -214,7 +219,7 @@ function OverviewView({ onPick }: { onPick: (v: string) => void }) {
               size="sm"
               variant="ghost"
               className="h-7 gap-1 text-xs text-[var(--primary)] hover:bg-[var(--primary)]/10"
-              onClick={() => onPick("insights")}
+              onClick={() => onPick("ai-insights")}
             >
               View All Insights <ArrowRight className="h-3 w-3" />
             </Button>

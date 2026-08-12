@@ -59,7 +59,6 @@ import { useAssets, useLiabilities, useInvestments, useAccounts, inr as inrW } f
 import {
   computeNetWorth,
   useCreateSnapshot,
-  useDailySnapshotCapture,
   useSnapshots,
   type Snapshot,
 } from "@/lib/networth";
@@ -152,8 +151,6 @@ function Dashboard() {
     };
   }, [assets, liabilities, investments, accounts, txns]);
 
-  // Capture one snapshot per day automatically so history accrues on its own.
-  useDailySnapshotCapture(totals.breakdown, !snapsQ.isLoading);
 
 
   // Allocation: group investments by category
