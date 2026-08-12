@@ -4,7 +4,7 @@
 // net worth from `computeNetWorth` so the number can never disagree between
 // modules. Snapshot read/write hooks live here too.
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";

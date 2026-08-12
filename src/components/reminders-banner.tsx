@@ -36,14 +36,14 @@ export function RemindersBanner() {
       </div>
       {rest > 0 ? (
         <Link
-          to="/insights"
+          to="/tools"
           className="rounded-lg border border-amber-500/40 px-2.5 py-1 text-[11px] font-semibold text-amber-500"
         >
           +{rest} more
         </Link>
       ) : null}
       <Link
-        to={(first.link ?? "/insights") as string}
+        to={(first.link ?? "/tools") as string}
         className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1.5 text-[11px] font-semibold text-[#1a1200]"
       >
         View <ArrowRight className="h-3 w-3" />
