@@ -2,12 +2,12 @@ import { useState, useMemo, useCallback, type CSSProperties } from "react";
 import { C, useThemeVersion } from "./palette";
 import InfoTooltip from "./info-tooltip";
 import { WEALTH_PLANNER_TOOLTIPS, type TooltipEntry } from "./tooltips";
-import fingerprintAsset from "@/assets/wealth-ace-icon-t.png.asset.json";
+import fingerprintAsset from "@/assets/wa-icon.png";
 
 const RT = WEALTH_PLANNER_TOOLTIPS.retirement;
 
 const BrandIcon = ({ size = 22 }: { size?: number }) => (
-  <img src={fingerprintAsset.url} alt="Wealth Ace" width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", objectFit: "contain" }} />
+  <img src={fingerprintAsset} alt="Wealth Ace" width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", objectFit: "contain" }} />
 );
 
 

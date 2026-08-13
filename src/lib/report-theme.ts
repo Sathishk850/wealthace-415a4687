@@ -4,6 +4,7 @@
  * regardless of the app's runtime theme (light / dark / system).
  */
 import { formatDate, formatDateTime } from "@/lib/date-format";
+import waIcon from "@/assets/wa-icon.png";
 
 export const REPORT_THEME = {
   brand: {
@@ -88,7 +89,7 @@ export function hexToRgb(hex: string): [number, number, number] {
  */
 // Reports render on a white background regardless of app theme, so we
 // always use the light-surface variant of the official WA mark.
-const BRAND_MARK_SRC = "/logo-icon-light.png";
+const BRAND_MARK_SRC = waIcon;
 
 let brandMarkPromise: Promise<string | null> | null = null;
 export function loadBrandMark(): Promise<string | null> {
@@ -110,7 +111,7 @@ export function loadBrandMark(): Promise<string | null> {
   })();
   return brandMarkPromise;
 }
-export const BRAND_MARK_ASPECT = 942 / 999; // width / height of the WA mark png
+export const BRAND_MARK_ASPECT = 1; // width / height of the WA mark png (592x592)
 
 /**
  * Premium banking-style header. Left: FV mark + wordmark. Center: WEALTH ACE
