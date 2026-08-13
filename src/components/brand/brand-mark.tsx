@@ -22,11 +22,12 @@ export function BrandIcon({ className = "h-9 w-9" }: { className?: string; title
 type Size = "sm" | "md" | "lg" | "xl";
 
 const SIZE: Record<Size, string> = {
-  sm: "max-w-[92px] sm:max-w-[108px] md:max-w-[118px] lg:max-w-[132px]",
-  md: "max-w-[124px] sm:max-w-[146px] md:max-w-[172px] lg:max-w-[200px]",
-  lg: "max-w-[168px] sm:max-w-[196px] md:max-w-[228px] lg:max-w-[264px]",
-  xl: "max-w-[280px] sm:max-w-[340px] md:max-w-[400px] lg:max-w-[460px]",
+  sm: "w-[92px] sm:w-[108px] md:w-[118px] lg:w-[132px] max-w-full",
+  md: "w-[124px] sm:w-[146px] md:w-[172px] lg:w-[200px] max-w-full",
+  lg: "w-[168px] sm:w-[196px] md:w-[228px] lg:w-[264px] max-w-full",
+  xl: "w-[280px] sm:w-[340px] md:w-[400px] lg:w-[460px] max-w-full",
 };
+
 
 /** Deprecated — the lockup already renders the wordmark and tagline. */
 export function BrandWordmark(_props: {
@@ -82,7 +83,7 @@ export function BrandMark({
   animated?: boolean;
   children?: ReactNode;
 }) {
-  const classes = `@container block w-full ${SIZE[size]} ${className}`;
+  const classes = `@container block shrink-0 ${SIZE[size]} ${className}`;
   const inner = animated ? <AnimatedLockup /> : <WALockup tagline={tagline} />;
   if (to) {
     return (
