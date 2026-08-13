@@ -111,7 +111,7 @@ export function loadBrandMark(): Promise<string | null> {
   })();
   return brandMarkPromise;
 }
-export const BRAND_MARK_ASPECT = 942 / 999; // width / height of the WA mark png
+export const BRAND_MARK_ASPECT = 1; // width / height of the WA mark png (592x592)
 
 /**
  * Premium banking-style header. Left: FV mark + wordmark. Center: WEALTH ACE
