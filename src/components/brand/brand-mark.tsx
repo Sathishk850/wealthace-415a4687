@@ -83,7 +83,7 @@ export function BrandMark({
   animated?: boolean;
   children?: ReactNode;
 }) {
-  const classes = `@container block w-full ${SIZE[size]} ${className}`;
+  const classes = `@container block shrink-0 ${SIZE[size]} ${className}`;
   const inner = animated ? <AnimatedLockup /> : <WALockup tagline={tagline} />;
   if (to) {
     return (
