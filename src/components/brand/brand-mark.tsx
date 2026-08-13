@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { WALockup, WAMonogram } from "./wa-logo";
+import { WALockup, WAMonogram, WA_LOCKUP_URL, WA_MARK_URL } from "./wa-logo";
 
 /** Kept for consumers (reports, meta) that need a raster URL. */
 export const BRAND_LOGO_URL = WA_LOCKUP_URL;
