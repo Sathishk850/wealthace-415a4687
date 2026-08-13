@@ -1,8 +1,7 @@
-```tsx
 /**
  * WEALTH ACE — brand artwork.
  *
- * Uses the approved WealthAce image assets:
+ * Uses the approved WealthAce image assets (same in light and dark mode):
  * - wa-lockup.png → full WEALTH ACE logo + tagline
  * - wa-icon.png   → W+A monogram
  */
@@ -50,4 +49,3 @@ export function WALockup({
     </span>
   );
 }
-```
