@@ -4,6 +4,7 @@
  * regardless of the app's runtime theme (light / dark / system).
  */
 import { formatDate, formatDateTime } from "@/lib/date-format";
+import waIcon from "@/assets/wa-icon.png";
 
 export const REPORT_THEME = {
   brand: {
