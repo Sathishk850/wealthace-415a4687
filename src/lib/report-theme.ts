@@ -88,7 +88,7 @@ export function hexToRgb(hex: string): [number, number, number] {
  */
 // Reports render on a white background regardless of app theme, so we
 // always use the light-surface variant of the official WA mark.
-const BRAND_MARK_SRC = "/logo-icon-light.png";
+const BRAND_MARK_SRC = waIcon;
 
 let brandMarkPromise: Promise<string | null> | null = null;
 export function loadBrandMark(): Promise<string | null> {
