@@ -8,6 +8,8 @@
  */
 
 /** Legacy raster URLs kept for consumers that need a bitmap (PDF reports, meta). */
+import waLockup from "@/assets/wa-lockup.png";
+import waIcon from "@/assets/wa-icon.png";
 export const WA_LOCKUP_URL = "/logo-full-dark.png";
 export const WA_LOCKUP_LIGHT_URL = "/logo-full-light.png";
 export const WA_MARK_URL = "/logo-icon-dark.png";
