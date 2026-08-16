@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_notification_log: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          kind?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_notification_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "market_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           attachment_url: string | null
@@ -114,6 +146,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      market_events: {
+        Row: {
+          actual: string | null
+          asset_classes: string[]
+          category: string
+          country: string
+          created_at: string
+          description: string | null
+          event_name: string
+          event_time: string
+          external_id: string
+          forecast: string | null
+          id: string
+          impact: string
+          last_updated: string
+          markets: string[]
+          previous: string | null
+          region: string
+          source: string
+          source_url: string | null
+          status: string
+          timezone: string
+          unit: string | null
+        }
+        Insert: {
+          actual?: string | null
+          asset_classes?: string[]
+          category: string
+          country: string
+          created_at?: string
+          description?: string | null
+          event_name: string
+          event_time: string
+          external_id: string
+          forecast?: string | null
+          id?: string
+          impact?: string
+          last_updated?: string
+          markets?: string[]
+          previous?: string | null
+          region: string
+          source: string
+          source_url?: string | null
+          status?: string
+          timezone?: string
+          unit?: string | null
+        }
+        Update: {
+          actual?: string | null
+          asset_classes?: string[]
+          category?: string
+          country?: string
+          created_at?: string
+          description?: string | null
+          event_name?: string
+          event_time?: string
+          external_id?: string
+          forecast?: string | null
+          id?: string
+          impact?: string
+          last_updated?: string
+          markets?: string[]
+          previous?: string | null
+          region?: string
+          source?: string
+          source_url?: string | null
+          status?: string
+          timezone?: string
+          unit?: string | null
+        }
+        Relationships: []
       }
       market_price_cache: {
         Row: {
@@ -894,6 +998,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_event_alerts: {
+        Row: {
+          active: boolean
+          channels: Json
+          created_at: string
+          event_id: string
+          id: string
+          lead_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          channels?: Json
+          created_at?: string
+          event_id: string
+          id?: string
+          lead_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          channels?: Json
+          created_at?: string
+          event_id?: string
+          id?: string
+          lead_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_event_alerts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "market_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_payment_prefs: {
         Row: {
           created_at: string
@@ -943,6 +1088,39 @@ export type Database = {
           failed_attempts?: number
           locked_until?: string | null
           pin_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_watchlist: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          market: string | null
+          name: string
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          market?: string | null
+          name: string
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          market?: string | null
+          name?: string
+          symbol?: string
           updated_at?: string
           user_id?: string
         }
