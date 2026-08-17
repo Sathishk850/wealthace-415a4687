@@ -497,7 +497,7 @@ export function DeepDetails({
   const total = holdings.length + watched.length;
   return (
     <Panel title="Selected Event — Deep Details" icon={Activity}>
-      <div className="grid gap-4 p-4 lg:grid-cols-3">
+      <div className="grid items-start gap-4 p-4 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
         {/* --- column 1: identity + values --- */}
         <div className="min-w-0">
           <span
@@ -820,8 +820,20 @@ export function EventTimeline({
         <EmptyState text="No events match your filters." />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-left text-xs">
+          <div className="w-full min-w-0">
+            <table className="w-full table-fixed text-left text-xs">
+              <colgroup>
+                <col className="w-[7%]" />
+                <col className="w-[18%]" />
+                <col className="w-[12%]" />
+                <col className="w-[8%]" />
+                <col className="w-[8%]" />
+                <col className="w-[8%]" />
+                <col className="w-[9%]" />
+                <col className="w-[14%]" />
+                <col className="w-[9%]" />
+                <col className="w-[7%]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-2 font-medium">Time</th>
@@ -848,36 +860,36 @@ export function EventTimeline({
                         e.id === selectedId && "bg-mint/10",
                       )}
                     >
-                      <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
+                      <td className="px-4 py-2.5 align-top text-muted-foreground">
                         {formatTime(e.event_time)}
                       </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2">
+                      <td className="px-3 py-2.5 align-top">
+                        <div className="flex items-start gap-2">
                           <Flag country={e.country} />
                           <div className="min-w-0">
-                            <div className="truncate font-semibold text-foreground">{e.event_name}</div>
-                            <div className="truncate text-[10px] text-muted-foreground">
+                            <div className="break-words font-semibold text-foreground">{e.event_name}</div>
+                            <div className="break-words text-[10px] text-muted-foreground">
                               {e.country} • {e.category}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                      <td className="px-3 py-2.5 align-top text-muted-foreground">
                         {formatDateTime(e.event_time)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-foreground">
+                      <td className="break-words px-3 py-2.5 align-top text-foreground">
                         {displayValue(e.previous)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                      <td className="break-words px-3 py-2.5 align-top text-muted-foreground">
                         {displayValue(e.forecast)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-foreground">
+                      <td className="break-words px-3 py-2.5 align-top text-foreground">
                         {displayValue(e.actual)}
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-2.5 align-top">
                         <ImpactBadge impact={e.impact} />
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-2.5 align-top">
                         <div className="flex flex-wrap gap-1">
                           {e.markets.slice(0, 4).map((m) => (
                             <span
@@ -889,16 +901,16 @@ export function EventTimeline({
                           ))}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5">
+                      <td className="px-3 py-2.5 align-top">
                         {n > 0 ? (
-                          <span className="rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
+                          <span className="inline-block rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
                             {n} Holding{n === 1 ? "" : "s"}
                           </span>
                         ) : (
                           <span className="text-[10px] text-muted-foreground">None</span>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                      <td className="px-3 py-2.5 text-right align-top">
                         <button
                           type="button"
                           onClick={(ev) => {
