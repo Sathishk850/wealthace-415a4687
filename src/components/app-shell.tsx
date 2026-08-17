@@ -9,6 +9,7 @@ import {
   Sun,
   Moon,
   CalendarClock,
+  Globe,
   User,
   Settings as SettingsIcon,
   MessageSquare,
@@ -106,7 +107,7 @@ const TOP_TABS: NavItem[] = [
   { to: "/wealth", label: "Wealth", icon: Wallet },
   { to: "/money", label: "Money", icon: Coins },
   { to: "/planner", label: "Planner", icon: CalendarClock },
-  
+  { to: "/events", label: "Events", icon: Globe },
   { to: "/tools", label: "Tools", icon: Wrench },
 ];
 

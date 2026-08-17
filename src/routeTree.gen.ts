@@ -24,6 +24,7 @@ import { Route as AppNotificationsRouteImport } from './routes/_app.notification
 import { Route as AppMoneyRouteImport } from './routes/_app.money'
 import { Route as AppInsightsRouteImport } from './routes/_app.insights'
 import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
+import { Route as AppEventsRouteImport } from './routes/_app.events'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
@@ -111,6 +112,11 @@ const AppFeedbackRoute = AppFeedbackRouteImport.update({
   path: '/feedback',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEventsRoute = AppEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/brand': typeof BrandRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
+  '/events': typeof AppEventsRoute
   '/feedback': typeof AppFeedbackRoute
   '/insights': typeof AppInsightsRoute
   '/money': typeof AppMoneyRouteWithChildren
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/brand': typeof BrandRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRouteWithChildren
+  '/events': typeof AppEventsRoute
   '/feedback': typeof AppFeedbackRoute
   '/insights': typeof AppInsightsRoute
   '/money': typeof AppMoneyRouteWithChildren
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/brand': typeof BrandRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/dashboard': typeof AppDashboardRouteWithChildren
+  '/_app/events': typeof AppEventsRoute
   '/_app/feedback': typeof AppFeedbackRoute
   '/_app/insights': typeof AppInsightsRoute
   '/_app/money': typeof AppMoneyRouteWithChildren
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/brand'
     | '/reset-password'
     | '/dashboard'
+    | '/events'
     | '/feedback'
     | '/insights'
     | '/money'
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/brand'
     | '/reset-password'
     | '/dashboard'
+    | '/events'
     | '/feedback'
     | '/insights'
     | '/money'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/brand'
     | '/reset-password'
     | '/_app/dashboard'
+    | '/_app/events'
     | '/_app/feedback'
     | '/_app/insights'
     | '/_app/money'
@@ -466,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFeedbackRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/events': {
+      id: '/_app/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof AppEventsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -593,6 +612,7 @@ const AppToolsRouteWithChildren = AppToolsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRouteWithChildren
+  AppEventsRoute: typeof AppEventsRoute
   AppFeedbackRoute: typeof AppFeedbackRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppMoneyRoute: typeof AppMoneyRouteWithChildren
@@ -611,6 +631,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRouteWithChildren,
+  AppEventsRoute: AppEventsRoute,
   AppFeedbackRoute: AppFeedbackRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppMoneyRoute: AppMoneyRouteWithChildren,

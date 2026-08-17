@@ -171,6 +171,20 @@ function EventsPage() {
     [upcoming, exposureCount],
   );
 
+  const affectedHoldingIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    for (const e of affectingEvents) {
+      const classes = new Set(e.asset_classes);
+      for (const inv of investmentsQ.data ?? []) {
+        const cls = CATEGORY_TO_ASSET_CLASS[inv.category] ?? "Equity";
+        if (classes.has(cls) && regionMatches(e.region, inv.symbol, inv.currency)) ids.add(inv.id);
+      }
+    }
+    return ids;
+  }, [affectingEvents, investmentsQ.data]);
+
+
+
   const exposureBuckets = React.useMemo(() => {
     const counts = new Map<string, number>();
     for (const inv of investmentsQ.data ?? []) {
@@ -258,7 +272,7 @@ function EventsPage() {
         highImpact={highlights.length}
         withMarketImpact={filtered.filter((e) => e.markets.length > 0).length}
         affecting={affectingEvents.length}
-        affectedHoldings={new Set(affectingEvents.flatMap(() => [])).size || exposureCount(selected ?? ({} as MarketEvent))}
+        affectedHoldings={affectedHoldingIds.size}
         watchlistCount={(watchlistQ.data ?? []).length}
       />
 
