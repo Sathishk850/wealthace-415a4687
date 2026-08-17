@@ -258,7 +258,7 @@ function EventsPage() {
         highImpact={highlights.length}
         withMarketImpact={filtered.filter((e) => e.markets.length > 0).length}
         affecting={affectingEvents.length}
-        affectedHoldings={new Set(affectingEvents.flatMap(() => [])).size || exposureCount(selected ?? ({} as MarketEvent))}
+        affectedHoldings={affectedHoldingIds.size}
         watchlistCount={(watchlistQ.data ?? []).length}
       />
 
