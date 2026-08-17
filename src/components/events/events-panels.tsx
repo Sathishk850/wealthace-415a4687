@@ -822,6 +822,18 @@ export function EventTimeline({
         <>
           <div className="w-full min-w-0">
             <table className="w-full table-fixed text-left text-xs">
+              <colgroup>
+                <col className="w-[7%]" />
+                <col className="w-[18%]" />
+                <col className="w-[12%]" />
+                <col className="w-[8%]" />
+                <col className="w-[8%]" />
+                <col className="w-[8%]" />
+                <col className="w-[9%]" />
+                <col className="w-[14%]" />
+                <col className="w-[9%]" />
+                <col className="w-[7%]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-2 font-medium">Time</th>
