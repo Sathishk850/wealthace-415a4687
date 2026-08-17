@@ -497,7 +497,7 @@ export function DeepDetails({
   const total = holdings.length + watched.length;
   return (
     <Panel title="Selected Event — Deep Details" icon={Activity}>
-      <div className="grid gap-4 p-4 lg:grid-cols-3">
+      <div className="grid items-start gap-4 p-4 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
         {/* --- column 1: identity + values --- */}
         <div className="min-w-0">
           <span
