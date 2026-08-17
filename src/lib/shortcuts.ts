@@ -8,7 +8,7 @@
 export type Shortcut = {
   id: string;
   label: string;
-  group: "Dashboard" | "Wealth" | "Money" | "Planner" | "Tools" | "Account";
+  group: "Dashboard" | "Wealth" | "Money" | "Planner" | "Events" | "Tools" | "Account";
   path: string;
   keywords?: string;
 };
