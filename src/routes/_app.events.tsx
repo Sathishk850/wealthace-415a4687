@@ -238,16 +238,7 @@ function EventsPage() {
     <div className="space-y-4">
       {/* -------- header banner -------- */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
-        <img
-          src={bannerImg}
-          alt=""
-          aria-hidden
-          loading="lazy"
-          width={1920}
-          height={512}
-          className="absolute inset-y-0 right-0 h-full w-2/3 object-cover opacity-60"
-        />
-        <div className="relative bg-gradient-to-r from-card via-card/90 to-transparent p-5">
+        <div className="relative p-5">
           <div className="flex items-start gap-3">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-mint/10 text-mint">
               <CalendarClock className="h-5 w-5" />
