@@ -820,8 +820,8 @@ export function EventTimeline({
         <EmptyState text="No events match your filters." />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-left text-xs">
+          <div className="w-full min-w-0">
+            <table className="w-full table-fixed text-left text-xs">
               <thead>
                 <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-2 font-medium">Time</th>
