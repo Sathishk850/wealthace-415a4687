@@ -886,10 +886,10 @@ export function EventTimeline({
                       <td className="break-words px-3 py-2.5 align-top text-foreground">
                         {displayValue(e.actual)}
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-2.5 align-top">
                         <ImpactBadge impact={e.impact} />
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-2.5 align-top">
                         <div className="flex flex-wrap gap-1">
                           {e.markets.slice(0, 4).map((m) => (
                             <span
@@ -901,16 +901,16 @@ export function EventTimeline({
                           ))}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5">
+                      <td className="px-3 py-2.5 align-top">
                         {n > 0 ? (
-                          <span className="rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
+                          <span className="inline-block rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
                             {n} Holding{n === 1 ? "" : "s"}
                           </span>
                         ) : (
                           <span className="text-[10px] text-muted-foreground">None</span>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-right">
+                      <td className="px-3 py-2.5 text-right align-top">
                         <button
                           type="button"
                           onClick={(ev) => {
