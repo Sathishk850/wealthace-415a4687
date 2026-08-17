@@ -860,30 +860,30 @@ export function EventTimeline({
                         e.id === selectedId && "bg-mint/10",
                       )}
                     >
-                      <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
+                      <td className="px-4 py-2.5 align-top text-muted-foreground">
                         {formatTime(e.event_time)}
                       </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2">
+                      <td className="px-3 py-2.5 align-top">
+                        <div className="flex items-start gap-2">
                           <Flag country={e.country} />
                           <div className="min-w-0">
-                            <div className="truncate font-semibold text-foreground">{e.event_name}</div>
-                            <div className="truncate text-[10px] text-muted-foreground">
+                            <div className="break-words font-semibold text-foreground">{e.event_name}</div>
+                            <div className="break-words text-[10px] text-muted-foreground">
                               {e.country} • {e.category}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                      <td className="px-3 py-2.5 align-top text-muted-foreground">
                         {formatDateTime(e.event_time)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-foreground">
+                      <td className="break-words px-3 py-2.5 align-top text-foreground">
                         {displayValue(e.previous)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                      <td className="break-words px-3 py-2.5 align-top text-muted-foreground">
                         {displayValue(e.forecast)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-foreground">
+                      <td className="break-words px-3 py-2.5 align-top text-foreground">
                         {displayValue(e.actual)}
                       </td>
                       <td className="px-3 py-2.5">
