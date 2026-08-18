@@ -271,17 +271,15 @@ function EventsPage() {
 
       <div className="grid gap-4 xl:grid-cols-4">
         <div className="min-w-0 space-y-4 xl:col-span-3">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <TodaysEvents events={todays} selectedId={selectedId} onSelect={(e) => setSelectedId(e.id)} />
-            <DeepDetails
-              event={selected}
-              holdings={holdings}
-              watched={watched}
-              alertActive={alertActive}
-              onSetAlert={() => selected && setAlert.mutate(selected.id)}
-              onAddReminder={() => handleAddReminder(selected)}
-            />
-          </div>
+          <TodaysEvents events={todays} selectedId={selectedId} onSelect={(e) => setSelectedId(e.id)} />
+          <DeepDetails
+            event={selected}
+            holdings={holdings}
+            watched={watched}
+            alertActive={alertActive}
+            onSetAlert={() => selected && setAlert.mutate(selected.id)}
+            onAddReminder={() => handleAddReminder(selected)}
+          />
 
           <div className="grid gap-4 lg:grid-cols-2">
             <UpcomingImportantEvents
