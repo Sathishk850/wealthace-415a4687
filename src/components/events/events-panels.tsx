@@ -435,7 +435,43 @@ function ValueBox({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
+function ImpactDonut({ impact }: { impact: Impact }) {
+  const score = IMPACT_SCORE[impact];
+  const pct = score / 4;
+  const r = 42;
+  const c = Math.PI * r; // half circumference (semi donut)
+  return (
+    <div className="flex min-w-0 flex-col items-center justify-center">
+      <svg viewBox="0 0 100 58" className="w-full max-w-[150px]" role="img" aria-label={`Overall potential impact ${impact}`}>
+        <path
+          d={`M ${50 - r} 50 A ${r} ${r} 0 0 1 ${50 + r} 50`}
+          fill="none"
+          className="stroke-muted"
+          strokeWidth="9"
+          strokeLinecap="round"
+        />
+        <path
+          d={`M ${50 - r} 50 A ${r} ${r} 0 0 1 ${50 + r} 50`}
+          fill="none"
+          className="stroke-mint"
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={`${c * pct} ${c}`}
+        />
+      </svg>
+      <div className="-mt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Overall Impact
+      </div>
+      <div className="font-display text-lg font-bold text-foreground">{impact}</div>
+      <div className="mt-0.5 text-center text-[9px] text-muted-foreground">
+        Wealth Ace classification — not a guaranteed market reaction
+      </div>
+    </div>
+  );
+}
+
 function ExposureList({
+
   title,
   hits,
   emptyText,
