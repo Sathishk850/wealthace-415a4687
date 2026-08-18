@@ -620,7 +620,7 @@ export function DeepDetails({
 
 
         {/* --- column 3: exposure + actions --- */}
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-col border-t border-border p-4 lg:border-t-0">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Your Portfolio Exposure
           </div>
@@ -629,7 +629,7 @@ export function DeepDetails({
               ? `${total} position${total === 1 ? "" : "s"} potentially affected`
               : "No potential exposure detected"}
           </div>
-          <div className="mt-3 space-y-4">
+          <div className="mt-3 flex-1 space-y-4">
             <ExposureList
               title="Potentially affected holdings"
               hits={holdings}
@@ -641,7 +641,7 @@ export function DeepDetails({
               emptyText="No watchlist entries map to this event's markets."
             />
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3">
             <Button size="sm" variant={alertActive ? "default" : "outline"} onClick={onSetAlert}>
               <Bell className="mr-1.5 h-3.5 w-3.5" />
               {alertActive ? "Alert Set" : "Set Alert"}
@@ -650,6 +650,8 @@ export function DeepDetails({
               <BellPlus className="mr-1.5 h-3.5 w-3.5" /> Add Reminder
             </Button>
           </div>
+        </div>
+
         </div>
       </div>
     </Panel>
