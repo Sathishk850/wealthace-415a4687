@@ -651,8 +651,6 @@ export function DeepDetails({
             </Button>
           </div>
         </div>
-
-        </div>
       </div>
     </Panel>
   );
