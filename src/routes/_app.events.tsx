@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 import { CalendarClock } from "lucide-react";
-import bannerImg from "@/assets/events-banner.jpg";
+
 import {
   DEFAULT_FILTERS,
   DeepDetails,
