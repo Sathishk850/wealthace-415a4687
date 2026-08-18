@@ -269,17 +269,19 @@ function EventsPage() {
 
       <EventFilters value={filters} onChange={setFilters} onReset={() => setFilters(DEFAULT_FILTERS)} />
 
-      <div className="grid gap-4 xl:grid-cols-4">
-        <div className="min-w-0 space-y-4 xl:col-span-3">
-          <TodaysEvents events={todays} selectedId={selectedId} onSelect={(e) => setSelectedId(e.id)} />
-          <DeepDetails
-            event={selected}
-            holdings={holdings}
-            watched={watched}
-            alertActive={alertActive}
-            onSetAlert={() => selected && setAlert.mutate(selected.id)}
-            onAddReminder={() => handleAddReminder(selected)}
-          />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,4fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-4">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] lg:items-start">
+            <TodaysEvents events={todays} selectedId={selectedId} onSelect={(e) => setSelectedId(e.id)} />
+            <DeepDetails
+              event={selected}
+              holdings={holdings}
+              watched={watched}
+              alertActive={alertActive}
+              onSetAlert={() => selected && setAlert.mutate(selected.id)}
+              onAddReminder={() => handleAddReminder(selected)}
+            />
+          </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <UpcomingImportantEvents
@@ -308,7 +310,8 @@ function EventsPage() {
           />
         </div>
 
-        <div className="min-w-0 xl:col-span-1">
+        <div className="min-w-0">
+
           <EventsSidebar
             highlights={highlights}
             categoryCounts={categoryCounts}
