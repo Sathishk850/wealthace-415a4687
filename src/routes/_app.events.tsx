@@ -236,40 +236,26 @@ function EventsPage() {
 
   return (
     <div className="space-y-4 2xl:-mx-[calc((100vw-1280px)/2-2rem)]">
-      {/* -------- header banner -------- */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="relative p-5">
-          <div className="flex items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-mint/10 text-mint">
-              <CalendarClock className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                Events
-              </h1>
-              <div className="text-sm font-semibold text-mint">Global Market &amp; Financial Events</div>
-              <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
-                Track important financial events, understand potential market impact, and see how
-                events may affect your holdings and watchlist.
-              </p>
-            </div>
-          </div>
+      {/* -------- plain page header -------- */}
+      <div className="flex items-start gap-3">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-mint/10 text-mint">
+          <CalendarClock className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Events
+          </h1>
+          <div className="text-sm font-semibold text-mint">Global Market &amp; Financial Events</div>
+          <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
+            Track important financial events, understand potential market impact, and see how
+            events may affect your holdings and watchlist.
+          </p>
         </div>
       </div>
 
-      <SummaryCards
-        upcoming={upcoming.length}
-        today={todays.length}
-        highImpact={highlights.length}
-        withMarketImpact={filtered.filter((e) => e.markets.length > 0).length}
-        affecting={affectingEvents.length}
-        affectedHoldings={affectedHoldingIds.size}
-        watchlistCount={(watchlistQ.data ?? []).length}
-      />
-
       <EventFilters value={filters} onChange={setFilters} onReset={() => setFilters(DEFAULT_FILTERS)} />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,4fr)_minmax(0,1fr)]">
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,4fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-4">
           <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] lg:items-start">
             <TodaysEvents events={todays} selectedId={selectedId} onSelect={(e) => setSelectedId(e.id)} />
@@ -298,20 +284,9 @@ function EventsPage() {
               selectedId={selectedId}
             />
           </div>
-
-          <EventTimeline
-            events={filtered.slice(0, timelineLimit)}
-            selectedId={selectedId}
-            onSelect={(e) => setSelectedId(e.id)}
-            exposureCount={exposureCount}
-            onSetAlert={(e) => setAlert.mutate(e.id)}
-            onLoadMore={() => setTimelineLimit((n) => n + 10)}
-            canLoadMore={filtered.length > timelineLimit}
-          />
         </div>
 
         <div className="min-w-0">
-
           <EventsSidebar
             highlights={highlights}
             categoryCounts={categoryCounts}
@@ -324,6 +299,17 @@ function EventsPage() {
           />
         </div>
       </div>
+
+      <EventTimeline
+        events={filtered.slice(0, timelineLimit)}
+        selectedId={selectedId}
+        onSelect={(e) => setSelectedId(e.id)}
+        exposureCount={exposureCount}
+        onSetAlert={(e) => setAlert.mutate(e.id)}
+        onLoadMore={() => setTimelineLimit((n) => n + 10)}
+        canLoadMore={filtered.length > timelineLimit}
+      />
+
 
       {eventsQ.isLoading && (
         <p className="text-center text-xs text-muted-foreground">Loading events…</p>
