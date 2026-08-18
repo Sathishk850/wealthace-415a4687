@@ -497,9 +497,9 @@ export function DeepDetails({
   const total = holdings.length + watched.length;
   return (
     <Panel title="Selected Event — Deep Details" icon={Activity}>
-      <div className="grid items-start gap-4 p-4 lg:grid-cols-[repeat(3,minmax(0,1fr))]">
+      <div className="grid items-stretch gap-0 lg:grid-cols-[repeat(3,minmax(0,1fr))] lg:divide-x lg:divide-border">
         {/* --- column 1: identity + values --- */}
-        <div className="min-w-0">
+        <div className="min-w-0 p-4">
           <span
             className={cn(
               "inline-flex items-center rounded-md border border-border bg-surface-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
@@ -534,7 +534,7 @@ export function DeepDetails({
             />
           </div>
 
-          <div className="mt-3">
+          <div className="mt-3 border-t border-border pt-3">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Event Description
             </div>
@@ -554,43 +554,30 @@ export function DeepDetails({
           </div>
         </div>
 
-        {/* --- column 2: market impact + scenarios --- */}
-        <div className="min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Market Impact
-          </div>
-          {event.markets.length === 0 ? (
-            <p className="mt-2 text-[11px] text-muted-foreground">{UNAVAILABLE}</p>
-          ) : (
-            <ul className="mt-2 space-y-1">
-              {event.markets.map((m) => (
-                <li key={m} className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[11px] text-foreground">{m}</span>
-                  <ImpactBadge impact={event.impact} />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-4 rounded-xl border border-border bg-surface-2 p-3 text-center">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Overall Potential Impact
+        {/* --- column 2: market impact + gauge + scenarios --- */}
+        <div className="min-w-0 border-t border-border p-4 lg:border-t-0">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Market Impact
+              </div>
+              {event.markets.length === 0 ? (
+                <p className="mt-2 text-[11px] text-muted-foreground">{UNAVAILABLE}</p>
+              ) : (
+                <ul className="mt-2 space-y-1">
+                  {event.markets.map((m) => (
+                    <li key={m} className="flex items-center justify-between gap-2">
+                      <span className="truncate text-[11px] text-foreground">{m}</span>
+                      <ImpactBadge impact={event.impact} />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            <div className="mx-auto mt-2 flex h-2 w-full max-w-[160px] overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-mint"
-                style={{ width: `${(IMPACT_SCORE[event.impact] / 4) * 100}%` }}
-              />
-            </div>
-            <div className="mt-2 font-display text-lg font-bold text-foreground">
-              {event.impact}
-            </div>
-            <div className="text-[9px] text-muted-foreground">
-              Wealth Ace classification — not a guaranteed market reaction
-            </div>
+            <ImpactDonut impact={event.impact} />
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 border-t border-border pt-4">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Scenario Analysis
             </div>
@@ -630,6 +617,7 @@ export function DeepDetails({
             </p>
           </div>
         </div>
+
 
         {/* --- column 3: exposure + actions --- */}
         <div className="min-w-0">
