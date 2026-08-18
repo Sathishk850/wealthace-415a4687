@@ -419,7 +419,7 @@ function ValueBox({ label, value, sub }: { label: string; value: string; sub?: s
   const unavailable = value === UNAVAILABLE;
   return (
     <div className="min-w-0 rounded-xl border border-border bg-surface-2 px-2 py-2 text-center">
-      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
         <span className="block truncate">{label}</span>
       </div>
       <div
@@ -442,7 +442,7 @@ function ImpactDonut({ impact }: { impact: Impact }) {
   const c = Math.PI * r; // half circumference (semi donut)
   return (
     <div className="flex min-w-0 flex-col items-center justify-center">
-      <svg viewBox="0 0 100 58" className="w-full max-w-[150px]" role="img" aria-label={`Overall potential impact ${impact}`}>
+      <svg viewBox="0 0 100 58" className="w-full max-w-[180px]" role="img" aria-label={`Overall potential impact ${impact}`}>
         <path
           d={`M ${50 - r} 50 A ${r} ${r} 0 0 1 ${50 + r} 50`}
           fill="none"
@@ -560,7 +560,7 @@ export function DeepDetails({
             <ImpactBadge impact={event.impact} />
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-1.5">
             <ValueBox label="Previous" value={displayValue(event.previous)} />
             <ValueBox label="Forecast" value={displayValue(event.forecast)} />
             <ValueBox
@@ -592,7 +592,7 @@ export function DeepDetails({
 
         {/* --- column 2: market impact + gauge + scenarios --- */}
         <div className="min-w-0 border-t border-border p-4 lg:border-t-0">
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4">
             <div className="min-w-0">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Market Impact
