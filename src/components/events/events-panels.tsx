@@ -677,17 +677,17 @@ export function DeepDetails({
               emptyText="No watchlist entries map to this event's markets."
             />
           </div>
-          <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row">
+          <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 2xl:flex-row">
             <Button
               size="sm"
               variant={alertActive ? "default" : "outline"}
               onClick={onSetAlert}
-              className="min-w-0 flex-1 text-xs"
+              className="min-w-0 w-full text-xs 2xl:flex-1"
             >
               <Bell className="mr-1.5 h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{alertActive ? "Alert Set" : "Set Alert"}</span>
             </Button>
-            <Button size="sm" variant="outline" onClick={onAddReminder} className="min-w-0 flex-1 text-xs">
+            <Button size="sm" variant="outline" onClick={onAddReminder} className="min-w-0 w-full text-xs 2xl:flex-1">
               <BellPlus className="mr-1.5 h-3.5 w-3.5 shrink-0" />
               <span className="truncate">Add Reminder</span>
             </Button>
