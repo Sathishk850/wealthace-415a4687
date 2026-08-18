@@ -984,92 +984,97 @@ export function EventsSidebar({
   onManageAlerts: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-4">
-      <Panel title="Market Impact Highlights" icon={BarChart3}>
-        {highlights.length === 0 ? (
-          <EmptyState text="No high impact events in range." />
-        ) : (
-          <div className="divide-y divide-border">
-            {highlights.slice(0, 4).map((e) => (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => onSelect(e)}
-                className={cn(
-                  "flex w-full items-start gap-2 px-4 py-3 text-left transition hover:bg-surface-2",
-                  e.id === selectedId && "bg-mint/10",
-                )}
-              >
-                <Flag country={e.country} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-xs font-semibold text-foreground">
-                    {e.event_name} ({formatDate(e.event_time).slice(0, 5)})
-                  </div>
-                  <div className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                    {e.markets.slice(0, 3).join(" • ") || "—"}
-                  </div>
+    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      {/* --- market impact highlights --- */}
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-foreground">
+        <BarChart3 className="h-3.5 w-3.5 text-mint" /> Market Impact Highlights
+      </div>
+      {highlights.length === 0 ? (
+        <EmptyState text="No high impact events in range." />
+      ) : (
+        <div className="divide-y divide-border">
+          {highlights.slice(0, 4).map((e) => (
+            <button
+              key={e.id}
+              type="button"
+              onClick={() => onSelect(e)}
+              className={cn(
+                "flex w-full items-start gap-2 border-l-2 px-4 py-3 text-left transition hover:bg-surface-2",
+                e.id === selectedId ? "border-l-mint bg-mint/10" : "border-l-transparent",
+              )}
+            >
+              <Flag country={e.country} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-semibold text-foreground">
+                  {e.event_name} ({formatDate(e.event_time).slice(0, 5)})
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <ImpactBars impact={e.impact} />
-                  <span className="text-[9px] font-semibold text-muted-foreground">{e.impact}</span>
+                <div className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                  {e.markets.slice(0, 3).join(" • ") || "—"}
                 </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </Panel>
-
-      <Panel
-        title="Event Categories"
-        icon={Activity}
-        action={<span className="text-[11px] text-mint">View All →</span>}
-      >
-        <ul className="divide-y divide-border">
-          {categoryCounts.map((c) => (
-            <li key={c.category} className="flex items-center justify-between px-4 py-2.5">
-              <span
-                className={cn("text-xs font-medium", CATEGORY_TONE[c.category] ?? "text-foreground")}
-              >
-                {c.category}
-              </span>
-              <span className="text-xs font-semibold text-muted-foreground">{c.count}</span>
-            </li>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <ImpactBars impact={e.impact} />
+                <span className="text-[9px] font-semibold text-muted-foreground">{e.impact}</span>
+              </div>
+            </button>
           ))}
-        </ul>
-      </Panel>
-
-      <Panel
-        title="My Exposure"
-        icon={Target}
-        action={<span className="text-[11px] text-mint">View Details →</span>}
-      >
-        <div className="p-4">
-          <div className="text-center">
-            <div className="font-display text-2xl font-bold text-foreground">{exposure.total}</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Events Affecting You
-            </div>
-          </div>
-          {exposure.buckets.length === 0 ? (
-            <p className="mt-3 text-center text-[11px] text-muted-foreground">
-              No potential exposure detected from your holdings.
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {exposure.buckets.map((b) => (
-                <li key={b.label} className="flex items-center justify-between gap-2 text-[11px]">
-                  <span className="inline-flex items-center gap-2 text-muted-foreground">
-                    <span className={cn("h-1.5 w-1.5 rounded-full", b.tone)} /> {b.label}
-                  </span>
-                  <span className="font-semibold text-foreground">{b.pct}%</span>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
-      </Panel>
+      )}
 
-      <div className="rounded-2xl border border-border bg-card p-4 text-center">
+      {/* --- event categories --- */}
+      <div className="flex items-center justify-between gap-2 border-y border-border px-4 py-3">
+        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-foreground">
+          <Activity className="h-3.5 w-3.5 text-mint" /> Event Categories
+        </span>
+        <span className="text-[11px] text-mint">View All →</span>
+      </div>
+      <ul className="divide-y divide-border">
+        {categoryCounts.map((c) => (
+          <li key={c.category} className="flex items-center justify-between px-4 py-2.5">
+            <span
+              className={cn("text-xs font-medium", CATEGORY_TONE[c.category] ?? "text-foreground")}
+            >
+              {c.category}
+            </span>
+            <span className="text-xs font-semibold text-muted-foreground">{c.count}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* --- my exposure --- */}
+      <div className="flex items-center justify-between gap-2 border-y border-border px-4 py-3">
+        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-foreground">
+          <Target className="h-3.5 w-3.5 text-mint" /> My Exposure
+        </span>
+        <span className="text-[11px] text-mint">View Details →</span>
+      </div>
+      <div className="p-4">
+        <div className="text-center">
+          <div className="font-display text-2xl font-bold text-foreground">{exposure.total}</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Events Affecting You
+          </div>
+        </div>
+        {exposure.buckets.length === 0 ? (
+          <p className="mt-3 text-center text-[11px] text-muted-foreground">
+            No potential exposure detected from your holdings.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {exposure.buckets.map((b) => (
+              <li key={b.label} className="flex items-center justify-between gap-2 text-[11px]">
+                <span className="inline-flex items-center gap-2 text-muted-foreground">
+                  <span className={cn("h-1.5 w-1.5 rounded-full", b.tone)} /> {b.label}
+                </span>
+                <span className="font-semibold text-foreground">{b.pct}%</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* --- alerts cta --- */}
+      <div className="mt-auto border-t border-border p-4 text-center">
         <Bell className="mx-auto h-5 w-5 text-amber-400" />
         <div className="mt-2 text-sm font-semibold text-foreground">
           Never Miss an Important Event
@@ -1084,3 +1089,4 @@ export function EventsSidebar({
     </div>
   );
 }
+
