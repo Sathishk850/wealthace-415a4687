@@ -424,13 +424,13 @@ function ValueBox({ label, value, sub }: { label: string; value: string; sub?: s
       </div>
       <div
         className={cn(
-          "mt-1 break-words font-display text-xs font-bold sm:text-sm",
+          "mt-1 truncate font-display text-xs font-bold",
           unavailable ? "text-muted-foreground" : "text-foreground",
         )}
       >
-        {value}
+        <span title={value}>{value === UNAVAILABLE ? "N/A" : value}</span>
       </div>
-      {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
+      {sub && <div className="truncate text-[9px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
@@ -677,7 +677,7 @@ export function DeepDetails({
               emptyText="No watchlist entries map to this event's markets."
             />
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row">
             <Button
               size="sm"
               variant={alertActive ? "default" : "outline"}
