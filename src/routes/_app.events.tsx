@@ -235,7 +235,7 @@ function EventsPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 2xl:-mx-[calc((100vw-1280px)/2-2rem)]">
       {/* -------- header banner -------- */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
         <div className="relative p-5">
