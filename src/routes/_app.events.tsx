@@ -9,7 +9,6 @@ import {
   EventFilters,
   EventTimeline,
   EventsSidebar,
-  SummaryCards,
   TodaysEvents,
   UpcomingImportantEvents,
   type EventFilterState,
