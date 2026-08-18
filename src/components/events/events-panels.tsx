@@ -418,13 +418,13 @@ export function EmptyState({ text }: { text: string }) {
 function ValueBox({ label, value, sub }: { label: string; value: string; sub?: string }) {
   const unavailable = value === UNAVAILABLE;
   return (
-    <div className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-center">
+    <div className="min-w-0 rounded-xl border border-border bg-surface-2 px-2 py-2 text-center">
       <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
+        <span className="block truncate">{label}</span>
       </div>
       <div
         className={cn(
-          "mt-1 font-display text-sm font-bold",
+          "mt-1 break-words font-display text-xs font-bold sm:text-sm",
           unavailable ? "text-muted-foreground" : "text-foreground",
         )}
       >
@@ -459,7 +459,7 @@ function ImpactDonut({ impact }: { impact: Impact }) {
           strokeDasharray={`${c * pct} ${c}`}
         />
       </svg>
-      <div className="-mt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Overall Impact
       </div>
       <div className="font-display text-lg font-bold text-foreground">{impact}</div>
@@ -592,7 +592,7 @@ export function DeepDetails({
 
         {/* --- column 2: market impact + gauge + scenarios --- */}
         <div className="min-w-0 border-t border-border p-4 lg:border-t-0">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             <div className="min-w-0">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Market Impact
@@ -677,13 +677,19 @@ export function DeepDetails({
               emptyText="No watchlist entries map to this event's markets."
             />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3">
-            <Button size="sm" variant={alertActive ? "default" : "outline"} onClick={onSetAlert}>
-              <Bell className="mr-1.5 h-3.5 w-3.5" />
-              {alertActive ? "Alert Set" : "Set Alert"}
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            <Button
+              size="sm"
+              variant={alertActive ? "default" : "outline"}
+              onClick={onSetAlert}
+              className="min-w-0 flex-1 text-xs"
+            >
+              <Bell className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{alertActive ? "Alert Set" : "Set Alert"}</span>
             </Button>
-            <Button size="sm" variant="outline" onClick={onAddReminder}>
-              <BellPlus className="mr-1.5 h-3.5 w-3.5" /> Add Reminder
+            <Button size="sm" variant="outline" onClick={onAddReminder} className="min-w-0 flex-1 text-xs">
+              <BellPlus className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Add Reminder</span>
             </Button>
           </div>
         </div>
