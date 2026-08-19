@@ -27,6 +27,7 @@ import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
+import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
 import { Route as AppWealthAddInvestmentRouteImport } from './routes/_app.wealth_.add-investment'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
 import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
@@ -126,6 +127,11 @@ const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
   path: '/reports/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPushSubscribeRoute = ApiPushSubscribeRouteImport.update({
+  id: '/api/push/subscribe',
+  path: '/api/push/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWealthAddInvestmentRoute = AppWealthAddInvestmentRouteImport.update({
   id: '/wealth_/add-investment',
   path: '/wealth/add-investment',
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
+  '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/reports/': typeof AppReportsIndexRoute
   '/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
+  '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/reports': typeof AppReportsIndexRoute
   '/tools': typeof AppToolsIndexRoute
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/_app/reports/$id': typeof AppReportsIdRoute
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/_app/wealth_/add-investment': typeof AppWealthAddInvestmentRoute
+  '/api/push/subscribe': typeof ApiPushSubscribeRoute
   '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/reports/$id'
     | '/tools/financial-calculator'
     | '/wealth/add-investment'
+    | '/api/push/subscribe'
     | '/reports/'
     | '/tools/'
     | '/api/public/hooks/events-sync'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/reports/$id'
     | '/tools/financial-calculator'
     | '/wealth/add-investment'
+    | '/api/push/subscribe'
     | '/reports'
     | '/tools'
     | '/api/public/hooks/events-sync'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/_app/reports/$id'
     | '/_app/tools/financial-calculator'
     | '/_app/wealth_/add-investment'
+    | '/api/push/subscribe'
     | '/_app/reports/'
     | '/_app/tools/'
     | '/api/public/hooks/events-sync'
@@ -354,6 +366,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
   ApiPublicHooksEventsSyncRoute: typeof ApiPublicHooksEventsSyncRoute
   ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
   ApiPublicHooksReleaseNotesRoute: typeof ApiPublicHooksReleaseNotesRoute
@@ -486,6 +499,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reports/'
       preLoaderRoute: typeof AppReportsIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/push/subscribe': {
+      id: '/api/push/subscribe'
+      path: '/api/push/subscribe'
+      fullPath: '/api/push/subscribe'
+      preLoaderRoute: typeof ApiPushSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/wealth_/add-investment': {
       id: '/_app/wealth_/add-investment'
@@ -635,6 +655,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPushSubscribeRoute: ApiPushSubscribeRoute,
   ApiPublicHooksEventsSyncRoute: ApiPublicHooksEventsSyncRoute,
   ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
   ApiPublicHooksReleaseNotesRoute: ApiPublicHooksReleaseNotesRoute,
