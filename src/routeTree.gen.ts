@@ -27,6 +27,8 @@ import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
+import { Route as ApiPushUnsubscribeRouteImport } from './routes/api/push/unsubscribe'
+import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
 import { Route as AppWealthAddInvestmentRouteImport } from './routes/_app.wealth_.add-investment'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
 import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
@@ -35,6 +37,7 @@ import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slu
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
 import { Route as ApiPublicHooksReleaseNotesRouteImport } from './routes/api/public/hooks/release-notes'
 import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
+import { Route as ApiPublicHooksEventsSyncRouteImport } from './routes/api/public/hooks/events-sync'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -125,6 +128,16 @@ const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
   path: '/reports/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPushUnsubscribeRoute = ApiPushUnsubscribeRouteImport.update({
+  id: '/api/push/unsubscribe',
+  path: '/api/push/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPushSubscribeRoute = ApiPushSubscribeRouteImport.update({
+  id: '/api/push/subscribe',
+  path: '/api/push/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWealthAddInvestmentRoute = AppWealthAddInvestmentRouteImport.update({
   id: '/wealth_/add-investment',
   path: '/wealth/add-investment',
@@ -168,6 +181,12 @@ const ApiPublicHooksNotificationCronRoute =
     path: '/api/public/hooks/notification-cron',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEventsSyncRoute =
+  ApiPublicHooksEventsSyncRouteImport.update({
+    id: '/api/public/hooks/events-sync',
+    path: '/api/public/hooks/events-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -191,8 +210,11 @@ export interface FileRoutesByFullPath {
   '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
+  '/api/push/subscribe': typeof ApiPushSubscribeRoute
+  '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/reports/': typeof AppReportsIndexRoute
   '/tools/': typeof AppToolsIndexRoute
+  '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -217,8 +239,11 @@ export interface FileRoutesByTo {
   '/reports/$id': typeof AppReportsIdRoute
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
+  '/api/push/subscribe': typeof ApiPushSubscribeRoute
+  '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/reports': typeof AppReportsIndexRoute
   '/tools': typeof AppToolsIndexRoute
+  '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -246,8 +271,11 @@ export interface FileRoutesById {
   '/_app/reports/$id': typeof AppReportsIdRoute
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/_app/wealth_/add-investment': typeof AppWealthAddInvestmentRoute
+  '/api/push/subscribe': typeof ApiPushSubscribeRoute
+  '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/tools/': typeof AppToolsIndexRoute
+  '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -275,8 +303,11 @@ export interface FileRouteTypes {
     | '/reports/$id'
     | '/tools/financial-calculator'
     | '/wealth/add-investment'
+    | '/api/push/subscribe'
+    | '/api/push/unsubscribe'
     | '/reports/'
     | '/tools/'
+    | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
   fileRoutesByTo: FileRoutesByTo
@@ -301,8 +332,11 @@ export interface FileRouteTypes {
     | '/reports/$id'
     | '/tools/financial-calculator'
     | '/wealth/add-investment'
+    | '/api/push/subscribe'
+    | '/api/push/unsubscribe'
     | '/reports'
     | '/tools'
+    | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
   id:
@@ -329,8 +363,11 @@ export interface FileRouteTypes {
     | '/_app/reports/$id'
     | '/_app/tools/financial-calculator'
     | '/_app/wealth_/add-investment'
+    | '/api/push/subscribe'
+    | '/api/push/unsubscribe'
     | '/_app/reports/'
     | '/_app/tools/'
+    | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
   fileRoutesById: FileRoutesById
@@ -341,6 +378,9 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
+  ApiPushUnsubscribeRoute: typeof ApiPushUnsubscribeRoute
+  ApiPublicHooksEventsSyncRoute: typeof ApiPublicHooksEventsSyncRoute
   ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
   ApiPublicHooksReleaseNotesRoute: typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -473,6 +513,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/push/unsubscribe': {
+      id: '/api/push/unsubscribe'
+      path: '/api/push/unsubscribe'
+      fullPath: '/api/push/unsubscribe'
+      preLoaderRoute: typeof ApiPushUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/push/subscribe': {
+      id: '/api/push/subscribe'
+      path: '/api/push/subscribe'
+      fullPath: '/api/push/subscribe'
+      preLoaderRoute: typeof ApiPushSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/wealth_/add-investment': {
       id: '/_app/wealth_/add-investment'
       path: '/wealth/add-investment'
@@ -527,6 +581,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/notification-cron'
       fullPath: '/api/public/hooks/notification-cron'
       preLoaderRoute: typeof ApiPublicHooksNotificationCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/events-sync': {
+      id: '/api/public/hooks/events-sync'
+      path: '/api/public/hooks/events-sync'
+      fullPath: '/api/public/hooks/events-sync'
+      preLoaderRoute: typeof ApiPublicHooksEventsSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -614,6 +675,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPushSubscribeRoute: ApiPushSubscribeRoute,
+  ApiPushUnsubscribeRoute: ApiPushUnsubscribeRoute,
+  ApiPublicHooksEventsSyncRoute: ApiPublicHooksEventsSyncRoute,
   ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
   ApiPublicHooksReleaseNotesRoute: ApiPublicHooksReleaseNotesRoute,
 }
