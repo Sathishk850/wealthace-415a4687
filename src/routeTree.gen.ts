@@ -35,6 +35,7 @@ import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slu
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
 import { Route as ApiPublicHooksReleaseNotesRouteImport } from './routes/api/public/hooks/release-notes'
 import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
+import { Route as ApiPublicHooksEventsSyncRouteImport } from './routes/api/public/hooks/events-sync'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -168,6 +169,12 @@ const ApiPublicHooksNotificationCronRoute =
     path: '/api/public/hooks/notification-cron',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEventsSyncRoute =
+  ApiPublicHooksEventsSyncRouteImport.update({
+    id: '/api/public/hooks/events-sync',
+    path: '/api/public/hooks/events-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
   '/reports/': typeof AppReportsIndexRoute
   '/tools/': typeof AppToolsIndexRoute
+  '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
   '/reports': typeof AppReportsIndexRoute
   '/tools': typeof AppToolsIndexRoute
+  '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/_app/wealth_/add-investment': typeof AppWealthAddInvestmentRoute
   '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/tools/': typeof AppToolsIndexRoute
+  '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/wealth/add-investment'
     | '/reports/'
     | '/tools/'
+    | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
   fileRoutesByTo: FileRoutesByTo
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/wealth/add-investment'
     | '/reports'
     | '/tools'
+    | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
   id:
@@ -331,6 +343,7 @@ export interface FileRouteTypes {
     | '/_app/wealth_/add-investment'
     | '/_app/reports/'
     | '/_app/tools/'
+    | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
   fileRoutesById: FileRoutesById
@@ -341,6 +354,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicHooksEventsSyncRoute: typeof ApiPublicHooksEventsSyncRoute
   ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
   ApiPublicHooksReleaseNotesRoute: typeof ApiPublicHooksReleaseNotesRoute
 }
@@ -529,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksNotificationCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/events-sync': {
+      id: '/api/public/hooks/events-sync'
+      path: '/api/public/hooks/events-sync'
+      fullPath: '/api/public/hooks/events-sync'
+      preLoaderRoute: typeof ApiPublicHooksEventsSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -614,6 +635,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicHooksEventsSyncRoute: ApiPublicHooksEventsSyncRoute,
   ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
   ApiPublicHooksReleaseNotesRoute: ApiPublicHooksReleaseNotesRoute,
 }
