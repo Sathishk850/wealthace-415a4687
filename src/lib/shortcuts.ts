@@ -8,7 +8,7 @@
 export type Shortcut = {
   id: string;
   label: string;
-  group: "Dashboard" | "Wealth" | "Money" | "Planner" | "Events" | "Tools" | "Account";
+  group: "Dashboard" | "Wealth" | "Money" | "Planner" | "Tools" | "Account";
   path: string;
   keywords?: string;
 };
@@ -36,7 +36,6 @@ export const SHORTCUTS: Shortcut[] = [
   { id: "retirement", label: "Retirement Plan", group: "Planner", path: "/planner#retirement", keywords: "retire corpus pension" },
   { id: "fire", label: "FIRE Plan", group: "Planner", path: "/planner#fire", keywords: "financial independence" },
 
-  { id: "events", label: "Global Events Calendar", group: "Events", path: "/events", keywords: "economic calendar rbi fomc cpi earnings impact" },
 
   { id: "tools", label: "Tools Overview", group: "Tools", path: "/tools#overview", keywords: "utilities" },
   { id: "reports", label: "Reports Generator", group: "Tools", path: "/tools#reports", keywords: "pdf excel export statement" },
