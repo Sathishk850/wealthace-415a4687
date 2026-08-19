@@ -9,7 +9,6 @@ import {
   Sun,
   Moon,
   CalendarClock,
-  Globe,
   User,
   Settings as SettingsIcon,
   MessageSquare,
