@@ -27,6 +27,7 @@ import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
 import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
+import { Route as ApiPushUnsubscribeRouteImport } from './routes/api/push/unsubscribe'
 import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
 import { Route as AppWealthAddInvestmentRouteImport } from './routes/_app.wealth_.add-investment'
 import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
@@ -127,6 +128,11 @@ const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
   path: '/reports/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPushUnsubscribeRoute = ApiPushUnsubscribeRouteImport.update({
+  id: '/api/push/unsubscribe',
+  path: '/api/push/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPushSubscribeRoute = ApiPushSubscribeRouteImport.update({
   id: '/api/push/subscribe',
   path: '/api/push/subscribe',
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
+  '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/reports/': typeof AppReportsIndexRoute
   '/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/wealth/add-investment': typeof AppWealthAddInvestmentRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
+  '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/reports': typeof AppReportsIndexRoute
   '/tools': typeof AppToolsIndexRoute
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/_app/tools/financial-calculator': typeof AppToolsFinancialCalculatorRoute
   '/_app/wealth_/add-investment': typeof AppWealthAddInvestmentRoute
   '/api/push/subscribe': typeof ApiPushSubscribeRoute
+  '/api/push/unsubscribe': typeof ApiPushUnsubscribeRoute
   '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/tools/': typeof AppToolsIndexRoute
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/tools/financial-calculator'
     | '/wealth/add-investment'
     | '/api/push/subscribe'
+    | '/api/push/unsubscribe'
     | '/reports/'
     | '/tools/'
     | '/api/public/hooks/events-sync'
@@ -323,6 +333,7 @@ export interface FileRouteTypes {
     | '/tools/financial-calculator'
     | '/wealth/add-investment'
     | '/api/push/subscribe'
+    | '/api/push/unsubscribe'
     | '/reports'
     | '/tools'
     | '/api/public/hooks/events-sync'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/_app/tools/financial-calculator'
     | '/_app/wealth_/add-investment'
     | '/api/push/subscribe'
+    | '/api/push/unsubscribe'
     | '/_app/reports/'
     | '/_app/tools/'
     | '/api/public/hooks/events-sync'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   BrandRoute: typeof BrandRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPushSubscribeRoute: typeof ApiPushSubscribeRoute
+  ApiPushUnsubscribeRoute: typeof ApiPushUnsubscribeRoute
   ApiPublicHooksEventsSyncRoute: typeof ApiPublicHooksEventsSyncRoute
   ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
   ApiPublicHooksReleaseNotesRoute: typeof ApiPublicHooksReleaseNotesRoute
@@ -499,6 +512,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reports/'
       preLoaderRoute: typeof AppReportsIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/push/unsubscribe': {
+      id: '/api/push/unsubscribe'
+      path: '/api/push/unsubscribe'
+      fullPath: '/api/push/unsubscribe'
+      preLoaderRoute: typeof ApiPushUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/push/subscribe': {
       id: '/api/push/subscribe'
@@ -656,6 +676,7 @@ const rootRouteChildren: RootRouteChildren = {
   BrandRoute: BrandRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPushSubscribeRoute: ApiPushSubscribeRoute,
+  ApiPushUnsubscribeRoute: ApiPushUnsubscribeRoute,
   ApiPublicHooksEventsSyncRoute: ApiPublicHooksEventsSyncRoute,
   ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
   ApiPublicHooksReleaseNotesRoute: ApiPublicHooksReleaseNotesRoute,
