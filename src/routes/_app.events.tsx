@@ -67,8 +67,7 @@ function EventsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader
-          title="Events"
-          subtitle="Global Market & Financial Events"
+          title="Events — Global Market & Financial Events"
           description="Real economic & central bank events — previous and actual values from FRED and curated sources."
         />
         <button
@@ -84,7 +83,7 @@ function EventsPage() {
       <PushPermissionBanner />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <TextTabs items={FILTERS} value={filter} onValueChange={setFilter} />
+        <TextTabs items={FILTERS} value={filter} onChange={setFilter} />
         <Select value={country} onValueChange={setCountry}>
           <SelectTrigger className="w-[180px]">
             <SelectValue />
