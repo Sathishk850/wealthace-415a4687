@@ -69,6 +69,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
+import { MarketEventsCard } from "@/components/events/market-events-card";
+import { PushPermissionBanner } from "@/components/push/push-permission-banner";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -658,6 +660,12 @@ function Dashboard() {
           )}
         </Card>
 
+
+        {/* Push opt-in + Global Market Events */}
+        <div className="col-span-12 space-y-4">
+          <PushPermissionBanner />
+          <MarketEventsCard />
+        </div>
 
         {/* Upcoming Reminders + Financial Insights */}
         <div className="col-span-12 grid grid-cols-1 gap-4 lg:grid-cols-2">
