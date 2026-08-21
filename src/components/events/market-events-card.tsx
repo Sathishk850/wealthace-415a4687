@@ -1,24 +1,25 @@
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Calendar, RefreshCw } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { flagFor, type MarketEvent } from "@/lib/events/types";
-import { orderForCard, useMarketEvents, useSyncMarketEvents } from "@/lib/events-api";
+import { todaysEvents, upcomingEvents, useMarketEvents } from "@/lib/events-api";
 
 export function impactClass(impact: string): string {
-  switch (impact) {
-    case "Low": return "bg-sky-500/15 text-sky-400";
-    case "Moderate": return "bg-yellow-500/15 text-yellow-400";
-    case "High": return "bg-orange-500/15 text-orange-400";
-    case "Very High": return "bg-red-500/15 text-red-400";
+  switch (impact?.toLowerCase()) {
+    case "low": return "bg-sky-500/15 text-sky-400";
+    case "moderate": return "bg-yellow-500/15 text-yellow-400";
+    case "high": return "bg-orange-500/15 text-orange-400";
+    case "very high": return "bg-red-500/15 text-red-400";
     default: return "bg-muted text-muted-foreground";
   }
 }
 
 export function statusClass(status: string): string {
-  switch (status) {
-    case "UPCOMING": return "bg-cyan-500/15 text-cyan-400";
-    case "RELEASED": return "bg-green-500/15 text-green-400";
+  switch (status?.toLowerCase()) {
+    case "upcoming": return "bg-cyan-500/15 text-cyan-400";
+    case "released": return "bg-green-500/15 text-green-400";
     default: return "bg-slate-500/15 text-slate-400";
   }
 }
@@ -28,7 +29,11 @@ export function eventDay(iso: string): string {
 }
 
 export function eventTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 function Pill({ label, className }: { label: string; className: string }) {
@@ -67,10 +72,17 @@ function Row({ e }: { e: MarketEvent }) {
   );
 }
 
+type TabKey = "today" | "upcoming";
+
 export function MarketEventsCard({ className }: { className?: string }) {
   const { data, isLoading } = useMarketEvents();
-  const sync = useSyncMarketEvents();
-  const rows = orderForCard(data?.events ?? [], 6);
+  const events = data?.events ?? [];
+
+  const today = useMemo(() => todaysEvents(events, 5), [events]);
+  const upcoming = useMemo(() => upcomingEvents(events, 5), [events]);
+  const [tab, setTab] = useState<TabKey | null>(null);
+  const active: TabKey = tab ?? (today.length > 0 ? "today" : "upcoming");
+  const rows = active === "today" ? today : upcoming;
 
   return (
     <Card className={cn("p-6", className)}>
@@ -89,7 +101,25 @@ export function MarketEventsCard({ className }: { className?: string }) {
         </Link>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 flex items-center gap-1.5">
+        {(["today", "upcoming"] as TabKey[]).map((k) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setTab(k)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-semibold capitalize transition",
+              active === k
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {k}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2">
         {isLoading ? (
           <div className="space-y-2.5 py-2">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -98,25 +128,17 @@ export function MarketEventsCard({ className }: { className?: string }) {
           </div>
         ) : rows.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No events loaded yet — click Refresh to sync.
+            {active === "today"
+              ? "No events scheduled for today."
+              : "No upcoming events loaded yet."}
           </p>
         ) : (
           rows.map((e) => <Row key={e.id} e={e} />)
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <span className="text-xs text-muted-foreground">
-          Last synced: {data?.synced_at ? new Date(data.synced_at).toLocaleString() : "Never"}
-        </span>
-        <button
-          type="button"
-          onClick={() => sync.mutate()}
-          disabled={sync.isPending}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 px-2.5 py-1 text-xs font-semibold text-primary transition hover:bg-primary/10 disabled:opacity-60"
-        >
-          <RefreshCw className={cn("h-3.5 w-3.5", sync.isPending && "animate-spin")} /> Refresh
-        </button>
+      <div className="mt-3 text-xs text-muted-foreground">
+        Last synced: {data?.synced_at ? new Date(data.synced_at).toLocaleString() : "Never"}
       </div>
     </Card>
   );

@@ -237,7 +237,7 @@ export function buildCuratedEvents(now: Date = new Date()): MarketEventUpsert[] 
       actual: null,
       unit: null,
       impact: base.impact,
-      status: past ? "UNAVAILABLE" : "UPCOMING",
+      status: past ? "unavailable" : "upcoming",
       description: base.description,
       markets: base.markets,
       asset_classes: base.assetClasses,

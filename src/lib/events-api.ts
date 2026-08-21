@@ -33,7 +33,32 @@ export function orderForCard(events: MarketEvent[], limit = 6): MarketEvent[] {
     .filter((e) => new Date(e.event_time).getTime() >= now)
     .sort((a, b) => a.event_time.localeCompare(b.event_time));
   const past = events
-    .filter((e) => new Date(e.event_time).getTime() < now)
+    .filter(
+      (e) => new Date(e.event_time).getTime() < now && e.status?.toLowerCase() === "released",
+    )
     .sort((a, b) => b.event_time.localeCompare(a.event_time));
   return [...upcoming, ...past].slice(0, limit);
+}
+
+/** Events whose local date is today. */
+export function todaysEvents(events: MarketEvent[], limit = 5): MarketEvent[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return events
+    .filter((e) => {
+      const d = new Date(e.event_time);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime();
+    })
+    .sort((a, b) => a.event_time.localeCompare(b.event_time))
+    .slice(0, limit);
+}
+
+/** Next events strictly in the future, soonest first. */
+export function upcomingEvents(events: MarketEvent[], limit = 5): MarketEvent[] {
+  const now = Date.now();
+  return events
+    .filter((e) => new Date(e.event_time).getTime() > now)
+    .sort((a, b) => a.event_time.localeCompare(b.event_time))
+    .slice(0, limit);
 }

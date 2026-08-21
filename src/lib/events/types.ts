@@ -3,7 +3,7 @@
 export const IMPACTS = ["Low", "Moderate", "High", "Very High"] as const;
 export type EventImpact = (typeof IMPACTS)[number];
 
-export const EVENT_STATUSES = ["UPCOMING", "RELEASED", "UNAVAILABLE"] as const;
+export const EVENT_STATUSES = ["upcoming", "released", "unavailable"] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
 export type MarketEvent = {
@@ -24,6 +24,7 @@ export type MarketEvent = {
   status: string;
   description: string | null;
   markets: string[];
+  asset_classes?: string[] | null;
   source_url: string | null;
   last_updated: string;
 };
