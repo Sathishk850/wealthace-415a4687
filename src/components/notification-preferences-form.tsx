@@ -13,6 +13,7 @@ import {
   usePreferences,
   useUpdatePreferences,
 } from "@/lib/notifications-api";
+import { PushSettingsSection } from "@/components/push/push-settings-section";
 import { REMINDER_KINDS, REMINDER_KIND_LABEL, type ReminderKind } from "@/lib/tools-api";
 
 const FUTURE_CHANNELS: Channel[] = ["push", "sms", "whatsapp"];
@@ -89,6 +90,8 @@ export function NotificationPreferencesForm() {
           })}
         </div>
       </Card>
+
+      <PushSettingsSection />
 
       <Card className="glass-card border-[var(--border)] p-5">
         <h3 className="mb-2 text-sm font-semibold text-foreground">Reminder Types</h3>
