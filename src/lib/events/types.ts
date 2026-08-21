@@ -24,6 +24,7 @@ export type MarketEvent = {
   status: string;
   description: string | null;
   markets: string[];
+  asset_classes?: string[] | null;
   source_url: string | null;
   last_updated: string;
 };
