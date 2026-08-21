@@ -3,7 +3,7 @@
 export const IMPACTS = ["Low", "Moderate", "High", "Very High"] as const;
 export type EventImpact = (typeof IMPACTS)[number];
 
-export const EVENT_STATUSES = ["UPCOMING", "RELEASED", "UNAVAILABLE"] as const;
+export const EVENT_STATUSES = ["upcoming", "released", "unavailable"] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 
 export type MarketEvent = {

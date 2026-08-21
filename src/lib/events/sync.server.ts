@@ -63,11 +63,13 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
 /** Notification-worthy: just-released values, or upcoming high-impact events. */
 function isNotifiable(row: MarketEventUpsert, now: Date): boolean {
   const t = new Date(row.event_time).getTime();
-  const highImpact = row.impact === "High" || row.impact === "Very High";
-  if (row.status === "RELEASED" && row.actual) {
+  const impact = row.impact.toLowerCase();
+  const status = row.status.toLowerCase();
+  const highImpact = impact === "high" || impact === "very high";
+  if (status === "released" && row.actual) {
     return now.getTime() - t < 24 * 60 * 60 * 1000;
   }
-  if (row.status === "UPCOMING" && highImpact) {
+  if (status === "upcoming" && highImpact) {
     const delta = t - now.getTime();
     return delta > 0 && delta < 24 * 60 * 60 * 1000;
   }
@@ -101,7 +103,7 @@ async function dispatchEventPushes(
       .maybeSingle();
     if (!stored?.id) continue;
 
-    const kind = `event_push:${row.status}`;
+    const kind = `event_push:${row.status.toLowerCase()}`;
     const priority =
       row.impact === "Very High"
         ? ("very-high" as const)

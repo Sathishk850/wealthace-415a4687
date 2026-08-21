@@ -181,10 +181,11 @@ export async function buildFredEvents(now: Date = new Date()): Promise<MarketEve
     try {
       const obsRes = (await fredGet(
         "series/observations",
-        { series_id: spec.id, sort_order: "asc", limit: "60" },
+        { series_id: spec.id, sort_order: "desc", limit: spec.yoy ? "14" : "3" },
         apiKey,
       )) as { observations?: Observation[] };
-      const obs = (obsRes.observations ?? []).filter((o) => o.value !== ".");
+      // FRED returned newest-first; reverse to ascending for YoY indexing.
+      const obs = (obsRes.observations ?? []).filter((o) => o.value !== ".").reverse();
       if (obs.length < 2) continue;
 
       const latest = obs[obs.length - 1]!;
@@ -217,7 +218,7 @@ export async function buildFredEvents(now: Date = new Date()): Promise<MarketEve
         event_time: new Date(`${latest.date}T12:30:00Z`).toISOString(),
         previous,
         actual,
-        status: actual ? "RELEASED" : "UNAVAILABLE",
+        status: actual ? "released" : "unavailable",
       });
 
       const next = await nextReleaseDate(spec.id, apiKey, today);
@@ -228,7 +229,7 @@ export async function buildFredEvents(now: Date = new Date()): Promise<MarketEve
           event_time: new Date(`${next}T12:30:00Z`).toISOString(),
           previous: actual,
           actual: null,
-          status: "UPCOMING",
+          status: "upcoming",
         });
       }
     } catch (err) {
