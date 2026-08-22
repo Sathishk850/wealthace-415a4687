@@ -171,9 +171,16 @@ function ReminderRow({ n, onDone }: { n: Notification; onDone: () => void }) {
           <p className={`text-sm font-semibold ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>
             {n.title}
           </p>
+          {(() => {
+            const p = PRIORITY_LABEL[n.priority] ?? PRIORITY_LABEL["normal"]!;
+            return p.label ? (
+              <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-bold", p.cls)}>{p.label}</span>
+            ) : null;
+          })()}
           <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             {kind.replace(/_/g, " ")}
           </span>
+
         </div>
         {n.body ? <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p> : null}
         <p className="mt-1 text-[10px] text-muted-foreground">
