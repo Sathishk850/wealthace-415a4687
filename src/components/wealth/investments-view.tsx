@@ -659,6 +659,11 @@ function Holdings({
   const [sort, setSort] = useState<HSort>("latest");
   const [page, setPage] = useState(1);
 
+  const { data: fxData } = useFxRates();
+  const ugxInrRate = getRateFor(fxData?.rates ?? [], "UGX", "INR");
+  const totalCurrent = useMemo(() => rows.reduce((s, r) => s + r.cur, 0), [rows]);
+
+
   const filtered = useMemo(() => {
     let r = rows;
     if (q.trim()) {
