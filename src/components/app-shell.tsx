@@ -224,9 +224,13 @@ function TopBar() {
             <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
               <User className="mr-2 h-4 w-4" /> My Profile
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/tools" })}>
+              <Wrench className="mr-2 h-4 w-4" /> Tools
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
               <SettingsIcon className="mr-2 h-4 w-4" /> Settings
             </DropdownMenuItem>
+
             <DropdownMenuItem onClick={() => navigate({ to: "/feedback" })}>
               <MessageSquare className="mr-2 h-4 w-4" /> Feedback
             </DropdownMenuItem>
