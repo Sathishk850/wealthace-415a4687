@@ -91,6 +91,16 @@ export const FRED_SERIES: SeriesSpec[] = [
     description: "Advance retail and food services sales, seasonally adjusted (Census via FRED).",
   },
   {
+    id: "ICSA",
+    name: "US Initial Jobless Claims",
+    category: "Employment",
+    impact: "Moderate",
+    unit: "K",
+    markets: ["S&P 500", "USD"],
+    assetClasses: ["Equity", "Currency"],
+    description: "Initial claims for unemployment insurance, weekly seasonally adjusted (DOL via FRED).",
+  },
+  {
     id: "UMCSENT",
     name: "US Consumer Sentiment",
     category: "Sentiment",
@@ -100,6 +110,7 @@ export const FRED_SERIES: SeriesSpec[] = [
     assetClasses: ["Equity", "Currency"],
     description: "University of Michigan Consumer Sentiment index (via FRED).",
   },
+
 ];
 
 type Observation = { date: string; value: string };
