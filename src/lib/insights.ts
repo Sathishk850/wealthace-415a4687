@@ -34,6 +34,14 @@ export const DAY_MS = 86400000;
 
 export type InsightTone = "positive" | "warning" | "critical" | "neutral";
 
+const TONE_ORDER: Record<InsightTone, number> = {
+  critical: 0,
+  warning: 1,
+  positive: 2,
+  neutral: 3,
+};
+
+
 export type Insight = {
   id: string;
   title: string;
