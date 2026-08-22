@@ -116,8 +116,9 @@ const MOBILE_TABS: NavItem[] = [
   { to: "/money", label: "Money", icon: Coins },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/planner", label: "Planner", icon: CalendarClock },
-  { to: "/tools", label: "Tools", icon: Wrench },
+  { to: "/events", label: "Events", icon: Calendar },
 ];
+
 
 function Brand() {
   return (
