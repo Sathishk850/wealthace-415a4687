@@ -855,7 +855,7 @@ function Holdings({
                         </td>
                         <td className="py-3 text-right text-foreground">
                           {inr(h.inv)}
-                          {h.currency === "UGX" && ugxInrRate ? (
+                          {(h.currency as string) === "UGX" && ugxInrRate ? (
                             <div className="text-[10px] text-muted-foreground">
                               ≈ UGX {Math.round(h.inv / ugxInrRate).toLocaleString("en-US")}
                             </div>
@@ -863,7 +863,7 @@ function Holdings({
                         </td>
                         <td className="py-3 text-right font-medium text-foreground">
                           {inr(h.cur)}
-                          {h.currency === "UGX" && ugxInrRate ? (
+                          {(h.currency as string) === "UGX" && ugxInrRate ? (
                             <div className="text-[10px] text-muted-foreground">
                               ≈ UGX {Math.round(h.cur / ugxInrRate).toLocaleString("en-US")}
                             </div>
