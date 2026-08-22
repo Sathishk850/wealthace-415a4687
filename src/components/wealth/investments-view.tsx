@@ -777,7 +777,6 @@ function Holdings({
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
                     <th className="py-3 pl-2 font-medium">Name</th>
-                    <th className="py-3 font-medium">Type</th>
                     <th className="py-3 text-right font-medium">Quantity</th>
                     <th className="py-3 text-right font-medium">Avg Price</th>
                     <th className="py-3 text-right font-medium">Current Price</th>
@@ -785,8 +784,11 @@ function Holdings({
                     <th className="py-3 text-right font-medium">Current</th>
                     <th className="py-3 text-right font-medium">P&L</th>
                     <th className="py-3 text-right font-medium">Returns %</th>
+                    <th className="py-3 text-right font-medium">XIRR</th>
+                    <th className="py-3 text-right font-medium">Allocation</th>
                     <th className="py-3 font-medium">Last Updated</th>
                     <th className="py-3 pr-2 font-medium">Actions</th>
+
                   </tr>
                 </thead>
                 <tbody>
