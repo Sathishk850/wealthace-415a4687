@@ -60,6 +60,8 @@ import { MarketStatus } from "@/components/market/market-status";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
 import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
 import type { MarketQuote } from "@/lib/market/types";
+import { useFxRates, getRateFor } from "@/lib/use-fx-rates";
+
 import {
   type Investment,
   type InvestmentInput,
