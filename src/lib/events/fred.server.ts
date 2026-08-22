@@ -128,10 +128,12 @@ async function fredGet(path: string, params: Record<string, string>, apiKey: str
 function fmtValue(spec: SeriesSpec, value: number | null): string | null {
   if (value === null || !Number.isFinite(value)) return null;
   if (spec.unit === "%") return `${value.toFixed(2)}%`;
+  if (spec.unit === "K") return `${Math.round(value / 1000)}K`;
   if (spec.unit === "K jobs") return `${Math.round(value).toLocaleString("en-US")}K`;
   if (spec.unit === "$B" || spec.unit === "$M") return value.toLocaleString("en-US", { maximumFractionDigits: 1 });
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
+
 
 function num(v: string): number | null {
   if (!v || v === ".") return null;
