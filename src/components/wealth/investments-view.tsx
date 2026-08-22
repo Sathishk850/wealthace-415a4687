@@ -60,6 +60,8 @@ import { MarketStatus } from "@/components/market/market-status";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
 import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
 import type { MarketQuote } from "@/lib/market/types";
+import { useFxRates, getRateFor } from "@/lib/use-fx-rates";
+
 import {
   type Investment,
   type InvestmentInput,
@@ -659,6 +661,11 @@ function Holdings({
   const [sort, setSort] = useState<HSort>("latest");
   const [page, setPage] = useState(1);
 
+  const { data: fxData } = useFxRates();
+  const ugxInrRate = getRateFor(fxData?.rates ?? [], "UGX", "INR");
+  const totalCurrent = useMemo(() => rows.reduce((s, r) => s + r.cur, 0), [rows]);
+
+
   const filtered = useMemo(() => {
     let r = rows;
     if (q.trim()) {
@@ -777,7 +784,6 @@ function Holdings({
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
                     <th className="py-3 pl-2 font-medium">Name</th>
-                    <th className="py-3 font-medium">Type</th>
                     <th className="py-3 text-right font-medium">Quantity</th>
                     <th className="py-3 text-right font-medium">Avg Price</th>
                     <th className="py-3 text-right font-medium">Current Price</th>
@@ -785,8 +791,11 @@ function Holdings({
                     <th className="py-3 text-right font-medium">Current</th>
                     <th className="py-3 text-right font-medium">P&L</th>
                     <th className="py-3 text-right font-medium">Returns %</th>
+                    <th className="py-3 text-right font-medium">XIRR</th>
+                    <th className="py-3 text-right font-medium">Allocation</th>
                     <th className="py-3 font-medium">Last Updated</th>
                     <th className="py-3 pr-2 font-medium">Actions</th>
+
                   </tr>
                 </thead>
                 <tbody>
@@ -823,7 +832,7 @@ function Holdings({
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 text-muted-foreground">{h.category}{h.currency && h.currency !== "INR" ? ` · ${h.currency}` : ""}</td>
+                        
                         <td className="py-3 text-right text-foreground">{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
                         <td className="py-3 text-right text-foreground">{inrPrice(h.avg_price)}</td>
                         <td className="py-3 text-right text-foreground">
@@ -844,8 +853,22 @@ function Holdings({
                             ) : null}
                           </div>
                         </td>
-                        <td className="py-3 text-right text-foreground">{inr(h.inv)}</td>
-                        <td className="py-3 text-right font-medium text-foreground">{inr(h.cur)}</td>
+                        <td className="py-3 text-right text-foreground">
+                          {inr(h.inv)}
+                          {(h.currency as string) === "UGX" && ugxInrRate ? (
+                            <div className="text-[10px] text-muted-foreground">
+                              ≈ UGX {Math.round(h.inv / ugxInrRate).toLocaleString("en-US")}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="py-3 text-right font-medium text-foreground">
+                          {inr(h.cur)}
+                          {(h.currency as string) === "UGX" && ugxInrRate ? (
+                            <div className="text-[10px] text-muted-foreground">
+                              ≈ UGX {Math.round(h.cur / ugxInrRate).toLocaleString("en-US")}
+                            </div>
+                          ) : null}
+                        </td>
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
                           <span className="inline-flex items-center gap-1">
                             {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
@@ -855,6 +878,13 @@ function Holdings({
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
                           {(up ? "+" : "") + h.ret.toFixed(2)}%
                         </td>
+                        <td className={`py-3 text-right ${h.xirrPct >= 0 ? "text-mint" : "text-rose-400"}`}>
+                          {h.xirrPct !== 0 ? `${h.xirrPct >= 0 ? "+" : ""}${h.xirrPct.toFixed(2)}%` : "—"}
+                        </td>
+                        <td className="py-3 text-right text-muted-foreground">
+                          {totalCurrent > 0 ? `${((h.cur / totalCurrent) * 100).toFixed(2)}%` : "—"}
+                        </td>
+
                         <td className="py-3 text-muted-foreground">{h.has_live && h.live_as_of ? formatDate(h.live_as_of) : formatDate(h.last_updated)}</td>
 
                         <td className="py-3 pr-2">

@@ -10,6 +10,8 @@ import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insuranc
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { WealthOverview } from "@/components/wealth/wealth-overview";
 import { AllocationTargetCard } from "@/components/wealth/AllocationTargetCard";
+import { FxRatesWidget } from "@/components/fx/FxRatesWidget";
+
 
 import { getExchangeSessionLabels, getMarketStatus } from "@/lib/market/calendar";
 import { formatTime } from "@/lib/date-format";
@@ -68,8 +70,12 @@ function Wealth() {
       </div>
 
       {tab === "overview" ? (
-        <WealthOverview onGoSip={() => setTab("sip-tracker")} />
+        <>
+          <WealthOverview onGoSip={() => setTab("sip-tracker")} />
+          <FxRatesWidget className="mt-4" />
+        </>
       ) : tab === "assets" ? (
+
         <AssetsView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "liabilities" ? (
         <LiveLiabilitiesView registerAdd={(fn) => { addRef.current = fn; }} />
