@@ -846,8 +846,22 @@ function Holdings({
                             ) : null}
                           </div>
                         </td>
-                        <td className="py-3 text-right text-foreground">{inr(h.inv)}</td>
-                        <td className="py-3 text-right font-medium text-foreground">{inr(h.cur)}</td>
+                        <td className="py-3 text-right text-foreground">
+                          {inr(h.inv)}
+                          {h.currency === "UGX" && ugxInrRate ? (
+                            <div className="text-[10px] text-muted-foreground">
+                              ≈ UGX {Math.round(h.inv / ugxInrRate).toLocaleString("en-US")}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="py-3 text-right font-medium text-foreground">
+                          {inr(h.cur)}
+                          {h.currency === "UGX" && ugxInrRate ? (
+                            <div className="text-[10px] text-muted-foreground">
+                              ≈ UGX {Math.round(h.cur / ugxInrRate).toLocaleString("en-US")}
+                            </div>
+                          ) : null}
+                        </td>
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
                           <span className="inline-flex items-center gap-1">
                             {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
@@ -857,6 +871,13 @@ function Holdings({
                         <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
                           {(up ? "+" : "") + h.ret.toFixed(2)}%
                         </td>
+                        <td className={`py-3 text-right ${h.xirrPct >= 0 ? "text-mint" : "text-rose-400"}`}>
+                          {h.xirrPct !== 0 ? `${h.xirrPct >= 0 ? "+" : ""}${h.xirrPct.toFixed(2)}%` : "—"}
+                        </td>
+                        <td className="py-3 text-right text-muted-foreground">
+                          {totalCurrent > 0 ? `${((h.cur / totalCurrent) * 100).toFixed(2)}%` : "—"}
+                        </td>
+
                         <td className="py-3 text-muted-foreground">{h.has_live && h.live_as_of ? formatDate(h.live_as_of) : formatDate(h.last_updated)}</td>
 
                         <td className="py-3 pr-2">
