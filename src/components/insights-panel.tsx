@@ -13,6 +13,15 @@ import {
   type ReminderFilter,
 } from "@/lib/insights";
 import { formatDateTime } from "@/lib/date-format";
+import { cn } from "@/lib/utils";
+
+const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
+  urgent: { label: "URGENT", cls: "bg-red-500/20 text-red-400" },
+  high: { label: "HIGH", cls: "bg-orange-500/20 text-orange-400" },
+  normal: { label: "", cls: "" },
+  low: { label: "LOW", cls: "bg-slate-500/20 text-slate-400" },
+};
+
 
 const TONE_CLASS: Record<Insight["tone"], string> = {
   positive: "border-emerald-500/30 bg-emerald-500/5",
