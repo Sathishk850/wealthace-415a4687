@@ -68,8 +68,12 @@ function Wealth() {
       </div>
 
       {tab === "overview" ? (
-        <WealthOverview onGoSip={() => setTab("sip-tracker")} />
+        <>
+          <WealthOverview onGoSip={() => setTab("sip-tracker")} />
+          <FxRatesWidget className="mt-4" />
+        </>
       ) : tab === "assets" ? (
+
         <AssetsView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "liabilities" ? (
         <LiveLiabilitiesView registerAdd={(fn) => { addRef.current = fn; }} />
