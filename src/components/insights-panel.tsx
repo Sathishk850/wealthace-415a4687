@@ -13,6 +13,15 @@ import {
   type ReminderFilter,
 } from "@/lib/insights";
 import { formatDateTime } from "@/lib/date-format";
+import { cn } from "@/lib/utils";
+
+const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
+  urgent: { label: "URGENT", cls: "bg-red-500/20 text-red-400" },
+  high: { label: "HIGH", cls: "bg-orange-500/20 text-orange-400" },
+  normal: { label: "", cls: "" },
+  low: { label: "LOW", cls: "bg-slate-500/20 text-slate-400" },
+};
+
 
 const TONE_CLASS: Record<Insight["tone"], string> = {
   positive: "border-emerald-500/30 bg-emerald-500/5",
@@ -162,9 +171,16 @@ function ReminderRow({ n, onDone }: { n: Notification; onDone: () => void }) {
           <p className={`text-sm font-semibold ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>
             {n.title}
           </p>
+          {(() => {
+            const p = PRIORITY_LABEL[n.priority] ?? PRIORITY_LABEL["normal"]!;
+            return p.label ? (
+              <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-bold", p.cls)}>{p.label}</span>
+            ) : null;
+          })()}
           <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             {kind.replace(/_/g, " ")}
           </span>
+
         </div>
         {n.body ? <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p> : null}
         <p className="mt-1 text-[10px] text-muted-foreground">

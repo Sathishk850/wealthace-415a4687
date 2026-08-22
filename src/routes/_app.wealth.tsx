@@ -9,6 +9,8 @@ import { InvestmentsView as LiveInvestmentsView } from "@/components/wealth/inve
 import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insurance-view";
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { WealthOverview } from "@/components/wealth/wealth-overview";
+import { AllocationTargetCard } from "@/components/wealth/AllocationTargetCard";
+
 import { getExchangeSessionLabels, getMarketStatus } from "@/lib/market/calendar";
 import { formatTime } from "@/lib/date-format";
 import { useEffect } from "react";

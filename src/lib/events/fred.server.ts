@@ -91,6 +91,16 @@ export const FRED_SERIES: SeriesSpec[] = [
     description: "Advance retail and food services sales, seasonally adjusted (Census via FRED).",
   },
   {
+    id: "ICSA",
+    name: "US Initial Jobless Claims",
+    category: "Employment",
+    impact: "Moderate",
+    unit: "K",
+    markets: ["S&P 500", "USD"],
+    assetClasses: ["Equity", "Currency"],
+    description: "Initial claims for unemployment insurance, weekly seasonally adjusted (DOL via FRED).",
+  },
+  {
     id: "UMCSENT",
     name: "US Consumer Sentiment",
     category: "Sentiment",
@@ -100,6 +110,7 @@ export const FRED_SERIES: SeriesSpec[] = [
     assetClasses: ["Equity", "Currency"],
     description: "University of Michigan Consumer Sentiment index (via FRED).",
   },
+
 ];
 
 type Observation = { date: string; value: string };
@@ -117,10 +128,12 @@ async function fredGet(path: string, params: Record<string, string>, apiKey: str
 function fmtValue(spec: SeriesSpec, value: number | null): string | null {
   if (value === null || !Number.isFinite(value)) return null;
   if (spec.unit === "%") return `${value.toFixed(2)}%`;
+  if (spec.unit === "K") return `${Math.round(value / 1000)}K`;
   if (spec.unit === "K jobs") return `${Math.round(value).toLocaleString("en-US")}K`;
   if (spec.unit === "$B" || spec.unit === "$M") return value.toLocaleString("en-US", { maximumFractionDigits: 1 });
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
+
 
 function num(v: string): number | null {
   if (!v || v === ".") return null;
