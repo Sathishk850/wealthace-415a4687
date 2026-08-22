@@ -217,7 +217,7 @@ export function computeInsights(input: {
     });
   }
 
-  return out;
+  return out.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]);
 }
 
 /* ------------------------------------------------------------------ *
