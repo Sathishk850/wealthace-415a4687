@@ -78,13 +78,17 @@ function Wealth() {
       ) : tab === "accounts" ? (
         <LiveAccountsView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : (
-        <LiveInvestmentsView
-          key="sip-tracker"
-          activeSub="SIP Tracker"
-          hideSubTabs
-          registerAdd={(fn) => { addRef.current = fn; }}
-        />
+        <>
+          <LiveInvestmentsView
+            key="sip-tracker"
+            activeSub="SIP Tracker"
+            hideSubTabs
+            registerAdd={(fn) => { addRef.current = fn; }}
+          />
+          <AllocationTargetCard className="mt-6" />
+        </>
       )}
+
     </div>
   );
 }
