@@ -123,9 +123,7 @@ const MOBILE_TABS: NavItem[] = [
 function Brand() {
   return (
     <>
-      <Link to="/dashboard" aria-label="Wealth Ace" className="sm:hidden">
-        <BrandIcon className="h-9 w-9" />
-      </Link>
+      <BrandMark to="/dashboard" size="sm" tagline={false} className="sm:hidden" />
       <span className="hidden sm:block">
         <BrandMark to="/dashboard" size="md" />
       </span>
