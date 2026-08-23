@@ -1353,15 +1353,15 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   <label className={labelCls}>
                     Average Buy Price ({sym}) <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="number"
-                    className={inputCls}
-                    min={0}
-                    step="0.01"
+                  <AmountInput
                     value={form.avg_price}
-                    onChange={(e) => setForm((f) => ({ ...f, avg_price: e.target.value }))}
+                    onChange={(v) => setForm((f) => ({ ...f, avg_price: v }))}
+                    className={inputCls}
                     placeholder="0.00"
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Tip: type an expression like <span className="text-mint">1200+18%</span> or <span className="text-mint">500*2</span>
+                  </p>
                 </div>
 
                 <div>
