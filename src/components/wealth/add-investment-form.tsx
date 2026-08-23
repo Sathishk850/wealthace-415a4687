@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { AmountInput } from "@/components/ui/amount-input";
 import { searchInstruments, getMarketQuotes } from "@/lib/market.functions";
 import type { IdentifierType, MarketQuote, SearchResult } from "@/lib/market/types";
 import { curatedKindFor, searchIndiaListed } from "@/lib/market/india-listed";
@@ -1353,15 +1354,15 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   <label className={labelCls}>
                     Average Buy Price ({sym}) <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="number"
-                    className={inputCls}
-                    min={0}
-                    step="0.01"
+                  <AmountInput
                     value={form.avg_price}
-                    onChange={(e) => setForm((f) => ({ ...f, avg_price: e.target.value }))}
+                    onChange={(v) => setForm((f) => ({ ...f, avg_price: v }))}
+                    className={inputCls}
                     placeholder="0.00"
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Tip: type an expression like <span className="text-mint">1200+18%</span> or <span className="text-mint">500*2</span>
+                  </p>
                 </div>
 
                 <div>

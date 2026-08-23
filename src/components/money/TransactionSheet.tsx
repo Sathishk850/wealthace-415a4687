@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { AmountInput } from "@/components/ui/amount-input";
 import { useUpsertTransaction, useCategories, todayIso } from "@/lib/money-api";
 import type { Transaction } from "@/lib/money-api";
 import { cn } from "@/lib/utils";
@@ -79,7 +80,10 @@ export function TransactionSheet({ open, onOpenChange, initial, clone = false }:
             </div>
           </div>
           <div><label className={lbl}>Date</label><input type="date" className={inp} value={date} onChange={(e) => setDate(e.target.value)} /></div>
-          <div><label className={lbl}>Amount</label><input type="number" min="0" step="0.01" className={inp} placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
+<div>
+  <label className={lbl}>Amount</label>
+  <AmountInput value={amount} onChange={setAmount} className={inp} placeholder="0.00" />
+</div>
           <div><label className={lbl}>Description</label><input type="text" className={inp} placeholder="e.g. Swiggy, Salary, SIP" value={merchant} onChange={(e) => setMerchant(e.target.value)} /></div>
           <div>
             <label className={lbl}>Category</label>
