@@ -254,7 +254,7 @@ function Landing() {
             <Link
               to="/auth"
               search={{ mode: "signin" }}
-              className="btn-secondary-glow rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground"
+              className="btn-secondary-glow whitespace-nowrap rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground"
             >
               Sign In
             </Link>
