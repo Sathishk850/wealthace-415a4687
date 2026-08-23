@@ -229,6 +229,15 @@ export function HoldingDetailsModal({
             />
             <KpiCard label="Avg. Buy Price" value={priceIn(avgBuy, ccy)} />
             <KpiCard label="Net Quantity" value={String(netQty)} />
+            <KpiCard
+              label="Allocation %"
+              value={
+                allocationPct != null && Number.isFinite(allocationPct)
+                  ? `${allocationPct.toFixed(2)}%`
+                  : "—"
+              }
+              tone="text-mint"
+            />
           </div>
 
           <div className="mt-5">
