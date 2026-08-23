@@ -243,27 +243,31 @@ function Landing() {
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-black/70 backdrop-blur-xl load-nav">
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-          <BrandMark to="/" size="md" tagline className="fv-brand-rise min-w-0" />
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 overflow-hidden px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
+          <BrandMark to="/" size="sm" tagline className="fv-brand-rise min-w-0 shrink sm:hidden" />
+          <span className="hidden min-w-0 sm:block">
+            <BrandMark to="/" size="md" tagline className="fv-brand-rise min-w-0" />
+          </span>
           <nav className="hidden items-center gap-9 text-sm text-muted-foreground md:flex">
             <a href="#features" onClick={smoothTo("features")} className="nav-link transition-colors hover:text-foreground">Features</a>
             <a href="#how" onClick={smoothTo("how")} className="nav-link transition-colors hover:text-foreground">How It Works</a>
             <a href="#about" onClick={smoothTo("about")} className="nav-link transition-colors hover:text-foreground">About</a>
           </nav>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Link
               to="/auth"
               search={{ mode: "signin" }}
-              className="btn-secondary-glow whitespace-nowrap rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground"
+              className="btn-secondary-glow whitespace-nowrap rounded-xl border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-foreground sm:px-4 sm:py-2 sm:text-sm"
             >
               Sign In
             </Link>
             <Link
               to="/auth"
               search={{ mode: "signup" }}
-              className="btn-primary-glow whitespace-nowrap rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground"
+              className="btn-primary-glow whitespace-nowrap rounded-xl bg-mint px-2.5 py-1.5 text-xs font-semibold text-mint-foreground sm:px-4 sm:py-2 sm:text-sm"
             >
-              Get Started Free
+              Get Started
+              <span className="hidden sm:inline"> Free</span>
             </Link>
           </div>
         </div>
