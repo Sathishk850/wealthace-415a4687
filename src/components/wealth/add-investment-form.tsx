@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { AmountInput } from "@/components/ui/amount-input";
 import { searchInstruments, getMarketQuotes } from "@/lib/market.functions";
 import type { IdentifierType, MarketQuote, SearchResult } from "@/lib/market/types";
 import { curatedKindFor, searchIndiaListed } from "@/lib/market/india-listed";
