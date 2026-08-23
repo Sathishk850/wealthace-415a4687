@@ -167,15 +167,15 @@ const CLASSIFICATION_SUGGESTIONS: Record<string, string[]> = {
 
 /** Currencies allowed per category (first entry is the default). */
 const CURRENCY_BY_CATEGORY: Record<string, Currency[]> = {
-  Stocks: ["INR", "USD"],
+  Stocks: ["INR", "USD", "UGX"],
   "Mutual Funds": ["INR"],
-  ETFs: ["INR", "USD"],
-  Commodities: ["INR", "USD"],
+  ETFs: ["INR", "USD", "UGX"],
+  Commodities: ["INR", "USD", "UGX"],
   REIT: ["INR"],
   InvIT: ["INR"],
-  Bonds: ["INR", "USD"],
-  "Fixed Deposit": ["INR", "USD"],
-  Crypto: ["INR", "USD"],
+  Bonds: ["INR", "USD", "UGX"],
+  "Fixed Deposit": ["INR", "USD", "UGX"],
+  Crypto: ["INR", "USD", "UGX"],
 };
 
 const SECTOR_SUGGESTIONS = [
@@ -786,14 +786,14 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
   const segmentOptions = SEGMENT_BY_CATEGORY[form.category] ?? [];
   const classificationOptions = CLASSIFICATION_SUGGESTIONS[form.category] ?? [];
-  const currencyOptions = CURRENCY_BY_CATEGORY[form.category] ?? (["INR", "USD"] as Currency[]);
+  const currencyOptions = CURRENCY_BY_CATEGORY[form.category] ?? (["INR", "USD", "UGX"] as Currency[]);
   const isExchangeListedTrust = form.category === "REIT" || form.category === "InvIT";
 
   // REIT / InvIT units are bought directly on the exchange — default the
   // platform to "NSE Listed" and keep currency inside the allowed set.
   useEffect(() => {
     setForm((f) => {
-      const allowed = CURRENCY_BY_CATEGORY[f.category] ?? (["INR", "USD"] as Currency[]);
+      const allowed = CURRENCY_BY_CATEGORY[f.category] ?? (["INR", "USD", "UGX"] as Currency[]);
       const nextCurrency = allowed.includes(f.currency) ? f.currency : allowed[0];
       const nextPlatform =
         (f.category === "REIT" || f.category === "InvIT") && !f.platform

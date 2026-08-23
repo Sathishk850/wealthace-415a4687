@@ -70,6 +70,8 @@ export async function fetchAllFxRates(): Promise<FxRate[]> {
   const pairs: [string, string][] = [
     ["UGX", "INR"],
     ["UGX", "USD"],
+    ["UGX", "EUR"],
+    ["UGX", "GBP"],
     ["USD", "INR"],
   ];
   const results = await Promise.allSettled(pairs.map(([f, t]) => fetchFxRate(f, t)));
