@@ -250,18 +250,18 @@ function Landing() {
             <a href="#how" onClick={smoothTo("how")} className="nav-link transition-colors hover:text-foreground">How It Works</a>
             <a href="#about" onClick={smoothTo("about")} className="nav-link transition-colors hover:text-foreground">About</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               to="/auth"
               search={{ mode: "signin" }}
-              className="btn-secondary-glow rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground"
+              className="btn-secondary-glow whitespace-nowrap rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground"
             >
               Sign In
             </Link>
             <Link
               to="/auth"
               search={{ mode: "signup" }}
-              className="btn-primary-glow rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground"
+              className="btn-primary-glow whitespace-nowrap rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground"
             >
               Get Started Free
             </Link>
