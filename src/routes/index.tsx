@@ -261,7 +261,7 @@ function Landing() {
             <Link
               to="/auth"
               search={{ mode: "signup" }}
-              className="btn-primary-glow rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground"
+              className="btn-primary-glow whitespace-nowrap rounded-xl bg-mint px-4 py-2 text-sm font-semibold text-mint-foreground"
             >
               Get Started Free
             </Link>
