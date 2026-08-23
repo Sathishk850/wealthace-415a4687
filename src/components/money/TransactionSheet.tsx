@@ -83,7 +83,7 @@ export function TransactionSheet({ open, onOpenChange, initial, clone = false }:
           <div><label className={lbl}>Description</label><input type="text" className={inp} placeholder="e.g. Swiggy, Salary, SIP" value={merchant} onChange={(e) => setMerchant(e.target.value)} /></div>
           <div>
             <label className={lbl}>Category</label>
-            <select className={inp} value={categoryId ?? ""} onChange={(e) => setCategoryId(e.value || null)}>
+            <select className={inp} value={categoryId ?? ""} onChange={(e) => setCategoryId(e.target.value || null)}>
               <option value="">— Select category —</option>
               {filteredCats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
