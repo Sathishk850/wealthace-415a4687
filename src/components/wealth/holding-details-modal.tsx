@@ -69,6 +69,7 @@ export function HoldingDetailsModal({
   lots,
   quote,
   platformLabel,
+  allocationPct,
   initialTab = "fundamental",
 }: Props) {
 
