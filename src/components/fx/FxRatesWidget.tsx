@@ -7,6 +7,8 @@ import { useFxRates } from "@/lib/use-fx-rates";
 const PAIRS = [
   { from: "UGX", to: "INR", label: "UGX / INR", flag: "🇺🇬" },
   { from: "UGX", to: "USD", label: "UGX / USD", flag: "🇺🇬" },
+  { from: "UGX", to: "EUR", label: "UGX / EUR", flag: "🇺🇬" },
+  { from: "UGX", to: "GBP", label: "UGX / GBP", flag: "🇺🇬" },
   { from: "USD", to: "INR", label: "USD / INR", flag: "🇺🇸" },
 ];
 
