@@ -518,19 +518,27 @@ export function defaultMaturityDate(
 
 export type SipFrequency = "monthly" | "weekly" | "quarterly" | "yearly";
 
-export type Currency = "INR" | "USD" | "EUR" | "GBP";
-export const CURRENCIES: Currency[] = ["INR", "USD", "EUR", "GBP"];
+export type Currency = "INR" | "USD" | "EUR" | "GBP" | "UGX";
+export const CURRENCIES: Currency[] = ["INR", "USD", "EUR", "GBP", "UGX"];
 export const CURRENCY_SYMBOL: Record<Currency, string> = {
   INR: "₹",
   USD: "$",
   EUR: "€",
   GBP: "£",
+  UGX: "USh",
+};
+export const CURRENCY_LABEL: Record<Currency, string> = {
+  INR: "INR — Indian Rupee",
+  USD: "USD — US Dollar",
+  EUR: "EUR — Euro",
+  GBP: "GBP — British Pound",
+  UGX: "UGX — Ugandan Shilling",
 };
 
 /** Precise per-unit price formatter with currency symbol (2–4 dp). */
 export const priceIn = (n: number, ccy: Currency | string | null | undefined) => {
   const sym = CURRENCY_SYMBOL[(ccy as Currency) ?? "INR"] ?? "₹";
-  const locale = ccy === "INR" ? "en-IN" : "en-US";
+  const locale = ccy === "INR" ? "en-IN" : ccy === "UGX" ? "en-UG" : "en-US";
   return (
     sym +
     (Number.isFinite(n) ? n : 0).toLocaleString(locale, {
@@ -543,7 +551,7 @@ export const priceIn = (n: number, ccy: Currency | string | null | undefined) =>
 /** Rounded amount formatter with currency symbol (whole units). */
 export const amountIn = (n: number, ccy: Currency | string | null | undefined) => {
   const sym = CURRENCY_SYMBOL[(ccy as Currency) ?? "INR"] ?? "₹";
-  const locale = ccy === "INR" ? "en-IN" : "en-US";
+  const locale = ccy === "INR" ? "en-IN" : ccy === "UGX" ? "en-UG" : "en-US";
   return sym + Math.round(Number.isFinite(n) ? n : 0).toLocaleString(locale);
 };
 

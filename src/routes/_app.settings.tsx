@@ -104,6 +104,7 @@ const CURRENCIES = [
   { v: "SGD", l: "SGD — Singapore Dollar" },
   { v: "AED", l: "AED — UAE Dirham" },
   { v: "CHF", l: "CHF — Swiss Franc" },
+  { v: "UGX", l: "UGX — Ugandan Shilling" },
 ];
 const LANGUAGES = [
   { v: "en", l: "English" },

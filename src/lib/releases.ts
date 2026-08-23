@@ -6,6 +6,14 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    version: "1.7.0",
+    releaseDate: "2026-08-23",
+    changes: [
+      "Added UGX (Ugandan Shilling) support — track assets, investments and accounts in UGX.",
+      "Live UGX conversion rates (INR, USD, EUR, GBP) in the FX Rates widget.",
+    ],
+  },
+  {
     version: "1.6.0",
     releaseDate: "2026-07-25",
     changes: [
