@@ -51,6 +51,8 @@ type Props = {
   lots?: Investment[] | null;
   quote?: MarketQuote | null;
   platformLabel?: string;
+  /** Share of the current portfolio value this holding represents (percent). */
+  allocationPct?: number | null;
   /** Tab to auto-select when the modal opens. */
   initialTab?: DetailTab;
 };
