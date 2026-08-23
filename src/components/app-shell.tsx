@@ -102,13 +102,13 @@ ProfileMenuTrigger.displayName = "ProfileMenuTrigger";
 type IconType = React.ComponentType<{ className?: string }>;
 type NavItem = { to: string; label: string; icon: IconType };
 
+// Tools intentionally lives only in the profile menu (desktop) — not the top nav.
 const TOP_TABS: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/wealth", label: "Wealth", icon: Wallet },
   { to: "/money", label: "Money", icon: Coins },
   { to: "/planner", label: "Planner", icon: CalendarClock },
   { to: "/events", label: "Events", icon: Calendar },
-  { to: "/tools", label: "Tools", icon: Wrench },
 ];
 
 const MOBILE_TABS: NavItem[] = [
