@@ -51,6 +51,8 @@ type Props = {
   lots?: Investment[] | null;
   quote?: MarketQuote | null;
   platformLabel?: string;
+  /** Share of the current portfolio value this holding represents (percent). */
+  allocationPct?: number | null;
   /** Tab to auto-select when the modal opens. */
   initialTab?: DetailTab;
 };
@@ -67,6 +69,7 @@ export function HoldingDetailsModal({
   lots,
   quote,
   platformLabel,
+  allocationPct,
   initialTab = "fundamental",
 }: Props) {
 
@@ -229,6 +232,15 @@ export function HoldingDetailsModal({
             />
             <KpiCard label="Avg. Buy Price" value={priceIn(avgBuy, ccy)} />
             <KpiCard label="Net Quantity" value={String(netQty)} />
+            <KpiCard
+              label="Allocation %"
+              value={
+                allocationPct != null && Number.isFinite(allocationPct)
+                  ? `${allocationPct.toFixed(2)}%`
+                  : "—"
+              }
+              tone="text-mint"
+            />
           </div>
 
           <div className="mt-5">

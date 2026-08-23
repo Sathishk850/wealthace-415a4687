@@ -690,15 +690,9 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
 
       {/* ============ TOOLBAR (mobile) ============ */}
+      {/* Filters + add on the first row; search (with refresh on its right) below. */}
       <div className="space-y-2 md:hidden">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setMobileSearch((v) => !v)}
-            aria-label="Search holdings"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground"
-          >
-            <Search className="h-4 w-4" />
-          </button>
           <div className="-mx-1 min-w-0 flex-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max items-center gap-2">
               <FilterMenu
@@ -727,7 +721,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
               />
             </div>
           </div>
-          <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
           <button
             onClick={openAdd}
             aria-label={ADD_LABEL[tab]}
@@ -736,18 +729,18 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             <Plus className="h-4 w-4" />
           </button>
         </div>
-        {mobileSearch ? (
-          <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
-              autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={SEARCH_PLACEHOLDER[tab]}
               className="w-full rounded-xl border border-border bg-surface-2 py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-mint/50 focus:outline-none"
             />
           </div>
-        ) : null}
+          <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
+        </div>
       </div>
 
       {/* ============ TOOLBAR (desktop) ============ */}
