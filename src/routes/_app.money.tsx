@@ -36,6 +36,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -47,6 +49,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { PaymentFields } from "@/components/payment/payment-fields";
 import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +81,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Budget,
   Category,
   Kind,
   PALETTE,
@@ -692,6 +696,9 @@ function Money() {
           totalBudget={totalBudget}
           totalSpent={totalSpent}
           onEdit={(b) => setOpenBudget({ open: true, editing: b })}
+          allBudgets={budgets}
+          transactions={transactions}
+          onCopiedLastMonth={() => {}}
         />
       )}
 
@@ -708,6 +715,7 @@ function Money() {
         editing={openBudget.editing}
         expenseCategories={categories.filter((c) => c.kind === "expense")}
         activeMonthKey={activeMonthKey}
+        transactions={transactions}
       />
       <BankStatementImporter open={importOpen} onOpenChange={setImportOpen} />
     </>
@@ -1380,10 +1388,14 @@ type BudgetRow = {
 function BudgetsView({
   rows,
   categories,
+  activeMonthKey,
   activeMonthLabel,
   totalBudget,
   totalSpent,
   onEdit,
+  allBudgets,
+  transactions,
+  onCopiedLastMonth,
 }: {
   rows: BudgetRow[];
   categories: Category[];
@@ -1392,9 +1404,59 @@ function BudgetsView({
   totalBudget: number;
   totalSpent: number;
   onEdit: (b: BudgetRow) => void;
+  allBudgets: Budget[];
+  transactions: Transaction[];
+  onCopiedLastMonth: () => void;
 }) {
   const delMut = useDeleteBudget();
+  const upsertBudget = useUpsertBudget();
   const [confirm, setConfirm] = useState<BudgetRow | null>(null);
+  const [copying, setCopying] = useState(false);
+
+  // Burn rate: at current pace, projected spend by end of month
+  const daysInMonth = new Date(
+    parseInt(activeMonthKey.slice(0, 4)),
+    parseInt(activeMonthKey.slice(5, 7)),
+    0
+  ).getDate();
+  const today = new Date();
+  const daysElapsed = Math.max(1,
+    activeMonthKey.slice(0, 7) === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`
+      ? today.getDate()
+      : daysInMonth
+  );
+
+  // Last month's budgets for copy action
+  const lastMonthKey = (() => {
+    const d = new Date(activeMonthKey);
+    d.setMonth(d.getMonth() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  })();
+  const lastMonthBudgets = allBudgets.filter(
+    (b) => b.period_month.slice(0, 7) === lastMonthKey.slice(0, 7)
+  );
+  const currentCatIds = new Set(rows.map((r) => r.category_id));
+
+  const handleCopyLastMonth = async () => {
+    const toCopy = lastMonthBudgets.filter((b) => !currentCatIds.has(b.category_id));
+    if (!toCopy.length) { toast.info("All last month's budgets are already set for this month."); return; }
+    setCopying(true);
+    try {
+      for (const b of toCopy) {
+        await upsertBudget.mutateAsync({
+          category_id: b.category_id,
+          period_month: activeMonthKey,
+          amount_limit: b.amount_limit,
+        });
+      }
+      toast.success(`Copied ${toCopy.length} budget${toCopy.length === 1 ? "" : "s"} from last month`);
+      onCopiedLastMonth();
+    } catch (e: any) {
+      toast.error(e.message || "Copy failed");
+    } finally {
+      setCopying(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -1407,7 +1469,18 @@ function BudgetsView({
       <div className="rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="text-sm font-semibold text-foreground">Budgets · {activeMonthLabel}</div>
-          {categories.length === 0 && <div className="text-xs text-muted-foreground">Create an expense category first.</div>}
+          <div className="flex items-center gap-2">
+            {lastMonthBudgets.length > 0 && (
+              <button
+                onClick={handleCopyLastMonth}
+                disabled={copying}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-mint/40 hover:text-mint disabled:opacity-60"
+              >
+                {copying ? "Copying…" : "Copy from last month"}
+              </button>
+            )}
+            {categories.length === 0 && <div className="text-xs text-muted-foreground">Create an expense category first.</div>}
+          </div>
         </div>
         {rows.length === 0 ? (
           <EmptyState icon={Inbox} title="No budgets for this month" description="Click Add to set a monthly limit for a category." />
@@ -1419,7 +1492,9 @@ function BudgetsView({
                   <th className="px-4 py-2.5 text-left font-medium">Category</th>
                   <th className="px-4 py-2.5 text-right font-medium">Limit</th>
                   <th className="px-4 py-2.5 text-right font-medium">Spent</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Remaining</th>
                   <th className="px-4 py-2.5 text-left font-medium">Progress</th>
+                  <th className="px-4 py-2.5 text-right font-medium hidden lg:table-cell">Projected</th>
                   <th className="px-4 py-2.5 text-right font-medium">Status</th>
                   <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
@@ -1438,13 +1513,32 @@ function BudgetsView({
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-foreground">₹{b.amount_limit.toLocaleString("en-IN")}</td>
                       <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">₹{b.spent.toLocaleString("en-IN")}</td>
+                      <td className={`px-4 py-3 text-right tabular-nums text-xs font-semibold ${b.amount_limit - b.spent >= 0 ? "text-success" : "text-destructive"}`}>
+                        {b.amount_limit - b.spent >= 0 ? "+" : ""}₹{Math.abs(b.amount_limit - b.spent).toLocaleString("en-IN")}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-40 overflow-hidden rounded-full bg-surface">
+                          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-surface">
                             <div className="h-full rounded-full" style={{ width: `${Math.min(b.pct, 100)}%`, background: barColor }} />
                           </div>
                           <span className="text-xs tabular-nums text-muted-foreground">{b.pct}%</span>
+                          {b.status === "At Risk" && (
+                            <span title="Spending is at 80%+ of budget" className="text-amber-400 text-[10px] font-bold">⚠ 80%</span>
+                          )}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-right hidden lg:table-cell">
+                        {(() => {
+                          const projected = Math.round((b.spent / daysElapsed) * daysInMonth);
+                          const overBy = projected - b.amount_limit;
+                          if (b.spent === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                          return (
+                            <span className={`text-xs font-medium tabular-nums ${overBy > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                              ₹{projected.toLocaleString("en-IN")}
+                              {overBy > 0 && <span className="ml-1 text-[10px]">+₹{overBy.toLocaleString("en-IN")}</span>}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className={`px-4 py-3 text-right text-xs font-semibold ${tone}`}>{b.status}</td>
                       <td className="px-4 py-3 text-right">
@@ -1488,6 +1582,12 @@ function BudgetsView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BudgetHistoryChart
+        transactions={transactions}
+        budgets={allBudgets}
+        categories={categories}
+      />
     </div>
   );
 }
@@ -1501,12 +1601,14 @@ function BudgetDialog({
   editing,
   expenseCategories,
   activeMonthKey,
+  transactions,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing?: BudgetRow;
   expenseCategories: Category[];
   activeMonthKey: string;
+  transactions: Transaction[];
 }) {
   const [categoryId, setCategoryId] = useState<string>(editing?.category_id ?? "");
   const [month, setMonth] = useState<string>(editing?.period_month?.slice(0, 7) ?? activeMonthKey.slice(0, 7));
@@ -1526,6 +1628,22 @@ function BudgetDialog({
     }
     return null;
   }, [open, editing, activeMonthKey]);
+
+  // Auto-fill: average actual spend for selected category across last 3 months
+  const suggestion = useMemo(() => {
+    if (!categoryId || showNewCat) return null;
+    const now = new Date();
+    const monthlyTotals = [1, 2, 3].map((i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      return transactions
+        .filter((t) => t.kind === "expense" && t.category_id === categoryId && t.occurred_on.slice(0, 7) === mk)
+        .reduce((s, t) => s + t.amount, 0);
+    });
+    const nonZero = monthlyTotals.filter((v) => v > 0);
+    if (!nonZero.length) return null;
+    return Math.round(nonZero.reduce((a, b) => a + b, 0) / nonZero.length);
+  }, [categoryId, showNewCat, transactions]);
 
   const upsert = useUpsertBudget();
   const upsertCat = useUpsertCategory();
@@ -1644,6 +1762,21 @@ function BudgetDialog({
             <div>
               <Label>Limit (₹)</Label>
               <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="10000" />
+              {suggestion != null && !editing && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    Suggested <span className="font-semibold text-foreground">₹{suggestion.toLocaleString("en-IN")}</span>
+                    <span className="text-muted-foreground"> (avg last 3 months)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(String(suggestion))}
+                    className="rounded-md border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint hover:bg-mint/20"
+                  >
+                    Use
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           {err && <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{err}</div>}
@@ -1667,5 +1800,70 @@ function BudgetDialog({
 
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ============================================================
+ * Budget History Chart — last 6 months budget vs actual
+ * ========================================================== */
+function BudgetHistoryChart({
+  transactions,
+  budgets,
+  categories,
+}: {
+  transactions: Transaction[];
+  budgets: Budget[];
+  categories: Category[];
+}) {
+  const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+
+  const data = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleString("en-IN", { month: "short", year: "2-digit" });
+      const budgeted = budgets
+        .filter((b) => b.period_month.slice(0, 7) === mk)
+        .reduce((s, b) => s + b.amount_limit, 0);
+      const actual = transactions
+        .filter((t) => t.kind === "expense" && t.occurred_on.slice(0, 7) === mk)
+        .reduce((s, t) => s + t.amount, 0);
+      return { label, budgeted, actual };
+    });
+  }, [transactions, budgets]);
+
+  const hasBudgetData = data.some((d) => d.budgeted > 0);
+  if (!hasBudgetData) return null;
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <div className="text-sm font-semibold text-foreground">Budget vs Actual (last 6 months)</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">Aggregate across all budgeted categories</div>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-mint/70" />Budget</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#EF4444]/70" />Actual</span>
+        </div>
+      </div>
+      <div className="h-44">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 4, right: 8, left: -8, bottom: 0 }} barCategoryGap="28%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
+            <XAxis dataKey="label" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${Math.round(v / 1000)}k`} />
+            <Tooltip
+              contentStyle={{ background: "#102634", border: "1px solid #1C3850", borderRadius: 12, fontSize: 12 }}
+              formatter={(v: number, name: string) => [inr(v), name === "budgeted" ? "Budget" : "Actual"]}
+              labelStyle={{ color: "#9CA3AF" }}
+            />
+            <Bar dataKey="budgeted" name="budgeted" fill="#22d3ee" fillOpacity={0.5} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="actual" name="actual" fill="#EF4444" fillOpacity={0.7} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }
