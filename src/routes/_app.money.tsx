@@ -80,6 +80,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Budget,
   Category,
   Kind,
   PALETTE,
