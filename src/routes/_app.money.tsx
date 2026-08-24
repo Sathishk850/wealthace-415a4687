@@ -1802,3 +1802,68 @@ function BudgetDialog({
     </Dialog>
   );
 }
+
+/* ============================================================
+ * Budget History Chart — last 6 months budget vs actual
+ * ========================================================== */
+function BudgetHistoryChart({
+  transactions,
+  budgets,
+  categories,
+}: {
+  transactions: Transaction[];
+  budgets: Budget[];
+  categories: Category[];
+}) {
+  const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+
+  const data = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleString("en-IN", { month: "short", year: "2-digit" });
+      const budgeted = budgets
+        .filter((b) => b.period_month.slice(0, 7) === mk)
+        .reduce((s, b) => s + b.amount_limit, 0);
+      const actual = transactions
+        .filter((t) => t.kind === "expense" && t.occurred_on.slice(0, 7) === mk)
+        .reduce((s, t) => s + t.amount, 0);
+      return { label, budgeted, actual };
+    });
+  }, [transactions, budgets]);
+
+  const hasBudgetData = data.some((d) => d.budgeted > 0);
+  if (!hasBudgetData) return null;
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <div className="text-sm font-semibold text-foreground">Budget vs Actual (last 6 months)</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">Aggregate across all budgeted categories</div>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-mint/70" />Budget</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#EF4444]/70" />Actual</span>
+        </div>
+      </div>
+      <div className="h-44">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 4, right: 8, left: -8, bottom: 0 }} barCategoryGap="28%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#1C3850" vertical={false} />
+            <XAxis dataKey="label" stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} />
+            <YAxis stroke="#6E8294" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${Math.round(v / 1000)}k`} />
+            <Tooltip
+              contentStyle={{ background: "#102634", border: "1px solid #1C3850", borderRadius: 12, fontSize: 12 }}
+              formatter={(v: number, name: string) => [inr(v), name === "budgeted" ? "Budget" : "Actual"]}
+              labelStyle={{ color: "#9CA3AF" }}
+            />
+            <Bar dataKey="budgeted" name="budgeted" fill="#22d3ee" fillOpacity={0.5} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="actual" name="actual" fill="#EF4444" fillOpacity={0.7} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
