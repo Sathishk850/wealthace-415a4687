@@ -711,6 +711,7 @@ function Money() {
         editing={openBudget.editing}
         expenseCategories={categories.filter((c) => c.kind === "expense")}
         activeMonthKey={activeMonthKey}
+        transactions={transactions}
       />
       <BankStatementImporter open={importOpen} onOpenChange={setImportOpen} />
     </>
