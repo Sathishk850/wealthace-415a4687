@@ -1665,6 +1665,21 @@ function BudgetDialog({
             <div>
               <Label>Limit (₹)</Label>
               <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="10000" />
+              {suggestion != null && !editing && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    Suggested <span className="font-semibold text-foreground">₹{suggestion.toLocaleString("en-IN")}</span>
+                    <span className="text-muted-foreground"> (avg last 3 months)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(String(suggestion))}
+                    className="rounded-md border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint hover:bg-mint/20"
+                  >
+                    Use
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           {err && <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{err}</div>}
