@@ -696,6 +696,9 @@ function Money() {
           totalBudget={totalBudget}
           totalSpent={totalSpent}
           onEdit={(b) => setOpenBudget({ open: true, editing: b })}
+          allBudgets={budgets}
+          transactions={transactions}
+          onCopiedLastMonth={() => {}}
         />
       )}
 
