@@ -1466,7 +1466,18 @@ function BudgetsView({
       <div className="rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="text-sm font-semibold text-foreground">Budgets · {activeMonthLabel}</div>
-          {categories.length === 0 && <div className="text-xs text-muted-foreground">Create an expense category first.</div>}
+          <div className="flex items-center gap-2">
+            {lastMonthBudgets.length > 0 && (
+              <button
+                onClick={handleCopyLastMonth}
+                disabled={copying}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-mint/40 hover:text-mint disabled:opacity-60"
+              >
+                {copying ? "Copying…" : "Copy from last month"}
+              </button>
+            )}
+            {categories.length === 0 && <div className="text-xs text-muted-foreground">Create an expense category first.</div>}
+          </div>
         </div>
         {rows.length === 0 ? (
           <EmptyState icon={Inbox} title="No budgets for this month" description="Click Add to set a monthly limit for a category." />
