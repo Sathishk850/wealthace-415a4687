@@ -1489,7 +1489,9 @@ function BudgetsView({
                   <th className="px-4 py-2.5 text-left font-medium">Category</th>
                   <th className="px-4 py-2.5 text-right font-medium">Limit</th>
                   <th className="px-4 py-2.5 text-right font-medium">Spent</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Remaining</th>
                   <th className="px-4 py-2.5 text-left font-medium">Progress</th>
+                  <th className="px-4 py-2.5 text-right font-medium hidden lg:table-cell">Projected</th>
                   <th className="px-4 py-2.5 text-right font-medium">Status</th>
                   <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
