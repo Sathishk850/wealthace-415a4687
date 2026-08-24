@@ -1405,7 +1405,54 @@ function BudgetsView({
   onCopiedLastMonth: () => void;
 }) {
   const delMut = useDeleteBudget();
+  const upsertBudget = useUpsertBudget();
   const [confirm, setConfirm] = useState<BudgetRow | null>(null);
+  const [copying, setCopying] = useState(false);
+
+  // Burn rate: at current pace, projected spend by end of month
+  const daysInMonth = new Date(
+    parseInt(activeMonthKey.slice(0, 4)),
+    parseInt(activeMonthKey.slice(5, 7)),
+    0
+  ).getDate();
+  const today = new Date();
+  const daysElapsed = Math.max(1,
+    activeMonthKey.slice(0, 7) === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`
+      ? today.getDate()
+      : daysInMonth
+  );
+
+  // Last month's budgets for copy action
+  const lastMonthKey = (() => {
+    const d = new Date(activeMonthKey);
+    d.setMonth(d.getMonth() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  })();
+  const lastMonthBudgets = allBudgets.filter(
+    (b) => b.period_month.slice(0, 7) === lastMonthKey.slice(0, 7)
+  );
+  const currentCatIds = new Set(rows.map((r) => r.category_id));
+
+  const handleCopyLastMonth = async () => {
+    const toCopy = lastMonthBudgets.filter((b) => !currentCatIds.has(b.category_id));
+    if (!toCopy.length) { toast.info("All last month's budgets are already set for this month."); return; }
+    setCopying(true);
+    try {
+      for (const b of toCopy) {
+        await upsertBudget.mutateAsync({
+          category_id: b.category_id,
+          period_month: activeMonthKey,
+          amount_limit: b.amount_limit,
+        });
+      }
+      toast.success(`Copied ${toCopy.length} budget${toCopy.length === 1 ? "" : "s"} from last month`);
+      onCopiedLastMonth();
+    } catch (e: any) {
+      toast.error(e.message || "Copy failed");
+    } finally {
+      setCopying(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
