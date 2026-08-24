@@ -1579,6 +1579,12 @@ function BudgetsView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BudgetHistoryChart
+        transactions={transactions}
+        budgets={allBudgets}
+        categories={categories}
+      />
     </div>
   );
 }
