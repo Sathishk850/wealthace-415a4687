@@ -5,7 +5,6 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import {
-  TrendingDown, Calendar, Banknote, Percent,
   ChevronDown, ChevronUp, Pencil,
 } from "lucide-react";
 import { inr, type Liability } from "@/lib/wealth-api";
