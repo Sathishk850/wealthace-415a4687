@@ -1504,12 +1504,14 @@ function BudgetDialog({
   editing,
   expenseCategories,
   activeMonthKey,
+  transactions,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing?: BudgetRow;
   expenseCategories: Category[];
   activeMonthKey: string;
+  transactions: Transaction[];
 }) {
   const [categoryId, setCategoryId] = useState<string>(editing?.category_id ?? "");
   const [month, setMonth] = useState<string>(editing?.period_month?.slice(0, 7) ?? activeMonthKey.slice(0, 7));
