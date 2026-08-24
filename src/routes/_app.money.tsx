@@ -1532,6 +1532,22 @@ function BudgetDialog({
     return null;
   }, [open, editing, activeMonthKey]);
 
+  // Auto-fill: average actual spend for selected category across last 3 months
+  const suggestion = useMemo(() => {
+    if (!categoryId || showNewCat) return null;
+    const now = new Date();
+    const monthlyTotals = [1, 2, 3].map((i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      return transactions
+        .filter((t) => t.kind === "expense" && t.category_id === categoryId && t.occurred_on.slice(0, 7) === mk)
+        .reduce((s, t) => s + t.amount, 0);
+    });
+    const nonZero = monthlyTotals.filter((v) => v > 0);
+    if (!nonZero.length) return null;
+    return Math.round(nonZero.reduce((a, b) => a + b, 0) / nonZero.length);
+  }, [categoryId, showNewCat, transactions]);
+
   const upsert = useUpsertBudget();
   const upsertCat = useUpsertCategory();
   const qc = useQueryClient();
