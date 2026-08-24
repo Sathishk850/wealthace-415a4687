@@ -6,6 +6,18 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    version: "1.8.0",
+    releaseDate: "2026-08-24",
+    changes: [
+      "Auto-fill budget from last 3 months average — select a category and get an instant suggestion.",
+      "Remaining budget column — instantly see how much headroom you have per category.",
+      "Burn rate projection — see if your current spend pace will exceed the budget by month-end.",
+      "Copy from last month — replicate all last month's budgets to this month in one tap.",
+      "Budget history chart — 6-month bar chart of budgeted vs actual spending.",
+      "80% nudge badge — At Risk budgets now show a visible ⚠ 80% indicator.",
+    ],
+  },
+  {
     version: "1.7.0",
     releaseDate: "2026-08-23",
     changes: [
