@@ -38,12 +38,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -590,7 +584,7 @@ export function LiabilitiesView({
         existing={editing}
       />
 
-      <LiabilityDetailsModal
+      <LoanDashboard
         liability={details}
         onClose={() => setDetails(null)}
         onEdit={(l) => {
