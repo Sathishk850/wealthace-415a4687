@@ -1510,13 +1510,32 @@ function BudgetsView({
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-foreground">₹{b.amount_limit.toLocaleString("en-IN")}</td>
                       <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">₹{b.spent.toLocaleString("en-IN")}</td>
+                      <td className={`px-4 py-3 text-right tabular-nums text-xs font-semibold ${b.amount_limit - b.spent >= 0 ? "text-success" : "text-destructive"}`}>
+                        {b.amount_limit - b.spent >= 0 ? "+" : ""}₹{Math.abs(b.amount_limit - b.spent).toLocaleString("en-IN")}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-40 overflow-hidden rounded-full bg-surface">
+                          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-surface">
                             <div className="h-full rounded-full" style={{ width: `${Math.min(b.pct, 100)}%`, background: barColor }} />
                           </div>
                           <span className="text-xs tabular-nums text-muted-foreground">{b.pct}%</span>
+                          {b.status === "At Risk" && (
+                            <span title="Spending is at 80%+ of budget" className="text-amber-400 text-[10px] font-bold">⚠ 80%</span>
+                          )}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-right hidden lg:table-cell">
+                        {(() => {
+                          const projected = Math.round((b.spent / daysElapsed) * daysInMonth);
+                          const overBy = projected - b.amount_limit;
+                          if (b.spent === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                          return (
+                            <span className={`text-xs font-medium tabular-nums ${overBy > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                              ₹{projected.toLocaleString("en-IN")}
+                              {overBy > 0 && <span className="ml-1 text-[10px]">+₹{overBy.toLocaleString("en-IN")}</span>}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className={`px-4 py-3 text-right text-xs font-semibold ${tone}`}>{b.status}</td>
                       <td className="px-4 py-3 text-right">
