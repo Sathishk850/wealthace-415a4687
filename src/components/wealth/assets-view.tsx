@@ -269,7 +269,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   });
 
   const [search, setSearch] = useState("");
-  const [mobileSearch, setMobileSearch] = useState(false);
 
   const [fSegment, setFSegment] = useState<string>("all");
   const [fSector, setFSector] = useState<string>("all");

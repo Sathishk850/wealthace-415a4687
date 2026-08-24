@@ -117,7 +117,6 @@ export function LiabilitiesView({
   }, [tab]);
 
   const [search, setSearch] = useState("");
-  const [mobileSearch, setMobileSearch] = useState(false);
   const [fLender, setFLender] = useState("all");
   const [fStatus, setFStatus] = useState("all");
   const [sortKey, setSortKey] = useState<SortKey>("name");
