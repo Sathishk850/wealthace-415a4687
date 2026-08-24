@@ -1384,10 +1384,14 @@ type BudgetRow = {
 function BudgetsView({
   rows,
   categories,
+  activeMonthKey,
   activeMonthLabel,
   totalBudget,
   totalSpent,
   onEdit,
+  allBudgets,
+  transactions,
+  onCopiedLastMonth,
 }: {
   rows: BudgetRow[];
   categories: Category[];
@@ -1396,6 +1400,9 @@ function BudgetsView({
   totalBudget: number;
   totalSpent: number;
   onEdit: (b: BudgetRow) => void;
+  allBudgets: Budget[];
+  transactions: Transaction[];
+  onCopiedLastMonth: () => void;
 }) {
   const delMut = useDeleteBudget();
   const [confirm, setConfirm] = useState<BudgetRow | null>(null);
