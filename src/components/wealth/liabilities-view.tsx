@@ -56,6 +56,7 @@ import {
 } from "@/lib/wealth-api";
 import { formatDate } from "@/lib/date-format";
 import { LiabilityDialog } from "@/components/wealth/liability-dialog";
+import { LoanDashboard } from "@/components/wealth/LoanDashboard";
 import { IoMenu } from "@/components/wealth/io-menu";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
 import { toast } from "sonner";
@@ -770,70 +771,6 @@ function MobileLiabilityGroups({
   );
 }
 
-/* =========================================================
-   Details modal
-========================================================= */
-function LiabilityDetailsModal({
-  liability,
-  onClose,
-  onEdit,
-}: {
-  liability: Liability | null;
-  onClose: () => void;
-  onEdit: (l: Liability) => void;
-}) {
-  const l = liability;
-  return (
-    <Dialog open={!!l} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-base">{l?.name}</DialogTitle>
-        </DialogHeader>
-        {l ? (
-          <div className="space-y-4">
-            <LiabilitySummaryRow
-              outstanding={l.outstanding}
-              emi={l.emi ?? 0}
-              rate={l.interest_rate ?? 0}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <MiniStat label="Category" value={l.category} />
-              <MiniStat label="Lender" value={l.lender ?? "—"} />
-              <MiniStat label="Principal" value={l.principal != null ? inr(l.principal) : "—"} />
-              <MiniStat
-                label="Tenure"
-                value={l.tenure_months != null ? `${l.tenure_months} mo` : "—"}
-              />
-              <MiniStat label="Start Date" value={formatDate(l.start_date) || "—"} />
-              <MiniStat label="Due Date" value={formatDate(l.due_date) || "—"} />
-              <MiniStat label="End Date" value={formatDate(l.end_date) || "—"} />
-              <MiniStat label="Status" value={titleCase(l.status)} />
-            </div>
-            {l.notes ? (
-              <div className="rounded-xl border border-border bg-surface-2/40 p-3 text-xs text-muted-foreground whitespace-pre-wrap">
-                {l.notes}
-              </div>
-            ) : null}
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={onClose}
-                className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => onEdit(l)}
-                className="rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] hover:brightness-110"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /* =========================================================
    Shared bits
