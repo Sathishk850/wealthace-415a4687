@@ -1,0 +1,242 @@
+/**
+ * Universal Import Engine — NORMALIZATION layer.
+ *
+ * Turns raw rows + a confirmed mapping plan into canonical rows for a module,
+ * validating every value and flagging duplicates, invalid rows, suspicious
+ * mappings and currency mismatches. Module schemas are untouched: the output
+ * is a plain canonical object the module's own bulk-insert API accepts.
+ */
+import { detectCurrency, toBoolean, toDate, toNumber, toPercent, toText } from "./coerce";
+import type { CanonicalField } from "./schemas";
+import type { MappingPlan } from "./match";
+import type { ParsedFile } from "./parse";
+
+export type IssueLevel = "error" | "warning";
+export type RowIssue = { level: IssueLevel; field?: string; message: string };
+
+export type TransformedRow = {
+  index: number;
+  /** Canonical values, keyed by canonical field key. */
+  values: Record<string, unknown>;
+  raw: Record<string, unknown>;
+  issues: RowIssue[];
+  duplicate: "file" | "existing" | null;
+  include: boolean;
+};
+
+export type TransformSummary = {
+  total: number;
+  valid: number;
+  invalid: number;
+  duplicates: number;
+  currencies: string[];
+  planIssues: RowIssue[];
+};
+
+export type TransformResult = { rows: TransformedRow[]; summary: TransformSummary };
+
+const KIND_EXPENSE = ["expense", "debit", "dr", "withdrawal", "paid", "out", "spend", "payment", "purchase"];
+const KIND_INCOME = ["income", "credit", "cr", "deposit", "received", "in", "salary", "refund"];
+
+function coerce(field: CanonicalField, raw: unknown, preferMonthFirst: boolean) {
+  switch (field.type) {
+    case "number":
+      return toNumber(raw);
+    case "percent":
+      return toPercent(raw);
+    case "date":
+      return toDate(raw, preferMonthFirst);
+    case "boolean":
+      return toBoolean(raw);
+    case "currency": {
+      const detected = detectCurrency(raw) ?? toText(raw)?.toUpperCase();
+      return detected && /^[A-Z]{3}$/.test(detected) ? detected : null;
+    }
+    default:
+      return toText(raw);
+  }
+}
+
+function dedupeKey(values: Record<string, unknown>, keys: string[]) {
+  return keys
+    .map((k) => String(values[k] ?? "").trim().toLowerCase())
+    .join("|");
+}
+
+export function transformRows(
+  parsed: ParsedFile,
+  plan: MappingPlan,
+  opts: {
+    /** Existing module rows (canonical-shaped) used for duplicate detection. */
+    existing?: Record<string, unknown>[];
+    /** Interpret ambiguous numeric dates as MM/DD/YYYY. */
+    preferMonthFirst?: boolean;
+  } = {},
+): TransformResult {
+  const { schema, mappings } = plan;
+  const preferMonthFirst = !!opts.preferMonthFirst;
+  const active = mappings.filter((m) => m.source);
+  const planIssues: RowIssue[] = [];
+  const currencies = new Set<string>();
+
+  const rows: TransformedRow[] = parsed.rows.map((raw, index) => {
+    const values: Record<string, unknown> = {};
+    const issues: RowIssue[] = [];
+
+    for (const m of active) {
+      const rawVal = raw[m.source as string];
+      const val = coerce(m.field, rawVal, preferMonthFirst);
+      const hadInput = rawVal != null && String(rawVal).trim() !== "";
+      if (val == null && hadInput) {
+        issues.push({
+          level: m.field.required ? "error" : "warning",
+          field: m.field.key,
+          message: `${m.field.label}: could not read “${String(rawVal).slice(0, 24)}” as ${m.field.type}`,
+        });
+      }
+      if (val != null) values[m.field.key] = val;
+      if (m.field.type === "currency" && typeof val === "string") currencies.add(val);
+      else {
+        const cur = detectCurrency(rawVal);
+        if (cur) currencies.add(cur);
+      }
+    }
+
+    // Fallbacks for absent / blank optional fields.
+    for (const m of mappings) {
+      if (values[m.field.key] == null && m.field.fallback !== undefined) {
+        values[m.field.key] = m.field.fallback;
+      }
+    }
+
+    // Module-aware normalisation.
+    if (schema.module === "transactions") {
+      const rawKind = String(values.kind ?? "").toLowerCase();
+      let kind: "income" | "expense" | null = null;
+      if (KIND_INCOME.some((w) => rawKind === w || rawKind.includes(w))) kind = "income";
+      if (KIND_EXPENSE.some((w) => rawKind === w || rawKind.includes(w))) kind = "expense";
+      const amt = typeof values.amount === "number" ? values.amount : null;
+      if (!kind && amt != null) kind = amt < 0 ? "expense" : "income";
+      const sourceHeader = (active.find((m) => m.field.key === "amount")?.source ?? "").toLowerCase();
+      if (/debit|withdraw/.test(sourceHeader)) kind = "expense";
+      else if (/credit|deposit/.test(sourceHeader)) kind = "income";
+      values.kind = kind ?? "expense";
+      if (amt != null) values.amount = Math.abs(amt);
+    }
+
+    if (schema.module === "investments") {
+      const qty = Number(values.quantity ?? 0);
+      const avg = Number(values.avg_price ?? 0);
+      const cur = Number(values.current_price ?? 0);
+      if (values.invested_value == null && qty && avg) values.invested_value = qty * avg;
+      if (values.current_value == null && qty && cur) values.current_value = qty * cur;
+      // Back-fill prices from totals when only values were provided.
+      if (!avg && qty && typeof values.invested_value === "number") {
+        values.avg_price = (values.invested_value as number) / qty;
+      }
+      if (!cur && qty && typeof values.current_value === "number") {
+        values.current_price = (values.current_value as number) / qty;
+      }
+    }
+
+    // Required-field + sanity validation.
+    for (const m of mappings) {
+      const f = m.field;
+      const v = values[f.key];
+      if (f.required && (v == null || v === "")) {
+        issues.push({ level: "error", field: f.key, message: `${f.label} is required but empty` });
+        continue;
+      }
+      if (typeof v === "number") {
+        if (!Number.isFinite(v)) {
+          issues.push({ level: "error", field: f.key, message: `${f.label} is not a valid number` });
+        } else {
+          if (f.min != null && v < f.min) {
+            issues.push({ level: "warning", field: f.key, message: `${f.label} (${v}) is below the expected minimum` });
+          }
+          if (f.max != null && v > f.max) {
+            issues.push({ level: "warning", field: f.key, message: `${f.label} (${v}) looks unusually large — check the mapping` });
+          }
+        }
+      }
+      if (f.type === "date" && typeof v === "string") {
+        const y = Number(v.slice(0, 4));
+        if (y < 1950 || y > 2100) {
+          issues.push({ level: "warning", field: f.key, message: `${f.label} (${v}) looks out of range` });
+        }
+      }
+    }
+
+    return {
+      index,
+      values,
+      raw,
+      issues,
+      duplicate: null,
+      include: !issues.some((i) => i.level === "error"),
+    };
+  });
+
+  /* ----- duplicate detection: within file and against existing rows ----- */
+  const keys = schema.dedupeKeys.length ? schema.dedupeKeys : [schema.fields[0].key];
+  const existingKeys = new Set((opts.existing ?? []).map((r) => dedupeKey(r, keys)));
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const k = dedupeKey(row.values, keys);
+    if (!k.replace(/\|/g, "")) continue;
+    if (existingKeys.has(k)) {
+      row.duplicate = "existing";
+      row.include = false;
+      row.issues.push({ level: "warning", message: "Looks like a record you already have" });
+    } else if (seen.has(k)) {
+      row.duplicate = "file";
+      row.include = false;
+      row.issues.push({ level: "warning", message: "Duplicate row within this file" });
+    }
+    seen.add(k);
+  }
+
+  /* ----- plan-level checks: suspicious mappings, currency mismatch ----- */
+  for (const m of active) {
+    if (m.field.type !== "number" && m.field.type !== "percent") continue;
+    const parsedCount = rows.filter((r) => typeof r.values[m.field.key] === "number").length;
+    if (rows.length >= 3 && parsedCount / rows.length < 0.5) {
+      planIssues.push({
+        level: "warning",
+        field: m.field.key,
+        message: `“${m.source}” → ${m.field.label}: most values are not numeric. This mapping may be wrong.`,
+      });
+    }
+  }
+  for (const m of active) {
+    if (m.confidence === "low" && !m.confirmed) {
+      planIssues.push({
+        level: "warning",
+        field: m.field.key,
+        message: `Low-confidence mapping: “${m.source}” → ${m.field.label}. Please confirm.`,
+      });
+    }
+  }
+  for (const key of plan.missingRequired) {
+    const f = schema.fields.find((x) => x.key === key);
+    planIssues.push({ level: "error", field: key, message: `Required field not detected: ${f?.label ?? key}` });
+  }
+  if (currencies.size > 1) {
+    planIssues.push({
+      level: "warning",
+      message: `Multiple currencies detected (${[...currencies].join(", ")}). Values are imported as-is without conversion.`,
+    });
+  }
+
+  return {
+    rows,
+    summary: {
+      total: rows.length,
+      valid: rows.filter((r) => !r.issues.some((i) => i.level === "error")).length,
+      invalid: rows.filter((r) => r.issues.some((i) => i.level === "error")).length,
+      duplicates: rows.filter((r) => r.duplicate).length,
+      currencies: [...currencies],
+      planIssues,
+    },
+  };
+}
