@@ -729,6 +729,13 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             </div>
           </div>
           <button
+            onClick={openImportForTab}
+            aria-label="Import holdings"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-surface text-foreground"
+          >
+            <Upload className="h-4 w-4" />
+          </button>
+          <button
             onClick={openAdd}
             aria-label={ADD_LABEL[tab]}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-mint text-[#04121C]"
