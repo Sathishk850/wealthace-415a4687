@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { openImport } from "@/components/import/import-host";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
 import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
@@ -225,7 +226,8 @@ export function LiabilitiesView({
     { key: "notes", label: "Notes" },
   ] as const;
 
-  const handleImport = async () => {
+  // Legacy CSV-only importer, superseded by the Universal Import Engine.
+  const _legacyImport = async () => {
     const parsed = await pickAndParse();
     if (!parsed || !parsed.length) return;
     const mapped: LiabilityInput[] = parsed
@@ -352,7 +354,7 @@ export function LiabilitiesView({
         />
         <RefreshIconButton busy={isFetching} label="Refresh liabilities" onClick={() => refetch()} />
         <IoMenu
-          onImport={handleImport}
+          onImport={() => openImport("liabilities")}
           onExportCsv={() => exportCsv("liabilities", exportCols as any, sorted)}
           onExportXlsx={() => exportXlsx("liabilities", exportCols as any, sorted)}
           onExportJson={() => exportJson("liabilities", sorted)}
