@@ -11,6 +11,7 @@ import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 import { TransactionSheet } from "@/components/money/TransactionSheet";
 import { cn } from "@/lib/utils";
+import { openImport } from "@/components/import/import-host";
 
 const getRowId = (r: { id: string }) => r.id;
 
