@@ -27,6 +27,7 @@ import {
   Upload,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { TextTabs } from "@/components/text-tabs";
