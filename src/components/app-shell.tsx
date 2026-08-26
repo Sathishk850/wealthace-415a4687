@@ -32,6 +32,7 @@ import { RemindersBanner } from "@/components/reminders-banner";
 
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { PwaProvider } from "@/components/pwa/pwa-provider";
+import { UniversalImportHost } from "@/components/import/import-host";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -288,6 +289,7 @@ export function AppShell() {
       <AlertsDigest />
 
       <PwaProvider />
+      <UniversalImportHost />
     </div>
   );
 }

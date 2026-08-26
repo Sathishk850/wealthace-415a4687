@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { openImport } from "@/components/import/import-host";
 import {
   PieChart, Pie, Cell, ResponsiveContainer,
 } from "recharts";
@@ -150,7 +151,8 @@ export function FamilyView({
     { key: "notes", label: "Notes" },
   ] as const;
 
-  const handleImport = async () => {
+  // Legacy CSV-only importer, superseded by the Universal Import Engine.
+  const _legacyImport = async () => {
     const parsed = await pickAndParse();
     if (!parsed || !parsed.length) return;
     const truthy = (v: any) => v === true || String(v).toLowerCase() === "true" || v === 1 || v === "1" || String(v).toLowerCase() === "yes";
@@ -276,7 +278,7 @@ export function FamilyView({
                 ]}
               />
               <IoMenu
-                onImport={handleImport}
+                onImport={() => openImport("family")}
                 onExportCsv={() => exportCsv("family", exportCols as any, filtered)}
                 onExportXlsx={() => exportXlsx("family", exportCols as any, filtered)}
                 onExportJson={() => exportJson("family", filtered)}

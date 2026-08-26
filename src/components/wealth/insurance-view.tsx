@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { openImport } from "@/components/import/import-host";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
 import { BulkActionBar } from "@/components/bulk/bulk-action-bar";
@@ -157,7 +158,8 @@ export function InsuranceView({
     { key: "notes", label: "Notes" },
   ] as const;
 
-  const handleImport = async () => {
+  // Legacy CSV-only importer, superseded by the Universal Import Engine.
+  const _legacyImport = async () => {
     const parsed = await pickAndParse();
     if (!parsed || !parsed.length) return;
     const mapped: InsuranceInput[] = parsed
@@ -312,7 +314,7 @@ export function InsuranceView({
                 ]}
               />
               <IoMenu
-                onImport={handleImport}
+                onImport={() => openImport("insurance")}
                 onExportCsv={() => exportCsv("insurance", exportCols as any, filtered)}
                 onExportXlsx={() => exportXlsx("insurance", exportCols as any, filtered)}
                 onExportJson={() => exportJson("insurance", filtered)}

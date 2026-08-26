@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { openImport } from "@/components/import/import-host";
 import { useNavigate } from "@tanstack/react-router";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
@@ -247,7 +248,8 @@ export function InvestmentsView({
     { key: "notes", label: "Notes" },
   ] as const;
 
-  const handleImport = async () => {
+  // Legacy CSV-only importer, superseded by the Universal Import Engine.
+  const _legacyImport = async () => {
     const parsed = await pickAndParse();
     if (!parsed || !parsed.length) return;
     const mapped: InvestmentInput[] = parsed
@@ -286,7 +288,7 @@ export function InvestmentsView({
   const showEmptyOnly = !isLoading && rows.length === 0;
   const ioMenu = (
     <IoMenu
-      onImport={handleImport}
+      onImport={() => openImport("investments")}
       onExportCsv={() => exportCsv("investments", exportCols as any, derived.rich)}
       onExportXlsx={() => exportXlsx("investments", exportCols as any, derived.rich)}
       onExportJson={() => exportJson("investments", derived.rich)}
