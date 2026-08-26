@@ -6,6 +6,16 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    version: "1.9.0",
+    releaseDate: "2026-08-26",
+    changes: [
+      "Universal Import — bring in files from any broker or bank (Zerodha, Upstox, ICICI, Angel One, INDMoney, Kuvera, Dhan, HDFC, SBI and more). Column names don't need to match; they're mapped automatically.",
+      "Column mapping review step — see how each column was mapped before committing, and fix low-confidence matches with a dropdown.",
+      "Import now available on Investments, Assets, Liabilities, Insurance, Accounts, Family and Transactions.",
+      "Saved mappings — your column mapping is remembered for next time.",
+    ],
+  },
+  {
     version: "1.8.0",
     releaseDate: "2026-08-24",
     changes: [
