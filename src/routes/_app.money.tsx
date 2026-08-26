@@ -1547,12 +1547,29 @@ function BudgetsView({
                         {(() => {
                           const projected = Math.round((b.spent / daysElapsed) * daysInMonth);
                           const overBy = projected - b.amount_limit;
+                          const remaining = b.amount_limit - b.spent;
+                          const daysLeft = daysInMonth - daysElapsed;
+                          const dailyBudgetLeft = daysLeft > 0 ? remaining / daysLeft : 0;
+
                           if (b.spent === 0) return <span className="text-xs text-muted-foreground">—</span>;
+
                           return (
-                            <span className={`text-xs font-medium tabular-nums ${overBy > 0 ? "text-destructive" : "text-muted-foreground"}`}>
-                              ₹{projected.toLocaleString("en-IN")}
-                              {overBy > 0 && <span className="ml-1 text-[10px]">+₹{overBy.toLocaleString("en-IN")}</span>}
-                            </span>
+                            <div className="text-right">
+                              <div className={cn("text-xs font-medium tabular-nums",
+                                overBy > 0 ? "text-destructive" : "text-muted-foreground")}>
+                                ₹{projected.toLocaleString("en-IN")}
+                                {overBy > 0 && (
+                                  <span className="ml-1 text-[10px] text-destructive">
+                                    (+₹{overBy.toLocaleString("en-IN")} over)
+                                  </span>
+                                )}
+                              </div>
+                              {daysLeft > 0 && remaining > 0 && (
+                                <div className="text-[10px] text-muted-foreground">
+                                  ₹{Math.round(dailyBudgetLeft).toLocaleString("en-IN")}/day left
+                                </div>
+                              )}
+                            </div>
                           );
                         })()}
                       </td>
