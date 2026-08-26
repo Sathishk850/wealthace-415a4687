@@ -12,6 +12,8 @@ import {
 } from "@/lib/asset-classification";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 
+import { openImport } from "@/components/import/import-host";
+
 import {
   Search,
   ArrowUp,
@@ -22,6 +24,7 @@ import {
   Trash2,
   RefreshCw,
   Plus,
+  Upload,
   ChevronDown,
   MoreHorizontal,
 
