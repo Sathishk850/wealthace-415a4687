@@ -1483,6 +1483,32 @@ function BudgetsView({
         <KpiCard icon={ArrowDownRight} label="Total Spent" value={inr(totalSpent)} tone="negative" />
       </div>
 
+      {/* Mobile quick stats */}
+      <div className="flex gap-2 overflow-x-auto pb-1 md:hidden">
+        <div className="shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-center">
+          <div className="text-[10px] text-muted-foreground">Budget</div>
+          <div className="text-sm font-bold text-foreground">{inrCompact(totalBudget)}</div>
+        </div>
+        <div className="shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-center">
+          <div className="text-[10px] text-muted-foreground">Spent</div>
+          <div className="text-sm font-bold text-foreground">{inrCompact(totalSpent)}</div>
+        </div>
+        <div className="shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-center">
+          <div className="text-[10px] text-muted-foreground">Remaining</div>
+          <div className={cn("text-sm font-bold",
+            totalBudget - totalSpent >= 0 ? "text-success" : "text-destructive")}>
+            {inrCompact(Math.abs(totalBudget - totalSpent))}
+          </div>
+        </div>
+        <div className="shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-center">
+          <div className="text-[10px] text-muted-foreground">At Risk</div>
+          <div className={cn("text-sm font-bold",
+            rows.filter(r => r.status !== "On Track").length > 0 ? "text-warning" : "text-success")}>
+            {rows.filter(r => r.status !== "On Track").length}
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="text-sm font-semibold text-foreground">Budgets · {activeMonthLabel}</div>
