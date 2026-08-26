@@ -1,5 +1,6 @@
 import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { fireBudgetAlerts } from "@/lib/budget-alerts";
 import { smartXAxisProps } from "@/lib/chart-axis";
 import {
   TrendingUp,
