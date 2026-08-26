@@ -288,6 +288,7 @@ export function AppShell() {
       <AlertsDigest />
 
       <PwaProvider />
+      <UniversalImportHost />
     </div>
   );
 }
