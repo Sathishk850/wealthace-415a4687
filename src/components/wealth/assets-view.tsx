@@ -12,6 +12,8 @@ import {
 } from "@/lib/asset-classification";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 
+import { openImport } from "@/components/import/import-host";
+
 import {
   Search,
   ArrowUp,
@@ -22,6 +24,7 @@ import {
   Trash2,
   RefreshCw,
   Plus,
+  Upload,
   ChevronDown,
   MoreHorizontal,
 
@@ -593,6 +596,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   };
   if (registerAdd) registerAdd(openAdd);
 
+  const openImportForTab = () => {
+    openImport(INVESTMENT_TABS.includes(tab) ? "investments" : "assets");
+  };
+
+
   /* Edit routes to the matching existing form in edit mode */
   const openEdit = (h: Holding) => {
     if (h.source === "investment") {
@@ -721,6 +729,13 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             </div>
           </div>
           <button
+            onClick={openImportForTab}
+            aria-label="Import holdings"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-surface text-foreground"
+          >
+            <Upload className="h-4 w-4" />
+          </button>
+          <button
             onClick={openAdd}
             aria-label={ADD_LABEL[tab]}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-mint text-[#04121C]"
@@ -780,6 +795,12 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         />
         <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
         <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={openImportForTab}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition hover:border-mint/40"
+          >
+            <Upload className="h-3.5 w-3.5" /> Import
+          </button>
           <button
             onClick={openAdd}
             className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] transition hover:brightness-110"
