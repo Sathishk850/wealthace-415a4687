@@ -374,6 +374,21 @@ function Money() {
   const totalBudget = budgetRows.reduce((s, b) => s + b.amount_limit, 0);
   const totalSpent = budgetRows.reduce((s, b) => s + b.spent, 0);
 
+  // Fire in-app budget alerts (deduped via localStorage) when budgets cross thresholds
+  useEffect(() => {
+    if (!budgetRows.length) return;
+    void fireBudgetAlerts(
+      budgetRows.map((b) => ({
+        categoryName: b.name,
+        categoryId: b.category_id,
+        spent: b.spent,
+        limit: b.amount_limit,
+        pct: b.pct,
+        monthKey: activeMonthKey.slice(0, 7),
+      }))
+    );
+  }, [budgetRows, activeMonthKey]);
+
   // top-bar "Add" opens contextual dialog
   const [openTx, setOpenTx] = useState<{ open: boolean; editing?: Transaction; defaultKind?: Kind }>({ open: false });
   const [openBudget, setOpenBudget] = useState<{ open: boolean; editing?: any }>({ open: false });
