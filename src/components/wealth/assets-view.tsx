@@ -796,6 +796,12 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
         <div className="ml-auto flex items-center gap-2">
           <button
+            onClick={openImportForTab}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition hover:border-mint/40"
+          >
+            <Upload className="h-3.5 w-3.5" /> Import
+          </button>
+          <button
             onClick={openAdd}
             className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-[#04121C] transition hover:brightness-110"
           >
