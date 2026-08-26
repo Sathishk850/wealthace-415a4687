@@ -596,6 +596,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   };
   if (registerAdd) registerAdd(openAdd);
 
+  const openImportForTab = () => {
+    openImport(INVESTMENT_TABS.includes(tab) ? "investments" : "assets");
+  };
+
+
   /* Edit routes to the matching existing form in edit mode */
   const openEdit = (h: Holding) => {
     if (h.source === "investment") {
