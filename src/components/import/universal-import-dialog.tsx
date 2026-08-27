@@ -236,7 +236,62 @@ export function UniversalImportDialog({
 
         <div className="flex-1 overflow-y-auto pr-1">
           {/* ---------------- UPLOAD ---------------- */}
-          {step === "upload" && (
+          {step === "upload" && lockedFile && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!password || busy) return;
+                void handleFile(lockedFile, password);
+              }}
+              className="grid place-items-center gap-3 rounded-2xl border border-dashed border-amber-500/40 bg-card p-10 text-center"
+            >
+              {busy ? (
+                <Loader2 className="h-8 w-8 animate-spin text-mint" />
+              ) : (
+                <Lock className="h-8 w-8 text-amber-500" />
+              )}
+              <p className="text-sm font-medium text-foreground">
+                {lockedFile.name} is password protected
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {passwordError ?? "Enter the password to unlock this file."} The password is used
+                once to read the file and is never saved.
+              </p>
+              <input
+                type="password"
+                autoFocus
+                autoComplete="off"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="File password"
+                aria-label="File password"
+                className="w-56 rounded-xl border border-border bg-surface px-3 py-2 text-center text-sm text-foreground outline-none focus:border-mint/50"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setLockedFile(null);
+                    setPassword("");
+                    setPasswordError(null);
+                  }}
+                  className="rounded-xl border border-border px-4 py-2 text-xs font-semibold text-muted-foreground disabled:opacity-50"
+                >
+                  Choose another file
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy || !password}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-4 py-2 text-xs font-semibold text-mint-foreground disabled:opacity-50"
+                >
+                  <Lock className="h-3.5 w-3.5" /> Unlock &amp; continue
+                </button>
+              </div>
+            </form>
+          )}
+
+          {step === "upload" && !lockedFile && (
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
@@ -255,7 +310,8 @@ export function UniversalImportDialog({
                 {busy ? "Reading your file…" : "Drop a file here, or choose one"}
               </p>
               <p className="text-xs text-muted-foreground">
-                Supported: CSV · TSV · XLSX · XLS · JSON · PDF
+                Supported: CSV · TSV · XLSX · XLS · JSON · PDF — password-protected PDF/Excel files
+                are supported too
               </p>
               <input
                 ref={fileRef}
@@ -277,6 +333,7 @@ export function UniversalImportDialog({
               </button>
             </div>
           )}
+
 
           {/* ---------------- MAP ---------------- */}
           {step === "map" && parsed && plan && (
