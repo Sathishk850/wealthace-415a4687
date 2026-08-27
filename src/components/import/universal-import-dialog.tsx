@@ -31,6 +31,7 @@ import {
   detectSchema,
   fetchExistingRows,
   getSchema,
+  isPasswordError,
   parseImportFile,
   refreshPlan,
   serializeMapping,
@@ -41,6 +42,7 @@ import {
   type ParsedFile,
   type TransformResult,
 } from "@/lib/import";
+
 
 type Step = "upload" | "map" | "preview" | "done";
 
