@@ -111,12 +111,21 @@ export function UniversalImportDialog({
     return next;
   }, []);
 
-  const handleFile = async (file: File) => {
+  /**
+   * Parse a file. `pwd` is only passed through to the parser for encrypted
+   * PDF/XLSX files — it is never stored, logged or sent anywhere.
+   */
+  const handleFile = async (file: File, pwd?: string) => {
     setBusy(true);
     try {
-      const p = await parseImportFile(file);
+      const p = await parseImportFile(file, pwd);
       if (!p.rows.length) throw new Error("No data rows were found in this file.");
       setParsed(p);
+
+      // Unlocked successfully — drop the password and the pending file.
+      setPassword("");
+      setLockedFile(null);
+      setPasswordError(null);
 
       let mod = module;
       if (!lockModule) {
@@ -128,11 +137,21 @@ export function UniversalImportDialog({
       setExisting(await fetchExistingRows(mod));
       setStep("map");
     } catch (e) {
-      toast.error((e as Error).message || "Could not read this file");
+      if (isPasswordError(e)) {
+        setLockedFile(file);
+        setPassword("");
+        setPasswordError(e.message);
+      } else {
+        setLockedFile(null);
+        setPassword("");
+        setPasswordError(null);
+        toast.error((e as Error).message || "Could not read this file");
+      }
     } finally {
       setBusy(false);
     }
   };
+
 
   const setMapping = (fieldKey: string, source: string | null) => {
     if (!plan || !parsed) return;
