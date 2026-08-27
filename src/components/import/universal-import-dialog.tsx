@@ -11,9 +11,11 @@ import {
   ChevronLeft,
   FileSpreadsheet,
   Loader2,
+  Lock,
   Upload,
   X,
 } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
