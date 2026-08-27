@@ -7,6 +7,7 @@
  * is a plain canonical object the module's own bulk-insert API accepts.
  */
 import { detectCurrency, toBoolean, toDate, toNumber, toPercent, toText } from "./coerce";
+import { classifyCategory, type CategoryConfidence, type CorrectionMap } from "./categorize";
 import type { CanonicalField } from "./schemas";
 import type { MappingPlan } from "./match";
 import type { ParsedFile } from "./parse";
@@ -22,6 +23,8 @@ export type TransformedRow = {
   issues: RowIssue[];
   duplicate: "file" | "existing" | null;
   include: boolean;
+  /** Transactions only: category proposed by the shared classifier. */
+  categorySuggestion?: { category: string; confidence: CategoryConfidence; applied: boolean } | null;
 };
 
 export type TransformSummary = {
@@ -71,6 +74,8 @@ export function transformRows(
     existing?: Record<string, unknown>[];
     /** Interpret ambiguous numeric dates as MM/DD/YYYY. */
     preferMonthFirst?: boolean;
+    /** Learned per-user merchant→category corrections (transactions). */
+    corrections?: CorrectionMap;
   } = {},
 ): TransformResult {
   const { schema, mappings } = plan;
@@ -82,6 +87,7 @@ export function transformRows(
   const rows: TransformedRow[] = parsed.rows.map((raw, index) => {
     const values: Record<string, unknown> = {};
     const issues: RowIssue[] = [];
+    let categorySuggestion: TransformedRow["categorySuggestion"] = null;
 
     for (const m of active) {
       const rawVal = raw[m.source as string];
@@ -122,6 +128,27 @@ export function transformRows(
       else if (/credit|deposit/.test(sourceHeader)) kind = "income";
       values.kind = kind ?? "expense";
       if (amt != null) values.amount = Math.abs(amt);
+
+      // Merchant → category classification (only when the file gave no category).
+      const givenCategory = String(values.category ?? "").trim();
+      if (!givenCategory) {
+        const text = [values.merchant, values.note, raw.__raw]
+          .map((v) => (v == null ? "" : String(v)))
+          .join(" ");
+        const guess = classifyCategory(text, values.kind as "income" | "expense", opts.corrections);
+        if (guess.category) {
+          const applied = guess.confidence === "high";
+          if (applied) values.category = guess.category;
+          categorySuggestion = { category: guess.category, confidence: guess.confidence, applied };
+          if (guess.confidence === "low") {
+            issues.push({
+              level: "warning",
+              field: "category",
+              message: `Category needs review — “${guess.category}” is only a weak match`,
+            });
+          }
+        }
+      }
     }
 
     if (schema.module === "investments") {
@@ -174,6 +201,7 @@ export function transformRows(
       issues,
       duplicate: null,
       include: !issues.some((i) => i.level === "error"),
+      categorySuggestion,
     };
   });
 
