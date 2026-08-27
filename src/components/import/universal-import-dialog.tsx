@@ -11,9 +11,11 @@ import {
   ChevronLeft,
   FileSpreadsheet,
   Loader2,
+  Lock as LockIcon,
   Upload,
   X,
 } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -31,6 +33,7 @@ import {
   detectSchema,
   fetchExistingRows,
   getSchema,
+  isPasswordError,
   parseImportFile,
   refreshPlan,
   serializeMapping,
@@ -41,6 +44,7 @@ import {
   type ParsedFile,
   type TransformResult,
 } from "@/lib/import";
+
 
 type Step = "upload" | "map" | "preview" | "done";
 
@@ -87,6 +91,10 @@ export function UniversalImportDialog({
   const [rememberMapping, setRememberMapping] = useState(true);
   const [result, setResult] = useState<TransformResult | null>(null);
   const [outcome, setOutcome] = useState<{ inserted: number; skipped: number; failed: number; errors: string[] } | null>(null);
+  /** Encrypted file awaiting a password (kept in memory only). */
+  const [lockedFile, setLockedFile] = useState<File | null>(null);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const reset = useCallback(() => {
     setStep("upload");
@@ -96,7 +104,11 @@ export function UniversalImportDialog({
     setOutcome(null);
     setTarget(module);
     setMonthFirst(false);
+    setLockedFile(null);
+    setPassword("");
+    setPasswordError(null);
   }, [module]);
+
 
   const close = (v: boolean) => {
     onOpenChange(v);
@@ -111,12 +123,21 @@ export function UniversalImportDialog({
     return next;
   }, []);
 
-  const handleFile = async (file: File) => {
+  /**
+   * Parse a file. `pwd` is only passed through to the parser for encrypted
+   * PDF/XLSX files — it is never stored, logged or sent anywhere.
+   */
+  const handleFile = async (file: File, pwd?: string) => {
     setBusy(true);
     try {
-      const p = await parseImportFile(file);
+      const p = await parseImportFile(file, pwd);
       if (!p.rows.length) throw new Error("No data rows were found in this file.");
       setParsed(p);
+
+      // Unlocked successfully — drop the password and the pending file.
+      setPassword("");
+      setLockedFile(null);
+      setPasswordError(null);
 
       let mod = module;
       if (!lockModule) {
@@ -128,11 +149,21 @@ export function UniversalImportDialog({
       setExisting(await fetchExistingRows(mod));
       setStep("map");
     } catch (e) {
-      toast.error((e as Error).message || "Could not read this file");
+      if (isPasswordError(e)) {
+        setLockedFile(file);
+        setPassword("");
+        setPasswordError(e.message);
+      } else {
+        setLockedFile(null);
+        setPassword("");
+        setPasswordError(null);
+        toast.error((e as Error).message || "Could not read this file");
+      }
     } finally {
       setBusy(false);
     }
   };
+
 
   const setMapping = (fieldKey: string, source: string | null) => {
     if (!plan || !parsed) return;
@@ -207,7 +238,62 @@ export function UniversalImportDialog({
 
         <div className="flex-1 overflow-y-auto pr-1">
           {/* ---------------- UPLOAD ---------------- */}
-          {step === "upload" && (
+          {step === "upload" && lockedFile && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!password || busy) return;
+                void handleFile(lockedFile, password);
+              }}
+              className="grid place-items-center gap-3 rounded-2xl border border-dashed border-amber-500/40 bg-card p-10 text-center"
+            >
+              {busy ? (
+                <Loader2 className="h-8 w-8 animate-spin text-mint" />
+              ) : (
+                <LockIcon className="h-8 w-8 text-amber-500" />
+              )}
+              <p className="text-sm font-medium text-foreground">
+                {lockedFile.name} is password protected
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {passwordError ?? "Enter the password to unlock this file."} The password is used
+                once to read the file and is never saved.
+              </p>
+              <input
+                type="password"
+                autoFocus
+                autoComplete="off"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="File password"
+                aria-label="File password"
+                className="w-56 rounded-xl border border-border bg-surface px-3 py-2 text-center text-sm text-foreground outline-none focus:border-mint/50"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setLockedFile(null);
+                    setPassword("");
+                    setPasswordError(null);
+                  }}
+                  className="rounded-xl border border-border px-4 py-2 text-xs font-semibold text-muted-foreground disabled:opacity-50"
+                >
+                  Choose another file
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy || !password}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-4 py-2 text-xs font-semibold text-mint-foreground disabled:opacity-50"
+                >
+                  <LockIcon className="h-3.5 w-3.5" /> Unlock &amp; continue
+                </button>
+              </div>
+            </form>
+          )}
+
+          {step === "upload" && !lockedFile && (
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
@@ -226,7 +312,8 @@ export function UniversalImportDialog({
                 {busy ? "Reading your file…" : "Drop a file here, or choose one"}
               </p>
               <p className="text-xs text-muted-foreground">
-                Supported: CSV · TSV · XLSX · XLS · JSON · PDF
+                Supported: CSV · TSV · XLSX · XLS · JSON · PDF — password-protected PDF/Excel files
+                are supported too
               </p>
               <input
                 ref={fileRef}
@@ -248,6 +335,7 @@ export function UniversalImportDialog({
               </button>
             </div>
           )}
+
 
           {/* ---------------- MAP ---------------- */}
           {step === "map" && parsed && plan && (

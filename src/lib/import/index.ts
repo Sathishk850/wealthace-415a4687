@@ -1,4 +1,6 @@
 export * from "./coerce";
+export * from "./password";
+
 export * from "./schemas";
 export * from "./parse";
 export * from "./match";

@@ -7,6 +7,12 @@
  * metadata. Nothing here knows about WealthAce modules.
  */
 import { detectColumnType, normalizeHeader, type DetectedType } from "./coerce";
+import {
+  ImportPasswordRequiredError,
+  looksEncryptedWorkbook,
+  normalizeParseError,
+} from "./password";
+
 
 export type RawColumn = {
   index: number;
