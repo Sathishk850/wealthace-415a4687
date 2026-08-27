@@ -180,8 +180,14 @@ function buildColumns(headers: string[], rows: Record<string, unknown>[]): RawCo
 
 /* ------------------------------- entry ------------------------------- */
 
-export async function parseImportFile(file: File): Promise<ParsedFile> {
+/**
+ * Parse any supported file into a raw grid.
+ * `password` is only used to open encrypted PDF/XLSX files; it is never
+ * stored, logged or returned.
+ */
+export async function parseImportFile(file: File, password?: string): Promise<ParsedFile> {
   const ext = (file.name.split(".").pop() || "").toLowerCase();
+  const hadPassword = !!password;
 
   if (ext === "json") {
     const data = JSON.parse(await file.text());
@@ -200,8 +206,20 @@ export async function parseImportFile(file: File): Promise<ParsedFile> {
   }
 
   if (ext === "xlsx" || ext === "xls" || ext === "xlsm") {
+    if (!hadPassword && (await looksEncryptedWorkbook(file, ext))) {
+      throw new ImportPasswordRequiredError(false);
+    }
     const XLSX = await import("xlsx");
-    const wb = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
+    let wb: any;
+    try {
+      wb = XLSX.read(await file.arrayBuffer(), {
+        type: "array",
+        cellDates: true,
+        ...(password ? { password } : {}),
+      });
+    } catch (e) {
+      throw normalizeParseError(e, hadPassword);
+    }
     // Pick the sheet with the most usable rows.
     let best = { name: wb.SheetNames[0], grid: [] as string[][] };
     for (const name of wb.SheetNames) {
@@ -230,8 +248,14 @@ export async function parseImportFile(file: File): Promise<ParsedFile> {
 
   if (ext === "pdf") {
     const { pdfToGrid } = await import("@/lib/pdf-table");
-    const grid = await pdfToGrid(file);
+    let grid: string[][];
+    try {
+      grid = await pdfToGrid(file, password);
+    } catch (e) {
+      throw normalizeParseError(e, hadPassword);
+    }
     if (!grid.length) throw new Error("No table could be extracted from this PDF.");
+
     // Keep only rows matching the dominant width so column alignment holds.
     const counts = new Map<number, number>();
     for (const r of grid) counts.set(r.length, (counts.get(r.length) ?? 0) + 1);
