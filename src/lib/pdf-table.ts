@@ -23,10 +23,17 @@ async function getPdfjs() {
 type Item = { text: string; x: number; y: number };
 
 /** Extract a row/cell grid out of a PDF file. */
-export async function pdfToGrid(file: File | ArrayBuffer): Promise<string[][]> {
+export async function pdfToGrid(
+  file: File | ArrayBuffer,
+  password?: string,
+): Promise<string[][]> {
   const pdfjs = await getPdfjs();
   const data = file instanceof ArrayBuffer ? file : await file.arrayBuffer();
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(data) }).promise;
+  const doc = await pdfjs.getDocument({
+    data: new Uint8Array(data),
+    ...(password ? { password } : {}),
+  }).promise;
+
   const grid: string[][] = [];
 
   for (let p = 1; p <= doc.numPages; p++) {
