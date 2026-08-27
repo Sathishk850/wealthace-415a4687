@@ -89,6 +89,10 @@ export function UniversalImportDialog({
   const [rememberMapping, setRememberMapping] = useState(true);
   const [result, setResult] = useState<TransformResult | null>(null);
   const [outcome, setOutcome] = useState<{ inserted: number; skipped: number; failed: number; errors: string[] } | null>(null);
+  /** Encrypted file awaiting a password (kept in memory only). */
+  const [lockedFile, setLockedFile] = useState<File | null>(null);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const reset = useCallback(() => {
     setStep("upload");
@@ -98,7 +102,11 @@ export function UniversalImportDialog({
     setOutcome(null);
     setTarget(module);
     setMonthFirst(false);
+    setLockedFile(null);
+    setPassword("");
+    setPasswordError(null);
   }, [module]);
+
 
   const close = (v: boolean) => {
     onOpenChange(v);
