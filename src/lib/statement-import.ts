@@ -9,6 +9,8 @@
  * Pure functions only — no React, no network.
  */
 
+import { classifyCategory } from "./import/categorize";
+
 export type ParsedRow = {
   occurred_on: string; // YYYY-MM-DD
   merchant: string;
