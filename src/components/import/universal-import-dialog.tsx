@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   FileSpreadsheet,
   Loader2,
-  Lock,
+  Lock as LockIcon,
   Upload,
   X,
 } from "lucide-react";
@@ -250,7 +250,7 @@ export function UniversalImportDialog({
               {busy ? (
                 <Loader2 className="h-8 w-8 animate-spin text-mint" />
               ) : (
-                <Lock className="h-8 w-8 text-amber-500" />
+                <LockIcon className="h-8 w-8 text-amber-500" />
               )}
               <p className="text-sm font-medium text-foreground">
                 {lockedFile.name} is password protected
@@ -287,7 +287,7 @@ export function UniversalImportDialog({
                   disabled={busy || !password}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-4 py-2 text-xs font-semibold text-mint-foreground disabled:opacity-50"
                 >
-                  <Lock className="h-3.5 w-3.5" /> Unlock &amp; continue
+                  <LockIcon className="h-3.5 w-3.5" /> Unlock &amp; continue
                 </button>
               </div>
             </form>
