@@ -147,6 +147,39 @@ export type Database = {
           },
         ]
       }
+      import_category_rules: {
+        Row: {
+          category: string
+          created_at: string
+          hits: number
+          id: string
+          kind: string
+          merchant_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          hits?: number
+          id?: string
+          kind: string
+          merchant_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          hits?: number
+          id?: string
+          kind?: string
+          merchant_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       market_events: {
         Row: {
           actual: string | null
