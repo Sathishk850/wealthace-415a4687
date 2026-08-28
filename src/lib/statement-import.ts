@@ -9,7 +9,7 @@
  * Pure functions only — no React, no network.
  */
 
-import { classifyCategory } from "./import/categorize";
+import { classifyCategory, type CorrectionMap } from "./import/categorize";
 
 export type ParsedRow = {
   occurred_on: string; // YYYY-MM-DD
@@ -155,35 +155,20 @@ export function cleanMerchant(desc: string): string {
 
 /* ---------------- auto categorisation ---------------- */
 
-const CATEGORY_RULES: { name: string; kind: "income" | "expense"; match: RegExp }[] = [
-  { name: "Salary", kind: "income", match: /salary|payroll|sal cr|wages/i },
-  { name: "Interest", kind: "income", match: /interest|int\.pd|int pd|fd interest/i },
-  { name: "Dividend", kind: "income", match: /dividend|div payout/i },
-  { name: "Refund", kind: "income", match: /refund|reversal|cashback/i },
-  { name: "Groceries", kind: "expense", match: /bigbasket|blinkit|zepto|dmart|grofers|grocer|supermarket|reliance fresh|more retail/i },
-  { name: "Food & Dining", kind: "expense", match: /swiggy|zomato|restaurant|cafe|dominos|mcdonald|starbucks|eatery|hotel/i },
-  { name: "Transport", kind: "expense", match: /uber|ola|rapido|irctc|metro|petrol|fuel|hpcl|iocl|bpcl|indian oil|toll|fastag/i },
-  { name: "Shopping", kind: "expense", match: /amazon|flipkart|myntra|ajio|nykaa|meesho|decathlon|ikea|shop/i },
-  { name: "Bills & Utilities", kind: "expense", match: /electricity|bescom|msedcl|water bill|gas|broadband|airtel|jio|vodafone|vi |bsnl|dth|bill pay|bbps/i },
-  { name: "Rent", kind: "expense", match: /rent|nobroker|landlord/i },
-  { name: "Entertainment", kind: "expense", match: /netflix|prime video|hotstar|spotify|bookmyshow|pvr|inox|youtube premium|jiocinema/i },
-  { name: "Health", kind: "expense", match: /pharmacy|apollo|medplus|hospital|clinic|diagnostic|practo|1mg|netmeds/i },
-  { name: "Insurance", kind: "expense", match: /insurance|lic |policy premium|premium paid|hdfc life|icici pru|max life/i },
-  { name: "Investments", kind: "expense", match: /sip|mutual fund|mf purchase|zerodha|groww|upstox|nse|bse|cams|kfintech|nps|ppf/i },
-  { name: "Loan / EMI", kind: "expense", match: /emi|loan|nach|ecs|home loan|car loan/i },
-  { name: "Education", kind: "expense", match: /school|college|tuition|udemy|coursera|byju|unacademy/i },
-  { name: "Cash Withdrawal", kind: "expense", match: /atw|nwd|atm|cash wdl|cash withdrawal/i },
-  { name: "Transfer", kind: "expense", match: /self|transfer to|imps|neft|rtgs/i },
-  { name: "Taxes & Fees", kind: "expense", match: /gst|tds|tax|charges|fee|penalty|sms chrg/i },
-];
-
-/** Best-effort category name guess from the raw statement narration. */
-export function guessCategory(raw: string, kind: "income" | "expense"): string | null {
-  for (const rule of CATEGORY_RULES) {
-    if (rule.kind === kind && rule.match.test(raw)) return rule.name;
-  }
-  return null;
+/**
+ * Best-effort category name guess from the raw statement narration.
+ * Delegates to the shared Universal Import classifier so both import paths
+ * behave identically. Learned per-user corrections can be supplied by the
+ * caller via `corrections` (see `loadCategoryCorrections()`).
+ */
+export function guessCategory(
+  raw: string,
+  kind: "income" | "expense",
+  corrections?: CorrectionMap,
+): string | null {
+  return classifyCategory(raw, kind, corrections).category;
 }
+
 
 /* ---------------- parsing ---------------- */
 
@@ -327,13 +312,14 @@ export function buildDrafts(
   parsed: ParsedRow[],
   categories: { id: string; name: string; kind: string }[],
   existing: ExistingKey[],
+  corrections?: CorrectionMap,
 ): ImportDraft[] {
   const existingKeys = new Set(existing.map(dupKey));
   const byName = new Map(categories.map((c) => [`${c.kind}|${c.name.toLowerCase()}`, c.id]));
   const seen = new Set<string>();
 
   return parsed.map((p) => {
-    const guess = guessCategory(p.raw, p.kind);
+    const guess = guessCategory(p.raw, p.kind, corrections);
     const catId = guess ? (byName.get(`${p.kind}|${guess.toLowerCase()}`) ?? null) : null;
     const key = dupKey(p);
     const duplicate = existingKeys.has(key) || seen.has(key);

@@ -38,11 +38,14 @@ import {
   refreshPlan,
   serializeMapping,
   transformRows,
+  loadCategoryCorrections,
+  saveCategoryCorrections,
   useImportCommit,
   type ImportModule,
   type MappingPlan,
   type ParsedFile,
   type TransformResult,
+  type CorrectionMap,
 } from "@/lib/import";
 
 
@@ -95,6 +98,8 @@ export function UniversalImportDialog({
   const [lockedFile, setLockedFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  /** Learned per-user merchant→category corrections (transactions only). */
+  const [corrections, setCorrections] = useState<CorrectionMap>(new Map());
 
   const reset = useCallback(() => {
     setStep("upload");
@@ -107,6 +112,7 @@ export function UniversalImportDialog({
     setLockedFile(null);
     setPassword("");
     setPasswordError(null);
+    setCorrections(new Map());
   }, [module]);
 
 
@@ -147,6 +153,7 @@ export function UniversalImportDialog({
       setTarget(mod);
       setPlan(buildPlanFor(p, mod));
       setExisting(await fetchExistingRows(mod));
+      setCorrections(mod === "transactions" ? await loadCategoryCorrections() : new Map());
       setStep("map");
     } catch (e) {
       if (isPasswordError(e)) {
@@ -181,7 +188,7 @@ export function UniversalImportDialog({
       toast.error("Map every required field before continuing.");
       return;
     }
-    setResult(transformRows(parsed, plan, { existing, preferMonthFirst: monthFirst }));
+    setResult(transformRows(parsed, plan, { existing, preferMonthFirst: monthFirst, corrections }));
     setStep("preview");
   };
 
@@ -194,6 +201,17 @@ export function UniversalImportDialog({
 
   const doCommit = async () => {
     if (!result || !plan) return;
+    if (target === "transactions") {
+      void saveCategoryCorrections(
+        result.rows
+          .filter((r) => r.include && r.values.category && r.values.merchant)
+          .map((r) => ({
+            merchant: String(r.values.merchant),
+            kind: (r.values.kind === "income" ? "income" : "expense") as "income" | "expense",
+            category: String(r.values.category),
+          })),
+      );
+    }
     const out = await commit(target, result.rows);
     if (rememberMapping) {
       try {
@@ -493,6 +511,29 @@ export function UniversalImportDialog({
                             <span className="mr-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-amber-500">
                               duplicate
                             </span>
+                          )}
+                          {r.categorySuggestion && !r.categorySuggestion.applied && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setResult({
+                                  ...result,
+                                  rows: result.rows.map((x) =>
+                                    x.index === r.index
+                                      ? {
+                                          ...x,
+                                          values: { ...x.values, category: r.categorySuggestion!.category },
+                                          categorySuggestion: { ...r.categorySuggestion!, applied: true },
+                                        }
+                                      : x,
+                                  ),
+                                })
+                              }
+                              className="mr-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-primary hover:bg-primary/25"
+                              title="Apply this suggested category"
+                            >
+                              use “{r.categorySuggestion.category}”
+                            </button>
                           )}
                           {r.issues
                             .filter((i) => i.level === "error")

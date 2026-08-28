@@ -25,6 +25,7 @@ import {
   type DetectedBank,
   type ImportDraft,
 } from "@/lib/statement-import";
+import { loadCategoryCorrections, saveCategoryCorrections } from "@/lib/import/categorize";
 import {
   inr,
   useCategories,
@@ -61,7 +62,10 @@ export function BankStatementImporter({ open, onOpenChange }: Props) {
   const handleFile = async (file: File) => {
     setBusy(true);
     try {
-      const parsed = await parseStatementFile(file);
+      const [parsed, corrections] = await Promise.all([
+        parseStatementFile(file),
+        loadCategoryCorrections(),
+      ]);
       const built = buildDrafts(
         parsed.rows,
         (cats.data ?? []).map((c) => ({ id: c.id, name: c.name, kind: c.kind })),
@@ -70,6 +74,7 @@ export function BankStatementImporter({ open, onOpenChange }: Props) {
           amount: t.amount,
           kind: t.kind,
         })),
+        corrections,
       );
       setBank(parsed.bank);
       setSkipped(parsed.skipped);
@@ -101,6 +106,12 @@ export function BankStatementImporter({ open, onOpenChange }: Props) {
 
   const submit = async () => {
     if (selected.length === 0) return;
+    const catName = new Map((cats.data ?? []).map((c) => [c.id, c.name]));
+    void saveCategoryCorrections(
+      selected
+        .filter((d) => d.category_id && catName.get(d.category_id))
+        .map((d) => ({ merchant: d.merchant, kind: d.kind, category: catName.get(d.category_id!)! })),
+    );
     await bulk.mutateAsync(
       selected.map((d) => ({
         kind: d.kind,
