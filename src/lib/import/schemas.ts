@@ -254,8 +254,73 @@ export const FAMILY_SCHEMA: ImportSchema = {
   ],
 };
 
+export const INVESTMENT_TXNS_SCHEMA: ImportSchema = {
+  module: "investment_txns",
+  label: "Investment Transactions",
+  description: "Buy / sell trade books and mutual fund transaction statements.",
+  signals: ["buy", "sell", "trade", "trade date", "txn type", "transaction type", "order", "contract note", "rate", "traded qty", "purchase", "redemption", "switch"],
+  dedupeKeys: ["occurred_on", "investment", "quantity", "price"],
+  fields: [
+    {
+      key: "investment",
+      label: "Instrument (existing holding)",
+      type: "string",
+      required: true,
+      aliases: [
+        "investment", "instrument", "instrument name", "name", "security", "security name", "scheme", "scheme name",
+        "stock", "stock name", "scrip", "scrip name", "symbol", "ticker", "isin", "isin code", "company", "particulars", "description", "fund name",
+      ],
+      hint: "Matched against your existing holdings by name, symbol or ISIN.",
+    },
+    {
+      key: "txn_type",
+      label: "Transaction Type",
+      type: "string",
+      required: true,
+      fallback: "buy",
+      aliases: ["txn type", "transaction type", "type", "trade type", "buy sell", "buy / sell", "side", "action", "order type", "nature of transaction", "description type"],
+    },
+    {
+      key: "quantity",
+      label: "Quantity",
+      type: "number",
+      required: true,
+      min: 0,
+      max: 1e12,
+      aliases: ["quantity", "qty", "units", "unit", "no of shares", "number of shares", "shares", "no of units", "traded qty", "filled qty", "executed quantity"],
+    },
+    {
+      key: "price",
+      label: "Price / NAV",
+      type: "number",
+      required: true,
+      min: 0,
+      max: MONEY_MAX,
+      aliases: ["price", "rate", "trade price", "traded price", "nav", "purchase nav", "sale nav", "unit price", "price per unit", "avg trade price", "executed price"],
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      type: "number",
+      min: 0,
+      max: MONEY_MAX,
+      aliases: ["amount", "net amount", "gross amount", "total", "total amount", "value", "trade value", "consideration", "net obligation"],
+      hint: "Derived from quantity x price when absent.",
+    },
+    {
+      key: "occurred_on",
+      label: "Date",
+      type: "date",
+      required: true,
+      aliases: ["date", "trade date", "transaction date", "txn date", "order date", "value date", "posting date", "occurred on", "settlement date"],
+    },
+    { key: "notes", label: "Notes", type: "string", aliases: ["notes", "note", "remarks", "comment", "comments", "narration", "reference", "order id"] },
+  ],
+};
+
 export const IMPORT_SCHEMAS: ImportSchema[] = [
   INVESTMENTS_SCHEMA,
+  INVESTMENT_TXNS_SCHEMA,
   TRANSACTIONS_SCHEMA,
   ASSETS_SCHEMA,
   LIABILITIES_SCHEMA,
