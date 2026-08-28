@@ -7,6 +7,7 @@
  */
 export type ImportModule =
   | "investments"
+  | "investment_txns"
   | "transactions"
   | "assets"
   | "liabilities"
@@ -30,6 +31,13 @@ const str = (v: unknown) => {
   const s = v == null ? "" : String(v).trim();
   return s === "" ? null : s;
 };
+/** Map any spelling of a trade side onto the stored "buy" / "sell" values. */
+export function normalizeTxnType(v: unknown): "buy" | "sell" {
+  const s = String(v ?? "").toLowerCase();
+  if (/sell|sale|sold|redeem|redemption|withdraw|debit|switch out|exit|s$/.test(s.trim())) return "sell";
+  return "buy";
+}
+
 const bool = (v: unknown) => v === true || v === "true";
 
 export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
@@ -56,6 +64,25 @@ export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
       notes: str(v.notes),
       last_updated: today,
     }),
+  },
+  investment_txns: {
+    table: "wealth_investment_txns",
+    invalidate: [["wealth", "investments"], ["wealth", "investment-txns"]],
+    dedupeSelect: ["occurred_on", "quantity", "price"],
+    build: (v, { userId }) => {
+      const qty = Math.abs(num(v.quantity, 0) ?? 0);
+      const price = Math.abs(num(v.price, 0) ?? 0);
+      return {
+        user_id: userId,
+        investment_id: (v.__investment_id as string | null) ?? null,
+        txn_type: normalizeTxnType(v.txn_type),
+        quantity: qty,
+        price,
+        amount: Math.abs(num(v.amount, 0) ?? 0) || qty * price,
+        occurred_on: str(v.occurred_on),
+        notes: str(v.notes),
+      };
+    },
   },
   transactions: {
     table: "money_transactions",
