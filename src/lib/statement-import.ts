@@ -9,7 +9,7 @@
  * Pure functions only — no React, no network.
  */
 
-import { classifyCategory } from "./import/categorize";
+import { classifyCategory, type CorrectionMap } from "./import/categorize";
 
 export type ParsedRow = {
   occurred_on: string; // YYYY-MM-DD
@@ -312,13 +312,14 @@ export function buildDrafts(
   parsed: ParsedRow[],
   categories: { id: string; name: string; kind: string }[],
   existing: ExistingKey[],
+  corrections?: CorrectionMap,
 ): ImportDraft[] {
   const existingKeys = new Set(existing.map(dupKey));
   const byName = new Map(categories.map((c) => [`${c.kind}|${c.name.toLowerCase()}`, c.id]));
   const seen = new Set<string>();
 
   return parsed.map((p) => {
-    const guess = guessCategory(p.raw, p.kind);
+    const guess = guessCategory(p.raw, p.kind, corrections);
     const catId = guess ? (byName.get(`${p.kind}|${guess.toLowerCase()}`) ?? null) : null;
     const key = dupKey(p);
     const duplicate = existingKeys.has(key) || seen.has(key);
