@@ -97,7 +97,7 @@ export function UniversalImportDialog({
   /** Commit strategy chosen in the review step. */
   const [commitMode, setCommitMode] = useState<CommitMode>("insert");
   const [result, setResult] = useState<TransformResult | null>(null);
-  const [outcome, setOutcome] = useState<{ inserted: number; skipped: number; failed: number; errors: string[] } | null>(null);
+  const [outcome, setOutcome] = useState<ImportOutcome | null>(null);
   /** Encrypted file awaiting a password (kept in memory only). */
   const [lockedFile, setLockedFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
