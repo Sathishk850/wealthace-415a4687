@@ -48,6 +48,7 @@ import {
   type TransformResult,
   type CorrectionMap,
   type CommitMode,
+  type ImportOutcome,
 } from "@/lib/import";
 
 
