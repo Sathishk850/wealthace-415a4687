@@ -151,6 +151,15 @@ export function transformRows(
       }
     }
 
+    if (schema.module === "investment_txns") {
+      const qty = Number(values.quantity ?? 0);
+      const price = Number(values.price ?? 0);
+      if (values.amount == null && qty && price) values.amount = qty * price;
+      if (!price && qty && typeof values.amount === "number") values.price = (values.amount as number) / qty;
+      if (typeof values.quantity === "number") values.quantity = Math.abs(values.quantity as number);
+      if (typeof values.price === "number") values.price = Math.abs(values.price as number);
+    }
+
     if (schema.module === "investments") {
       const qty = Number(values.quantity ?? 0);
       const avg = Number(values.avg_price ?? 0);

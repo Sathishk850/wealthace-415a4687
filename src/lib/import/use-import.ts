@@ -69,6 +69,22 @@ async function resolveCategories(rows: Record<string, unknown>[], userId: string
   }
 }
 
+/** Resolve canonical `investment` text onto an existing holding id. */
+async function resolveInvestments(rows: Record<string, unknown>[]) {
+  const { data } = await supabase.from("wealth_investments").select("id,name,symbol,identifier");
+  const byKey = new Map<string, string>();
+  for (const r of (data ?? []) as { id: string; name: string | null; symbol: string | null; identifier: string | null }[]) {
+    for (const k of [r.name, r.symbol, r.identifier]) {
+      const key = String(k ?? "").trim().toLowerCase();
+      if (key && !byKey.has(key)) byKey.set(key, r.id);
+    }
+  }
+  for (const v of rows) {
+    const key = String(v.investment ?? "").trim().toLowerCase();
+    v.__investment_id = key ? byKey.get(key) ?? null : null;
+  }
+}
+
 export type ImportOutcome = { inserted: number; skipped: number; failed: number; errors: string[] };
 
 export function useImportCommit() {
@@ -90,11 +106,29 @@ export function useImportCommit() {
         const today = new Date().toISOString().slice(0, 10);
         const values = selected.map((r) => ({ ...r.values }));
         if (module === "transactions") await resolveCategories(values, userId);
+        let unmatched = 0;
+        const unmatchedErrors: string[] = [];
+        let rowsToCommit = values;
+        if (module === "investment_txns") {
+          await resolveInvestments(values);
+          rowsToCommit = values.filter((v) => v.__investment_id);
+          unmatched = values.length - rowsToCommit.length;
+          if (unmatched) {
+            unmatchedErrors.push(
+              `${unmatched} row(s) skipped — no matching holding found. Add the holding first, then re-import.`,
+            );
+          }
+        }
 
-        const payload = values.map((v) => target.build(v, { userId, today }));
+        const payload = rowsToCommit.map((v) => target.build(v, { userId, today }));
         let inserted = 0;
-        let failed = 0;
-        const errors: string[] = [];
+        let failed = unmatched;
+        const errors: string[] = [...unmatchedErrors];
+
+        if (!payload.length) {
+          for (const key of target.invalidate) qc.invalidateQueries({ queryKey: key });
+          return { inserted: 0, skipped, failed, errors };
+        }
 
         for (let i = 0; i < payload.length; i += CHUNK) {
           const chunk = payload.slice(i, i + CHUNK);
