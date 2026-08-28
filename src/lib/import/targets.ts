@@ -15,12 +15,31 @@ export type ImportModule =
   | "accounts"
   | "family";
 
+/**
+ * Optional merge/update support. When the user picks "Update existing / merge"
+ * in the commit step, matched rows are UPDATEd instead of inserted.
+ */
+export type ImportMerge = {
+  /** Extra existing columns to fetch (id is always fetched). */
+  select: string[];
+  /** Ordered match keys derived from an existing DB row (most specific first). */
+  rowKeys: (row: Record<string, unknown>) => string[];
+  /** Ordered match keys derived from canonical import values. */
+  valueKeys: (v: Record<string, unknown>) => string[];
+  /** Payload columns that a merge is allowed to overwrite. */
+  updatable: string[];
+  /** Human description of the match rule, shown in the wizard. */
+  describe: string;
+};
+
 export type ImportTarget = {
   table: string;
   /** Query key prefixes to invalidate after a successful import. */
   invalidate: string[][];
   /** Canonical keys used for duplicate detection against existing rows. */
   dedupeSelect: string[];
+  /** Present when this module supports merge/update commits. */
+  merge?: ImportMerge;
   /** Build the insert payload from canonical values. */
   build: (v: Record<string, unknown>, ctx: { userId: string; today: string }) => Record<string, unknown>;
 };
@@ -38,6 +57,9 @@ export function normalizeTxnType(v: unknown): "buy" | "sell" {
   return "buy";
 }
 
+const key = (...parts: unknown[]) =>
+  parts.map((p) => String(p ?? "").trim().toLowerCase()).join("|");
+
 const bool = (v: unknown) => v === true || v === "true";
 
 export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
@@ -45,6 +67,28 @@ export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
     table: "wealth_investments",
     invalidate: [["wealth", "investments"]],
     dedupeSelect: ["name", "symbol", "quantity"],
+    merge: {
+      select: ["name", "symbol", "identifier", "exchange"],
+      describe: "Matched by ISIN / symbol + exchange, falling back to instrument name + exchange.",
+      rowKeys: (r) => {
+        const keys: string[] = [];
+        for (const id of [r.symbol, r.identifier]) {
+          if (String(id ?? "").trim()) keys.push(key("id", id, r.exchange));
+        }
+        if (String(r.name ?? "").trim()) keys.push(key("name", r.name, r.exchange));
+        return keys;
+      },
+      valueKeys: (v) => {
+        const keys: string[] = [];
+        if (String(v.symbol ?? "").trim()) keys.push(key("id", v.symbol, v.exchange));
+        if (String(v.name ?? "").trim()) keys.push(key("name", v.name, v.exchange));
+        return keys;
+      },
+      updatable: [
+        "quantity", "avg_price", "current_price", "currency", "category", "sub_category",
+        "purchase_date", "status", "notes", "last_updated",
+      ],
+    },
     build: (v, { userId, today }) => ({
       user_id: userId,
       name: str(v.name) ?? "Unnamed",
@@ -69,6 +113,13 @@ export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
     table: "wealth_investment_txns",
     invalidate: [["wealth", "investments"], ["wealth", "investment-txns"]],
     dedupeSelect: ["occurred_on", "quantity", "price"],
+    merge: {
+      select: ["investment_id", "occurred_on", "txn_type", "quantity", "price"],
+      describe: "Matched by holding + date + transaction type.",
+      rowKeys: (r) => [key("t", r.investment_id, r.occurred_on, r.txn_type)],
+      valueKeys: (v) => [key("t", v.__investment_id, v.occurred_on, normalizeTxnType(v.txn_type))],
+      updatable: ["quantity", "price", "amount", "notes"],
+    },
     build: (v, { userId }) => {
       const qty = Math.abs(num(v.quantity, 0) ?? 0);
       const price = Math.abs(num(v.price, 0) ?? 0);
@@ -88,6 +139,23 @@ export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
     table: "money_transactions",
     invalidate: [["money", "transactions"], ["money", "budgets"], ["money", "categories"]],
     dedupeSelect: ["occurred_on", "amount", "merchant"],
+    merge: {
+      select: ["occurred_on", "amount", "merchant", "note"],
+      describe: "Matched by reference (note / UTR) when present, otherwise date + amount + description.",
+      rowKeys: (r) => {
+        const keys: string[] = [];
+        if (String(r.note ?? "").trim()) keys.push(key("ref", r.note));
+        keys.push(key("dam", r.occurred_on, Math.abs(Number(r.amount ?? 0)), r.merchant));
+        return keys;
+      },
+      valueKeys: (v) => {
+        const keys: string[] = [];
+        if (String(v.note ?? "").trim()) keys.push(key("ref", v.note));
+        keys.push(key("dam", v.occurred_on, Math.abs(Number(v.amount ?? 0)), v.merchant));
+        return keys;
+      },
+      updatable: ["kind", "amount", "occurred_on", "merchant", "category_id", "note"],
+    },
     build: (v, { userId }) => ({
       user_id: userId,
       kind: v.kind === "income" ? "income" : "expense",

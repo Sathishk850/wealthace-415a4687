@@ -85,7 +85,32 @@ async function resolveInvestments(rows: Record<string, unknown>[]) {
   }
 }
 
-export type ImportOutcome = { inserted: number; skipped: number; failed: number; errors: string[] };
+export type CommitMode = "insert" | "merge";
+
+export type ImportOutcome = {
+  inserted: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  errors: string[];
+};
+
+/** Existing-row match index for merge mode: match key → row id. */
+async function buildMergeIndex(module: ImportModule) {
+  const merge = IMPORT_TARGETS[module].merge!;
+  const table = IMPORT_TARGETS[module].table;
+  const { data } = await supabase
+    .from(table as any)
+    .select(["id", ...merge.select].join(","))
+    .limit(5000);
+  const index = new Map<string, string>();
+  for (const row of (data ?? []) as unknown as Record<string, unknown>[]) {
+    for (const k of merge.rowKeys(row)) {
+      if (k && !index.has(k)) index.set(k, String(row.id));
+    }
+  }
+  return index;
+}
 
 export function useImportCommit() {
   const qc = useQueryClient();
@@ -93,11 +118,11 @@ export function useImportCommit() {
   const [progress, setProgress] = useState(0);
 
   const commit = useCallback(
-    async (module: ImportModule, rows: TransformedRow[]): Promise<ImportOutcome> => {
+    async (module: ImportModule, rows: TransformedRow[], mode: CommitMode = "insert"): Promise<ImportOutcome> => {
       const target = IMPORT_TARGETS[module];
       const selected = rows.filter((r) => r.include);
       const skipped = rows.length - selected.length;
-      if (!selected.length) return { inserted: 0, skipped, failed: 0, errors: [] };
+      if (!selected.length) return { inserted: 0, updated: 0, skipped, failed: 0, errors: [] };
 
       setPending(true);
       setProgress(0);
@@ -127,7 +152,60 @@ export function useImportCommit() {
 
         if (!payload.length) {
           for (const key of target.invalidate) qc.invalidateQueries({ queryKey: key });
-          return { inserted: 0, skipped, failed, errors };
+          return { inserted: 0, updated: 0, skipped, failed, errors };
+        }
+
+        /* ---------- merge / update mode ---------- */
+        const merging = mode === "merge" && !!target.merge;
+        if (merging) {
+          const merge = target.merge!;
+          const index = await buildMergeIndex(module);
+          const inserts: Record<string, unknown>[] = [];
+          const updates: { id: string; patch: Record<string, unknown> }[] = [];
+          rowsToCommit.forEach((v, i) => {
+            const built = payload[i]!;
+            const matchId = merge.valueKeys(v).map((k) => index.get(k)).find(Boolean);
+            if (matchId) {
+              const patch: Record<string, unknown> = {};
+              for (const col of merge.updatable) {
+                if (col in built && built[col] != null) patch[col] = built[col];
+              }
+              updates.push({ id: matchId, patch });
+            } else {
+              inserts.push(built);
+            }
+          });
+
+          let inserted = 0;
+          let updated = 0;
+          let total = 0;
+          for (const u of updates) {
+            const { error } = await supabase
+              .from(target.table as any)
+              .update(u.patch as any)
+              .eq("id", u.id);
+            if (error) {
+              failed += 1;
+              if (errors.length < 3) errors.push(error.message);
+            } else updated += 1;
+            total += 1;
+            setProgress(Math.round((total / payload.length) * 100));
+          }
+          for (let i = 0; i < inserts.length; i += CHUNK) {
+            const chunk = inserts.slice(i, i + CHUNK);
+            const { data, error } = await supabase
+              .from(target.table as any)
+              .insert(chunk as any)
+              .select("id");
+            if (error) {
+              failed += chunk.length;
+              if (errors.length < 3) errors.push(error.message);
+            } else inserted += (data ?? []).length || chunk.length;
+            total += chunk.length;
+            setProgress(Math.round(Math.min(1, total / payload.length) * 100));
+          }
+          for (const key of target.invalidate) qc.invalidateQueries({ queryKey: key });
+          return { inserted, updated, skipped, failed, errors };
         }
 
         for (let i = 0; i < payload.length; i += CHUNK) {
@@ -146,7 +224,7 @@ export function useImportCommit() {
         }
 
         for (const key of target.invalidate) qc.invalidateQueries({ queryKey: key });
-        return { inserted, skipped, failed, errors };
+        return { inserted, updated: 0, skipped, failed, errors };
       } finally {
         setPending(false);
       }

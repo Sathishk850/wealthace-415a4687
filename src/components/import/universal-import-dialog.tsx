@@ -41,11 +41,14 @@ import {
   loadCategoryCorrections,
   saveCategoryCorrections,
   useImportCommit,
+  IMPORT_TARGETS,
   type ImportModule,
   type MappingPlan,
   type ParsedFile,
   type TransformResult,
   type CorrectionMap,
+  type CommitMode,
+  type ImportOutcome,
 } from "@/lib/import";
 
 
@@ -92,8 +95,10 @@ export function UniversalImportDialog({
   const [existing, setExisting] = useState<Record<string, unknown>[]>([]);
   const [monthFirst, setMonthFirst] = useState(false);
   const [rememberMapping, setRememberMapping] = useState(true);
+  /** Commit strategy chosen in the review step. */
+  const [commitMode, setCommitMode] = useState<CommitMode>("insert");
   const [result, setResult] = useState<TransformResult | null>(null);
-  const [outcome, setOutcome] = useState<{ inserted: number; skipped: number; failed: number; errors: string[] } | null>(null);
+  const [outcome, setOutcome] = useState<ImportOutcome | null>(null);
   /** Encrypted file awaiting a password (kept in memory only). */
   const [lockedFile, setLockedFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
@@ -199,6 +204,29 @@ export function UniversalImportDialog({
 
   const includedCount = result?.rows.filter((r) => r.include).length ?? 0;
 
+  /** Merge rule description for the active module (absent → merge unsupported). */
+  const mergeInfo = IMPORT_TARGETS[target]?.merge?.describe ?? null;
+
+  /**
+   * Merge mode acts on rows that duplicate existing data, so re-include rows
+   * that were excluded purely because they matched an existing record.
+   */
+  const enableMerge = () => {
+    setCommitMode("merge");
+    setResult((prev) =>
+      prev
+        ? {
+            ...prev,
+            rows: prev.rows.map((r) =>
+              r.duplicate === "existing" && !r.issues.some((i) => i.level === "error")
+                ? { ...r, include: true }
+                : r,
+            ),
+          }
+        : prev,
+    );
+  };
+
   const doCommit = async () => {
     if (!result || !plan) return;
     if (target === "transactions") {
@@ -212,7 +240,7 @@ export function UniversalImportDialog({
           })),
       );
     }
-    const out = await commit(target, result.rows);
+    const out = await commit(target, result.rows, commitMode);
     if (rememberMapping) {
       try {
         localStorage.setItem(savedKey(target), JSON.stringify(serializeMapping(plan)));
@@ -371,6 +399,7 @@ export function UniversalImportDialog({
                   <select
                     value={target}
                     onChange={(e) => {
+                      setCommitMode("insert");
                       const mod = e.target.value as ImportModule;
                       setTarget(mod);
                       setPlan(buildPlanFor(parsed, mod));
@@ -434,6 +463,36 @@ export function UniversalImportDialog({
                 <p className="text-[11px] text-muted-foreground">
                   Ignored columns: {plan.unmappedColumns.join(", ")}
                 </p>
+              )}
+
+              {mergeInfo && (
+                <div className="space-y-2 rounded-2xl border border-border bg-card p-3">
+                  <p className="text-xs font-semibold text-foreground">How should these rows be saved?</p>
+                  <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="radio"
+                      className="mt-0.5"
+                      checked={commitMode === "insert"}
+                      onChange={() => setCommitMode("insert")}
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">Add as new</span> — every included row is inserted;
+                      duplicates stay flagged and excluded.
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="radio"
+                      className="mt-0.5"
+                      checked={commitMode === "merge"}
+                      onChange={() => enableMerge()}
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">Update existing / merge</span> — {mergeInfo}
+                      {" "}Rows with no match are added as new.
+                    </span>
+                  </label>
+                </div>
               )}
 
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -573,6 +632,7 @@ export function UniversalImportDialog({
               <CheckCircle2 className="h-8 w-8 text-success" />
               <p className="text-sm font-semibold text-foreground">
                 {outcome.inserted} record{outcome.inserted === 1 ? "" : "s"} imported
+                {outcome.updated ? ` · ${outcome.updated} updated` : ""}
               </p>
               <p className="text-xs text-muted-foreground">
                 {outcome.skipped} skipped (duplicates or invalid)
