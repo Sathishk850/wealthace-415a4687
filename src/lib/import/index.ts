@@ -1,5 +1,6 @@
 export * from "./coerce";
 export * from "./password";
+export * from "./categorize";
 
 export * from "./schemas";
 export * from "./parse";
