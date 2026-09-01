@@ -106,7 +106,10 @@ export function UniversalImportDialog({
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   /** Learned per-user merchant→category corrections (transactions only). */
-  const [corrections, setCorrections] = useState<CorrectionMap>(new Map());
+  /** Broker / bank guessed from the file itself (display only). */
+  const [detectedProvider, setDetectedProvider] = useState<DetectedProvider | null>(null);
+
+
 
   const reset = useCallback(() => {
     setStep("upload");
