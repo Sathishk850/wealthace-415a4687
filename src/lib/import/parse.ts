@@ -171,7 +171,10 @@ function detectHeaderRow(grid: string[][]): number {
 }
 
 function gridToRows(grid: string[][]) {
-  const headerIdx = detectHeaderRow(grid);
+  // Prefer the financial-vocabulary sniffer (bank/broker preambles); fall back
+  // to the generic shape-based scorer for plain exports.
+  const headerIdx = findHeaderRow(grid) || detectHeaderRow(grid);
+
   const preamble = grid
     .slice(0, headerIdx)
     .map((r) => r.filter(Boolean).join(" · "))
