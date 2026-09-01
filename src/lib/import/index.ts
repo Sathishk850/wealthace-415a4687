@@ -8,3 +8,6 @@ export * from "./match";
 export * from "./transform";
 export * from "./targets";
 export * from "./use-import";
+export * from "./providers";
+export * from "./classify-security";
+
