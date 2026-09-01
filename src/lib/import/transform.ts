@@ -176,7 +176,9 @@ export function transformRows(
       }
 
       let derivedKind: "income" | "expense" | null = null;
-      // Split debit/credit columns → amount + kind.
+      // Split debit/credit columns → amount + kind. A mapped-but-zero amount
+      // (ledger exports print 0.00 in the unused column) counts as absent.
+      if (values.amount === 0 && (debit || credit)) values.amount = null;
       if (values.amount == null && (debit != null || credit != null)) {
         if (credit != null && credit > 0) {
           values.amount = credit;

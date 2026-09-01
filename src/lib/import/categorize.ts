@@ -102,6 +102,7 @@ export const CATEGORY_TAXONOMY: CategoryRule[] = [
       "reliance fresh", "reliance smart", "more retail", "spencers", "star bazaar", "nature's basket", "licious",
       "fresh to home", "freshtohome", "country delight", "milk basket", "milkbasket", "amul parlour", "instamart",
       "kirana", "supermarket", "hypermarket", "provision store", "walmart", "costco", "tesco", "aldi", "kroger", "safeway", "whole foods",
+      "big bazaar", "bigbazaar", "vishal mega mart", "smart bazaar", "easyday", "ratnadeep", "metro cash",
     ],
     keywords: ["grocery", "groceries", "grocer", "vegetables", "fruits", "dairy", "supermart", "general store", "mart"],
   },
