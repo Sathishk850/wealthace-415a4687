@@ -377,11 +377,13 @@ export function transformRows(
 
   return {
     rows,
+    skipped: skippedRows,
     summary: {
       total: rows.length,
       valid: rows.filter((r) => !r.issues.some((i) => i.level === "error")).length,
       invalid: rows.filter((r) => r.issues.some((i) => i.level === "error")).length,
       duplicates: rows.filter((r) => r.duplicate).length,
+      skipped: skippedRows,
       currencies: [...currencies],
       planIssues,
     },
