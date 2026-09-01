@@ -90,9 +90,49 @@ function looksNumeric(v: string) {
 }
 
 /**
+ * Financial header vocabulary used to locate the real header row inside
+ * bank/broker reports that open with title banners and account summaries.
+ */
+const FINANCIAL_HEADER_ALIASES = [
+  "date", "narration", "debit", "credit", "balance", "isin", "quantity", "nav",
+  "description", "withdrawal", "deposit", "amount", "particulars", "remarks",
+  "ref", "scheme", "units", "folio",
+];
+
+/**
+ * Scan the first 40 rows and pick the one whose cells best match the
+ * financial header vocabulary. Returns 0 when nothing matches (row 0 is then
+ * treated as the header by the caller's generic scorer) and also returns 0
+ * when row 0 is already the strongest candidate.
+ */
+export function findHeaderRow(grid: string[][]): number {
+  let bestIdx = 0;
+  let bestScore = 0;
+  const limit = Math.min(grid.length, 40);
+  for (let i = 0; i < limit; i++) {
+    const row = grid[i] ?? [];
+    const cells = row.map((c) => String(c ?? "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim()).filter(Boolean);
+    if (cells.length < 2) continue;
+    let hits = 0;
+    for (const cell of cells) {
+      if (FINANCIAL_HEADER_ALIASES.some((a) => cell === a || cell.split(" ").includes(a) || cell.includes(a))) hits++;
+    }
+    if (hits < 2) continue;
+    const numeric = cells.filter(looksNumeric).length;
+    const score = hits * 3 + cells.length - numeric * 4 - i * 0.1;
+    if (score > bestScore) {
+      bestScore = score;
+      bestIdx = i;
+    }
+  }
+  return bestScore > 0 ? bestIdx : 0;
+}
+
+/**
  * Score each of the first rows as a candidate header: mostly non-empty,
  * mostly non-numeric, distinct labels, and a width close to the modal width.
  */
+
 function detectHeaderRow(grid: string[][]): number {
   const widths = new Map<number, number>();
   for (const r of grid) {
