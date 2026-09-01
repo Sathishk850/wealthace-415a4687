@@ -128,10 +128,14 @@ export function transformRows(
   const planIssues: RowIssue[] = [];
   const currencies = new Set<string>();
 
-  const rows: TransformedRow[] = parsed.rows.map((raw, index) => {
+  const rows: TransformedRow[] = [];
+  let skippedRows = 0;
+  parsed.rows.forEach((raw, index) => {
     const values: Record<string, unknown> = {};
     const issues: RowIssue[] = [];
+    let skipRow = false;
     let categorySuggestion: TransformedRow["categorySuggestion"] = null;
+
 
     for (const m of active) {
       const rawVal = raw[m.source as string];
