@@ -41,6 +41,7 @@ import {
   loadCategoryCorrections,
   saveCategoryCorrections,
   useImportCommit,
+  detectProvider,
   IMPORT_TARGETS,
   type ImportModule,
   type MappingPlan,
@@ -49,6 +50,7 @@ import {
   type CorrectionMap,
   type CommitMode,
   type ImportOutcome,
+  type DetectedProvider,
 } from "@/lib/import";
 
 
@@ -105,6 +107,8 @@ export function UniversalImportDialog({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   /** Learned per-user merchant→category corrections (transactions only). */
   const [corrections, setCorrections] = useState<CorrectionMap>(new Map());
+  /** Broker / bank guessed from the file itself (display only). */
+  const [detectedProvider, setDetectedProvider] = useState<DetectedProvider | null>(null);
 
   const reset = useCallback(() => {
     setStep("upload");
@@ -118,6 +122,7 @@ export function UniversalImportDialog({
     setPassword("");
     setPasswordError(null);
     setCorrections(new Map());
+    setDetectedProvider(null);
   }, [module]);
 
 
@@ -157,6 +162,7 @@ export function UniversalImportDialog({
       }
       setTarget(mod);
       setPlan(buildPlanFor(p, mod));
+      setDetectedProvider(detectProvider(p));
       setExisting(await fetchExistingRows(mod));
       setCorrections(mod === "transactions" ? await loadCategoryCorrections() : new Map());
       setStep("map");
@@ -392,6 +398,30 @@ export function UniversalImportDialog({
                 {parsed.columns.length} columns
                 {parsed.skippedRows ? ` · ${parsed.skippedRows} blank/total rows skipped` : ""}
               </div>
+
+              {detectedProvider && (
+                <div
+                  className={cn(
+                    "flex items-start gap-2 rounded-xl border px-3 py-2 text-xs",
+                    detectedProvider.confidence === "high"
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : detectedProvider.confidence === "medium"
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "border-border bg-surface text-muted-foreground",
+                  )}
+                >
+                  <FileSpreadsheet className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    Looks like a <span className="font-semibold">{detectedProvider.name}</span>{" "}
+                    {detectedProvider.kind.toLowerCase()}
+                    {detectedProvider.confidence === "high"
+                      ? " — column mapping pre-filled accordingly."
+                      : " — please double-check the mapping below."}
+                  </span>
+                </div>
+              )}
+
+
 
               {!lockModule && (
                 <label className="flex items-center gap-2 text-xs">
