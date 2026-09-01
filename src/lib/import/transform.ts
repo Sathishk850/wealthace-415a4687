@@ -8,9 +8,11 @@
  */
 import { detectCurrency, toBoolean, toDate, toNumber, toPercent, toText } from "./coerce";
 import { classifyCategory, type CategoryConfidence, type CorrectionMap } from "./categorize";
+import { classifySecurity } from "./classify-security";
 import type { CanonicalField } from "./schemas";
 import type { MappingPlan } from "./match";
 import type { ParsedFile } from "./parse";
+
 
 export type IssueLevel = "error" | "warning";
 export type RowIssue = { level: IssueLevel; field?: string; message: string };
