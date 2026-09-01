@@ -46,6 +46,45 @@ export type TransformResult = { rows: TransformedRow[]; summary: TransformSummar
 const KIND_EXPENSE = ["expense", "debit", "dr", "withdrawal", "paid", "out", "spend", "payment", "purchase"];
 const KIND_INCOME = ["income", "credit", "cr", "deposit", "received", "in", "salary", "refund"];
 
+/**
+ * Turn a raw bank narration into a readable merchant label: drop channel
+ * prefixes, long reference numbers, VPA suffixes and trailing pipe segments.
+ */
+export function cleanBankNarration(input: unknown): string {
+  let s = String(input ?? "").replace(/\s+/g, " ").trim();
+  if (!s) return "";
+  // Channel prefixes, possibly repeated (e.g. "UPI/NEFT-DR-...").
+  for (let i = 0; i < 3; i++) {
+    s = s.replace(/^(upi|neft|imps|rtgs|pos|atm|ach|ecs|nach|inb|mmt|bil|tpt|chq|cash)[\s\-/:*|]+(dr|cr)?[\s\-/:*|]*/i, "").trim();
+  }
+  // Trailing pipe/slash separated ref segments.
+  s = s.split("|")[0].trim();
+  // VPA handles → keep only the readable part.
+  s = s.replace(/([a-z0-9._-]+)@[a-z]+/gi, "$1");
+  // Long reference numbers.
+  s = s.replace(/\b\d{9,}\b/g, " ");
+  s = s.replace(/[\-/_*]{2,}/g, " ").replace(/\s{2,}/g, " ").replace(/^[\s\-/*|:]+|[\s\-/*|:]+$/g, "").trim();
+  if (s && s === s.toUpperCase()) {
+    s = s
+      .toLowerCase()
+      .split(" ")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(" ");
+  }
+  return s;
+}
+
+/** Parse "1,250.00 Dr" / "500 CR" style amount strings. */
+function parseDrCrAmount(raw: unknown): { amount: number; kind: "income" | "expense" } | null {
+  const s = String(raw ?? "").trim();
+  if (!s) return null;
+  const m = /(dr|cr)\b\.?/i.exec(s);
+  const num = toNumber(s.replace(/(dr|cr)\b\.?/i, ""));
+  if (num == null || !m) return null;
+  return { amount: Math.abs(num), kind: m[1].toLowerCase() === "cr" ? "income" : "expense" };
+}
+
+
 function coerce(field: CanonicalField, raw: unknown, preferMonthFirst: boolean) {
   switch (field.type) {
     case "number":
