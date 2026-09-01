@@ -399,6 +399,30 @@ export function UniversalImportDialog({
                 {parsed.skippedRows ? ` · ${parsed.skippedRows} blank/total rows skipped` : ""}
               </div>
 
+              {detectedProvider && (
+                <div
+                  className={cn(
+                    "flex items-start gap-2 rounded-xl border px-3 py-2 text-xs",
+                    detectedProvider.confidence === "high"
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : detectedProvider.confidence === "medium"
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "border-border bg-surface text-muted-foreground",
+                  )}
+                >
+                  <FileSpreadsheet className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    Looks like a <span className="font-semibold">{detectedProvider.name}</span>{" "}
+                    {detectedProvider.kind.toLowerCase()}
+                    {detectedProvider.confidence === "high"
+                      ? " — column mapping pre-filled accordingly."
+                      : " — please double-check the mapping below."}
+                  </span>
+                </div>
+              )}
+
+
+
               {!lockModule && (
                 <label className="flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground">Import into</span>
