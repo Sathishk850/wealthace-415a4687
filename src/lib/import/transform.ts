@@ -165,6 +165,36 @@ export function transformRows(
 
     // Module-aware normalisation.
     if (schema.module === "transactions") {
+      const debit = typeof values.debit === "number" ? Math.abs(values.debit) : null;
+      const credit = typeof values.credit === "number" ? Math.abs(values.credit) : null;
+
+      // Statement filler lines: no date and no money column at all.
+      const hasMoney = values.amount != null || debit != null || credit != null || String(values.raw_amount ?? "").trim() !== "";
+      if (values.occurred_on == null && !hasMoney) {
+        skippedRows++;
+        skipRow = true;
+      }
+
+      let derivedKind: "income" | "expense" | null = null;
+      // Split debit/credit columns → amount + kind.
+      if (values.amount == null && (debit != null || credit != null)) {
+        if (credit != null && credit > 0) {
+          values.amount = credit;
+          derivedKind = "income";
+        } else if (debit != null && debit > 0) {
+          values.amount = debit;
+          derivedKind = "expense";
+        }
+      }
+      // "1,250.00 Dr" style single column.
+      if (values.amount == null && values.raw_amount != null) {
+        const drcr = parseDrCrAmount(values.raw_amount);
+        if (drcr) {
+          values.amount = drcr.amount;
+          derivedKind = drcr.kind;
+        }
+      }
+
       const rawKind = String(values.kind ?? "").toLowerCase();
       let kind: "income" | "expense" | null = null;
       if (KIND_INCOME.some((w) => rawKind === w || rawKind.includes(w))) kind = "income";
@@ -174,12 +204,20 @@ export function transformRows(
       const sourceHeader = (active.find((m) => m.field.key === "amount")?.source ?? "").toLowerCase();
       if (/debit|withdraw/.test(sourceHeader)) kind = "expense";
       else if (/credit|deposit/.test(sourceHeader)) kind = "income";
+      if (derivedKind) kind = derivedKind;
       values.kind = kind ?? "expense";
-      if (amt != null) values.amount = Math.abs(amt);
+      if (typeof values.amount === "number") values.amount = Math.abs(values.amount as number);
+
+      // Readable merchant label from raw bank narrations.
+      if (typeof values.merchant === "string") {
+        const cleaned = cleanBankNarration(values.merchant);
+        if (cleaned) values.merchant = cleaned;
+      }
 
       // Merchant → category classification (only when the file gave no category).
       const givenCategory = String(values.category ?? "").trim();
       if (!givenCategory) {
+
         const text = [values.merchant, values.note, raw.__raw]
           .map((v) => (v == null ? "" : String(v)))
           .join(" ");
