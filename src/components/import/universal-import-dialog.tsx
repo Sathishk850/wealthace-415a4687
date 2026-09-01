@@ -162,6 +162,7 @@ export function UniversalImportDialog({
       }
       setTarget(mod);
       setPlan(buildPlanFor(p, mod));
+      setDetectedProvider(detectProvider(p));
       setExisting(await fetchExistingRows(mod));
       setCorrections(mod === "transactions" ? await loadCategoryCorrections() : new Map());
       setStep("map");
