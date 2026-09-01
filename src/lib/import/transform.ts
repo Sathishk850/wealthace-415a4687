@@ -34,11 +34,14 @@ export type TransformSummary = {
   valid: number;
   invalid: number;
   duplicates: number;
+  /** Rows silently dropped as non-data (e.g. statement filler lines). */
+  skipped: number;
   currencies: string[];
   planIssues: RowIssue[];
 };
 
-export type TransformResult = { rows: TransformedRow[]; summary: TransformSummary };
+export type TransformResult = { rows: TransformedRow[]; summary: TransformSummary; skipped: number };
+
 
 const KIND_EXPENSE = ["expense", "debit", "dr", "withdrawal", "paid", "out", "spend", "payment", "purchase"];
 const KIND_INCOME = ["income", "credit", "cr", "deposit", "received", "in", "salary", "refund"];
