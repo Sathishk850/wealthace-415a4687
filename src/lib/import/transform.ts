@@ -259,7 +259,29 @@ export function transformRows(
       if (!cur && qty && typeof values.current_value === "number") {
         values.current_price = (values.current_value as number) / qty;
       }
+
+      // Asset-class inference when the file gave nothing useful.
+      const given = String(values.category ?? "").trim().toLowerCase();
+      if (!given || given === "others" || given === "other" || given === "equity") {
+        const guess = classifySecurity({
+          name: values.name as string | undefined,
+          symbol: (values.symbol ?? values.isin) as string | undefined,
+          isin: values.isin as string | undefined,
+        });
+        if (guess) {
+          values.category = guess.category;
+          if (guess.sub_category && !values.sub_category) values.sub_category = guess.sub_category;
+          if (guess.confidence === "low") {
+            issues.push({
+              level: "warning",
+              field: "category",
+              message: `Asset class guessed as “${guess.category}” (${guess.reason}) — please review`,
+            });
+          }
+        }
+      }
     }
+
 
     // Required-field + sanity validation.
     for (const m of mappings) {
