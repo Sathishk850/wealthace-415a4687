@@ -311,7 +311,9 @@ export function transformRows(
       }
     }
 
-    return {
+    if (skipRow) return;
+
+    rows.push({
       index,
       values,
       raw,
@@ -319,7 +321,7 @@ export function transformRows(
       duplicate: null,
       include: !issues.some((i) => i.level === "error"),
       categorySuggestion,
-    };
+    });
   });
 
   /* ----- duplicate detection: within file and against existing rows ----- */
