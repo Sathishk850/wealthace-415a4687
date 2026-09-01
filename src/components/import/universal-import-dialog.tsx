@@ -41,6 +41,7 @@ import {
   loadCategoryCorrections,
   saveCategoryCorrections,
   useImportCommit,
+  detectProvider,
   IMPORT_TARGETS,
   type ImportModule,
   type MappingPlan,
@@ -49,6 +50,7 @@ import {
   type CorrectionMap,
   type CommitMode,
   type ImportOutcome,
+  type DetectedProvider,
 } from "@/lib/import";
 
 
