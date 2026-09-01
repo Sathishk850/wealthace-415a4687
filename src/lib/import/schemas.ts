@@ -146,6 +146,13 @@ export const TRANSACTIONS_SCHEMA: ImportSchema = {
     { key: "kind", label: "Type (income / expense)", type: "string", fallback: "expense", aliases: ["kind", "type", "transaction type", "txn type", "dr cr", "debit credit", "cr dr", "direction", "in out"] },
     { key: "category", label: "Category", type: "string", aliases: ["category", "category name", "expense category", "head", "group", "tag"] },
     { key: "note", label: "Note", type: "string", aliases: ["note", "notes", "comment", "comments", "memo", "reference no", "ref no", "cheque no", "utr"] },
+    /* Bank-statement shaped columns — used to derive amount + kind. */
+    { key: "debit", label: "Debit / Withdrawal", type: "number", min: 0, max: MONEY_MAX, aliases: ["debit", "debit amount", "withdrawal", "withdrawal amt", "withdrawal amount", "dr amount", "dr amt", "paid out", "money out"] },
+    { key: "credit", label: "Credit / Deposit", type: "number", min: 0, max: MONEY_MAX, aliases: ["credit", "credit amount", "deposit", "deposit amt", "deposit amount", "cr amount", "cr amt", "paid in", "money in"] },
+    { key: "raw_amount", label: "Amount (Dr/Cr)", type: "string", aliases: ["amount dr cr", "amount dr/cr", "amount(dr/cr)", "dr cr amount", "transaction amount dr cr"] },
+    { key: "balance", label: "Balance", type: "number", max: MONEY_MAX, aliases: ["balance", "closing balance", "running balance", "bal", "available balance", "balance amount"] },
+    { key: "reference", label: "Reference", type: "string", aliases: ["reference", "reference no", "ref no", "ref", "chq no", "cheque no", "chq/ref no", "transaction id", "txn id", "utr", "utr no"] },
+
   ],
 };
 

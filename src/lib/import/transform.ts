@@ -8,9 +8,11 @@
  */
 import { detectCurrency, toBoolean, toDate, toNumber, toPercent, toText } from "./coerce";
 import { classifyCategory, type CategoryConfidence, type CorrectionMap } from "./categorize";
+import { classifySecurity } from "./classify-security";
 import type { CanonicalField } from "./schemas";
 import type { MappingPlan } from "./match";
 import type { ParsedFile } from "./parse";
+
 
 export type IssueLevel = "error" | "warning";
 export type RowIssue = { level: IssueLevel; field?: string; message: string };
@@ -32,14 +34,56 @@ export type TransformSummary = {
   valid: number;
   invalid: number;
   duplicates: number;
+  /** Rows silently dropped as non-data (e.g. statement filler lines). */
+  skipped: number;
   currencies: string[];
   planIssues: RowIssue[];
 };
 
-export type TransformResult = { rows: TransformedRow[]; summary: TransformSummary };
+export type TransformResult = { rows: TransformedRow[]; summary: TransformSummary; skipped: number };
+
 
 const KIND_EXPENSE = ["expense", "debit", "dr", "withdrawal", "paid", "out", "spend", "payment", "purchase"];
 const KIND_INCOME = ["income", "credit", "cr", "deposit", "received", "in", "salary", "refund"];
+
+/**
+ * Turn a raw bank narration into a readable merchant label: drop channel
+ * prefixes, long reference numbers, VPA suffixes and trailing pipe segments.
+ */
+export function cleanBankNarration(input: unknown): string {
+  let s = String(input ?? "").replace(/\s+/g, " ").trim();
+  if (!s) return "";
+  // Channel prefixes, possibly repeated (e.g. "UPI/NEFT-DR-...").
+  for (let i = 0; i < 3; i++) {
+    s = s.replace(/^(upi|neft|imps|rtgs|pos|atm|ach|ecs|nach|inb|mmt|bil|tpt|chq|cash)[\s\-/:*|]+(dr|cr)?[\s\-/:*|]*/i, "").trim();
+  }
+  // Trailing pipe/slash separated ref segments.
+  s = s.split("|")[0].trim();
+  // VPA handles → keep only the readable part.
+  s = s.replace(/([a-z0-9._-]+)@[a-z]+/gi, "$1");
+  // Long reference numbers.
+  s = s.replace(/\b\d{9,}\b/g, " ");
+  s = s.replace(/[\-/_*]{2,}/g, " ").replace(/\s{2,}/g, " ").replace(/^[\s\-/*|:]+|[\s\-/*|:]+$/g, "").trim();
+  if (s && s === s.toUpperCase()) {
+    s = s
+      .toLowerCase()
+      .split(" ")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(" ");
+  }
+  return s;
+}
+
+/** Parse "1,250.00 Dr" / "500 CR" style amount strings. */
+function parseDrCrAmount(raw: unknown): { amount: number; kind: "income" | "expense" } | null {
+  const s = String(raw ?? "").trim();
+  if (!s) return null;
+  const m = /(dr|cr)\b\.?/i.exec(s);
+  const num = toNumber(s.replace(/(dr|cr)\b\.?/i, ""));
+  if (num == null || !m) return null;
+  return { amount: Math.abs(num), kind: m[1].toLowerCase() === "cr" ? "income" : "expense" };
+}
+
 
 function coerce(field: CanonicalField, raw: unknown, preferMonthFirst: boolean) {
   switch (field.type) {
@@ -84,10 +128,14 @@ export function transformRows(
   const planIssues: RowIssue[] = [];
   const currencies = new Set<string>();
 
-  const rows: TransformedRow[] = parsed.rows.map((raw, index) => {
+  const rows: TransformedRow[] = [];
+  let skippedRows = 0;
+  parsed.rows.forEach((raw, index) => {
     const values: Record<string, unknown> = {};
     const issues: RowIssue[] = [];
+    let skipRow = false;
     let categorySuggestion: TransformedRow["categorySuggestion"] = null;
+
 
     for (const m of active) {
       const rawVal = raw[m.source as string];
@@ -117,6 +165,36 @@ export function transformRows(
 
     // Module-aware normalisation.
     if (schema.module === "transactions") {
+      const debit = typeof values.debit === "number" ? Math.abs(values.debit) : null;
+      const credit = typeof values.credit === "number" ? Math.abs(values.credit) : null;
+
+      // Statement filler lines: no date and no money column at all.
+      const hasMoney = values.amount != null || debit != null || credit != null || String(values.raw_amount ?? "").trim() !== "";
+      if (values.occurred_on == null && !hasMoney) {
+        skippedRows++;
+        skipRow = true;
+      }
+
+      let derivedKind: "income" | "expense" | null = null;
+      // Split debit/credit columns → amount + kind.
+      if (values.amount == null && (debit != null || credit != null)) {
+        if (credit != null && credit > 0) {
+          values.amount = credit;
+          derivedKind = "income";
+        } else if (debit != null && debit > 0) {
+          values.amount = debit;
+          derivedKind = "expense";
+        }
+      }
+      // "1,250.00 Dr" style single column.
+      if (values.amount == null && values.raw_amount != null) {
+        const drcr = parseDrCrAmount(values.raw_amount);
+        if (drcr) {
+          values.amount = drcr.amount;
+          derivedKind = drcr.kind;
+        }
+      }
+
       const rawKind = String(values.kind ?? "").toLowerCase();
       let kind: "income" | "expense" | null = null;
       if (KIND_INCOME.some((w) => rawKind === w || rawKind.includes(w))) kind = "income";
@@ -126,12 +204,20 @@ export function transformRows(
       const sourceHeader = (active.find((m) => m.field.key === "amount")?.source ?? "").toLowerCase();
       if (/debit|withdraw/.test(sourceHeader)) kind = "expense";
       else if (/credit|deposit/.test(sourceHeader)) kind = "income";
+      if (derivedKind) kind = derivedKind;
       values.kind = kind ?? "expense";
-      if (amt != null) values.amount = Math.abs(amt);
+      if (typeof values.amount === "number") values.amount = Math.abs(values.amount as number);
+
+      // Readable merchant label from raw bank narrations.
+      if (typeof values.merchant === "string") {
+        const cleaned = cleanBankNarration(values.merchant);
+        if (cleaned) values.merchant = cleaned;
+      }
 
       // Merchant → category classification (only when the file gave no category).
       const givenCategory = String(values.category ?? "").trim();
       if (!givenCategory) {
+
         const text = [values.merchant, values.note, raw.__raw]
           .map((v) => (v == null ? "" : String(v)))
           .join(" ");
