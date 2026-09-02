@@ -74,6 +74,53 @@ const confBadge: Record<string, string> = {
   none: "bg-muted text-muted-foreground",
 };
 
+/** Wealth Ace columns shown in the preview table, per module. */
+const PREVIEW_FIELDS: Record<ImportModule, string[]> = {
+  investments: ["name", "category", "quantity", "current_value", "avg_price", "invested_value"],
+  investment_txns: ["occurred_on", "name", "side", "quantity", "price", "amount"],
+  assets: ["name", "category", "current_value", "currency"],
+  transactions: ["occurred_on", "merchant", "kind", "category", "amount"],
+  liabilities: ["name", "category", "outstanding", "emi", "interest_rate"],
+  insurance: ["name", "category", "premium", "sum_assured", "maturity_date"],
+  accounts: ["name", "type", "balance", "currency"],
+  family: ["name", "relation", "dob"],
+};
+
+const PREVIEW_LABELS: Record<string, string> = {
+  name: "Name", category: "Type", quantity: "Qty", current_value: "Cur. Value",
+  avg_price: "Avg Cost", invested_value: "Invested", occurred_on: "Date",
+  merchant: "Description", kind: "Type", amount: "Amount", outstanding: "Outstanding",
+  emi: "EMI", interest_rate: "Rate %", premium: "Premium", sum_assured: "Cover",
+  maturity_date: "Maturity", balance: "Balance", currency: "Currency",
+  type: "Account Type", relation: "Relation", dob: "DOB", side: "Side", price: "Price",
+};
+
+const MONEY_KEYS = [
+  "current_value", "invested_value", "avg_price", "outstanding", "emi",
+  "premium", "sum_assured", "balance", "amount", "price",
+];
+const DATE_KEYS = ["occurred_on", "maturity_date", "dob"];
+
+function formatPreviewCell(key: string, value: unknown): string {
+  if (value == null || value === "") return "—";
+  const s = String(value);
+  if (MONEY_KEYS.includes(key)) {
+    const n = parseFloat(s);
+    if (!Number.isNaN(n)) {
+      return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  }
+  if (DATE_KEYS.includes(key)) {
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    }
+  }
+  if (key === "kind") return s === "income" ? "Income ↑" : "Expense ↓";
+  return s.length > 30 ? `${s.slice(0, 28)}…` : s;
+}
+
+
 export function UniversalImportDialog({
   open,
   onOpenChange,
@@ -161,11 +208,39 @@ export function UniversalImportDialog({
         if (ranked[0]) mod = ranked[0].schema.module as ImportModule;
       }
       setTarget(mod);
-      setPlan(buildPlanFor(p, mod));
-      setDetectedProvider(detectProvider(p));
-      setExisting(await fetchExistingRows(mod));
-      setCorrections(mod === "transactions" ? await loadCategoryCorrections() : new Map());
-      setStep("map");
+      const next = buildPlanFor(p, mod);
+      setPlan(next);
+      const provider = detectProvider(p);
+      setDetectedProvider(provider);
+      const rows = await fetchExistingRows(mod);
+      setExisting(rows);
+      const corrs: CorrectionMap =
+        mod === "transactions" ? await loadCategoryCorrections() : new Map();
+      setCorrections(corrs);
+
+      const allRequiredMapped = next.missingRequired.length === 0;
+      const needsReview = next.mappings.some(
+        (m) => m.field.required && (m.confidence === "low" || m.confidence === "none"),
+      );
+
+      if (allRequiredMapped && !needsReview) {
+        const tr = transformRows(p, next, {
+          existing: rows,
+          preferMonthFirst: false,
+          corrections: corrs,
+        });
+        setResult(tr);
+        setStep("preview");
+        const label = (getSchema(mod)?.label ?? "records").toLowerCase();
+        toast.success(
+          provider
+            ? `${provider.name} format detected — ${tr.summary.total} ${label} auto-mapped`
+            : `${tr.summary.total} ${label} ready to review`,
+        );
+      } else {
+        setStep("map");
+      }
+
     } catch (e) {
       if (isPasswordError(e)) {
         setLockedFile(file);
@@ -203,10 +278,13 @@ export function UniversalImportDialog({
     setStep("preview");
   };
 
-  const previewCols = useMemo(
-    () => (plan ? plan.mappings.filter((m) => m.source).map((m) => m.field) : []),
-    [plan],
-  );
+  const previewCols = useMemo(() => {
+    const keys = PREVIEW_FIELDS[target] ?? [];
+    return keys.filter((k) =>
+      result?.rows.some((r) => r.values[k] != null && r.values[k] !== ""),
+    );
+  }, [target, result]);
+
 
   const includedCount = result?.rows.filter((r) => r.include).length ?? 0;
 
@@ -266,7 +344,7 @@ export function UniversalImportDialog({
             Import {getSchema(target)?.label ?? "data"}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            {step === "upload" && "CSV, TSV, Excel, JSON or PDF — column names and order don't matter."}
+            {step === "upload" && "Drop any broker or bank export — columns are detected automatically."}
             {step === "map" && "Check how your columns map to Wealth Ace fields. Adjust anything that looks off."}
             {step === "preview" && "Review the cleaned rows. Duplicates and invalid rows are excluded by default."}
             {step === "done" && "Import complete."}
@@ -275,18 +353,27 @@ export function UniversalImportDialog({
 
         {/* Stepper */}
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          {(["upload", "map", "preview", "done"] as Step[]).map((s, i) => (
-            <span
-              key={s}
-              className={cn(
-                "rounded-full px-2 py-0.5 capitalize",
-                step === s ? "bg-mint text-mint-foreground font-semibold" : "bg-muted",
-              )}
-            >
-              {i + 1}. {s === "map" ? "map columns" : s}
-            </span>
-          ))}
+          {(["upload", "map", "preview", "done"] as Step[]).map((s, i) => {
+            const jumped = s === "map" && step !== "map" && step !== "upload";
+            return (
+              <span
+                key={s}
+                className={cn(
+                  "rounded-full px-2 py-0.5 capitalize transition-colors",
+                  step === s
+                    ? "bg-mint text-mint-foreground font-semibold"
+                    : jumped
+                      ? "bg-muted text-muted-foreground/40 line-through"
+                      : "bg-muted text-muted-foreground",
+                )}
+              >
+                {i + 1}. {s === "map" ? "map columns" : s}
+                {jumped && " (auto)"}
+              </span>
+            );
+          })}
         </div>
+
 
         <div className="flex-1 overflow-y-auto pr-1">
           {/* ---------------- UPLOAD ---------------- */}
