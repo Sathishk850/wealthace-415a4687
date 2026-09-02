@@ -10,6 +10,7 @@ import {
   INVESTMENT_CATEGORY_FOR,
   type AssetClassification,
 } from "@/lib/asset-classification";
+import { normalizeInvestmentCategory } from "@/lib/import/classify-security";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 
 import { openImport } from "@/components/import/import-host";
@@ -173,14 +174,29 @@ const SEARCH_PLACEHOLDER: Record<AssetTab, string> = {
   "Other Assets": "Search assets...",
 };
 
-function classifyInvestment(cat: string, subCategory?: string | null): AssetTab {
+function classifyInvestment(
+  category: string,
+  subCategory?: string | null,
+  symbol?: string | null,
+  name?: string | null,
+): AssetTab {
+  const canonical = normalizeInvestmentCategory(category);
   const sub = (subCategory ?? "").toLowerCase();
-  if (cat === "Bonds" || cat === "Bond") return "Bonds";
-  if (cat === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
-  if (cat === "Stocks") return "Stocks";
-  if (cat === "Mutual Funds") return "Mutual Funds";
-  if (cat === "Commodities" || cat === "Commodity" || cat === "Gold" || cat === "Crypto")
-    return "Commodities";
+  const text = `${name ?? ""} ${symbol ?? ""} ${sub}`.toLowerCase();
+
+  if (canonical === "Bonds") return "Bonds";
+  if (canonical === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
+  if (canonical === "Stocks") return "Stocks";
+  if (canonical === "Mutual Funds") return "Mutual Funds";
+  if (canonical === "Gold" || canonical === "Commodities" || canonical === "Crypto") return "Commodities";
+  if (canonical === "REIT" || canonical === "InvIT") return "Other Assets";
+
+  // Legacy broker exports often save no useful category. Use the remaining
+  // normalized fields so existing rows appear in the same tab as new imports.
+  if (/\b(etf|index fund|bees)\b/.test(text)) return "ETFs";
+  if (/\b(fund|scheme|mutual fund|direct plan|folio)\b/.test(text)) return "Mutual Funds";
+  if (/\b(reit|invit)\b/.test(text)) return "Other Assets";
+  if (symbol || name || subCategory) return "Stocks";
   return "Other Assets";
 }
 
@@ -375,7 +391,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       out.push({
         id: inv.id,
         source: "investment",
-        tab: classifyInvestment(inv.category, inv.sub_category),
+        tab: classifyInvestment(inv.category, inv.sub_category, inv.symbol, inv.name),
         name: inv.name,
         symbol: inv.symbol,
         type: inv.sub_category || inv.category,
