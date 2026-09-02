@@ -218,10 +218,14 @@ export function UniversalImportDialog({
         mod === "transactions" ? await loadCategoryCorrections() : new Map();
       setCorrections(corrs);
 
+      // Auto-skip when every required field is either directly mapped or
+      // derivable (SATISFIED_BY rules). Unmapped-but-derivable fields report
+      // confidence "none", so only *mapped* required fields gate the skip.
       const allRequiredMapped = next.missingRequired.length === 0;
       const needsReview = next.mappings.some(
-        (m) => m.field.required && (m.confidence === "low" || m.confidence === "none"),
+        (m) => m.field.required && m.source && !m.confirmed && (m.confidence === "low" || m.confidence === "none"),
       );
+
 
       if (allRequiredMapped && !needsReview) {
         const tr = transformRows(p, next, {
