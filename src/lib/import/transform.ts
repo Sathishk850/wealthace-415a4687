@@ -249,9 +249,17 @@ export function transformRows(
     }
 
     if (schema.module === "investments") {
-      const qty = Number(values.quantity ?? 0);
+      let qty = Number(values.quantity ?? 0);
       const avg = Number(values.avg_price ?? 0);
       const cur = Number(values.current_price ?? 0);
+      // Quantity from totals ÷ price when the export omitted a units column.
+      if (!qty) {
+        const iv = Number(values.invested_value ?? 0);
+        const cv = Number(values.current_value ?? 0);
+        if (cv && cur) qty = cv / cur;
+        else if (iv && avg) qty = iv / avg;
+        if (qty) values.quantity = qty;
+      }
       if (values.invested_value == null && qty && avg) values.invested_value = qty * avg;
       if (values.current_value == null && qty && cur) values.current_value = qty * cur;
       // Back-fill prices from totals when only values were provided.
@@ -261,6 +269,14 @@ export function transformRows(
       if (!cur && qty && typeof values.current_value === "number") {
         values.current_price = (values.current_value as number) / qty;
       }
+      // Last resort: cost basis stands in for current price (live quotes refresh it later).
+      if (!Number(values.current_price ?? 0) && Number(values.avg_price ?? 0)) {
+        values.current_price = values.avg_price;
+      }
+      if (!Number(values.avg_price ?? 0) && Number(values.current_price ?? 0)) {
+        values.avg_price = values.current_price;
+      }
+
 
       // Asset class: normalise whatever the file gave, then infer when unusable.
       const normalized = normalizeInvestmentCategory(values.category as string | undefined);
