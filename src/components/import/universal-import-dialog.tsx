@@ -74,6 +74,53 @@ const confBadge: Record<string, string> = {
   none: "bg-muted text-muted-foreground",
 };
 
+/** Wealth Ace columns shown in the preview table, per module. */
+const PREVIEW_FIELDS: Record<ImportModule, string[]> = {
+  investments: ["name", "category", "quantity", "current_value", "avg_price", "invested_value"],
+  investment_txns: ["occurred_on", "name", "side", "quantity", "price", "amount"],
+  assets: ["name", "category", "current_value", "currency"],
+  transactions: ["occurred_on", "merchant", "kind", "category", "amount"],
+  liabilities: ["name", "category", "outstanding", "emi", "interest_rate"],
+  insurance: ["name", "category", "premium", "sum_assured", "maturity_date"],
+  accounts: ["name", "type", "balance", "currency"],
+  family: ["name", "relation", "dob"],
+};
+
+const PREVIEW_LABELS: Record<string, string> = {
+  name: "Name", category: "Type", quantity: "Qty", current_value: "Cur. Value",
+  avg_price: "Avg Cost", invested_value: "Invested", occurred_on: "Date",
+  merchant: "Description", kind: "Type", amount: "Amount", outstanding: "Outstanding",
+  emi: "EMI", interest_rate: "Rate %", premium: "Premium", sum_assured: "Cover",
+  maturity_date: "Maturity", balance: "Balance", currency: "Currency",
+  type: "Account Type", relation: "Relation", dob: "DOB", side: "Side", price: "Price",
+};
+
+const MONEY_KEYS = [
+  "current_value", "invested_value", "avg_price", "outstanding", "emi",
+  "premium", "sum_assured", "balance", "amount", "price",
+];
+const DATE_KEYS = ["occurred_on", "maturity_date", "dob"];
+
+function formatPreviewCell(key: string, value: unknown): string {
+  if (value == null || value === "") return "—";
+  const s = String(value);
+  if (MONEY_KEYS.includes(key)) {
+    const n = parseFloat(s);
+    if (!Number.isNaN(n)) {
+      return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  }
+  if (DATE_KEYS.includes(key)) {
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    }
+  }
+  if (key === "kind") return s === "income" ? "Income ↑" : "Expense ↓";
+  return s.length > 30 ? `${s.slice(0, 28)}…` : s;
+}
+
+
 export function UniversalImportDialog({
   open,
   onOpenChange,
@@ -161,11 +208,39 @@ export function UniversalImportDialog({
         if (ranked[0]) mod = ranked[0].schema.module as ImportModule;
       }
       setTarget(mod);
-      setPlan(buildPlanFor(p, mod));
-      setDetectedProvider(detectProvider(p));
-      setExisting(await fetchExistingRows(mod));
-      setCorrections(mod === "transactions" ? await loadCategoryCorrections() : new Map());
-      setStep("map");
+      const next = buildPlanFor(p, mod);
+      setPlan(next);
+      const provider = detectProvider(p);
+      setDetectedProvider(provider);
+      const rows = await fetchExistingRows(mod);
+      setExisting(rows);
+      const corrs: CorrectionMap =
+        mod === "transactions" ? await loadCategoryCorrections() : new Map();
+      setCorrections(corrs);
+
+      const allRequiredMapped = next.missingRequired.length === 0;
+      const needsReview = next.mappings.some(
+        (m) => m.field.required && (m.confidence === "low" || m.confidence === "none"),
+      );
+
+      if (allRequiredMapped && !needsReview) {
+        const tr = transformRows(p, next, {
+          existing: rows,
+          preferMonthFirst: false,
+          corrections: corrs,
+        });
+        setResult(tr);
+        setStep("preview");
+        const label = (getSchema(mod)?.label ?? "records").toLowerCase();
+        toast.success(
+          provider
+            ? `${provider.name} format detected — ${tr.summary.total} ${label} auto-mapped`
+            : `${tr.summary.total} ${label} ready to review`,
+        );
+      } else {
+        setStep("map");
+      }
+
     } catch (e) {
       if (isPasswordError(e)) {
         setLockedFile(file);
@@ -203,10 +278,13 @@ export function UniversalImportDialog({
     setStep("preview");
   };
 
-  const previewCols = useMemo(
-    () => (plan ? plan.mappings.filter((m) => m.source).map((m) => m.field) : []),
-    [plan],
-  );
+  const previewCols = useMemo(() => {
+    const keys = PREVIEW_FIELDS[target] ?? [];
+    return keys.filter((k) =>
+      result?.rows.some((r) => r.values[k] != null && r.values[k] !== ""),
+    );
+  }, [target, result]);
+
 
   const includedCount = result?.rows.filter((r) => r.include).length ?? 0;
 
@@ -266,7 +344,7 @@ export function UniversalImportDialog({
             Import {getSchema(target)?.label ?? "data"}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            {step === "upload" && "CSV, TSV, Excel, JSON or PDF — column names and order don't matter."}
+            {step === "upload" && "Drop any broker or bank export — columns are detected automatically."}
             {step === "map" && "Check how your columns map to Wealth Ace fields. Adjust anything that looks off."}
             {step === "preview" && "Review the cleaned rows. Duplicates and invalid rows are excluded by default."}
             {step === "done" && "Import complete."}
@@ -275,18 +353,27 @@ export function UniversalImportDialog({
 
         {/* Stepper */}
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          {(["upload", "map", "preview", "done"] as Step[]).map((s, i) => (
-            <span
-              key={s}
-              className={cn(
-                "rounded-full px-2 py-0.5 capitalize",
-                step === s ? "bg-mint text-mint-foreground font-semibold" : "bg-muted",
-              )}
-            >
-              {i + 1}. {s === "map" ? "map columns" : s}
-            </span>
-          ))}
+          {(["upload", "map", "preview", "done"] as Step[]).map((s, i) => {
+            const jumped = s === "map" && step !== "map" && step !== "upload";
+            return (
+              <span
+                key={s}
+                className={cn(
+                  "rounded-full px-2 py-0.5 capitalize transition-colors",
+                  step === s
+                    ? "bg-mint text-mint-foreground font-semibold"
+                    : jumped
+                      ? "bg-muted text-muted-foreground/40 line-through"
+                      : "bg-muted text-muted-foreground",
+                )}
+              >
+                {i + 1}. {s === "map" ? "map columns" : s}
+                {jumped && " (auto)"}
+              </span>
+            );
+          })}
         </div>
+
 
         <div className="flex-1 overflow-y-auto pr-1">
           {/* ---------------- UPLOAD ---------------- */}
@@ -535,6 +622,33 @@ export function UniversalImportDialog({
           {/* ---------------- PREVIEW ---------------- */}
           {step === "preview" && result && (
             <div className="space-y-3">
+              {/* Provider + auto-mapping banner */}
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2 text-xs">
+                  {detectedProvider ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                      <span className="truncate text-muted-foreground">
+                        <span className="font-medium text-foreground">{detectedProvider.name}</span>{" "}
+                        format detected — {detectedProvider.kind.toLowerCase()}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <FileSpreadsheet className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="text-muted-foreground">Columns auto-mapped</span>
+                    </>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep("map")}
+                  className="shrink-0 text-[11px] text-mint underline underline-offset-2 hover:no-underline"
+                >
+                  Adjust mapping
+                </button>
+              </div>
+
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
                   { label: "Rows", value: result.summary.total },
@@ -544,14 +658,25 @@ export function UniversalImportDialog({
                 ].map((k) => (
                   <div key={k.label} className="rounded-xl border border-border bg-card px-3 py-2">
                     <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.label}</div>
-                    <div className="text-sm font-semibold text-foreground">{k.value}</div>
+                    <div
+                      className={cn(
+                        "text-sm font-semibold",
+                        k.label === "Invalid" && k.value > 0
+                          ? "text-destructive"
+                          : k.label === "Ready"
+                            ? "text-success"
+                            : "text-foreground",
+                      )}
+                    >
+                      {k.value}
+                    </div>
                   </div>
                 ))}
               </div>
 
               {result.summary.planIssues.length > 0 && (
                 <ul className="space-y-1 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-[11px]">
-                  {result.summary.planIssues.slice(0, 6).map((i, idx) => (
+                  {result.summary.planIssues.slice(0, 4).map((i, idx) => (
                     <li key={idx} className="flex gap-1.5">
                       <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
                       <span className={i.level === "error" ? "text-red-400" : "text-foreground"}>{i.message}</span>
@@ -560,25 +685,56 @@ export function UniversalImportDialog({
                 </ul>
               )}
 
+              {mergeInfo && (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Import mode:</span>
+                  {(["insert", "merge"] as CommitMode[]).map((m) => (
+                    <label key={m} className="flex cursor-pointer items-center gap-1.5">
+                      <input
+                        type="radio"
+                        checked={commitMode === m}
+                        onChange={() => (m === "merge" ? enableMerge() : setCommitMode("insert"))}
+                      />
+                      <span className={commitMode === m ? "font-medium text-foreground" : "text-muted-foreground"}>
+                        {m === "insert" ? "Add new" : "Update existing"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+
               <div className="overflow-auto rounded-xl border border-border">
                 <table className="w-full text-xs">
                   <thead className="bg-surface text-muted-foreground">
                     <tr>
-                      <th className="px-2 py-2 text-left font-medium">Use</th>
-                      {previewCols.map((f) => (
-                        <th key={f.key} className="whitespace-nowrap px-2 py-2 text-left font-medium">
-                          {f.label}
+                      <th className="w-8 px-2 py-2 text-left">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all rows"
+                          checked={result.rows.length > 0 && result.rows.every((r) => r.include)}
+                          onChange={(e) =>
+                            setResult({
+                              ...result,
+                              rows: result.rows.map((r) => ({ ...r, include: e.target.checked })),
+                            })
+                          }
+                        />
+                      </th>
+                      {previewCols.map((k) => (
+                        <th key={k} className="whitespace-nowrap px-2 py-2 text-left text-xs font-medium">
+                          {PREVIEW_LABELS[k] ?? k}
                         </th>
                       ))}
-                      <th className="px-2 py-2 text-left font-medium">Issues</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {result.rows.slice(0, 100).map((r) => (
-                      <tr key={r.index} className={cn(!r.include && "opacity-60")}>
+                      <tr key={r.index} className={cn(!r.include && "opacity-50")}>
                         <td className="px-2 py-1.5">
                           <input
                             type="checkbox"
+                            aria-label={`Include row ${r.index + 1}`}
                             checked={r.include}
                             onChange={(e) =>
                               setResult({
@@ -590,16 +746,18 @@ export function UniversalImportDialog({
                             }
                           />
                         </td>
-                        {previewCols.map((f) => (
-                          <td key={f.key} className="whitespace-nowrap px-2 py-1.5 text-foreground">
-                            {r.values[f.key] == null ? "—" : String(r.values[f.key])}
+                        {previewCols.map((k) => (
+                          <td key={k} className="whitespace-nowrap px-2 py-1.5 text-xs text-foreground">
+                            {formatPreviewCell(k, r.values[k])}
                           </td>
                         ))}
                         <td className="px-2 py-1.5 text-[10px]">
-                          {r.duplicate && (
-                            <span className="mr-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-amber-500">
-                              duplicate
-                            </span>
+                          {r.duplicate ? (
+                            <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-amber-500">duplicate</span>
+                          ) : !r.include ? (
+                            <span className="rounded-full bg-red-500/15 px-1.5 py-0.5 text-red-400">invalid</span>
+                          ) : (
+                            <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-success">✓ ready</span>
                           )}
                           {r.categorySuggestion && !r.categorySuggestion.applied && (
                             <button
@@ -618,20 +776,12 @@ export function UniversalImportDialog({
                                   ),
                                 })
                               }
-                              className="mr-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-primary hover:bg-primary/25"
+                              className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-primary hover:bg-primary/25"
                               title="Apply this suggested category"
                             >
                               use “{r.categorySuggestion.category}”
                             </button>
                           )}
-                          {r.issues
-                            .filter((i) => i.level === "error")
-                            .slice(0, 2)
-                            .map((i, idx) => (
-                              <span key={idx} className="mr-1 text-red-400">
-                                {i.message}
-                              </span>
-                            ))}
                         </td>
                       </tr>
                     ))}
@@ -640,7 +790,7 @@ export function UniversalImportDialog({
               </div>
               {result.rows.length > 100 && (
                 <p className="text-[11px] text-muted-foreground">
-                  Showing first 100 of {result.rows.length} rows — all selected rows will be imported.
+                  Showing first 100 of {result.rows.length} rows — all {includedCount} selected rows will be imported.
                 </p>
               )}
 
@@ -655,6 +805,7 @@ export function UniversalImportDialog({
               )}
             </div>
           )}
+
 
           {/* ---------------- DONE ---------------- */}
           {step === "done" && outcome && (
@@ -689,7 +840,8 @@ export function UniversalImportDialog({
           {step === "preview" && (
             <>
               <button onClick={() => setStep("map")} className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold">
-                <ChevronLeft className="h-3.5 w-3.5" /> Back
+                <ChevronLeft className="h-3.5 w-3.5" /> Adjust mapping
+
               </button>
               <button
                 disabled={isPending || includedCount === 0}
