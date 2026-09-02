@@ -8,7 +8,7 @@
  */
 import { detectCurrency, toBoolean, toDate, toNumber, toPercent, toText } from "./coerce";
 import { classifyCategory, type CategoryConfidence, type CorrectionMap } from "./categorize";
-import { classifySecurity } from "./classify-security";
+import { classifySecurity, normalizeInvestmentCategory } from "./classify-security";
 import type { CanonicalField } from "./schemas";
 import type { MappingPlan } from "./match";
 import type { ParsedFile } from "./parse";
@@ -262,26 +262,31 @@ export function transformRows(
         values.current_price = (values.current_value as number) / qty;
       }
 
-      // Asset-class inference when the file gave nothing useful.
-      const given = String(values.category ?? "").trim().toLowerCase();
-      if (!given || given === "others" || given === "other" || given === "equity") {
+      // Asset class: normalise whatever the file gave, then infer when unusable.
+      const normalized = normalizeInvestmentCategory(values.category as string | undefined);
+      if (normalized) values.category = normalized;
+      if (!normalized) {
         const guess = classifySecurity({
           name: values.name as string | undefined,
           symbol: (values.symbol ?? values.isin) as string | undefined,
           isin: values.isin as string | undefined,
         });
-        if (guess) {
-          values.category = guess.category;
+        const guessed = guess ? normalizeInvestmentCategory(guess.category) : null;
+        if (guess && guessed) {
+          values.category = guessed;
           if (guess.sub_category && !values.sub_category) values.sub_category = guess.sub_category;
           if (guess.confidence === "low") {
             issues.push({
               level: "warning",
               field: "category",
-              message: `Asset class guessed as “${guess.category}” (${guess.reason}) — please review`,
+              message: `Asset class guessed as “${guessed}” (${guess.reason}) — please review`,
             });
           }
+        } else {
+          values.category = "Others";
         }
       }
+
     }
 
 
