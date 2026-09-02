@@ -85,3 +85,48 @@ export function classifySecurity(input: {
 
   return null;
 }
+
+/* =========================================================
+   Canonical asset-class normalisation
+   ---------------------------------------------------------
+   Broker/registrar exports carry free-form asset-class labels
+   ("Equity - Small Cap", "Others - Index Funds/ETFs", "-").
+   Holdings tabs bucket on the canonical WealthAce categories,
+   so every imported category must be mapped onto one of them.
+========================================================= */
+
+export const CANONICAL_CATEGORIES = [
+  "Stocks",
+  "Mutual Funds",
+  "ETFs",
+  "Bonds",
+  "Gold",
+  "Commodities",
+  "Crypto",
+  "REIT",
+  "InvIT",
+  "Others",
+] as const;
+
+/** Map any classifier / file label onto a canonical category. Null = unknown. */
+export function normalizeInvestmentCategory(raw?: string | null): string | null {
+  const v = clean(raw).toLowerCase().replace(/\s+/g, " ");
+  if (!v || /^[-–—.\/]+$/.test(v) || ["na", "n/a", "null", "unknown", "others", "other"].includes(v)) {
+    return null;
+  }
+  if (/\b(reit|reits)\b/.test(v)) return "REIT";
+  if (/\b(invit|invits)\b/.test(v)) return "InvIT";
+  if (/crypto|bitcoin|ethereum/.test(v)) return "Crypto";
+  if (/\b(bond|bonds|ncd|debenture|g-?sec|gsec|sdl|t-?bill|sgb|sovereign gold)\b/.test(v)) {
+    return /sgb|sovereign gold/.test(v) ? "Gold" : "Bonds";
+  }
+  if (/gold|silver/.test(v)) return "Gold";
+  if (/commodit/.test(v)) return "Commodities";
+  // "fund" beats "etf": index-fund/ETF buckets in MF statements are schemes.
+  if (/fund|scheme|elss|liquid|hybrid|flexi|multi asset|arbitrage|debt fund|sip/.test(v)) {
+    return "Mutual Funds";
+  }
+  if (/etf|exchange traded|bees/.test(v)) return "ETFs";
+  if (/stock|share|equity/.test(v)) return "Stocks";
+  return null;
+}
