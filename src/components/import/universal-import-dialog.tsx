@@ -622,6 +622,33 @@ export function UniversalImportDialog({
           {/* ---------------- PREVIEW ---------------- */}
           {step === "preview" && result && (
             <div className="space-y-3">
+              {/* Provider + auto-mapping banner */}
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2 text-xs">
+                  {detectedProvider ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                      <span className="truncate text-muted-foreground">
+                        <span className="font-medium text-foreground">{detectedProvider.name}</span>{" "}
+                        format detected — {detectedProvider.kind.toLowerCase()}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <FileSpreadsheet className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="text-muted-foreground">Columns auto-mapped</span>
+                    </>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep("map")}
+                  className="shrink-0 text-[11px] text-mint underline underline-offset-2 hover:no-underline"
+                >
+                  Adjust mapping
+                </button>
+              </div>
+
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
                   { label: "Rows", value: result.summary.total },
@@ -631,14 +658,25 @@ export function UniversalImportDialog({
                 ].map((k) => (
                   <div key={k.label} className="rounded-xl border border-border bg-card px-3 py-2">
                     <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.label}</div>
-                    <div className="text-sm font-semibold text-foreground">{k.value}</div>
+                    <div
+                      className={cn(
+                        "text-sm font-semibold",
+                        k.label === "Invalid" && k.value > 0
+                          ? "text-destructive"
+                          : k.label === "Ready"
+                            ? "text-success"
+                            : "text-foreground",
+                      )}
+                    >
+                      {k.value}
+                    </div>
                   </div>
                 ))}
               </div>
 
               {result.summary.planIssues.length > 0 && (
                 <ul className="space-y-1 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-[11px]">
-                  {result.summary.planIssues.slice(0, 6).map((i, idx) => (
+                  {result.summary.planIssues.slice(0, 4).map((i, idx) => (
                     <li key={idx} className="flex gap-1.5">
                       <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-amber-500" />
                       <span className={i.level === "error" ? "text-red-400" : "text-foreground"}>{i.message}</span>
@@ -647,25 +685,56 @@ export function UniversalImportDialog({
                 </ul>
               )}
 
+              {mergeInfo && (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2 text-xs">
+                  <span className="shrink-0 text-muted-foreground">Import mode:</span>
+                  {(["insert", "merge"] as CommitMode[]).map((m) => (
+                    <label key={m} className="flex cursor-pointer items-center gap-1.5">
+                      <input
+                        type="radio"
+                        checked={commitMode === m}
+                        onChange={() => (m === "merge" ? enableMerge() : setCommitMode("insert"))}
+                      />
+                      <span className={commitMode === m ? "font-medium text-foreground" : "text-muted-foreground"}>
+                        {m === "insert" ? "Add new" : "Update existing"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+
               <div className="overflow-auto rounded-xl border border-border">
                 <table className="w-full text-xs">
                   <thead className="bg-surface text-muted-foreground">
                     <tr>
-                      <th className="px-2 py-2 text-left font-medium">Use</th>
-                      {previewCols.map((f) => (
-                        <th key={f.key} className="whitespace-nowrap px-2 py-2 text-left font-medium">
-                          {f.label}
+                      <th className="w-8 px-2 py-2 text-left">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all rows"
+                          checked={result.rows.length > 0 && result.rows.every((r) => r.include)}
+                          onChange={(e) =>
+                            setResult({
+                              ...result,
+                              rows: result.rows.map((r) => ({ ...r, include: e.target.checked })),
+                            })
+                          }
+                        />
+                      </th>
+                      {previewCols.map((k) => (
+                        <th key={k} className="whitespace-nowrap px-2 py-2 text-left text-xs font-medium">
+                          {PREVIEW_LABELS[k] ?? k}
                         </th>
                       ))}
-                      <th className="px-2 py-2 text-left font-medium">Issues</th>
+                      <th className="px-2 py-2 text-left text-xs font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {result.rows.slice(0, 100).map((r) => (
-                      <tr key={r.index} className={cn(!r.include && "opacity-60")}>
+                      <tr key={r.index} className={cn(!r.include && "opacity-50")}>
                         <td className="px-2 py-1.5">
                           <input
                             type="checkbox"
+                            aria-label={`Include row ${r.index + 1}`}
                             checked={r.include}
                             onChange={(e) =>
                               setResult({
@@ -677,16 +746,18 @@ export function UniversalImportDialog({
                             }
                           />
                         </td>
-                        {previewCols.map((f) => (
-                          <td key={f.key} className="whitespace-nowrap px-2 py-1.5 text-foreground">
-                            {r.values[f.key] == null ? "—" : String(r.values[f.key])}
+                        {previewCols.map((k) => (
+                          <td key={k} className="whitespace-nowrap px-2 py-1.5 text-xs text-foreground">
+                            {formatPreviewCell(k, r.values[k])}
                           </td>
                         ))}
                         <td className="px-2 py-1.5 text-[10px]">
-                          {r.duplicate && (
-                            <span className="mr-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-amber-500">
-                              duplicate
-                            </span>
+                          {r.duplicate ? (
+                            <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-amber-500">duplicate</span>
+                          ) : !r.include ? (
+                            <span className="rounded-full bg-red-500/15 px-1.5 py-0.5 text-red-400">invalid</span>
+                          ) : (
+                            <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-success">✓ ready</span>
                           )}
                           {r.categorySuggestion && !r.categorySuggestion.applied && (
                             <button
@@ -705,20 +776,12 @@ export function UniversalImportDialog({
                                   ),
                                 })
                               }
-                              className="mr-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-primary hover:bg-primary/25"
+                              className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-primary hover:bg-primary/25"
                               title="Apply this suggested category"
                             >
                               use “{r.categorySuggestion.category}”
                             </button>
                           )}
-                          {r.issues
-                            .filter((i) => i.level === "error")
-                            .slice(0, 2)
-                            .map((i, idx) => (
-                              <span key={idx} className="mr-1 text-red-400">
-                                {i.message}
-                              </span>
-                            ))}
                         </td>
                       </tr>
                     ))}
@@ -727,7 +790,7 @@ export function UniversalImportDialog({
               </div>
               {result.rows.length > 100 && (
                 <p className="text-[11px] text-muted-foreground">
-                  Showing first 100 of {result.rows.length} rows — all selected rows will be imported.
+                  Showing first 100 of {result.rows.length} rows — all {includedCount} selected rows will be imported.
                 </p>
               )}
 
@@ -742,6 +805,7 @@ export function UniversalImportDialog({
               )}
             </div>
           )}
+
 
           {/* ---------------- DONE ---------------- */}
           {step === "done" && outcome && (
