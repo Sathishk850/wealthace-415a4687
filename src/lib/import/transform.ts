@@ -211,10 +211,17 @@ export function transformRows(
       if (typeof values.amount === "number") values.amount = Math.abs(values.amount as number);
 
       // Readable merchant label from raw bank narrations.
+      if (!String(values.merchant ?? "").trim()) {
+        const alt = [values.note, values.reference, raw.__raw].find(
+          (v) => v != null && String(v).trim() !== "",
+        );
+        if (alt != null) values.merchant = String(alt);
+      }
       if (typeof values.merchant === "string") {
         const cleaned = cleanBankNarration(values.merchant);
         if (cleaned) values.merchant = cleaned;
       }
+
 
       // Merchant → category classification (only when the file gave no category).
       const givenCategory = String(values.category ?? "").trim();
