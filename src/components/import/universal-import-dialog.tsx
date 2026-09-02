@@ -840,7 +840,8 @@ export function UniversalImportDialog({
           {step === "preview" && (
             <>
               <button onClick={() => setStep("map")} className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold">
-                <ChevronLeft className="h-3.5 w-3.5" /> Back
+                <ChevronLeft className="h-3.5 w-3.5" /> Adjust mapping
+
               </button>
               <button
                 disabled={isPending || includedCount === 0}
