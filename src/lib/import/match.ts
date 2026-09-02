@@ -223,7 +223,7 @@ export function buildMappingPlan(parsed: ParsedFile, schema: ImportSchema): Mapp
     needsConfirmation: mappings
       .filter((m) => m.source && (m.confidence === "medium" || m.confidence === "low"))
       .map((m) => m.field.key),
-    missingRequired: mappings.filter((m) => m.field.required && !m.source).map((m) => m.field.key),
+    missingRequired: computeMissingRequired(schema, mappings),
   };
 }
 
@@ -236,8 +236,40 @@ export function refreshPlan(plan: MappingPlan, allColumns: string[]): MappingPla
     needsConfirmation: plan.mappings
       .filter((m) => m.source && !m.confirmed && m.confidence !== "high")
       .map((m) => m.field.key),
-    missingRequired: plan.mappings.filter((m) => m.field.required && !m.source).map((m) => m.field.key),
+    missingRequired: computeMissingRequired(plan.schema, plan.mappings),
   };
+}
+
+
+/* ----------------------- derivable required fields ----------------------- */
+
+/**
+ * A required field does not need its own column when the engine can derive it
+ * from other mapped columns (broker/bank exports routinely omit one side of a
+ * pair). Each entry lists alternative column sets that satisfy the field.
+ */
+const SATISFIED_BY: Record<string, Record<string, string[][]>> = {
+  investments: {
+    avg_price: [["invested_value", "quantity"], ["current_price"]],
+    current_price: [["current_value", "quantity"], ["avg_price"], ["invested_value", "quantity"]],
+    quantity: [["current_value", "current_price"], ["invested_value", "avg_price"]],
+    current_value: [["quantity", "current_price"], ["invested_value"]],
+    invested_value: [["quantity", "avg_price"], ["current_value"]],
+  },
+  transactions: {
+    amount: [["debit"], ["credit"], ["raw_amount"]],
+    merchant: [["note"], ["reference"]],
+  },
+};
+
+/** Required fields that have neither a mapped column nor a derivable source. */
+function computeMissingRequired(schema: ImportSchema, mappings: FieldMapping[]): string[] {
+  const mapped = new Set(mappings.filter((m) => m.source).map((m) => m.field.key));
+  const rules = SATISFIED_BY[schema.module] ?? {};
+  return mappings
+    .filter((m) => m.field.required && !m.source)
+    .filter((m) => !(rules[m.field.key] ?? []).some((set) => set.every((k) => mapped.has(k))))
+    .map((m) => m.field.key);
 }
 
 /** Serialise a plan for reuse ("use this mapping next time"). */
