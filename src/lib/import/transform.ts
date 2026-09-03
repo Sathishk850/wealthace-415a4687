@@ -256,9 +256,15 @@ export function transformRows(
     }
 
     if (schema.module === "investments") {
+      // Zerodha-style exports carry only Symbol/ISIN — use it as the label.
+      if (!String(values.name ?? "").trim()) {
+        const alt = [values.symbol, values.isin].find((v) => v != null && String(v).trim() !== "");
+        if (alt != null) values.name = String(alt).trim();
+      }
       let qty = Number(values.quantity ?? 0);
       const avg = Number(values.avg_price ?? 0);
       const cur = Number(values.current_price ?? 0);
+
       // Quantity from totals ÷ price when the export omitted a units column.
       if (!qty) {
         const iv = Number(values.invested_value ?? 0);

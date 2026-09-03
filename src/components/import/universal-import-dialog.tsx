@@ -162,6 +162,8 @@ export function UniversalImportDialog({
 
   const reset = useCallback(() => {
     setStep("upload");
+    setMapSkipped(false);
+
     setParsed(null);
     setPlan(null);
     setResult(null);
