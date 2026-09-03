@@ -131,15 +131,19 @@ type AssetTab =
   | "InvIT"
   | "Real Estate"
   | "Savings"
+  | "Crypto"
   | "Other Assets";
 
-/** Tabs shown in the UI. REIT / InvIT holdings surface under "Other Assets". */
+/** Unified asset-type tabs. Legacy Real Estate and Savings remain available as distinct views. */
 const ASSET_TABS: AssetTab[] = [
+  "All Holdings",
   "Stocks",
   "Mutual Funds",
   "ETFs",
   "Commodities",
   "Bonds",
+  "REIT",
+  "Crypto",
   "Real Estate",
   "Savings",
   "Other Assets",
@@ -154,6 +158,7 @@ const ADD_LABEL: Record<AssetTab, string> = {
   Commodities: "Add Commodity",
   Bonds: "Add Bond",
   REIT: "Add REIT",
+  Crypto: "Add Crypto",
   InvIT: "Add InvIT",
   "Real Estate": "Add Property",
   Savings: "Add Savings",
@@ -168,6 +173,7 @@ const SEARCH_PLACEHOLDER: Record<AssetTab, string> = {
   Commodities: "Search commodities...",
   Bonds: "Search bonds...",
   REIT: "Search REITs...",
+  Crypto: "Search crypto...",
   InvIT: "Search InvITs...",
   "Real Estate": "Search properties...",
   Savings: "Search savings...",
@@ -188,8 +194,10 @@ function classifyInvestment(
   if (canonical === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
   if (canonical === "Stocks") return "Stocks";
   if (canonical === "Mutual Funds") return "Mutual Funds";
-  if (canonical === "Gold" || canonical === "Commodities" || canonical === "Crypto") return "Commodities";
-  if (canonical === "REIT" || canonical === "InvIT") return "Other Assets";
+  if (canonical === "Crypto") return "Crypto";
+  if (canonical === "Gold" || canonical === "Commodities") return "Commodities";
+  if (canonical === "REIT") return "REIT";
+  if (canonical === "InvIT") return "Other Assets";
 
   // Legacy broker exports often save no useful category. Use the remaining
   // normalized fields so existing rows appear in the same tab as new imports.
@@ -502,8 +510,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   }, [flatRows, txnCounts]);
 
   const tabRows = useMemo(
-    () => rows.filter((r) => r.tab === tab),
-
+    () => (tab === "All Holdings" ? rows : rows.filter((r) => r.tab === tab)),
     [rows, tab],
   );
 
@@ -598,7 +605,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
   /* Desktop grouped view: sector buckets over the same filtered/sorted rows. */
   const deskCollapse = useCollapsibleGroups("assets-desktop-groups-v1", true);
-  const deskGroups = useMemo(() => buildHoldingGroups(sorted), [sorted]);
+  const deskGroups = useMemo(() => buildHoldingGroups(sorted, tab), [sorted, tab]);
   const deskAllOpen = deskGroups.length > 0 && deskGroups.every((g) => deskCollapse.isOpen(g.label));
 
 
@@ -608,6 +615,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
       tab === "Mutual Funds" ||
       tab === "ETFs" ||
       tab === "Commodities" ||
+      tab === "Crypto" ||
       tab === "REIT" ||
       tab === "InvIT"
     ) {
@@ -719,6 +727,24 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         />
       </div>
 
+
+      {/* ============ TAB SUMMARY ============ */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {[
+          { label: "Invested", value: amountIn(totals.invested, sorted[0]?.currency ?? "INR") },
+          { label: "Current value", value: amountIn(totals.current, sorted[0]?.currency ?? "INR") },
+          {
+            label: "Overall P&L",
+            value: `${totals.pnl >= 0 ? "+" : ""}${amountIn(totals.pnl, sorted[0]?.currency ?? "INR")} · ${totals.pnl_pct.toFixed(2)}%`,
+          },
+          { label: "Holdings", value: String(sorted.length) },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-xl border border-border bg-card px-3 py-2.5">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{stat.label}</div>
+            <div className="mt-1 truncate text-sm font-semibold tabular-nums text-foreground">{stat.value}</div>
+          </div>
+        ))}
+      </div>
 
       {/* ============ TOOLBAR (mobile) ============ */}
       {/* Filters + add on the first row; search (with refresh on its right) below. */}
@@ -857,7 +883,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             <div className="px-4 py-10 text-center text-sm text-muted-foreground">Loading…</div>
           ) : sorted.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-              No holdings in {tab}. Tap <span className="text-mint">+</span> to add one.
+              No {tab === "All Holdings" ? "holdings" : tab.toLowerCase()} found. Tap <span className="text-mint">+</span> to add one.
             </div>
           ) : (
             <MobileHoldingGroups
@@ -977,7 +1003,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
               ) : sorted.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="px-4 py-10 text-center text-sm text-muted-foreground">
-                    No holdings in {tab}. Click <span className="text-mint">{ADD_LABEL[tab]}</span>{" "}
+                    No {tab === "All Holdings" ? "holdings" : tab.toLowerCase()} found. Click <span className="text-mint">{ADD_LABEL[tab]}</span>{" "}
                     to add one.
                   </td>
                 </tr>
@@ -1221,11 +1247,11 @@ export const GROUP_FIELD_LABEL: Partial<Record<AssetTab, string>> = {
  * empty or a literal placeholder ("-", "n/a"), so anything unusable collapses
  * into a single readable "Uncategorised" bucket instead of a stray dash.
  */
-function groupLabelFor(h: Holding, tab: AssetTab): string {
+export function groupLabelFor(h: Holding, tab: AssetTab): string {
   let label: string | null = null;
   switch (tab) {
     case "Stocks":
-      label = firstUsable(h.sector, h.market_cap, h.segment);
+      label = firstUsable(h.sector);
       break;
     case "Mutual Funds":
       label = firstUsable(fundHouseFromName(h.name), h.type, h.segment);
@@ -1263,7 +1289,7 @@ export type HoldingGroup = {
 };
 
 /** Bucket already-filtered/sorted rows for the grouped view of a tab. */
-function buildHoldingGroups(rows: Holding[], tab: AssetTab): HoldingGroup[] {
+export function buildHoldingGroups(rows: Holding[], tab: AssetTab): HoldingGroup[] {
   const m = new Map<string, Holding[]>();
   for (const r of rows) {
     const k = groupLabelFor(r, tab);
@@ -1299,6 +1325,7 @@ function MobileHoldingGroups({
   onView,
   onEdit,
   onDelete,
+  tab,
 }: {
   rows: Holding[];
   rowKey: (h: Holding) => string;
@@ -1311,6 +1338,9 @@ function MobileHoldingGroups({
 }) {
   const { isOpen, toggle, setAll } = useCollapsibleGroups("assets-mobile-groups-v2", false);
   const [view, setView] = useState<"grouped" | "flat">(tab === "Crypto" ? "flat" : "grouped");
+  useEffect(() => {
+    if (tab === "Crypto") setView("flat");
+  }, [tab]);
 
   const groups = useMemo(() => buildHoldingGroups(rows, tab), [rows, tab]);
 
