@@ -809,7 +809,22 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           onChange={setFPlatform}
           options={platformOptions}
         />
+        <div className="inline-flex rounded-xl border border-border bg-surface-2 p-0.5">
+          {(["grouped", "flat"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setDeskView(v)}
+              aria-pressed={deskView === v}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                deskView === v ? "bg-mint text-[#04121C]" : "text-muted-foreground"
+              }`}
+            >
+              {v === "grouped" ? "Grouped" : "List"}
+            </button>
+          ))}
+        </div>
         <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
+
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={openImportForTab}
