@@ -858,6 +858,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
             </button>
           ))}
         </div>
+        {deskView === "grouped" ? (
+          <button
+            onClick={() => deskCollapse.setAll(deskGroups.map((g) => g.label), !deskAllOpen)}
+            className="px-2 text-xs font-semibold text-mint"
+          >
+            {deskAllOpen ? "Collapse all" : "Expand all"}
+          </button>
+        ) : null}
         <RefreshIconButton busy={refreshHoldings.isPending} label="Refresh prices" onClick={refreshAll} />
 
         <div className="ml-auto flex items-center gap-2">
