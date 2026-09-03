@@ -1184,16 +1184,112 @@ function compactAmount(v: number, currency: string): string {
  */
 const UNCATEGORISED = "Uncategorised";
 
-function groupLabelFor(h: Holding): string {
-  const candidates = [h.sector, h.segment, h.type];
+const PLACEHOLDER_RE = /^(-+|_+|n\/?a|na|null|none|others?|unknown)$/i;
+
+function firstUsable(...candidates: (string | null | undefined)[]): string | null {
   for (const c of candidates) {
     const v = (c ?? "").trim();
-    if (!v) continue;
-    if (/^(-+|_+|n\/?a|na|null|none|others?|unknown)$/i.test(v)) continue;
+    if (!v || PLACEHOLDER_RE.test(v)) continue;
     return v;
   }
-  return UNCATEGORISED;
+  return null;
 }
+
+/** Fund house / AMC inferred from a scheme name ("HDFC Mid Cap …" → "HDFC"). */
+function fundHouseFromName(name: string): string | null {
+  const first = name.trim().split(/[\s\-—·|]+/)[0];
+  if (!first || first.length < 2) return null;
+  return first.toUpperCase() === first && first.length <= 4 ? first : first;
+}
+
+/** What each tab groups by, shown in the grouped-view header. */
+export const GROUP_FIELD_LABEL: Partial<Record<AssetTab, string>> = {
+  Stocks: "Sector",
+  "Mutual Funds": "Fund House",
+  ETFs: "Category",
+  Commodities: "Commodity Type",
+  Bonds: "Issuer / Type",
+  REIT: "Property Type",
+  "Real Estate": "Property Type",
+  Savings: "Type",
+  "Other Assets": "Asset Type",
+  "All Holdings": "Asset Class",
+};
+
+/**
+ * Group label for a holding, chosen per asset type. Imported data is often
+ * empty or a literal placeholder ("-", "n/a"), so anything unusable collapses
+ * into a single readable "Uncategorised" bucket instead of a stray dash.
+ */
+function groupLabelFor(h: Holding, tab: AssetTab): string {
+  let label: string | null = null;
+  switch (tab) {
+    case "Stocks":
+      label = firstUsable(h.sector, h.market_cap, h.segment);
+      break;
+    case "Mutual Funds":
+      label = firstUsable(h.platform && null, fundHouseFromName(h.name), h.type, h.segment);
+      break;
+    case "ETFs":
+      label = firstUsable(h.sector, h.type, h.segment);
+      break;
+    case "Commodities":
+    case "Savings":
+    case "Other Assets":
+    case "Real Estate":
+    case "REIT":
+    case "InvIT":
+      label = firstUsable(h.type, h.sector, h.segment);
+      break;
+    case "Bonds":
+      label = firstUsable(h.type, h.segment, h.sector);
+      break;
+    case "All Holdings":
+      label = firstUsable(h.tab, h.segment);
+      break;
+    default:
+      label = firstUsable(h.sector, h.segment, h.type);
+  }
+  return label ?? UNCATEGORISED;
+}
+
+export type HoldingGroup = {
+  label: string;
+  items: Holding[];
+  invested: number;
+  current: number;
+  pct: number;
+  currency: string;
+};
+
+/** Bucket already-filtered/sorted rows for the grouped view of a tab. */
+function buildHoldingGroups(rows: Holding[], tab: AssetTab): HoldingGroup[] {
+  const m = new Map<string, Holding[]>();
+  for (const r of rows) {
+    const k = groupLabelFor(r, tab);
+    const list = m.get(k);
+    if (list) list.push(r);
+    else m.set(k, [r]);
+  }
+  return [...m.entries()]
+    .map(([label, items]) => {
+      const invested = items.reduce((s, i) => s + i.invested, 0);
+      const current = items.reduce((s, i) => s + i.current, 0);
+      return {
+        label,
+        items,
+        invested,
+        current,
+        pct: invested > 0 ? ((current - invested) / invested) * 100 : 0,
+        currency: items[0]?.currency || "INR",
+      };
+    })
+    // Biggest groups first; the catch-all bucket always sits last.
+    .sort((a, b) =>
+      a.label === UNCATEGORISED ? 1 : b.label === UNCATEGORISED ? -1 : b.current - a.current,
+    );
+}
+
 
 function MobileHoldingGroups({
   rows,
