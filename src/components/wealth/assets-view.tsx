@@ -1228,7 +1228,7 @@ function groupLabelFor(h: Holding, tab: AssetTab): string {
       label = firstUsable(h.sector, h.market_cap, h.segment);
       break;
     case "Mutual Funds":
-      label = firstUsable(h.platform && null, fundHouseFromName(h.name), h.type, h.segment);
+      label = firstUsable(fundHouseFromName(h.name), h.type, h.segment);
       break;
     case "ETFs":
       label = firstUsable(h.sector, h.type, h.segment);
@@ -1307,39 +1307,12 @@ function MobileHoldingGroups({
   onView: (h: Holding) => void;
   onEdit: (h: Holding) => void;
   onDelete: (h: Holding) => void;
+  tab: AssetTab;
 }) {
   const { isOpen, toggle, setAll } = useCollapsibleGroups("assets-mobile-groups-v2", false);
-  const [view, setView] = useState<"grouped" | "flat">("grouped");
+  const [view, setView] = useState<"grouped" | "flat">(tab === "Crypto" ? "flat" : "grouped");
 
-  const groups = useMemo(() => {
-    const m = new Map<string, Holding[]>();
-    for (const r of rows) {
-      const k = groupLabelFor(r);
-      const list = m.get(k);
-      if (list) list.push(r);
-      else m.set(k, [r]);
-    }
-    return [...m.entries()]
-      .map(([label, items]) => {
-        const invested = items.reduce((s, i) => s + i.invested, 0);
-        const current = items.reduce((s, i) => s + i.current, 0);
-        return {
-          label,
-          items,
-          current,
-          pct: invested > 0 ? ((current - invested) / invested) * 100 : 0,
-          currency: items[0]?.currency || "INR",
-        };
-      })
-      // Biggest sectors first; the catch-all bucket always sits last.
-      .sort((a, b) =>
-        a.label === UNCATEGORISED
-          ? 1
-          : b.label === UNCATEGORISED
-            ? -1
-            : b.current - a.current,
-      );
-  }, [rows]);
+  const groups = useMemo(() => buildHoldingGroups(rows, tab), [rows, tab]);
 
   const allOpen = groups.length > 0 && groups.every((g) => isOpen(g.label));
 
