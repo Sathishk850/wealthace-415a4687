@@ -1098,6 +1098,24 @@ function compactAmount(v: number, currency: string): string {
   return `${sym}${v.toFixed(2)}`;
 }
 
+/**
+ * Group labels come from imported data and are often empty or literal
+ * placeholders ("-", "n/a"). Everything unusable collapses to a single
+ * readable "Uncategorised" bucket instead of a stray dash.
+ */
+const UNCATEGORISED = "Uncategorised";
+
+function groupLabelFor(h: Holding): string {
+  const candidates = [h.sector, h.segment, h.type];
+  for (const c of candidates) {
+    const v = (c ?? "").trim();
+    if (!v) continue;
+    if (/^(-+|_+|n\/?a|na|null|none|others?|unknown)$/i.test(v)) continue;
+    return v;
+  }
+  return UNCATEGORISED;
+}
+
 function MobileHoldingGroups({
   rows,
   rowKey,
@@ -1116,149 +1134,188 @@ function MobileHoldingGroups({
   onDelete: (h: Holding) => void;
 }) {
   const { isOpen, toggle, setAll } = useCollapsibleGroups("assets-mobile-groups-v2", false);
+  const [view, setView] = useState<"grouped" | "flat">("grouped");
 
   const groups = useMemo(() => {
     const m = new Map<string, Holding[]>();
     for (const r of rows) {
-      const k = r.segment || r.type || "Other";
+      const k = groupLabelFor(r);
       const list = m.get(k);
       if (list) list.push(r);
       else m.set(k, [r]);
     }
-    return [...m.entries()].map(([label, items]) => {
-      const invested = items.reduce((s, i) => s + i.invested, 0);
-      const current = items.reduce((s, i) => s + i.current, 0);
-      return {
-        label,
-        items,
-        current,
-        pct: invested > 0 ? ((current - invested) / invested) * 100 : 0,
-        currency: items[0]?.currency || "INR",
-      };
-    });
+    return [...m.entries()]
+      .map(([label, items]) => {
+        const invested = items.reduce((s, i) => s + i.invested, 0);
+        const current = items.reduce((s, i) => s + i.current, 0);
+        return {
+          label,
+          items,
+          current,
+          pct: invested > 0 ? ((current - invested) / invested) * 100 : 0,
+          currency: items[0]?.currency || "INR",
+        };
+      })
+      // Biggest sectors first; the catch-all bucket always sits last.
+      .sort((a, b) =>
+        a.label === UNCATEGORISED
+          ? 1
+          : b.label === UNCATEGORISED
+            ? -1
+            : b.current - a.current,
+      );
   }, [rows]);
 
   const allOpen = groups.length > 0 && groups.every((g) => isOpen(g.label));
 
+  const row = (h: Holding, detailed: boolean) => {
+    const key = rowKey(h);
+    const rowUp = h.pnl >= 0;
+    return (
+      <div
+        key={key}
+        data-holding-id={h.id}
+        className={`flex items-center gap-2 border-t border-border/40 px-3 py-3 ${
+          isSelected(key) ? "bg-mint/[0.06]" : ""
+        }`}
+      >
+        <SelectCheckbox
+          label={`Select ${h.name}`}
+          checked={isSelected(key)}
+          onChange={(v) => onSelectChange(key, v)}
+        />
+        <button
+          onClick={() => onView(h)}
+          className="min-w-0 flex-1 text-left"
+          aria-label={`View ${h.name}`}
+        >
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold text-foreground">{h.name}</span>
+            {h.txn_count && h.txn_count > 1 ? (
+              <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
+                {h.txn_count}
+              </span>
+            ) : null}
+          </div>
+          <div className="truncate text-[11px] text-muted-foreground">
+            {[h.symbol?.toUpperCase(), h.type].filter(Boolean).join(" · ")}
+          </div>
+          {detailed ? (
+            <div className="mt-0.5 truncate text-[11px] tabular-nums text-muted-foreground">
+              Qty {formatQty(h.quantity)} · Avg {priceIn(h.avg_price, h.currency)}
+            </div>
+          ) : null}
+        </button>
+        <div className="shrink-0 text-right">
+          <div className="text-sm font-semibold tabular-nums text-foreground">
+            {compactAmount(h.current, h.currency)}
+          </div>
+          <div
+            className={`text-[11px] font-medium tabular-nums ${rowUp ? "text-emerald-500" : "text-rose-500"}`}
+          >
+            {rowUp ? "+" : ""}
+            {h.pnl_pct.toFixed(2)}%
+          </div>
+          <div className="text-[10px] tabular-nums text-muted-foreground">
+            {rowUp ? "+" : ""}
+            {compactAmount(h.pnl, h.currency)}
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label={`Actions for ${h.name}`}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => onView(h)}>
+              <Eye className="mr-2 h-4 w-4" /> View
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(h)}>
+              <Pencil className="mr-2 h-4 w-4" /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(h)}
+              className="text-rose-500 focus:text-rose-500"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+
   return (
     <div className="divide-y divide-border">
-      <div className="flex justify-end px-3 py-2">
-        <button
-          onClick={() => setAll(groups.map((g) => g.label), !allOpen)}
-          className="text-[11px] font-semibold text-mint"
-        >
-          {allOpen ? "Collapse all" : "Expand all"}
-        </button>
-      </div>
-      {groups.map((g) => {
-        const open = isOpen(g.label);
-        const up = g.pct >= 0;
-        return (
-          <div key={g.label}>
+      {/* View toggle + expand/collapse */}
+      <div className="flex items-center justify-between gap-2 px-3 py-2">
+        <div className="inline-flex rounded-lg border border-border bg-surface-2 p-0.5">
+          {(["grouped", "flat"] as const).map((v) => (
             <button
-              onClick={() => toggle(g.label)}
-
-              className="flex w-full items-center gap-2 px-3 py-3 text-left"
+              key={v}
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${
+                view === v ? "bg-mint text-[#04121C]" : "text-muted-foreground"
+              }`}
             >
-              <ChevronDown
-                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
-              />
-              <span className="truncate text-sm font-semibold text-foreground">{g.label}</span>
-              <span className="shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                {g.items.length}
-              </span>
-              <span className="ml-auto shrink-0 text-sm font-semibold text-foreground">
-                {compactAmount(g.current, g.currency)}
-              </span>
-              <span
-                className={`shrink-0 text-xs font-medium ${up ? "text-emerald-500" : "text-rose-500"}`}
-              >
-                {up ? "+" : ""}
-                {g.pct.toFixed(1)}%
-              </span>
+              {v === "grouped" ? "Grouped" : "List"}
             </button>
+          ))}
+        </div>
+        {view === "grouped" ? (
+          <button
+            onClick={() => setAll(groups.map((g) => g.label), !allOpen)}
+            className="text-[11px] font-semibold text-mint"
+          >
+            {allOpen ? "Collapse all" : "Expand all"}
+          </button>
+        ) : (
+          <span className="text-[11px] text-muted-foreground">{rows.length} holdings</span>
+        )}
+      </div>
 
-            {open
-              ? g.items.map((h) => {
-                  const key = rowKey(h);
-                  const rowUp = h.pnl >= 0;
-                  return (
-                    <div
-                      key={key}
-                      data-holding-id={h.id}
-                      className={`flex items-center gap-2 border-t border-border/40 px-3 py-3 ${
-                        isSelected(key) ? "bg-mint/[0.06]" : ""
-                      }`}
-                    >
-                      <SelectCheckbox
-                        label={`Select ${h.name}`}
-                        checked={isSelected(key)}
-                        onChange={(v) => onSelectChange(key, v)}
-                      />
-                      <button
-                        onClick={() => onView(h)}
-                        className="min-w-0 flex-1 text-left"
-                        aria-label={`View ${h.name}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium text-foreground">
-                            {h.name}
-                          </span>
-                          {h.txn_count && h.txn_count > 1 ? (
-                            <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
-                              {h.txn_count}
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="truncate text-[11px] text-muted-foreground">
-                          {[h.symbol, h.type].filter(Boolean).join(" · ")}
-                        </div>
-                      </button>
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm font-semibold text-foreground">
-                          {compactAmount(h.current, h.currency)}
-                        </div>
-                        <div
-                          className={`text-[11px] font-medium ${rowUp ? "text-emerald-500" : "text-rose-500"}`}
-                        >
-                          {rowUp ? "+" : ""}
-                          {h.pnl_pct.toFixed(2)}%
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            aria-label={`Actions for ${h.name}`}
-                            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem onClick={() => onView(h)}>
-                            <Eye className="mr-2 h-4 w-4" /> View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onEdit(h)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDelete(h)}
-                            className="text-rose-500 focus:text-rose-500"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  );
-                })
-              : null}
-          </div>
-        );
-      })}
+      {view === "flat"
+        ? rows.map((h) => row(h, true))
+        : groups.map((g) => {
+            const open = isOpen(g.label);
+            const up = g.pct >= 0;
+            return (
+              <div key={g.label}>
+                <button
+                  onClick={() => toggle(g.label)}
+                  className="flex w-full items-center gap-2 px-3 py-3 text-left"
+                >
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
+                  />
+                  <span className="truncate text-sm font-semibold text-foreground">{g.label}</span>
+                  <span className="shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                    {g.items.length}
+                  </span>
+                  <span className="ml-auto shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                    {compactAmount(g.current, g.currency)}
+                  </span>
+                  <span
+                    className={`shrink-0 text-xs font-medium tabular-nums ${up ? "text-emerald-500" : "text-rose-500"}`}
+                  >
+                    {up ? "+" : ""}
+                    {g.pct.toFixed(1)}%
+                  </span>
+                </button>
+
+                {open ? g.items.map((h) => row(h, false)) : null}
+              </div>
+            );
+          })}
     </div>
   );
 }
+
 
 
 
