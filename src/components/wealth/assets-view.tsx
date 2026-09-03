@@ -596,6 +596,12 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     };
   }, [sorted]);
 
+  /* Desktop grouped view: sector buckets over the same filtered/sorted rows. */
+  const deskCollapse = useCollapsibleGroups("assets-desktop-groups-v1", true);
+  const deskGroups = useMemo(() => buildHoldingGroups(sorted), [sorted]);
+  const deskAllOpen = deskGroups.length > 0 && deskGroups.every((g) => deskCollapse.isOpen(g.label));
+
+
   const openAdd = () => {
     if (
       tab === "Stocks" ||
