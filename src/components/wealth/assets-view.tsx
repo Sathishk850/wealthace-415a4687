@@ -896,9 +896,10 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                 setDetailsTab("fundamental");
                 setDetails(h);
               }}
-              onEdit={(h) => openEdit(h)}
-              onDelete={(h) => setConfirm(h)}
-            />
+               onEdit={(h) => openEdit(h)}
+               onDelete={(h) => setConfirm(h)}
+               tab={tab}
+             />
           )}
         </div>
 
