@@ -225,6 +225,7 @@ const INVESTMENT_TABS: AssetTab[] = [
   "Commodities",
   "Bonds",
   "REIT",
+  "Crypto",
   "InvIT",
 ];
 
