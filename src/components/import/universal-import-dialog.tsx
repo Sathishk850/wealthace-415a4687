@@ -137,6 +137,9 @@ export function UniversalImportDialog({
   const { commit, isPending, progress } = useImportCommit();
 
   const [step, setStep] = useState<Step>("upload");
+  /** True when auto-mapping succeeded and the map-columns step was bypassed. */
+  const [mapSkipped, setMapSkipped] = useState(false);
+
   const [busy, setBusy] = useState(false);
   const [parsed, setParsed] = useState<ParsedFile | null>(null);
   const [target, setTarget] = useState<ImportModule>(module);
@@ -234,6 +237,7 @@ export function UniversalImportDialog({
           corrections: corrs,
         });
         setResult(tr);
+        setMapSkipped(true);
         setStep("preview");
         const label = (getSchema(mod)?.label ?? "records").toLowerCase();
         toast.success(
@@ -242,8 +246,10 @@ export function UniversalImportDialog({
             : `${tr.summary.total} ${label} ready to review`,
         );
       } else {
+        setMapSkipped(false);
         setStep("map");
       }
+
 
     } catch (e) {
       if (isPasswordError(e)) {
@@ -355,28 +361,26 @@ export function UniversalImportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Stepper */}
+        {/* Stepper — the "map columns" step is hidden entirely when the engine
+            auto-mapped everything, so the user only sees steps they visit. */}
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          {(["upload", "map", "preview", "done"] as Step[]).map((s, i) => {
-            const jumped = s === "map" && step !== "map" && step !== "upload";
-            return (
+          {(["upload", "map", "preview", "done"] as Step[])
+            .filter((s) => s !== "map" || !mapSkipped || step === "map")
+            .map((s, i) => (
               <span
                 key={s}
                 className={cn(
                   "rounded-full px-2 py-0.5 capitalize transition-colors",
                   step === s
                     ? "bg-mint text-mint-foreground font-semibold"
-                    : jumped
-                      ? "bg-muted text-muted-foreground/40 line-through"
-                      : "bg-muted text-muted-foreground",
+                    : "bg-muted text-muted-foreground",
                 )}
               >
                 {i + 1}. {s === "map" ? "map columns" : s}
-                {jumped && " (auto)"}
               </span>
-            );
-          })}
+            ))}
         </div>
+
 
 
         <div className="flex-1 overflow-y-auto pr-1">

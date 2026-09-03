@@ -250,6 +250,8 @@ export function refreshPlan(plan: MappingPlan, allColumns: string[]): MappingPla
  */
 const SATISFIED_BY: Record<string, Record<string, string[][]>> = {
   investments: {
+    name: [["symbol"], ["isin"]],
+
     avg_price: [["invested_value", "quantity"], ["current_price"]],
     current_price: [["current_value", "quantity"], ["avg_price"], ["invested_value", "quantity"]],
     quantity: [["current_value", "current_price"], ["invested_value", "avg_price"]],
