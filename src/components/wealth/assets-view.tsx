@@ -294,8 +294,10 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [fMarketCap, setFMarketCap] = useState<string>("all");
   const [fExchange, setFExchange] = useState<string>("all");
   const [fPlatform, setFPlatform] = useState<string>("all");
+  const [deskView, setDeskView] = useState<"grouped" | "flat">("grouped");
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDir, setSortDir] = useState<"asc" | "desc">(DEFAULT_SORT.dir);
+
   const [details, setDetails] = useState<Holding | null>(null);
   const [detailsTab, setDetailsTab] = useState<"fundamental" | "history">("fundamental");
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
