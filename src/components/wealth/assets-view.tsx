@@ -975,6 +975,61 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     to add one.
                   </td>
                 </tr>
+              ) : deskView === "grouped" ? (
+                deskGroups.map((g) => {
+                  const open = deskCollapse.isOpen(g.label);
+                  const up = g.pct >= 0;
+                  return (
+                    <Fragment key={g.label}>
+                      <tr className="border-b border-border bg-surface-2/40">
+                        <td className="px-3 py-2"></td>
+                        <td colSpan={2} className="px-3 py-2">
+                          <button
+                            onClick={() => deskCollapse.toggle(g.label)}
+                            className="flex items-center gap-2 text-left"
+                          >
+                            <ChevronDown
+                              className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
+                            />
+                            <span className="text-sm font-semibold text-foreground">{g.label}</span>
+                            <span className="rounded-full bg-card px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                              {g.items.length}
+                            </span>
+                          </button>
+                        </td>
+                        <td colSpan={4}></td>
+                        <td className="px-3 py-2 text-right text-sm font-semibold tabular-nums text-foreground">
+                          {amountIn(g.current, g.currency)}
+                        </td>
+                        <td
+                          className={`px-3 py-2 text-right text-xs font-semibold tabular-nums ${up ? "text-emerald-500" : "text-rose-500"}`}
+                        >
+                          {up ? "+" : ""}
+                          {g.pct.toFixed(2)}%
+                        </td>
+                        <td colSpan={2}></td>
+                      </tr>
+                      {open
+                        ? g.items.map((h) => (
+                            <HoldingRow
+                              key={rowKey(h)}
+                              h={h}
+                              holdingId={h.id}
+                              highlight={lastTouched === h.id}
+                              selected={sel.isSelected(rowKey(h))}
+                              onSelectChange={(v) => sel.toggle(rowKey(h), v)}
+                              onView={() => {
+                                setDetailsTab("fundamental");
+                                setDetails(h);
+                              }}
+                              onEdit={() => openEdit(h)}
+                              onDelete={() => setConfirm(h)}
+                            />
+                          ))
+                        : null}
+                    </Fragment>
+                  );
+                })
               ) : (
                 sorted.map((h) => (
                   <HoldingRow
@@ -993,6 +1048,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   />
                 ))
               )}
+
 
 
             </tbody>
