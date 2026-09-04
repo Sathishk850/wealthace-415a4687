@@ -6,6 +6,8 @@
  */
 import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { refreshMyHoldings } from "@/lib/market.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { IMPORT_TARGETS, type ImportModule } from "./targets";
 import type { TransformedRow } from "./transform";
@@ -114,11 +116,24 @@ async function buildMergeIndex(module: ImportModule) {
 
 export function useImportCommit() {
   const qc = useQueryClient();
+  const refreshPrices = useServerFn(refreshMyHoldings);
   const [isPending, setPending] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const commit = useCallback(
     async (module: ImportModule, rows: TransformedRow[], mode: CommitMode = "insert"): Promise<ImportOutcome> => {
+      /** Fetch live prices for freshly imported holdings; never blocks the import. */
+      const autoRefresh = async (mod: ImportModule) => {
+        if (mod !== "investments" && mod !== "investment_txns") return;
+        try {
+          await refreshPrices({} as never);
+          qc.invalidateQueries({ queryKey: ["market"] });
+          qc.invalidateQueries({ queryKey: ["wealth"] });
+        } catch {
+          /* price refresh is best-effort; holdings still show imported values */
+        }
+      };
+
       const target = IMPORT_TARGETS[module];
       const selected = rows.filter((r) => r.include);
       const skipped = rows.length - selected.length;
@@ -205,6 +220,7 @@ export function useImportCommit() {
             setProgress(Math.round(Math.min(1, total / payload.length) * 100));
           }
           for (const key of target.invalidate) qc.invalidateQueries({ queryKey: key });
+          await autoRefresh(module);
           return { inserted, updated, skipped, failed, errors };
         }
 
@@ -224,12 +240,13 @@ export function useImportCommit() {
         }
 
         for (const key of target.invalidate) qc.invalidateQueries({ queryKey: key });
+        await autoRefresh(module);
         return { inserted, updated: 0, skipped, failed, errors };
       } finally {
         setPending(false);
       }
     },
-    [qc],
+    [qc, refreshPrices],
   );
 
   return { commit, isPending, progress };

@@ -254,6 +254,10 @@ type Holding = {
   quantity: number;
   avg_price: number;
   cmp: number;
+  /** True when a live market quote priced this row. */
+  live_price?: boolean;
+  /** True when the row is market-linked but no live quote is available. */
+  price_stale?: boolean;
   invested: number;
   current: number;
   pnl: number;
@@ -426,6 +430,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         quantity: inv.quantity,
         avg_price: inv.avg_price,
         cmp: d.current_price,
+        live_price: d.has_live,
+        price_stale: !!(inv.identifier_type && inv.identifier) && !d.has_live,
         invested: d.invested,
         current: d.current_value,
         pnl: d.unrealized_pl,
@@ -1542,6 +1548,7 @@ type RowLike = {
   quantity: number;
   avg_price: number;
   cmp: number;
+  price_stale?: boolean;
   invested: number;
   current: number;
   pnl: number;
@@ -1643,7 +1650,17 @@ function HoldingRow({
         {priceIn(h.avg_price, h.currency)}
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">
-        {priceIn(h.cmp, h.currency)}
+        <span className="inline-flex items-center gap-1">
+          {priceIn(h.cmp, h.currency)}
+          {h.price_stale && (
+            <span
+              title="Live price unavailable — showing last known price"
+              className="text-[10px] font-medium text-amber-500"
+            >
+              ⚠
+            </span>
+          )}
+        </span>
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">
         {amountIn(h.invested, h.currency)}
