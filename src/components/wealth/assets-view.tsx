@@ -291,9 +291,9 @@ const DEFAULT_SORT: { key: SortKey; dir: "asc" | "desc" } = { key: "name", dir: 
 
 export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) => void }) {
   const [tab, setTab] = useState<AssetTab>(() => {
-    if (typeof sessionStorage === "undefined") return "Stocks";
+    if (typeof sessionStorage === "undefined") return "All Holdings";
     const saved = sessionStorage.getItem(TAB_STORAGE_KEY) as AssetTab | null;
-    return saved && ASSET_TABS.includes(saved) ? saved : "Stocks";
+    return saved && ASSET_TABS.includes(saved) ? saved : "All Holdings";
   });
 
   const [search, setSearch] = useState("");
@@ -316,6 +316,17 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(LAST_TOUCHED_KEY),
   );
   const navigate = useNavigate();
+
+  // Filters are per-tab: a value carried over from another tab would filter
+  // every row out. Reset to "all" (= show everything) on every tab change.
+  useEffect(() => {
+    setFSegment("all");
+    setFSector("all");
+    setFMarketCap("all");
+    setFExchange("all");
+    setFPlatform("all");
+    setSearch("");
+  }, [tab]);
 
   // Fix 6: remember the active tab across add / edit navigations.
   useEffect(() => {
@@ -545,14 +556,27 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           `${r.name} ${r.symbol ?? ""} ${r.type} ${r.segment} ${r.platform ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
-      if (fSegment !== "all" && r.segment !== fSegment) return false;
-      if (fSector !== "all" && r.sector !== fSector) return false;
-      if (fMarketCap !== "all" && r.market_cap !== fMarketCap) return false;
-      if (fExchange !== "all" && r.exchange !== fExchange) return false;
-      if (fPlatform !== "all" && r.platform !== fPlatform) return false;
+      if (fSegment !== "all" && segmentOptions.includes(fSegment) && r.segment !== fSegment) return false;
+      if (fSector !== "all" && sectorOptions.includes(fSector) && r.sector !== fSector) return false;
+      if (fMarketCap !== "all" && marketCapOptions.includes(fMarketCap) && r.market_cap !== fMarketCap) return false;
+      if (fExchange !== "all" && exchangeOptions.includes(fExchange) && r.exchange !== fExchange) return false;
+      if (fPlatform !== "all" && platformOptions.includes(fPlatform) && r.platform !== fPlatform) return false;
       return true;
     });
-  }, [tabRows, search, fSegment, fSector, fMarketCap, fExchange, fPlatform]);
+  }, [
+    tabRows,
+    search,
+    fSegment,
+    fSector,
+    fMarketCap,
+    fExchange,
+    fPlatform,
+    segmentOptions,
+    sectorOptions,
+    marketCapOptions,
+    exchangeOptions,
+    platformOptions,
+  ]);
 
   /* Individual holdings — one row per holding (no grouping). */
   const sorted = useMemo(() => {
