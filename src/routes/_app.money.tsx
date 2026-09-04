@@ -116,7 +116,7 @@ export const Route = createFileRoute("/_app/money")({
   component: Money,
 });
 
-const tabs = ["Transactions", "Income", "Expenses", "Budgets"] as const;
+const tabs = ["Overview", "Income", "Expenses", "Budgets"] as const;
 type Tab = (typeof tabs)[number];
 
 function ChartCard({
@@ -200,7 +200,7 @@ function KpiCard({
 }
 
 function Money() {
-  const [tab, setTab] = useTabParam<Tab>("Transactions", tabs);
+  const [tab, setTab] = useTabParam<Tab>("Overview", tabs);
   const [importOpen, setImportOpen] = useState(false);
   const locationHash = useRouterState({ select: (st) => st.location.hash });
   useEffect(() => {
@@ -463,7 +463,7 @@ function Money() {
         <div className="flex h-64 items-center justify-center text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading…
         </div>
-      ) : tab === "Transactions" ? (
+      ) : tab === "Overview" ? (
         <>
           {/* KPI cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
