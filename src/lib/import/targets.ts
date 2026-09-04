@@ -5,6 +5,8 @@
  * invalidate, and the row builder that turns canonical values into an insert
  * payload. No schema changes: every payload only uses existing columns.
  */
+import { identifierForHolding, notesWithEnrichment } from "./classify-holding";
+
 export type ImportModule =
   | "investments"
   | "investment_txns"
@@ -105,7 +107,14 @@ export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
       sip_frequency: str(v.sip_frequency),
       sip_next_date: str(v.sip_next_date),
       status: str(v.status) ?? "active",
-      notes: str(v.notes),
+      notes: notesWithEnrichment(v.notes, {
+        category: str(v.category),
+        segment: str(v.segment),
+        sector: str(v.sector),
+        market_cap: str(v.market_cap),
+      }),
+      ...(identifierForHolding(v) ?? {}),
+      exchange: str(v.exchange),
       last_updated: today,
     }),
   },
@@ -182,7 +191,14 @@ export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
       unit: str(v.unit),
       location: str(v.location),
       status: str(v.status) ?? "active",
-      notes: str(v.notes),
+      notes: notesWithEnrichment(v.notes, {
+        category: str(v.category),
+        segment: str(v.segment),
+        sector: str(v.sector),
+        market_cap: str(v.market_cap),
+      }),
+      ...(identifierForHolding(v) ?? {}),
+      exchange: str(v.exchange),
       last_updated: today,
     }),
   },

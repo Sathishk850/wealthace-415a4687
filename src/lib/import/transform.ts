@@ -9,6 +9,7 @@
 import { detectCurrency, toBoolean, toDate, toNumber, toPercent, toText } from "./coerce";
 import { classifyCategory, type CategoryConfidence, type CorrectionMap } from "./categorize";
 import { classifySecurity, normalizeInvestmentCategory } from "./classify-security";
+import { classifyHolding } from "./classify-holding";
 import type { CanonicalField } from "./schemas";
 import type { MappingPlan } from "./match";
 import type { ParsedFile } from "./parse";
