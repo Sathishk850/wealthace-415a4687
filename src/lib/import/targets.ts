@@ -197,9 +197,8 @@ export const IMPORT_TARGETS: Record<ImportModule, ImportTarget> = {
         sector: str(v.sector),
         market_cap: str(v.market_cap),
       }),
-      ...(identifierForHolding(v) ?? {}),
-      exchange: str(v.exchange),
       last_updated: today,
+
     }),
   },
   liabilities: {
