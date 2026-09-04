@@ -189,3 +189,28 @@ export function notesWithEnrichment(notes: unknown, e: HoldingEnrichment): strin
   const out = lines.filter((l) => l.trim()).join("\n");
   return out || null;
 }
+
+/**
+ * Best-effort market-data identifier for an imported holding, so live prices
+ * refresh automatically after the import commits. Conservative: only emitted
+ * when the instrument can be looked up by ticker.
+ */
+export function identifierForHolding(input: {
+  symbol?: unknown;
+  isin?: unknown;
+  category?: unknown;
+  exchange?: unknown;
+}): { identifier_type: "stock_in" | "stock_us" | "crypto"; identifier: string } | null {
+  const symbol = clean(input.symbol).toUpperCase().replace(/\s+/g, "");
+  if (!symbol || /^IN[EF0][A-Z0-9]{9}$/.test(symbol)) return null;
+  const category = normalizeInvestmentCategory(clean(input.category));
+  if (category === "Crypto") return { identifier_type: "crypto", identifier: symbol };
+  if (category === "Mutual Funds") return null;
+  const isin = clean(input.isin).toUpperCase();
+  const exchange = clean(input.exchange).toUpperCase();
+  const indian = isin.startsWith("IN") || /NSE|BSE|NS|BO/.test(exchange);
+  const foreign = /NASDAQ|NYSE|AMEX|US/.test(exchange) || (!!isin && !isin.startsWith("IN"));
+  if (indian) return { identifier_type: "stock_in", identifier: symbol };
+  if (foreign) return { identifier_type: "stock_us", identifier: symbol };
+  return { identifier_type: "stock_in", identifier: symbol };
+}
