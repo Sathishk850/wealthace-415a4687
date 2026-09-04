@@ -1548,6 +1548,7 @@ type RowLike = {
   quantity: number;
   avg_price: number;
   cmp: number;
+  price_stale?: boolean;
   invested: number;
   current: number;
   pnl: number;
