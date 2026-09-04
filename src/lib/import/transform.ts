@@ -316,7 +316,25 @@ export function transformRows(
         }
       }
 
+      // Auto-enrichment: segment / sector / market-cap band so the grouped
+      // Assets views work straight after import (unknown values stay null).
+      const enriched = classifyHolding({
+        name: values.name,
+        symbol: values.symbol,
+        isin: values.isin,
+        category: values.category,
+        sub_category: values.sub_category,
+        sector: values.sector,
+        segment: values.segment,
+        market_cap: values.market_cap,
+        exchange: values.exchange,
+      });
+      if (enriched.category) values.category = enriched.category;
+      if (enriched.segment) values.segment = enriched.segment;
+      if (enriched.sector) values.sector = enriched.sector;
+      if (enriched.market_cap) values.market_cap = enriched.market_cap;
     }
+
 
 
     // Required-field + sanity validation.
