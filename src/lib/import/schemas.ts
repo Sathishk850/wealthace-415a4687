@@ -47,9 +47,8 @@ export const INVESTMENTS_SCHEMA: ImportSchema = {
   fields: [
     {
       key: "name",
-      label: "Instrument Name",
+      label: "Name",
       type: "string",
-      required: true,
       aliases: [
         "name", "instrument name", "instrument", "security name", "security", "scheme name", "scheme",
         "stock name", "company name", "company", "scrip name", "scrip", "particulars", "description",
@@ -67,13 +66,13 @@ export const INVESTMENTS_SCHEMA: ImportSchema = {
       label: "Category",
       type: "string",
       fallback: "Others",
-      aliases: ["category", "asset class", "asset type", "instrument type", "type", "segment", "product", "product type", "scheme category", "class"],
+      aliases: ["category", "asset class", "asset type", "instrument type", "type", "product", "product type", "scheme category", "class"],
     },
     {
       key: "sub_category",
       label: "Sub Category",
       type: "string",
-      aliases: ["sub category", "subcategory", "sub type", "sector", "sub segment", "scheme sub category", "industry"],
+      aliases: ["sub category", "subcategory", "sub type", "sub segment", "scheme sub category"],
     },
     {
       key: "quantity",
@@ -124,6 +123,10 @@ export const INVESTMENTS_SCHEMA: ImportSchema = {
     { key: "purchase_date", label: "Purchase Date", type: "date", aliases: ["purchase date", "buy date", "date of purchase", "trade date", "transaction date", "investment date", "date", "acquired on", "start date"] },
     { key: "maturity_date", label: "Maturity Date", type: "date", aliases: ["maturity date", "maturity", "matures on", "redemption date", "end date"] },
     { key: "exchange", label: "Exchange", type: "string", aliases: ["exchange", "exch", "market", "listed on"] },
+    { key: "isin", label: "ISIN", type: "string", aliases: ["isin", "isin code", "isin no", "isin number"] },
+    { key: "sector", label: "Sector", type: "string", aliases: ["sector", "industry", "sector name", "industry name", "gics sector"] },
+    { key: "segment", label: "Segment", type: "string", aliases: ["segment", "asset segment", "instrument segment"] },
+    { key: "market_cap", label: "Market Cap", type: "string", aliases: ["market cap", "mcap", "market capitalisation", "market capitalization", "cap", "cap category", "market cap category"] },
     { key: "is_sip", label: "Is SIP", type: "boolean", aliases: ["is sip", "sip", "sip flag", "recurring"] },
     { key: "sip_amount", label: "SIP Amount", type: "number", min: 0, aliases: ["sip amount", "monthly sip", "installment amount", "instalment amount", "recurring amount"] },
     { key: "sip_frequency", label: "SIP Frequency", type: "string", aliases: ["sip frequency", "frequency", "sip type"] },
