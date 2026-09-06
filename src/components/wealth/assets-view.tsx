@@ -1544,7 +1544,10 @@ type RowLike = {
   name: string;
   symbol: string | null;
   segment: string;
+  sector?: string | null;
+  type?: string | null;
   market_cap?: string | null;
+
   quantity: number;
   avg_price: number;
   cmp: number;
