@@ -964,14 +964,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   onClick={toggleSort}
                   align="left"
                 />
-                <SortHeader
-                  label="Segment"
-                  col="segment"
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onClick={toggleSort}
-                  align="left"
-                />
+
                 <SortHeader
                   label="Qty"
                   col="quantity"
