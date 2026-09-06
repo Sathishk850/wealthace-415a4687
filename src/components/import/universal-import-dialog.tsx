@@ -708,8 +708,7 @@ export function UniversalImportDialog({
                           ) : r.isUpdate ? (
                             <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-mint">update</span>
                           ) : (
-                            <span className="rounded-full bg-red-500/15 px-1.5 py-0.5 text-red-400">invalid</span>
-                          ) : (
+
                             <span className="rounded-full bg-success/15 px-1.5 py-0.5 text-success">✓ ready</span>
                           )}
                           {r.categorySuggestion && !r.categorySuggestion.applied && (
