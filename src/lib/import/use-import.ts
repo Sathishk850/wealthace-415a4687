@@ -87,8 +87,6 @@ async function resolveInvestments(rows: Record<string, unknown>[]) {
   }
 }
 
-export type CommitMode = "insert" | "merge";
-
 export type ImportOutcome = {
   inserted: number;
   updated: number;
@@ -121,7 +119,7 @@ export function useImportCommit() {
   const [progress, setProgress] = useState(0);
 
   const commit = useCallback(
-    async (module: ImportModule, rows: TransformedRow[], mode: CommitMode = "insert"): Promise<ImportOutcome> => {
+    async (module: ImportModule, rows: TransformedRow[]): Promise<ImportOutcome> => {
       /** Fetch live prices for freshly imported holdings; never blocks the import. */
       const autoRefresh = async (mod: ImportModule) => {
         if (mod !== "investments" && mod !== "investment_txns") return;
@@ -171,7 +169,7 @@ export function useImportCommit() {
         }
 
         /* ---------- merge / update mode ---------- */
-        const merging = mode === "merge" && !!target.merge;
+        const merging = !!target.merge;
         if (merging) {
           const merge = target.merge!;
           const index = await buildMergeIndex(module);
