@@ -1694,6 +1694,14 @@ function HoldingRow({
           <span className="text-xs text-muted-foreground">—</span>
         )}
       </td>
+      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+        {allocPct != null && Number.isFinite(allocPct) ? (
+          `${allocPct.toFixed(2)}%`
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </td>
+
       {/* Platform column removed — it stays available via the Platform filter. */}
       <td className="w-[150px] px-3 py-3">
         <div className="flex items-center justify-end gap-1">
