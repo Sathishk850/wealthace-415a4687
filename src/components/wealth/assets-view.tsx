@@ -52,6 +52,7 @@ import { HoldingDetailsModal } from "@/components/wealth/holding-details-modal";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
 import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
 import { fundCategory, marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
+import { normalizeSector } from "@/lib/import/classify-holding";
 import { AUTO_REFRESH_MS, RefreshIconButton } from "@/components/refresh-icon-button";
 import type { MarketQuote } from "@/lib/market/types";
 import { usePaymentAccounts } from "@/lib/payment-accounts-api";
@@ -422,7 +423,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         symbol: inv.symbol,
         type: inv.sub_category || inv.category,
         segment: segmentFromNotes(inv.notes) ?? SEGMENT_FALLBACK[inv.category] ?? "",
-        sector: sectorFromNotes(inv.notes),
+        sector: normalizeSector(sectorFromNotes(inv.notes)),
         market_cap: marketCapBand({ sub_category: inv.sub_category, notes: inv.notes }),
         exchange: inv.exchange ?? null,
         platform,
@@ -457,7 +458,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         symbol: null,
         type: a.sub_category || a.category,
         segment: SEGMENT_FALLBACK[a.category] ?? "",
-        sector: sectorFromNotes(a.notes),
+        sector: normalizeSector(sectorFromNotes(a.notes)),
         market_cap: marketCapBand({ sub_category: a.sub_category, notes: a.notes }),
         exchange: null,
         platform,
@@ -964,14 +965,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   onClick={toggleSort}
                   align="left"
                 />
-                <SortHeader
-                  label="Segment"
-                  col="segment"
-                  sortKey={sortKey}
-                  sortDir={sortDir}
-                  onClick={toggleSort}
-                  align="left"
-                />
+
                 <SortHeader
                   label="Qty"
                   col="quantity"
@@ -1028,6 +1022,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   onClick={toggleSort}
                   align="right"
                 />
+                <th className="px-3 py-3 text-right">Alloc %</th>
                 {/* Platform is available under the Platform filter, not as a column. */}
                 {/* reserved actions column, no header */}
                 <th className="w-[120px] px-3 py-3"></th>
@@ -1055,7 +1050,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     <Fragment key={g.label}>
                       <tr className="border-b border-border bg-surface-2/40">
                         <td className="px-3 py-2"></td>
-                        <td colSpan={2} className="px-3 py-2">
+                        <td className="px-3 py-2">
                           <button
                             onClick={() => deskCollapse.toggle(g.label)}
                             className="flex items-center gap-2 text-left"
@@ -1079,7 +1074,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                           {up ? "+" : ""}
                           {g.pct.toFixed(2)}%
                         </td>
-                        <td colSpan={2}></td>
+                        <td className="px-3 py-2"></td>
+                        <td className="px-3 py-2 text-right text-xs font-semibold tabular-nums text-muted-foreground">
+                          {totals.current > 0 ? `${((g.current / totals.current) * 100).toFixed(2)}%` : "—"}
+                        </td>
+                        <td className="px-3 py-2"></td>
                       </tr>
                       {open
                         ? g.items.map((h) => (
@@ -1088,6 +1087,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                               h={h}
                               holdingId={h.id}
                               highlight={lastTouched === h.id}
+                              allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
                               selected={sel.isSelected(rowKey(h))}
                               onSelectChange={(v) => sel.toggle(rowKey(h), v)}
                               onView={() => {
@@ -1109,6 +1109,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     h={h}
                     holdingId={h.id}
                     highlight={lastTouched === h.id}
+                    allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
                     selected={sel.isSelected(rowKey(h))}
                     onSelectChange={(v) => sel.toggle(rowKey(h), v)}
                     onView={() => {
@@ -1270,7 +1271,8 @@ function fundHouseFromName(name: string): string | null {
 
 /** What each tab groups by, shown in the grouped-view header. */
 export const GROUP_FIELD_LABEL: Partial<Record<AssetTab, string>> = {
-  Stocks: "Sector",
+  Stocks: "Market Cap",
+
   "Mutual Funds": "Fund House",
   ETFs: "Category",
   Commodities: "Commodity Type",
@@ -1291,8 +1293,10 @@ export function groupLabelFor(h: Holding, tab: AssetTab): string {
   let label: string | null = null;
   switch (tab) {
     case "Stocks":
-      label = firstUsable(h.sector);
+      // Stocks group by market cap; sector shows as the row subtitle.
+      label = firstUsable(h.market_cap);
       break;
+
     case "Mutual Funds":
       label = firstUsable(fundHouseFromName(h.name), h.type, h.segment);
       break;
@@ -1544,7 +1548,10 @@ type RowLike = {
   name: string;
   symbol: string | null;
   segment: string;
+  sector?: string | null;
+  type?: string | null;
   market_cap?: string | null;
+
   quantity: number;
   avg_price: number;
   cmp: number;
@@ -1571,6 +1578,7 @@ function HoldingRow({
   onSelectChange,
   holdingId,
   highlight,
+  allocPct,
 }: {
   h: RowLike;
   onView?: () => void;
@@ -1581,7 +1589,10 @@ function HoldingRow({
   onSelectChange: (v: boolean) => void;
   holdingId?: string;
   highlight?: boolean;
+  /** Share of the visible portfolio's current value, in percent. */
+  allocPct?: number | null;
 }) {
+
   const up = h.pnl >= 0;
   const xirrUp = h.xirr_pct >= 0;
   return (
@@ -1624,27 +1635,28 @@ function HoldingRow({
                 </span>
               ) : null}
             </div>
-            {(h.symbol || h.market_cap) ? (
-              <div className="truncate text-[11px] text-muted-foreground">
-                {h.symbol ? <span className="uppercase">{h.symbol}</span> : null}
-                {h.symbol && h.market_cap ? " · " : ""}
-                {h.market_cap ?? ""}
-              </div>
-            ) : null}
+            {(() => {
+              // "TICKER · Market Cap · Sector · Type" — only the parts we know.
+              const bits = [h.market_cap, h.sector, h.segment || h.type].filter(
+                (b) => !!b && String(b).trim() !== "",
+              ) as string[];
+              if (!h.symbol && bits.length === 0) return null;
+              return (
+                <div className="truncate text-[11px] text-muted-foreground">
+                  {h.symbol ? <span className="uppercase">{h.symbol}</span> : null}
+                  {h.symbol && bits.length ? " · " : ""}
+                  {bits.join(" · ")}
+                </div>
+              );
+            })()}
+
           </div>
 
         </div>
 
       </td>
-      <td className="px-3 py-3">
-        {h.segment ? (
-          <span className="rounded-md bg-surface-2/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-            {h.segment}
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
-      </td>
+      {/* Segment column removed — it stays available via the Segment filter. */}
+
       <td className="px-3 py-3 text-right tabular-nums text-foreground">{formatQty(h.quantity)}</td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">
         {priceIn(h.avg_price, h.currency)}
@@ -1690,6 +1702,14 @@ function HoldingRow({
           <span className="text-xs text-muted-foreground">—</span>
         )}
       </td>
+      <td className="px-3 py-3 text-right tabular-nums text-foreground">
+        {allocPct != null && Number.isFinite(allocPct) ? (
+          `${allocPct.toFixed(2)}%`
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </td>
+
       {/* Platform column removed — it stays available via the Platform filter. */}
       <td className="w-[150px] px-3 py-3">
         <div className="flex items-center justify-end gap-1">
