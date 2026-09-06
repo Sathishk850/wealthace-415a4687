@@ -1574,6 +1574,7 @@ function HoldingRow({
   onSelectChange,
   holdingId,
   highlight,
+  allocPct,
 }: {
   h: RowLike;
   onView?: () => void;
@@ -1584,7 +1585,10 @@ function HoldingRow({
   onSelectChange: (v: boolean) => void;
   holdingId?: string;
   highlight?: boolean;
+  /** Share of the visible portfolio's current value, in percent. */
+  allocPct?: number | null;
 }) {
+
   const up = h.pnl >= 0;
   const xirrUp = h.xirr_pct >= 0;
   return (
