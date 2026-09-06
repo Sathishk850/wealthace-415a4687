@@ -37,15 +37,25 @@ export function classifySecurity(input: {
   const nameHasBond = /\b(ncd|bond|bonds|debenture|debentures|g-sec|gsec|t-bill|tbill|sdl)\b/.test(lower);
   const nameHasGold = /\bgold\b/.test(lower);
   const nameHasSgb = /\b(sgb|sovereign gold)\b/.test(lower);
+  // Scheme markers only mutual funds carry.
+  const nameHasScheme =
+    /\b(fund|scheme|folio)\b/.test(lower) ||
+    /\b(direct|regular)\s+plan\b/.test(lower) ||
+    /\bidcw\b/.test(lower);
+  const nameHasPlanOption = /\b(growth|dividend|payout|reinvest(ment)?)\b/.test(lower);
 
   /* ---------------- ISIN rules ---------------- */
   if (/^IN[EF][A-Z0-9]{9}$/.test(isin) || /^IN[0-9A-Z]{10}$/.test(isin)) {
     if (isin.startsWith("INF")) {
-      if (nameHasEtf) return { category: "ETF", sub_category: nameHasGold ? "Gold ETF" : undefined, confidence: "high", reason: "ISIN INF with ETF in name" };
+      // INF is the Indian mutual-fund ISIN prefix — highest confidence signal.
+      if (nameHasEtf && !nameHasScheme)
+        return { category: "ETF", sub_category: nameHasGold ? "Gold ETF" : undefined, confidence: "high", reason: "ISIN INF with ETF in name" };
       return { category: "Mutual Fund", sub_category: undefined, confidence: "high", reason: "ISIN prefix INF (mutual fund)" };
     }
     if (isin.startsWith("INE")) {
       if (nameHasEtf) return { category: "ETF", sub_category: nameHasGold ? "Gold ETF" : undefined, confidence: "high", reason: "ISIN INE with ETF in name" };
+      if (nameHasScheme)
+        return { category: "Mutual Fund", confidence: "high", reason: "Scheme keywords in name" };
       if (nameHasBond) return { category: "Bonds", confidence: "high", reason: "ISIN INE with bond in name" };
       return { category: "Stocks", sub_category: "Indian Equity", confidence: "high", reason: "ISIN prefix INE (listed equity)" };
     }
@@ -53,6 +63,7 @@ export function classifySecurity(input: {
       return { category: "Bonds", sub_category: nameHasSgb ? "SGB" : "Government Security", confidence: "medium", reason: "ISIN IN0 (government security)" };
     }
   }
+
   if (/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(isin) && !isin.startsWith("IN")) {
     return { category: "International Stocks", sub_category: isin.slice(0, 2), confidence: "medium", reason: `Foreign ISIN (${isin.slice(0, 2)})` };
   }
