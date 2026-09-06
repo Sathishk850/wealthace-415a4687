@@ -90,9 +90,13 @@ export function classifySecurity(input: {
   if (nameHasBond) return { category: "Bonds", confidence: "medium", reason: "Bond keyword in name" };
   if (/\breit\b/.test(lower)) return { category: "REIT", confidence: "medium", reason: "REIT in name" };
   if (/\binvit\b/.test(lower)) return { category: "InvIT", confidence: "medium", reason: "InvIT in name" };
-  if (/\b(fund|scheme|direct plan|folio)\b/.test(lower)) {
-    return { category: "Mutual Fund", confidence: "low", reason: "Fund/scheme keyword in name" };
+  if (nameHasScheme) {
+    return { category: "Mutual Fund", confidence: "high", reason: "Fund/scheme keyword in name" };
   }
+  if (nameHasPlanOption) {
+    return { category: "Mutual Fund", confidence: "medium", reason: "Plan/option keyword in name" };
+  }
+
 
   return null;
 }
