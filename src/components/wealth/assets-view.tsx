@@ -1624,13 +1624,21 @@ function HoldingRow({
                 </span>
               ) : null}
             </div>
-            {(h.symbol || h.market_cap) ? (
-              <div className="truncate text-[11px] text-muted-foreground">
-                {h.symbol ? <span className="uppercase">{h.symbol}</span> : null}
-                {h.symbol && h.market_cap ? " · " : ""}
-                {h.market_cap ?? ""}
-              </div>
-            ) : null}
+            {(() => {
+              // "TICKER · Market Cap · Sector · Type" — only the parts we know.
+              const bits = [h.market_cap, h.sector, h.segment || h.type].filter(
+                (b) => !!b && String(b).trim() !== "",
+              ) as string[];
+              if (!h.symbol && bits.length === 0) return null;
+              return (
+                <div className="truncate text-[11px] text-muted-foreground">
+                  {h.symbol ? <span className="uppercase">{h.symbol}</span> : null}
+                  {h.symbol && bits.length ? " · " : ""}
+                  {bits.join(" · ")}
+                </div>
+              );
+            })()}
+
           </div>
 
         </div>
