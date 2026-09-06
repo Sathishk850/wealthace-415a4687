@@ -25,6 +25,8 @@ export type TransformedRow = {
   raw: Record<string, unknown>;
   issues: RowIssue[];
   duplicate: "file" | "existing" | null;
+  /** True when this row matches a record that already exists in the database. */
+  isUpdate?: boolean;
   include: boolean;
   /** Transactions only: category proposed by the shared classifier. */
   categorySuggestion?: { category: string; confidence: CategoryConfidence; applied: boolean } | null;
@@ -387,9 +389,8 @@ export function transformRows(
     const k = dedupeKey(row.values, keys);
     if (!k.replace(/\|/g, "")) continue;
     if (existingKeys.has(k)) {
-      row.duplicate = "existing";
-      row.include = false;
-      row.issues.push({ level: "warning", message: "Looks like a record you already have" });
+      row.isUpdate = true;
+      row.issues.push({ level: "warning", message: "Existing record — will be updated" });
     } else if (seen.has(k)) {
       row.duplicate = "file";
       row.include = false;
@@ -437,7 +438,7 @@ export function transformRows(
       total: rows.length,
       valid: rows.filter((r) => !r.issues.some((i) => i.level === "error")).length,
       invalid: rows.filter((r) => r.issues.some((i) => i.level === "error")).length,
-      duplicates: rows.filter((r) => r.duplicate).length,
+      duplicates: rows.filter((r) => r.duplicate === "file").length,
       skipped: skippedRows,
       currencies: [...currencies],
       planIssues,
