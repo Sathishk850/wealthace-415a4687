@@ -1272,7 +1272,8 @@ function fundHouseFromName(name: string): string | null {
 
 /** What each tab groups by, shown in the grouped-view header. */
 export const GROUP_FIELD_LABEL: Partial<Record<AssetTab, string>> = {
-  Stocks: "Sector",
+  Stocks: "Market Cap",
+
   "Mutual Funds": "Fund House",
   ETFs: "Category",
   Commodities: "Commodity Type",
