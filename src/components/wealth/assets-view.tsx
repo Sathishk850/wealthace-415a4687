@@ -52,6 +52,7 @@ import { HoldingDetailsModal } from "@/components/wealth/holding-details-modal";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
 import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
 import { fundCategory, marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
+import { normalizeSector } from "@/lib/import/classify-holding";
 import { AUTO_REFRESH_MS, RefreshIconButton } from "@/components/refresh-icon-button";
 import type { MarketQuote } from "@/lib/market/types";
 import { usePaymentAccounts } from "@/lib/payment-accounts-api";
@@ -422,7 +423,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         symbol: inv.symbol,
         type: inv.sub_category || inv.category,
         segment: segmentFromNotes(inv.notes) ?? SEGMENT_FALLBACK[inv.category] ?? "",
-        sector: sectorFromNotes(inv.notes),
+        sector: normalizeSector(sectorFromNotes(inv.notes)),
         market_cap: marketCapBand({ sub_category: inv.sub_category, notes: inv.notes }),
         exchange: inv.exchange ?? null,
         platform,
@@ -457,7 +458,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         symbol: null,
         type: a.sub_category || a.category,
         segment: SEGMENT_FALLBACK[a.category] ?? "",
-        sector: sectorFromNotes(a.notes),
+        sector: normalizeSector(sectorFromNotes(a.notes)),
         market_cap: marketCapBand({ sub_category: a.sub_category, notes: a.notes }),
         exchange: null,
         platform,
