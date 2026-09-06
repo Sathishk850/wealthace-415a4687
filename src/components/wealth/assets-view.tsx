@@ -1021,6 +1021,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   onClick={toggleSort}
                   align="right"
                 />
+                <th className="px-3 py-3 text-right">Alloc %</th>
                 {/* Platform is available under the Platform filter, not as a column. */}
                 {/* reserved actions column, no header */}
                 <th className="w-[120px] px-3 py-3"></th>
@@ -1048,7 +1049,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     <Fragment key={g.label}>
                       <tr className="border-b border-border bg-surface-2/40">
                         <td className="px-3 py-2"></td>
-                        <td colSpan={2} className="px-3 py-2">
+                        <td className="px-3 py-2">
                           <button
                             onClick={() => deskCollapse.toggle(g.label)}
                             className="flex items-center gap-2 text-left"
@@ -1072,7 +1073,11 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                           {up ? "+" : ""}
                           {g.pct.toFixed(2)}%
                         </td>
-                        <td colSpan={2}></td>
+                        <td className="px-3 py-2"></td>
+                        <td className="px-3 py-2 text-right text-xs font-semibold tabular-nums text-muted-foreground">
+                          {totals.current > 0 ? `${((g.current / totals.current) * 100).toFixed(2)}%` : "—"}
+                        </td>
+                        <td className="px-3 py-2"></td>
                       </tr>
                       {open
                         ? g.items.map((h) => (
@@ -1081,6 +1086,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                               h={h}
                               holdingId={h.id}
                               highlight={lastTouched === h.id}
+                              allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
                               selected={sel.isSelected(rowKey(h))}
                               onSelectChange={(v) => sel.toggle(rowKey(h), v)}
                               onView={() => {
@@ -1102,6 +1108,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     h={h}
                     holdingId={h.id}
                     highlight={lastTouched === h.id}
+                    allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
                     selected={sel.isSelected(rowKey(h))}
                     onSelectChange={(v) => sel.toggle(rowKey(h), v)}
                     onView={() => {
@@ -1112,6 +1119,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                     onDelete={() => setConfirm(h)}
                   />
                 ))
+              )}
+
               )}
 
 
