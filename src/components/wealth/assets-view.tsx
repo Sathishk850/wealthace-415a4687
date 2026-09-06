@@ -1122,8 +1122,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                 ))
               )}
 
-              )}
-
 
 
             </tbody>
