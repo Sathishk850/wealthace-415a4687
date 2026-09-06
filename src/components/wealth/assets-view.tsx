@@ -1636,15 +1636,8 @@ function HoldingRow({
         </div>
 
       </td>
-      <td className="px-3 py-3">
-        {h.segment ? (
-          <span className="rounded-md bg-surface-2/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-            {h.segment}
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
-      </td>
+      {/* Segment column removed — it stays available via the Segment filter. */}
+
       <td className="px-3 py-3 text-right tabular-nums text-foreground">{formatQty(h.quantity)}</td>
       <td className="px-3 py-3 text-right tabular-nums text-foreground">
         {priceIn(h.avg_price, h.currency)}
