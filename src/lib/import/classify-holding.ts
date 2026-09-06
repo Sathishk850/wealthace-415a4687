@@ -158,6 +158,7 @@ export function classifyHolding(input: {
   segment?: unknown;
   market_cap?: unknown;
   exchange?: unknown;
+  quantity?: unknown;
 }): HoldingEnrichment {
   const name = clean(input.name);
   const symbol = clean(input.symbol).toUpperCase().replace(/[-.].*$/, "");
@@ -173,14 +174,28 @@ export function classifyHolding(input: {
     }
   }
 
+  /* -------- mutual-fund overrides --------
+     Broker/registrar exports frequently label schemes as plain equity. These
+     three signals are unambiguous, so they win over a generic category. */
+  const mfText = `${name} ${sub}`.toLowerCase();
+  const isEtf = /\b(etf|exchange traded)\b/.test(mfText) || /bees\b/.test(mfText);
+  const mfKeyword =
+    /\b(fund|scheme|folio|idcw)\b/.test(mfText) ||
+    /\b(direct|regular)\s+plan\b/.test(mfText) ||
+    /\b(growth|dividend)\b/.test(mfText);
+  const qty = Number(input.quantity);
+  const fractionalQty = Number.isFinite(qty) && qty > 0 && Math.abs(qty % 1) > 1e-9;
+  if (!isEtf && (isin.startsWith("INF") || mfKeyword || (fractionalQty && category !== "Crypto"))) {
+    category = "Mutual Funds";
+  }
+
   /* -------- segment -------- */
   let segment = clean(input.segment) || null;
   if (!segment && category) segment = SEGMENT_BY_CATEGORY[category] ?? null;
 
   /* -------- sector -------- */
-  let sector = clean(input.sector) || null;
-  if (sector && /^[-–—.\/]+$/.test(sector)) sector = null;
-  if (!sector && sub && !/cap\b|plan|growth|direct|regular/i.test(sub)) sector = sub;
+  let sector = normalizeSector(input.sector);
+  if (!sector && sub && !/cap\b|plan|growth|direct|regular/i.test(sub)) sector = normalizeSector(sub);
   if (!sector) {
     const hay = `${name} ${symbol}`;
     for (const [re, label] of SECTOR_RULES) {
@@ -190,6 +205,7 @@ export function classifyHolding(input: {
       }
     }
   }
+
 
   /* -------- market cap -------- */
   let market_cap =
