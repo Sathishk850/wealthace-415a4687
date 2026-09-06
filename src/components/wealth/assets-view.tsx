@@ -1294,8 +1294,10 @@ export function groupLabelFor(h: Holding, tab: AssetTab): string {
   let label: string | null = null;
   switch (tab) {
     case "Stocks":
-      label = firstUsable(h.sector);
+      // Stocks group by market cap; sector shows as the row subtitle.
+      label = firstUsable(h.market_cap);
       break;
+
     case "Mutual Funds":
       label = firstUsable(fundHouseFromName(h.name), h.type, h.segment);
       break;
