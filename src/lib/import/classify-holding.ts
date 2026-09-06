@@ -41,8 +41,42 @@ const SEGMENT_BY_CATEGORY: Record<string, string> = {
 };
 
 /* ---------------------------------------------------------------
+   Sector canonicalisation — brokers spell the same sector many ways
+   ("AUTOMOBILE", "Auto/Automotive", "Auto"), which otherwise creates
+   duplicate groups in the Assets views.
+--------------------------------------------------------------- */
+const SECTOR_ALIASES: Array<[RegExp, string]> = [
+  [/^(financial\s*services?|bank(ing)?|finance|financials|bfsi|nbfc|insurance)$/i, "Financial Services"],
+  [/^(it|it\s*-?\s*software|software|software\s*services?|technolog(y|ies)|information\s*technology|it\s*services?)$/i, "Technology"],
+  [/^(fmcg|consumer\s*staples?|fast\s*moving\s*consumer\s*goods)$/i, "FMCG"],
+  [/^(energy|oil\s*&?\s*gas|oil\s*and\s*gas|power|utilities|energy\s*&?\s*power|petroleum)$/i, "Energy"],
+  [/^(automobiles?|auto|automotive|auto\s*\/\s*automotive|auto\s*ancillar(y|ies)|automobile\s*&?\s*ancillaries)$/i, "Automobiles"],
+  [/^(healthcare|health\s*care|pharma|pharmaceuticals?|pharmaceuticals?\s*&?\s*healthcare|hospitals?)$/i, "Healthcare"],
+  [/^(consumer\s*durables?|consumer\s*discretionary|durables?)$/i, "Consumer Durables"],
+  [/^(metals?|mining|metals?\s*&?\s*mining|ferrous|non\s*-?\s*ferrous|steel)$/i, "Metals & Mining"],
+  [/^(telecom|telecommunications?|telecom\s*services?)$/i, "Telecom"],
+  [/^(infrastructure|infra|construction|capital\s*goods|engineering)$/i, "Infrastructure"],
+  [/^(realty|real\s*estate|property)$/i, "Real Estate"],
+  [/^(chemicals?|fertilizers?|materials?)$/i, "Materials"],
+];
+
+/** Canonical sector label, or null when the value is unusable. */
+export function normalizeSector(raw: unknown): string | null {
+  const v = clean(raw).replace(/\s+/g, " ").trim();
+  if (!v || /^(-+|_+|n\/?a|na|null|none|others?|unknown)$/i.test(v)) return null;
+  for (const [re, label] of SECTOR_ALIASES) if (re.test(v)) return label;
+  // Title-case unknown but usable labels so casing differences don't split groups.
+  return v
+    .toLowerCase()
+    .split(" ")
+    .map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w.toUpperCase()))
+    .join(" ");
+}
+
+/* ---------------------------------------------------------------
    Sector keyword rules (name-driven, high precision only)
 --------------------------------------------------------------- */
+
 const SECTOR_RULES: Array<[RegExp, string]> = [
   [/\b(infosys|tcs|tata consultancy|wipro|hcl tech|tech mahindra|mphasis|ltimindtree|persistent|coforge|mindtree|infotech|software|technolog|cyient|zensar)\b/i, "Technology"],
   [/\b(hdfc bank|icici bank|axis bank|kotak mahindra|state bank|sbi\b|bank of baroda|punjab national|indusind|federal bank|idfc|yes bank|bandhan bank|au small finance|bajaj finance|bajaj finserv|shriram finance|chola|muthoot|hdfc life|sbi life|icici pru|max financial|insurance|finserv|nbfc|\bbank\b|financial services)\b/i, "Financial Services"],
