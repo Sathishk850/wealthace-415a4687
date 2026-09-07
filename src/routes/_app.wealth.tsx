@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { useRef, useState } from "react";
 import { Circle } from "lucide-react";
 import { TextTabs } from "@/components/text-tabs";
@@ -18,7 +20,14 @@ import { formatTime } from "@/lib/date-format";
 import { useEffect } from "react";
 
 
+const wealthSearchSchema = z.object({
+  addAsset: fallback(z.boolean(), false).optional(),
+  addLiability: fallback(z.boolean(), false).optional(),
+  category: fallback(z.string(), "").optional(),
+});
+
 export const Route = createFileRoute("/_app/wealth")({
+  validateSearch: zodValidator(wealthSearchSchema),
   head: () => ({
     meta: [
       { title: "Wealth · Wealth Ace" },

@@ -67,12 +67,13 @@ import { toast } from "sonner";
 --------------------------------------------------------- */
 const ICONS: Record<string, { Icon: any; tint: string }> = {
   "Home Loan": { Icon: Home, tint: "bg-blue-500/10 text-blue-400" },
-  "Car Loan": { Icon: Car, tint: "bg-violet-500/10 text-violet-400" },
+  "Vehicle Loan": { Icon: Car, tint: "bg-violet-500/10 text-violet-400" },
   "Personal Loan": { Icon: Banknote, tint: "bg-amber-500/10 text-amber-400" },
   "Gold Loan": { Icon: Coins, tint: "bg-yellow-500/10 text-yellow-400" },
   "Credit Card": { Icon: CreditCard, tint: "bg-rose-500/10 text-rose-400" },
   "Education Loan": { Icon: GraduationCap, tint: "bg-emerald-500/10 text-emerald-400" },
   "Business Loan": { Icon: Briefcase, tint: "bg-slate-500/10 text-slate-300" },
+  "Friends / Family": { Icon: Banknote, tint: "bg-teal-500/10 text-teal-300" },
   Other: { Icon: ShoppingBag, tint: "bg-emerald-500/10 text-emerald-400" },
 };
 

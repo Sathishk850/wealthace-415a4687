@@ -14,6 +14,8 @@ import { normalizeInvestmentCategory } from "@/lib/import/classify-security";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 
 import { openImport } from "@/components/import/import-host";
+import { AddAssetFlow } from "@/components/wealth/AddAssetFlow";
+import { useSearch } from "@tanstack/react-router";
 
 import {
   Search,
@@ -316,6 +318,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [detailsTab, setDetailsTab] = useState<"fundamental" | "history">("fundamental");
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
+  const [flowOpen, setFlowOpen] = useState(false);
+  const [prefillCategory, setPrefillCategory] = useState<string | undefined>(undefined);
   const [confirm, setConfirm] = useState<Holding | null>(null);
   const [lastTouched, setLastTouched] = useState<string | null>(() =>
     typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(LAST_TOUCHED_KEY),
@@ -641,24 +645,22 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const deskAllOpen = deskGroups.length > 0 && deskGroups.every((g) => deskCollapse.isOpen(g.label));
 
 
-  const openAdd = () => {
-    if (
-      tab === "Stocks" ||
-      tab === "Mutual Funds" ||
-      tab === "ETFs" ||
-      tab === "Commodities" ||
-      tab === "Crypto" ||
-      tab === "REIT" ||
-      tab === "InvIT"
-    ) {
-      // Investments go through the redesigned add flow.
-      navigate({ to: "/wealth/add-investment" });
-    } else {
-      setEditAsset(null);
-      setAssetDialogOpen(true);
-    }
-  };
+  /** Every Add entry point opens the two-level asset type picker. */
+  const openAdd = () => setFlowOpen(true);
   if (registerAdd) registerAdd(openAdd);
+
+  const wealthSearch = useSearch({ strict: false }) as {
+    addAsset?: boolean;
+    category?: string;
+  };
+  useEffect(() => {
+    if (!wealthSearch.addAsset) return;
+    setEditAsset(null);
+    setPrefillCategory(wealthSearch.category);
+    setAssetDialogOpen(true);
+    navigate({ to: "/wealth", search: {}, replace: true } as never);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wealthSearch.addAsset, wealthSearch.category]);
 
   const openImportForTab = () => {
     openImport(INVESTMENT_TABS.includes(tab) ? "investments" : "assets");
@@ -1194,7 +1196,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         }}
         existing={editAsset}
         defaultCategory={
-          tab === "Real Estate" ? "Property" : tab === "Savings" ? "Cash" : undefined
+          prefillCategory ??
+          (tab === "Real Estate" ? "Property" : tab === "Savings" ? "Cash" : undefined)
         }
       />
 
@@ -1220,6 +1223,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AddAssetFlow open={flowOpen} onClose={() => setFlowOpen(false)} />
     </div>
   );
 }
