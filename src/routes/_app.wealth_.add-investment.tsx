@@ -4,6 +4,8 @@ import { AddInvestmentForm } from "@/components/wealth/add-investment-form";
 
 const searchSchema = z.object({
   id: z.string().optional(),
+  category: z.string().optional(),
+  subCategory: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_app/wealth_/add-investment")({

@@ -104,6 +104,15 @@ const CATEGORY_OPTIONS = [
   "Bonds",
   "Fixed Deposit",
   "Crypto",
+  "NPS",
+  "ULIP",
+  "PMS/AIF",
+  "SSY",
+  "Govt. Savings",
+  "Insurance",
+  "Retirement",
+  "P2P Lending",
+  "Loan Given",
 ];
 
 const SEGMENT_BY_CATEGORY: Record<string, string[]> = {

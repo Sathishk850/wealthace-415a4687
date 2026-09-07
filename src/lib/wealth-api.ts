@@ -5,6 +5,11 @@ import { toast } from "sonner";
 /* =================== Types =================== */
 export type AssetCategory =
   | "Cash"
+  | "Savings Account"
+  | "Current Account"
+  | "Cash/Wallet"
+  | "NPS"
+  | "SSY"
   | "Property"
   | "Vehicle"
   | "EPF"
@@ -15,16 +20,22 @@ export type AssetCategory =
 
 export type LiabilityCategory =
   | "Home Loan"
-  | "Car Loan"
+  | "Vehicle Loan"
   | "Personal Loan"
   | "Gold Loan"
   | "Credit Card"
   | "Education Loan"
   | "Business Loan"
+  | "Friends / Family"
   | "Other";
 
 export const ASSET_CATEGORIES: AssetCategory[] = [
   "Cash",
+  "Savings Account",
+  "Current Account",
+  "Cash/Wallet",
+  "NPS",
+  "SSY",
   "Property",
   "Vehicle",
   "EPF",
@@ -36,12 +47,13 @@ export const ASSET_CATEGORIES: AssetCategory[] = [
 
 export const LIABILITY_CATEGORIES: LiabilityCategory[] = [
   "Home Loan",
-  "Car Loan",
+  "Vehicle Loan",
   "Personal Loan",
   "Gold Loan",
   "Credit Card",
   "Education Loan",
   "Business Loan",
+  "Friends / Family",
   "Other",
 ];
 
