@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
   Search,
   Loader2,
@@ -650,6 +650,13 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     [investments, investmentId, isEdit],
   );
 
+  const routeSearch = useSearch({ strict: false }) as {
+    category?: string;
+    subCategory?: string;
+  };
+  const preCategory = routeSearch.category;
+  const preSubCategory = routeSearch.subCategory;
+
   const [form, setForm] = useState<FormState>(EMPTY);
   const [hydrated, setHydrated] = useState(!isEdit);
   const [filter, setFilter] = useState<CategoryFilter>("all");
@@ -674,6 +681,17 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       setHydrated(true);
     }
   }, [isEdit, existing, hydrated]);
+
+  /* Pre-fill category / classification chosen in the asset type picker. */
+  useEffect(() => {
+    if (isEdit || !preCategory) return;
+    setForm((f) => ({
+      ...f,
+      category: preCategory,
+      classification: preSubCategory ?? f.classification,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, preCategory, preSubCategory]);
 
   useEffect(() => {
     const id = setTimeout(() => setDebounced(query.trim()), 300);
