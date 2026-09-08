@@ -339,7 +339,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           <Field label="Currency">
             <Select
               value={form.currency}
-              onChange={(v) => set("currency", v as Currency)}
+              onValueChange={(v) => set("currency", v as Currency)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -357,7 +357,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
         {spec.accountField && (
           <Field label="Held in account">
-            <Select value={form.account} onChange={(v) => set("account", v)}>
+            <Select value={form.account} onValueChange={(v) => set("account", v)}>
               <SelectTrigger>
                 <SelectValue placeholder={spec.accountPlaceholder} />
               </SelectTrigger>
@@ -475,7 +475,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
               />
             </Field>
             <Field label="Compounding">
-              <Select value={form.compounding} onChange={(v) => set("compounding", v)}>
+              <Select value={form.compounding} onValueChange={(v) => set("compounding", v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -518,7 +518,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
                 />
               </Field>
               <Field label="Paid">
-                <Select value={form.payFrequency} onChange={(v) => set("payFrequency", v)}>
+                <Select value={form.payFrequency} onValueChange={(v) => set("payFrequency", v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -555,7 +555,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           <div className="mt-3 space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="Geography">
-                <Select value={form.geography} onChange={(v) => set("geography", v)}>
+                <Select value={form.geography} onValueChange={(v) => set("geography", v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
