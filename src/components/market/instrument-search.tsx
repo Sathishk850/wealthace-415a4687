@@ -67,7 +67,7 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
   }, [showPanel]);
 
   const commit = (r: SearchResult) => {
-    onSelect(r);
+    onSelect(r, quoteMap.get(`${r.identifier_type}:${r.identifier}`) ?? null);
     setQ("");
     setDebounced("");
     setOpen(false);
