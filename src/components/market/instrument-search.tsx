@@ -144,6 +144,7 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
                 <ResultRow
                   key={`${r.identifier_type}:${r.identifier}:${r.exchange ?? ""}`}
                   r={r}
+                  quote={quoteMap.get(`${r.identifier_type}:${r.identifier}`) ?? null}
                   active={idx === active}
                   onSelect={() => commit(r)}
                   onHover={() => setActive(idx)}
