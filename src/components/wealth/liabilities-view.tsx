@@ -57,6 +57,7 @@ import {
 } from "@/lib/wealth-api";
 import { formatDate } from "@/lib/date-format";
 import { LiabilityDialog } from "@/components/wealth/liability-dialog";
+import { LiabilityCategoryPicker } from "@/components/wealth/LiabilityCategoryPicker";
 import { LoanDashboard } from "@/components/wealth/LoanDashboard";
 import { IoMenu } from "@/components/wealth/io-menu";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
@@ -123,10 +124,10 @@ export function LiabilitiesView({
   const [confirm, setConfirm] = useState<Liability | null>(null);
   const [details, setDetails] = useState<Liability | null>(null);
 
-  const openAdd = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
+  const [showPicker, setShowPicker] = useState(false);
+
+  /** The single Add entry point swaps the page body for the category picker. */
+  const openAdd = () => setShowPicker(true);
   if (registerAdd) registerAdd(openAdd);
 
   /* 30-minute auto refresh so figures stay current */
@@ -257,6 +258,20 @@ export function LiabilitiesView({
     if (!mapped.length) return toast.error("No valid rows found");
     await bulkInsert.mutateAsync(mapped);
   };
+
+  if (showPicker)
+    return (
+      <div className="space-y-4">
+        <LiabilityCategoryPicker
+          onClose={() => setShowPicker(false)}
+          onSelect={() => {
+            setShowPicker(false);
+            setEditing(null);
+            setDialogOpen(true);
+          }}
+        />
+      </div>
+    );
 
   if (isError)
     return (
