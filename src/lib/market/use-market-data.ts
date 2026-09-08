@@ -152,6 +152,30 @@ export function useInstrumentSearch(query: string, kind: IdentifierType) {
   });
 }
 
+/**
+ * Live quotes for an ad-hoc list of instruments (e.g. search results).
+ * Read-only, cache-first — never forces a provider refresh.
+ */
+export function useQuotesForItems(items: QuoteRequestItem[]) {
+  const fetchQuotes = useServerFn(getMarketQuotes);
+  const list = useMemo(() => items.slice(0, 12), [items]);
+  const query = useQuery({
+    queryKey: marketKeys.quotes(list),
+    queryFn: async () => {
+      if (list.length === 0) return [] as MarketQuote[];
+      return (await fetchQuotes({ data: { items: list } })) as MarketQuote[];
+    },
+    enabled: list.length > 0,
+    staleTime: 60 * 1000,
+  });
+  const quoteMap = useMemo(() => {
+    const m = new Map<string, MarketQuote>();
+    for (const q of query.data ?? []) m.set(`${q.identifier_type}:${q.identifier}`, q);
+    return m;
+  }, [query.data]);
+  return { quoteMap, isFetching: query.isFetching };
+}
+
 export function useRefreshHoldings() {
   const qc = useQueryClient();
   const fn = useServerFn(refreshMyHoldings);
