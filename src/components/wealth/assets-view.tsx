@@ -14,7 +14,7 @@ import { normalizeInvestmentCategory } from "@/lib/import/classify-security";
 import { SelectCheckbox } from "@/components/bulk/select-checkbox";
 
 import { openImport } from "@/components/import/import-host";
-import { AddAssetFlow } from "@/components/wealth/AddAssetFlow";
+import { AssetCategoryPicker } from "@/components/wealth/AssetCategoryPicker";
 import { useSearch } from "@tanstack/react-router";
 
 import {
@@ -318,7 +318,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [detailsTab, setDetailsTab] = useState<"fundamental" | "history">("fundamental");
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
-  const [flowOpen, setFlowOpen] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [prefillCategory, setPrefillCategory] = useState<string | undefined>(undefined);
   const [confirm, setConfirm] = useState<Holding | null>(null);
   const [lastTouched, setLastTouched] = useState<string | null>(() =>
@@ -645,8 +645,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const deskAllOpen = deskGroups.length > 0 && deskGroups.every((g) => deskCollapse.isOpen(g.label));
 
 
-  /** Every Add entry point opens the two-level asset type picker. */
-  const openAdd = () => setFlowOpen(true);
+  /** The single Add entry point swaps the page body for the category picker. */
+  const openAdd = () => setShowPicker(true);
   if (registerAdd) registerAdd(openAdd);
 
   const wealthSearch = useSearch({ strict: false }) as {
@@ -740,6 +740,14 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   };
 
   const isLoading = invLoading || assetLoading;
+
+  if (showPicker) {
+    return (
+      <div className="space-y-4">
+        <AssetCategoryPicker onClose={() => setShowPicker(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -1224,7 +1232,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         </AlertDialogContent>
       </AlertDialog>
 
-      <AddAssetFlow open={flowOpen} onClose={() => setFlowOpen(false)} />
     </div>
   );
 }
