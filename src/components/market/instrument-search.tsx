@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
-import { useInstrumentSearch } from "@/lib/market/use-market-data";
-import type { IdentifierType, SearchResult } from "@/lib/market/types";
+import { useInstrumentSearch, useQuotesForItems } from "@/lib/market/use-market-data";
+import type {
+  IdentifierType,
+  MarketQuote,
+  QuoteRequestItem,
+  SearchResult,
+} from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 
 type Props = {
   kind: IdentifierType;
-  onSelect: (r: SearchResult) => void;
+  onSelect: (r: SearchResult, quote?: MarketQuote | null) => void;
   placeholder?: string;
   autoFocus?: boolean;
 };
@@ -34,6 +39,18 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
   const results = data;
   const showPanel = open && debounced.length >= 2;
 
+  // Live CMP / NAV for the visible results.
+  const quoteItems = useMemo<QuoteRequestItem[]>(
+    () =>
+      results.slice(0, 8).map((r) => ({
+        identifier_type: r.identifier_type,
+        identifier: r.identifier,
+        exchange: r.exchange ?? null,
+      })),
+    [results],
+  );
+  const { quoteMap } = useQuotesForItems(showPanel ? quoteItems : []);
+
   useEffect(() => {
     setActive(0);
   }, [results]);
@@ -50,7 +67,7 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
   }, [showPanel]);
 
   const commit = (r: SearchResult) => {
-    onSelect(r);
+    onSelect(r, quoteMap.get(`${r.identifier_type}:${r.identifier}`) ?? null);
     setQ("");
     setDebounced("");
     setOpen(false);
@@ -127,6 +144,7 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
                 <ResultRow
                   key={`${r.identifier_type}:${r.identifier}:${r.exchange ?? ""}`}
                   r={r}
+                  quote={quoteMap.get(`${r.identifier_type}:${r.identifier}`) ?? null}
                   active={idx === active}
                   onSelect={() => commit(r)}
                   onHover={() => setActive(idx)}
@@ -142,16 +160,21 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
 
 function ResultRow({
   r,
+  quote,
   active,
   onSelect,
   onHover,
 }: {
   r: SearchResult;
+  quote?: MarketQuote | null;
   active: boolean;
   onSelect: () => void;
   onHover: () => void;
 }) {
   const { primary, secondary, badge } = useMemo(() => formatResult(r), [r]);
+  const isMf = r.identifier_type === "mf_in";
+  const price = quote?.latest_price ?? null;
+  const cur = (quote?.currency ?? r.currency ?? "INR") === "USD" ? "$" : "₹";
   return (
     <button
       type="button"
@@ -166,11 +189,22 @@ function ResultRow({
         <div className="truncate text-sm font-medium text-foreground">{primary}</div>
         <div className="truncate text-[11px] text-muted-foreground">{secondary}</div>
       </div>
-      {badge ? (
-        <span className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 text-[10px] font-semibold text-mint">
-          {badge}
-        </span>
-      ) : null}
+      <div className="flex shrink-0 items-center gap-2">
+        {price != null ? (
+          <span className="text-right text-[11px] leading-tight text-foreground">
+            <span className="block text-[9px] uppercase tracking-wide text-muted-foreground">
+              {isMf ? "NAV" : "CMP"}
+            </span>
+            {cur}
+            {price.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+          </span>
+        ) : null}
+        {badge ? (
+          <span className="rounded-md bg-mint/15 px-2 py-0.5 text-[10px] font-semibold text-mint">
+            {badge}
+          </span>
+        ) : null}
+      </div>
     </button>
   );
 }
