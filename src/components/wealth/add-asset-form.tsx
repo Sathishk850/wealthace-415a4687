@@ -391,7 +391,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             <Field label={spec.price.label}>
               <AmountInput
                 value={form.price}
-                onValueChange={(v) => set("price", v)}
+                onChange={(v) => set("price", v)}
                 placeholder={spec.price.placeholder}
               />
             </Field>
@@ -402,14 +402,14 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           <Field label={`Current Value * (${sym})`}>
             <AmountInput
               value={form.currentValue}
-              onValueChange={(v) => set("currentValue", v)}
+              onChange={(v) => set("currentValue", v)}
               placeholder="Current market value"
             />
           </Field>
           <Field label={`${spec.secondary.label} (${sym})`}>
             <AmountInput
               value={autoSecondary ? String(qty * price) : form.secondary}
-              onValueChange={(v) => set("secondary", v)}
+              onChange={(v) => set("secondary", v)}
               placeholder={spec.secondary.placeholder}
               disabled={autoSecondary}
             />
@@ -513,7 +513,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
               <Field label={`Monthly Instalment (${sym})`}>
                 <AmountInput
                   value={form.instalment}
-                  onValueChange={(v) => set("instalment", v)}
+                  onChange={(v) => set("instalment", v)}
                   placeholder="e.g. 5000"
                 />
               </Field>
