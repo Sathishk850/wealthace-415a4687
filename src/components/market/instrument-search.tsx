@@ -39,6 +39,18 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
   const results = data;
   const showPanel = open && debounced.length >= 2;
 
+  // Live CMP / NAV for the visible results.
+  const quoteItems = useMemo<QuoteRequestItem[]>(
+    () =>
+      results.slice(0, 8).map((r) => ({
+        identifier_type: r.identifier_type,
+        identifier: r.identifier,
+        exchange: r.exchange ?? null,
+      })),
+    [results],
+  );
+  const { quoteMap } = useQuotesForItems(showPanel ? quoteItems : []);
+
   useEffect(() => {
     setActive(0);
   }, [results]);
