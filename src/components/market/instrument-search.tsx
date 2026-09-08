@@ -160,16 +160,21 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
 
 function ResultRow({
   r,
+  quote,
   active,
   onSelect,
   onHover,
 }: {
   r: SearchResult;
+  quote?: MarketQuote | null;
   active: boolean;
   onSelect: () => void;
   onHover: () => void;
 }) {
   const { primary, secondary, badge } = useMemo(() => formatResult(r), [r]);
+  const isMf = r.identifier_type === "mf_in";
+  const price = quote?.latest_price ?? null;
+  const cur = (quote?.currency ?? r.currency ?? "INR") === "USD" ? "$" : "₹";
   return (
     <button
       type="button"
@@ -184,11 +189,22 @@ function ResultRow({
         <div className="truncate text-sm font-medium text-foreground">{primary}</div>
         <div className="truncate text-[11px] text-muted-foreground">{secondary}</div>
       </div>
-      {badge ? (
-        <span className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 text-[10px] font-semibold text-mint">
-          {badge}
-        </span>
-      ) : null}
+      <div className="flex shrink-0 items-center gap-2">
+        {price != null ? (
+          <span className="text-right text-[11px] leading-tight text-foreground">
+            <span className="block text-[9px] uppercase tracking-wide text-muted-foreground">
+              {isMf ? "NAV" : "CMP"}
+            </span>
+            {cur}
+            {price.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+          </span>
+        ) : null}
+        {badge ? (
+          <span className="rounded-md bg-mint/15 px-2 py-0.5 text-[10px] font-semibold text-mint">
+            {badge}
+          </span>
+        ) : null}
+      </div>
     </button>
   );
 }
