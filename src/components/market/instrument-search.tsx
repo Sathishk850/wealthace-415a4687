@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
-import { useInstrumentSearch } from "@/lib/market/use-market-data";
-import type { IdentifierType, SearchResult } from "@/lib/market/types";
+import { useInstrumentSearch, useQuotesForItems } from "@/lib/market/use-market-data";
+import type {
+  IdentifierType,
+  MarketQuote,
+  QuoteRequestItem,
+  SearchResult,
+} from "@/lib/market/types";
 import { cn } from "@/lib/utils";
 
 type Props = {
   kind: IdentifierType;
-  onSelect: (r: SearchResult) => void;
+  onSelect: (r: SearchResult, quote?: MarketQuote | null) => void;
   placeholder?: string;
   autoFocus?: boolean;
 };
