@@ -25,13 +25,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InstrumentSearch } from "@/components/market/instrument-search";
-import type { SearchResult } from "@/lib/market/types";
+import { AccountSelect } from "@/components/wealth/account-select";
+import type { MarketQuote, SearchResult } from "@/lib/market/types";
 import { assetFormSpec, assetTypeMeta, type AssetFormSpec } from "@/lib/asset-form-specs";
 import {
   CURRENCIES,
   CURRENCY_LABEL,
   CURRENCY_SYMBOL,
-  useAccounts,
   useUpsertAsset,
   useUpsertInvestment,
   type Currency,
