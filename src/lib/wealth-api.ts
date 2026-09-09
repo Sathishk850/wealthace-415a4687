@@ -1146,22 +1146,44 @@ export function daysUntil(date: string | null) {
 /* =================== ACCOUNTS =================== */
 export type AccountType =
   | "Bank Account"
-  | "Demat / Broker"
-  | "Investment Account"
   | "Credit Card"
-  | "Wallet"
-  | "Loan"
   | "Cash"
+  | "Wallet"
+  | "Broker"
   | "Other";
 
 export const ACCOUNT_TYPES: AccountType[] = [
   "Bank Account",
-  "Demat / Broker",
-  "Investment Account",
   "Credit Card",
-  "Wallet",
-  "Loan",
   "Cash",
+  "Wallet",
+  "Broker",
+  "Other",
+];
+
+/** Older stored labels mapped onto the current six types. */
+const LEGACY_ACCOUNT_TYPE_MAP: Record<string, AccountType> = {
+  "Demat / Broker": "Broker",
+  "Investment Account": "Broker",
+  Demat: "Broker",
+  Broker: "Broker",
+  Loan: "Other",
+  "Debit Card": "Bank Account",
+  UPI: "Wallet",
+};
+
+export function normalizeAccountType(t: string | null | undefined): AccountType {
+  if (!t) return "Other";
+  if ((ACCOUNT_TYPES as string[]).includes(t)) return t as AccountType;
+  return LEGACY_ACCOUNT_TYPE_MAP[t] ?? "Other";
+}
+
+/** Account kinds usable for market-traded holdings vs. bank-held ones. */
+export const MARKET_ACCOUNT_TYPES: AccountType[] = ["Broker", "Other"];
+export const BANK_ACCOUNT_TYPES: AccountType[] = [
+  "Bank Account",
+  "Cash",
+  "Wallet",
   "Other",
 ];
 
@@ -1178,6 +1200,13 @@ export type Account = {
   owner_member_id: string | null;
   status: string;
   notes: string | null;
+  color: string | null;
+  icon: string | null;
+  is_default: boolean;
+  is_emergency_fund: boolean;
+  credit_limit: number | null;
+  opening_balance: number | null;
+  balance_as_of: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -1194,6 +1223,13 @@ export type AccountInput = {
   owner_member_id?: string | null;
   status?: string;
   notes?: string | null;
+  color?: string | null;
+  icon?: string | null;
+  is_default?: boolean;
+  is_emergency_fund?: boolean;
+  credit_limit?: number | null;
+  opening_balance?: number | null;
+  balance_as_of?: string | null;
 };
 
 export function useAccounts() {
@@ -1205,7 +1241,14 @@ export function useAccounts() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r: any) => ({ ...r, balance: num(r.balance) })) as Account[];
+      return (data ?? []).map((r: any) => ({
+        ...r,
+        balance: num(r.balance),
+        credit_limit: r.credit_limit == null ? null : num(r.credit_limit),
+        opening_balance: r.opening_balance == null ? null : num(r.opening_balance),
+        is_default: !!r.is_default,
+        is_emergency_fund: !!r.is_emergency_fund,
+      })) as Account[];
     },
   });
 }
@@ -1222,6 +1265,16 @@ function accountPayload(a: AccountInput) {
     owner_member_id: a.owner_member_id || null,
     status: a.status || "active",
     notes: a.notes?.trim() || null,
+    color: a.color?.trim() || null,
+    icon: a.icon?.trim() || null,
+    is_default: !!a.is_default,
+    is_emergency_fund: !!a.is_emergency_fund,
+    credit_limit: a.credit_limit == null || a.credit_limit === ("" as any) ? null : Number(a.credit_limit),
+    opening_balance:
+      a.opening_balance == null || a.opening_balance === ("" as any)
+        ? null
+        : Number(a.opening_balance),
+    balance_as_of: a.balance_as_of || null,
   };
 }
 
@@ -1231,12 +1284,26 @@ export function useUpsertAccount() {
     mutationFn: async (input: AccountInput) => {
       const user_id = await uid();
       const payload = accountPayload(input);
+      let savedId = input.id;
       if (input.id) {
         const { error } = await supabase.from("wealth_accounts").update(payload).eq("id", input.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("wealth_accounts").insert({ ...payload, user_id });
+        const { data, error } = await supabase
+          .from("wealth_accounts")
+          .insert({ ...payload, user_id })
+          .select("id")
+          .single();
         if (error) throw error;
+        savedId = (data as any)?.id;
+      }
+      // Only one account can be the default.
+      if (payload.is_default && savedId) {
+        await supabase
+          .from("wealth_accounts")
+          .update({ is_default: false })
+          .eq("user_id", user_id)
+          .neq("id", savedId);
       }
     },
     onSuccess: () => {
