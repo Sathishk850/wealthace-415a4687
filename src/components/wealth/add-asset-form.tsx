@@ -25,13 +25,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InstrumentSearch } from "@/components/market/instrument-search";
-import type { SearchResult } from "@/lib/market/types";
+import { AccountSelect } from "@/components/wealth/account-select";
+import type { MarketQuote, SearchResult } from "@/lib/market/types";
 import { assetFormSpec, assetTypeMeta, type AssetFormSpec } from "@/lib/asset-form-specs";
 import {
   CURRENCIES,
   CURRENCY_LABEL,
   CURRENCY_SYMBOL,
-  useAccounts,
   useUpsertAsset,
   useUpsertInvestment,
   type Currency,
@@ -116,7 +116,6 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
   const navigate = useNavigate();
   const spec = useMemo(() => assetFormSpec(typeKey), [typeKey]);
   const meta = assetTypeMeta(typeKey);
-  const { data: accounts = [] } = useAccounts();
   const upsertInvestment = useUpsertInvestment();
   const upsertAsset = useUpsertAsset();
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -161,7 +160,8 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     setTagDraft("");
   };
 
-  const onLinked = (r: SearchResult) => {
+  const onLinked = (r: SearchResult, quote?: MarketQuote | null) => {
+    const live = quote?.latest_price ?? null;
     setForm((f) => ({
       ...f,
       name: r.name,
@@ -169,7 +169,11 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
       identifier: r.identifier,
       identifierType: r.identifier_type,
       exchange: r.exchange ?? null,
-      currency: ((r.currency as Currency) ?? f.currency) as Currency,
+      currency: ((quote?.currency as Currency) ?? (r.currency as Currency) ?? f.currency) as Currency,
+      // Prefill the current value from the live CMP / NAV when we have units.
+      currentValue:
+        live != null && n(f.quantity) > 0 ? String(live * n(f.quantity)) : f.currentValue,
+      price: live != null && !f.price ? String(live) : f.price,
     }));
   };
 
@@ -310,9 +314,15 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             </span>
           </div>
           <InstrumentSearch
-            kind={spec.livePrice === "fund" ? "mf_in" : "stock_in"}
+            kind={
+              spec.livePrice === "fund" ? "mf_in" : spec.livePrice === "crypto" ? "crypto" : "stock_in"
+            }
             placeholder={
-              spec.livePrice === "fund" ? "Search mutual fund..." : "Search stock ticker..."
+              spec.livePrice === "fund"
+                ? "Search mutual fund..."
+                : spec.livePrice === "crypto"
+                  ? "Search crypto (e.g. BTC)..."
+                  : "Search stock ticker..."
             }
             onSelect={onLinked}
           />
@@ -357,23 +367,12 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
         {spec.accountField && (
           <Field label="Held in account">
-            <Select value={form.account} onValueChange={(v) => set("account", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder={spec.accountPlaceholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.length === 0 && (
-                  <SelectItem value="__none__" disabled>
-                    No accounts yet
-                  </SelectItem>
-                )}
-                {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.provider ? `${a.provider} • ${a.name}` : a.name}>
-                    {a.provider ? `${a.provider} • ${a.name}` : a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AccountSelect
+              value={form.account}
+              onChange={(v) => set("account", v)}
+              kind={spec.accountKind ?? "any"}
+              placeholder={spec.accountPlaceholder}
+            />
           </Field>
         )}
 
