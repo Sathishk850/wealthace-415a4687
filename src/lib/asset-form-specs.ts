@@ -29,8 +29,10 @@ export type AssetFormSpec = {
     /** Auto-calculated from quantity × price. */
     auto?: "shares" | "units";
   };
-  /** Live-price search box: ticker search or fund search. */
-  livePrice?: "stock" | "fund";
+  /** Live-price search box: ticker search, fund search or crypto search. */
+  livePrice?: "stock" | "fund" | "crypto";
+  /** Which configured accounts the "Held in account" selector should offer. */
+  accountKind?: "market" | "bank";
   /** Show the "Customize asset allocation split" link. */
   allocationSplit?: boolean;
   /** Show the "Interest & maturity" sub-section. */
