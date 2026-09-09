@@ -315,9 +315,15 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             </span>
           </div>
           <InstrumentSearch
-            kind={spec.livePrice === "fund" ? "mf_in" : "stock_in"}
+            kind={
+              spec.livePrice === "fund" ? "mf_in" : spec.livePrice === "crypto" ? "crypto" : "stock_in"
+            }
             placeholder={
-              spec.livePrice === "fund" ? "Search mutual fund..." : "Search stock ticker..."
+              spec.livePrice === "fund"
+                ? "Search mutual fund..."
+                : spec.livePrice === "crypto"
+                  ? "Search crypto (e.g. BTC)..."
+                  : "Search stock ticker..."
             }
             onSelect={onLinked}
           />
