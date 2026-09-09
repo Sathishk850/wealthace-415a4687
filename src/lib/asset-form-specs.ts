@@ -327,11 +327,14 @@ export function assetFormSpec(key: string): AssetFormSpec | null {
     accountPlaceholder: "e.g. Groww Portfolio or HDFC Bank",
     secondary: { label: "Invested Amount" },
   };
-  return {
+  const merged = {
     ...base,
     ...(type ? fallbackSpec(type) : {}),
     ...(partial ?? {}),
   } as AssetFormSpec;
+  // Market-linked types offer broker / demat / MF accounts by default.
+  if (!merged.accountKind && merged.livePrice) merged.accountKind = "market";
+  return merged;
 }
 
 /** Icon / colour metadata for the "selected type" banner. */
