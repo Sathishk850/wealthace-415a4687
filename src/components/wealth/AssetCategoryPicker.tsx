@@ -24,6 +24,7 @@ const GOLD = { color: "#D4A63A", bg: "rgba(212,166,58,0.14)" };
 const REALTY = { color: "#E4A11B", bg: "rgba(228,161,27,0.14)" };
 const CRYPTO = { color: "#B07CF0", bg: "rgba(176,124,240,0.14)" };
 const CASH = { color: "#4FC3C7", bg: "rgba(79,195,199,0.14)" };
+const OTHER = { color: "#9AA4AE", bg: "rgba(154,164,174,0.14)" };
 
 export const ASSET_CATEGORIES: Category[] = [
   {
@@ -38,7 +39,7 @@ export const ASSET_CATEGORIES: Category[] = [
   },
   {
     key: "mf",
-    label: "MF",
+    label: "Mutual Fund",
     icon: "PieChart",
     ...EQUITY,
     types: [
@@ -118,6 +119,18 @@ export const ASSET_CATEGORIES: Category[] = [
       { key: "current-account", label: "Current Account", icon: "Building2" },
       { key: "cash-wallet", label: "Cash / Wallet", icon: "Wallet" },
       { key: "loan-given", label: "Loan Given", icon: "ArrowLeftRight" },
+    ],
+  },
+  {
+    key: "other",
+    label: "Other",
+    icon: "Boxes",
+    ...OTHER,
+    types: [
+      { key: "esop", label: "ESOP / RSU", icon: "Award" },
+      { key: "unlisted-equity", label: "Unlisted Equity", icon: "Building2" },
+      { key: "ulip", label: "ULIP / Insurance Plan", icon: "Umbrella" },
+      { key: "other-asset", label: "Other Asset", icon: "Boxes" },
     ],
   },
 ];
