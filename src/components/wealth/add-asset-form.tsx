@@ -161,7 +161,8 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     setTagDraft("");
   };
 
-  const onLinked = (r: SearchResult) => {
+  const onLinked = (r: SearchResult, quote?: MarketQuote | null) => {
+    const live = quote?.latest_price ?? null;
     setForm((f) => ({
       ...f,
       name: r.name,
@@ -169,7 +170,11 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
       identifier: r.identifier,
       identifierType: r.identifier_type,
       exchange: r.exchange ?? null,
-      currency: ((r.currency as Currency) ?? f.currency) as Currency,
+      currency: ((quote?.currency as Currency) ?? (r.currency as Currency) ?? f.currency) as Currency,
+      // Prefill the current value from the live CMP / NAV when we have units.
+      currentValue:
+        live != null && n(f.quantity) > 0 ? String(live * n(f.quantity)) : f.currentValue,
+      price: live != null && !f.price ? String(live) : f.price,
     }));
   };
 
