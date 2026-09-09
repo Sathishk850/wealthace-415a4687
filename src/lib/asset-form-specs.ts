@@ -246,6 +246,49 @@ for (const k of ["index-fund", "elss", "intl-equity", "gold-fund", "crypto-etf"]
 }
 for (const k of ["liquid-fund"]) SPECS[k] = { ...SPECS["debt-fund"] };
 for (const k of ["debt-etf", "gold-etf"]) SPECS[k] = { ...SPECS["equity-etf"] };
+/** Picker aliases for the fund variants. */
+for (const k of ["thematic-mf", "intl-mf", "gold-mf"]) SPECS[k] = { ...SPECS["equity-mf"] };
+SPECS["sgb-bond"] = { ...SPECS["govt-bond"] };
+
+/** Listed trusts trade like ETFs on the exchange. */
+for (const k of ["reit", "invit"]) {
+  SPECS[k] = {
+    ...SPECS["equity-etf"],
+    namePlaceholder: k === "reit" ? "e.g. Embassy Office Parks REIT" : "e.g. IndiGrid InvIT",
+    livePrice: "stock",
+  };
+}
+
+/** Crypto tokens / ETFs get the crypto price search. */
+SPECS["crypto-coin"] = {
+  namePlaceholder: "e.g. Bitcoin",
+  accountPlaceholder: "e.g. CoinDCX or WazirX",
+  quantity: { label: "Quantity Held", placeholder: "e.g. 0.25" },
+  price: { label: "Avg. Buy Price", placeholder: "e.g. 4500000" },
+  secondary: TOTAL_INVESTED_UNITS,
+  livePrice: "crypto",
+};
+SPECS["crypto-etf"] = { ...SPECS["equity-etf"], livePrice: "stock" };
+
+/** Bank-held asset types offer bank accounts in "Held in account". */
+for (const k of [
+  "bank-fd",
+  "corporate-fd",
+  "rd",
+  "savings-account",
+  "current-account",
+  "cash-wallet",
+  "ppf",
+  "govt-bond",
+  "corporate-bond",
+  "tax-free-bond",
+  "sgb",
+  "sgb-bond",
+  "tbill",
+]) {
+  if (SPECS[k]) SPECS[k] = { ...SPECS[k], accountKind: "bank" };
+  else SPECS[k] = { accountKind: "bank" };
+}
 
 const BY_KEY = new Map(allAssetTypes().map((t) => [t.key, t] as const));
 
