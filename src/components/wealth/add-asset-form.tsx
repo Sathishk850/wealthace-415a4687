@@ -357,23 +357,12 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
         {spec.accountField && (
           <Field label="Held in account">
-            <Select value={form.account} onValueChange={(v) => set("account", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder={spec.accountPlaceholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.length === 0 && (
-                  <SelectItem value="__none__" disabled>
-                    No accounts yet
-                  </SelectItem>
-                )}
-                {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.provider ? `${a.provider} • ${a.name}` : a.name}>
-                    {a.provider ? `${a.provider} • ${a.name}` : a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <AccountSelect
+              value={form.account}
+              onChange={(v) => set("account", v)}
+              kind={spec.accountKind ?? "any"}
+              placeholder={spec.accountPlaceholder}
+            />
           </Field>
         )}
 
