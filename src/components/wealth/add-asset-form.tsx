@@ -116,7 +116,6 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
   const navigate = useNavigate();
   const spec = useMemo(() => assetFormSpec(typeKey), [typeKey]);
   const meta = assetTypeMeta(typeKey);
-  const { data: accounts = [] } = useAccounts();
   const upsertInvestment = useUpsertInvestment();
   const upsertAsset = useUpsertAsset();
   const [form, setForm] = useState<FormState>(EMPTY);
