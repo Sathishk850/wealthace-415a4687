@@ -1203,12 +1203,19 @@ export type Database = {
           account_number_masked: string | null
           account_type: string
           balance: number
+          balance_as_of: string | null
+          color: string | null
           created_at: string
+          credit_limit: number | null
           currency: string
+          icon: string | null
           id: string
           ifsc: string | null
+          is_default: boolean
+          is_emergency_fund: boolean
           name: string
           notes: string | null
+          opening_balance: number | null
           owner_member_id: string | null
           provider: string | null
           status: string
@@ -1219,12 +1226,19 @@ export type Database = {
           account_number_masked?: string | null
           account_type: string
           balance?: number
+          balance_as_of?: string | null
+          color?: string | null
           created_at?: string
+          credit_limit?: number | null
           currency?: string
+          icon?: string | null
           id?: string
           ifsc?: string | null
+          is_default?: boolean
+          is_emergency_fund?: boolean
           name: string
           notes?: string | null
+          opening_balance?: number | null
           owner_member_id?: string | null
           provider?: string | null
           status?: string
@@ -1235,12 +1249,19 @@ export type Database = {
           account_number_masked?: string | null
           account_type?: string
           balance?: number
+          balance_as_of?: string | null
+          color?: string | null
           created_at?: string
+          credit_limit?: number | null
           currency?: string
+          icon?: string | null
           id?: string
           ifsc?: string | null
+          is_default?: boolean
+          is_emergency_fund?: boolean
           name?: string
           notes?: string | null
+          opening_balance?: number | null
           owner_member_id?: string | null
           provider?: string | null
           status?: string
