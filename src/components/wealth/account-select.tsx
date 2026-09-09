@@ -69,11 +69,7 @@ export function AccountSelect({
             <Plus className="h-3.5 w-3.5" /> Add Account
           </button>
         </div>
-        <AccountDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          {...({ existing: null } as never)}
-        />
+        <AccountDialog open={dialogOpen} onOpenChange={setDialogOpen} existing={null} />
       </>
     );
   }

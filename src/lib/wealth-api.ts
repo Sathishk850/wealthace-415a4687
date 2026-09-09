@@ -1146,6 +1146,8 @@ export function daysUntil(date: string | null) {
 /* =================== ACCOUNTS =================== */
 export type AccountType =
   | "Bank Account"
+  | "Demat / Broker"
+  | "Investment Account"
   | "Credit Card"
   | "Wallet"
   | "Loan"
@@ -1154,6 +1156,8 @@ export type AccountType =
 
 export const ACCOUNT_TYPES: AccountType[] = [
   "Bank Account",
+  "Demat / Broker",
+  "Investment Account",
   "Credit Card",
   "Wallet",
   "Loan",
