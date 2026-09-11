@@ -10,6 +10,24 @@ import { allAssetTypes, type AssetSubType } from "@/lib/asset-types";
 
 export type NumField = { label: string; placeholder?: string };
 
+export type FormFieldType = "text" | "number" | "select" | "date" | "textarea";
+
+export type FormField = {
+  key: string;
+  label: string;
+  type: FormFieldType;
+  required?: boolean;
+  placeholder?: string;
+  options?: string[];
+  defaultValue?: string;
+  /** Auto-calculated from other fields. */
+  calculated?: boolean;
+  calcFrom?: [string, string];
+  calcOp?: "multiply" | "subtract";
+  /** Only visible when another field matches a value. */
+  showWhen?: { field: string; value: string };
+};
+
 export type AssetFormSpec = {
   key: string;
   label: string;
@@ -41,6 +59,14 @@ export type AssetFormSpec = {
   recurring?: boolean;
   /** Equity allocation % segmented control. */
   equityAllocation?: boolean;
+  /** Fully custom per-type field list (non-market asset types). */
+  fields?: FormField[];
+  /** Placeholder for the live-price ticker search box. */
+  tickerSearchPlaceholder?: string;
+  /** Label for the dividend/distribution field. */
+  dividendLabel?: string;
+  /** Show the dividend received field (market types). */
+  dividendReceived?: boolean;
 };
 
 const TOTAL_INVESTED_SHARES = {
@@ -234,6 +260,188 @@ const SPECS: Record<string, Partial<AssetFormSpec>> = {
     },
     livePrice: "fund",
   },
+
+  /* ---------- Physical assets / property / cash ---------- */
+  "physical-gold": {
+    label: "Physical Gold / Silver",
+    module: "asset",
+    dbCategory: "Commodity",
+    namePlaceholder: "e.g. 22K gold bangles",
+    accountField: false,
+    secondary: {
+      label: "Invested Value",
+      placeholder: "Weight × purchase price per gram",
+      helper: "Auto-calculated from weight and purchase price",
+    },
+    fields: [
+      { key: "metal", label: "Metal", type: "select", required: true, options: ["Gold", "Silver"] },
+      { key: "form", label: "Form", type: "select", required: true, options: ["Coin", "Bar", "Jewellery", "Other"] },
+      { key: "weight", label: "Weight in grams", type: "number", required: true },
+      { key: "purity", label: "Purity", type: "text", placeholder: "e.g. 24K, 22K, 999" },
+      { key: "purchasePrice", label: "Purchase Price per gram", type: "number", required: true },
+      { key: "purchaseDate", label: "Purchase Date", type: "date" },
+      { key: "currentPrice", label: "Current Price per gram", type: "number" },
+      {
+        key: "investmentValue",
+        label: "Investment Value",
+        type: "number",
+        calculated: true,
+        calcFrom: ["weight", "purchasePrice"],
+        calcOp: "multiply",
+      },
+      {
+        key: "currentValue",
+        label: "Current Value",
+        type: "number",
+        required: true,
+        calculated: true,
+        calcFrom: ["weight", "currentPrice"],
+        calcOp: "multiply",
+      },
+      { key: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  property: {
+    label: "Property",
+    module: "asset",
+    dbCategory: "Real Estate",
+    namePlaceholder: "e.g. 2BHK, Whitefield",
+    accountField: false,
+    secondary: {
+      label: "Purchase Price",
+      placeholder: "Total purchase price",
+      helper: "Enables gain/loss tracking against market value",
+    },
+    fields: [
+      { key: "propertyType", label: "Property Type", type: "select", required: true, options: ["Residential", "Commercial", "Land", "Other"] },
+      { key: "propertyName", label: "Property Name / Address", type: "text", required: true },
+      { key: "purchaseDate", label: "Purchase Date", type: "date" },
+      { key: "purchasePrice", label: "Purchase Price", type: "number", required: true },
+      { key: "stampDuty", label: "Registration & Stamp Duty", type: "number" },
+      { key: "currentMarketValue", label: "Current Market Value", type: "number", required: true },
+      { key: "rentalIncome", label: "Monthly Rental Income", type: "number" },
+      { key: "ownershipPct", label: "Ownership %", type: "number", placeholder: "e.g. 100" },
+      { key: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  "savings-account": {
+    label: "Savings Account",
+    module: "asset",
+    dbCategory: "Savings",
+    namePlaceholder: "e.g. HDFC Salary Account",
+    accountKind: "bank",
+    secondary: {
+      label: "Current Balance",
+      placeholder: "Current account balance",
+    },
+    fields: [
+      { key: "bank", label: "Bank Name", type: "text", required: true },
+      { key: "accountName", label: "Account Name / Nickname", type: "text" },
+      { key: "accountNumber", label: "Account Number (masked)", type: "text", placeholder: "e.g. XXXX1234" },
+      { key: "currentBalance", label: "Current Balance", type: "number", required: true },
+      { key: "interestRate", label: "Interest Rate (%)", type: "number" },
+      { key: "jointOrSingle", label: "Account Type", type: "select", options: ["Single", "Joint"] },
+      {
+        key: "jointHolder",
+        label: "Joint Holder Name",
+        type: "text",
+        showWhen: { field: "jointOrSingle", value: "Joint" },
+      },
+      { key: "lastUpdated", label: "Last Updated", type: "date" },
+    ],
+  },
+  "current-account": {
+    label: "Current Account",
+    module: "asset",
+    dbCategory: "Savings",
+    namePlaceholder: "e.g. ICICI Business Account",
+    accountKind: "bank",
+    secondary: {
+      label: "Current Balance",
+      placeholder: "Current account balance",
+    },
+    fields: [
+      { key: "bank", label: "Bank Name", type: "text", required: true },
+      { key: "accountName", label: "Account Name / Nickname", type: "text" },
+      { key: "accountNumber", label: "Account Number (masked)", type: "text", placeholder: "e.g. XXXX1234" },
+      { key: "currentBalance", label: "Current Balance", type: "number", required: true },
+      { key: "jointOrSingle", label: "Account Type", type: "select", options: ["Single", "Joint"] },
+      {
+        key: "jointHolder",
+        label: "Joint Holder Name",
+        type: "text",
+        showWhen: { field: "jointOrSingle", value: "Joint" },
+      },
+      { key: "lastUpdated", label: "Last Updated", type: "date" },
+    ],
+  },
+  "cash-wallet": {
+    label: "Cash / Wallet",
+    module: "asset",
+    dbCategory: "Savings",
+    namePlaceholder: "e.g. Home safe",
+    accountField: false,
+    secondary: {
+      label: "Amount",
+      placeholder: "Cash / wallet balance",
+    },
+    fields: [
+      { key: "walletLocation", label: "Wallet / Location", type: "text", required: true, placeholder: "e.g. Home safe, Paytm, UPI wallet" },
+      { key: "currency", label: "Currency", type: "select", options: ["INR", "USD", "EUR", "GBP", "AED", "Other"], defaultValue: "INR" },
+      { key: "amount", label: "Amount", type: "number", required: true },
+      { key: "lastUpdated", label: "Last Updated", type: "date" },
+    ],
+  },
+  "loan-given": {
+    label: "Loan Given",
+    module: "asset",
+    dbCategory: "Savings",
+    namePlaceholder: "e.g. Loan to Ravi",
+    accountField: false,
+    secondary: {
+      label: "Loan Amount",
+      placeholder: "Total loan amount",
+      helper: "Enables outstanding / repayment tracking",
+    },
+    fields: [
+      { key: "borrower", label: "Borrower Name", type: "text", required: true },
+      { key: "loanAmount", label: "Loan Amount", type: "number", required: true },
+      { key: "amountGiven", label: "Amount Disbursed", type: "number" },
+      { key: "interestRate", label: "Interest Rate (%)", type: "number" },
+      { key: "startDate", label: "Start Date", type: "date" },
+      { key: "expectedRepaymentDate", label: "Expected Repayment Date", type: "date" },
+      { key: "amountRepaid", label: "Amount Repaid", type: "number" },
+      {
+        key: "outstandingAmount",
+        label: "Outstanding Amount",
+        type: "number",
+        calculated: true,
+        calcFrom: ["loanAmount", "amountRepaid"],
+        calcOp: "subtract",
+      },
+      { key: "status", label: "Status", type: "select", options: ["Active", "Partially Repaid", "Fully Repaid", "Defaulted"] },
+    ],
+  },
+  "other-asset": {
+    label: "Other Asset",
+    module: "asset",
+    dbCategory: "Other",
+    namePlaceholder: "e.g. Art collection",
+    accountField: false,
+    secondary: {
+      label: "Purchase / Invested Amount",
+      placeholder: "Amount invested",
+      helper: "Enables gain/loss tracking",
+    },
+    fields: [
+      { key: "name", label: "Name", type: "text", required: true },
+      { key: "description", label: "Description", type: "textarea" },
+      { key: "purchaseDate", label: "Purchase Date", type: "date" },
+      { key: "purchasePrice", label: "Purchase / Invested Amount", type: "number" },
+      { key: "currentValue", label: "Current Value", type: "number", required: true },
+      { key: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
 };
 
 /** Bond variants share the Bond / Debenture layout. */
@@ -256,6 +464,8 @@ for (const k of ["reit", "invit"]) {
     ...SPECS["equity-etf"],
     namePlaceholder: k === "reit" ? "e.g. Embassy Office Parks REIT" : "e.g. IndiGrid InvIT",
     livePrice: "stock",
+    tickerSearchPlaceholder: k === "reit" ? "Search REIT ticker..." : "Search InvIT ticker...",
+    dividendLabel: "Distribution Received",
   };
 }
 
@@ -268,7 +478,12 @@ SPECS["crypto-coin"] = {
   secondary: TOTAL_INVESTED_UNITS,
   livePrice: "crypto",
 };
-SPECS["crypto-etf"] = { ...SPECS["equity-etf"], livePrice: "stock" };
+SPECS["crypto-etf"] = {
+  ...SPECS["equity-etf"],
+  livePrice: "stock",
+  tickerSearchPlaceholder: "Search crypto ETF ticker...",
+  dividendReceived: false,
+};
 
 /** Bank-held asset types offer bank accounts in "Held in account". */
 for (const k of [
