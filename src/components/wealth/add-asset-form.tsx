@@ -466,53 +466,64 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           </Field>
         )}
 
-        {spec.quantity && spec.price && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label={spec.quantity.label}>
-              <Input
-                type="number"
-                step="0.0001"
-                value={form.quantity}
-                onChange={(e) => set("quantity", e.target.value)}
-                placeholder={spec.quantity.placeholder}
-              />
-            </Field>
-            <Field label={spec.price.label}>
-              <AmountInput
-                value={form.price}
-                onChange={(v) => set("price", v)}
-                placeholder={spec.price.placeholder}
-              />
-            </Field>
-          </div>
-        )}
+        {dynamicFields ? (
+          <DynamicFieldGrid
+            fields={dynamicFields}
+            values={dyn}
+            onChange={setDynField}
+            sym={sym}
+          />
+        ) : (
+          <>
+            {spec.quantity && spec.price && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={spec.quantity.label}>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={form.quantity}
+                    onChange={(e) => set("quantity", e.target.value)}
+                    placeholder={spec.quantity.placeholder}
+                  />
+                </Field>
+                <Field label={spec.price.label}>
+                  <AmountInput
+                    value={form.price}
+                    onChange={(v) => set("price", v)}
+                    placeholder={spec.price.placeholder}
+                  />
+                </Field>
+              </div>
+            )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label={`Current Value * (${sym})`}>
-            <AmountInput
-              value={form.currentValue}
-              onChange={(v) => set("currentValue", v)}
-              placeholder="Current market value"
-            />
-          </Field>
-          <Field label={`${spec.secondary.label} (${sym})`}>
-            <AmountInput
-              value={autoSecondary ? String(qty * price) : form.secondary}
-              onChange={(v) => set("secondary", v)}
-              placeholder={spec.secondary.placeholder}
-              disabled={autoSecondary}
-            />
-            {autoSecondary ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {spec.secondary.auto === "shares"
-                  ? "Auto-calculated from shares × price"
-                  : "Auto-calculated from units × NAV"}
-              </p>
-            ) : spec.secondary.helper ? (
-              <p className="mt-1 text-xs text-muted-foreground">{spec.secondary.helper}</p>
-            ) : null}
-          </Field>
-        </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label={`Current Value * (${sym})`}>
+                <AmountInput
+                  value={form.currentValue}
+                  onChange={(v) => set("currentValue", v)}
+                  placeholder="Current market value"
+                />
+              </Field>
+              <Field label={`${spec.secondary.label} (${sym})`}>
+                <AmountInput
+                  value={autoSecondary ? String(qty * price) : form.secondary}
+                  onChange={(v) => set("secondary", v)}
+                  placeholder={spec.secondary.placeholder}
+                  disabled={autoSecondary}
+                />
+                {autoSecondary ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {spec.secondary.auto === "shares"
+                      ? "Auto-calculated from shares × price"
+                      : "Auto-calculated from units × NAV"}
+                  </p>
+                ) : spec.secondary.helper ? (
+                  <p className="mt-1 text-xs text-muted-foreground">{spec.secondary.helper}</p>
+                ) : null}
+              </Field>
+            </div>
+          </>
+        )}
 
         {spec.allocationSplit && (
           <button
