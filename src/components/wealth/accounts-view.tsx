@@ -35,9 +35,9 @@ import { toast } from "sonner";
 const ICONS: Record<string, { Icon: any; tint: string }> = {
   "Bank Account": { Icon: Landmark, tint: "bg-blue-500/10 text-blue-400" },
   "Credit Card":  { Icon: CreditCard, tint: "bg-violet-500/10 text-violet-400" },
-  "Wallet":       { Icon: Wallet, tint: "bg-emerald-500/10 text-emerald-400" },
-  "Loan":         { Icon: HandCoins, tint: "bg-rose-500/10 text-rose-400" },
   "Cash":         { Icon: Banknote, tint: "bg-amber-500/10 text-amber-400" },
+  "Wallet":       { Icon: Wallet, tint: "bg-emerald-500/10 text-emerald-400" },
+  "Broker":       { Icon: HandCoins, tint: "bg-mint/10 text-mint" },
   "Other":        { Icon: Wallet, tint: "bg-slate-500/10 text-slate-300" },
 };
 const PIE = ["#3B82F6", "#14D8CF", "#F59E0B", "#8B5CF6", "#10B981", "#F97316", "#EF4444"];
