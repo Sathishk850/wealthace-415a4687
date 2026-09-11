@@ -218,6 +218,37 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     }));
   };
 
+  // Map dynamic fields to the closest database columns.
+  const dynNum = (key: string) => n(String(dyn[key] ?? ""));
+  const dynCurrent = dynamicFields
+    ? dynNum(
+        ["currentValue", "currentMarketValue", "currentBalance", "outstandingAmount", "amount"].find(
+          (k) => dynamicFields.some((f) => f.key === k),
+        ) ?? "",
+      )
+    : 0;
+  const dynPurchase = dynamicFields
+    ? dynNum(
+        ["purchasePrice", "investmentValue", "loanAmount"].find((k) =>
+          dynamicFields.some((f) => f.key === k),
+        ) ?? "",
+      )
+    : 0;
+
+  const dynNoteLines = () => {
+    if (!dynamicFields) return [] as string[];
+    const lines: string[] = [];
+    for (const f of dynamicFields) {
+      if (f.key === "notes") continue;
+      const v = dyn[f.key];
+      if (v == null || v === "") continue;
+      lines.push(`${f.label}: ${v}`);
+    }
+    const extra = dyn["notes"];
+    if (typeof extra === "string" && extra.trim()) lines.push("", extra.trim());
+    return lines;
+  };
+
   const noteLines = () => {
     const lines: string[] = [];
     if (spec.accountField && form.account) lines.push(`Platform: ${form.account}`);
@@ -237,20 +268,31 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
       if (form.instalment) lines.push(`Instalment: ${form.instalment}`);
       if (form.payFrequency) lines.push(`Paid: ${form.payFrequency}`);
     }
+    if (dynamicFields) lines.push(...dynNoteLines());
     if (form.notes.trim()) lines.push("", form.notes.trim());
     return lines.join("\n");
   };
 
   const reset = () => {
     setForm(EMPTY);
+    const seed: Record<string, string | number> = {};
+    for (const f of dynamicFields ?? []) if (f.defaultValue != null) seed[f.key] = f.defaultValue;
+    setDyn(seed);
     setTagDraft("");
     setShowDetails(false);
   };
 
   const submit = async (keepOpen = false) => {
     if (!form.name.trim()) return toast.error("Name is required");
-    const current = n(form.currentValue);
-    if (!(current >= 0) || form.currentValue === "")
+    if (dynamicFields) {
+      for (const f of dynamicFields) {
+        if (f.showWhen && String(dyn[f.showWhen.field] ?? "") !== f.showWhen.value) continue;
+        if (f.required && !f.calculated && String(dyn[f.key] ?? "").trim() === "")
+          return toast.error(`${f.label} is required`);
+      }
+    }
+    const current = dynamicFields ? dynCurrent : n(form.currentValue);
+    if (dynamicFields ? !(current >= 0) : !(current >= 0) || form.currentValue === "")
       return toast.error("Current value is required");
 
     try {
