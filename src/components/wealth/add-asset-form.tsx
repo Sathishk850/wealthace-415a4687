@@ -329,7 +329,13 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           category: spec.dbCategory,
           sub_category: form.subClass || spec.dbSubCategory || null,
           current_value: current,
-          purchase_value: secondaryValue > 0 ? secondaryValue : null,
+          purchase_value: dynamicFields
+            ? dynPurchase > 0
+              ? dynPurchase
+              : null
+            : secondaryValue > 0
+              ? secondaryValue
+              : null,
           purchase_date: form.investmentDate || null,
           quantity: qty > 0 ? qty : null,
           location: spec.accountField ? form.account || null : null,
@@ -401,11 +407,12 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
               spec.livePrice === "fund" ? "mf_in" : spec.livePrice === "crypto" ? "crypto" : "stock_in"
             }
             placeholder={
-              spec.livePrice === "fund"
+              spec.tickerSearchPlaceholder ??
+              (spec.livePrice === "fund"
                 ? "Search mutual fund..."
                 : spec.livePrice === "crypto"
                   ? "Search crypto (e.g. BTC)..."
-                  : "Search stock ticker..."
+                  : "Search stock ticker...")
             }
             onSelect={onLinked}
           />
