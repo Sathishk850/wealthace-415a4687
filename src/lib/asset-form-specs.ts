@@ -464,6 +464,8 @@ for (const k of ["reit", "invit"]) {
     ...SPECS["equity-etf"],
     namePlaceholder: k === "reit" ? "e.g. Embassy Office Parks REIT" : "e.g. IndiGrid InvIT",
     livePrice: "stock",
+    tickerSearchPlaceholder: k === "reit" ? "Search REIT ticker..." : "Search InvIT ticker...",
+    dividendLabel: "Distribution Received",
   };
 }
 
@@ -476,7 +478,12 @@ SPECS["crypto-coin"] = {
   secondary: TOTAL_INVESTED_UNITS,
   livePrice: "crypto",
 };
-SPECS["crypto-etf"] = { ...SPECS["equity-etf"], livePrice: "stock" };
+SPECS["crypto-etf"] = {
+  ...SPECS["equity-etf"],
+  livePrice: "stock",
+  tickerSearchPlaceholder: "Search crypto ETF ticker...",
+  dividendReceived: false,
+};
 
 /** Bank-held asset types offer bank accounts in "Held in account". */
 for (const k of [
