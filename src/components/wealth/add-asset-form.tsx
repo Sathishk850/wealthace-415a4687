@@ -27,7 +27,12 @@ import {
 import { InstrumentSearch } from "@/components/market/instrument-search";
 import { AccountSelect } from "@/components/wealth/account-select";
 import type { MarketQuote, SearchResult } from "@/lib/market/types";
-import { assetFormSpec, assetTypeMeta, type AssetFormSpec } from "@/lib/asset-form-specs";
+import {
+  assetFormSpec,
+  assetTypeMeta,
+  type AssetFormSpec,
+  type FormField,
+} from "@/lib/asset-form-specs";
 import {
   CURRENCIES,
   CURRENCY_LABEL,
@@ -119,8 +124,44 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
   const upsertInvestment = useUpsertInvestment();
   const upsertAsset = useUpsertAsset();
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [dyn, setDyn] = useState<Record<string, string | number>>({});
   const [showDetails, setShowDetails] = useState(false);
   const [tagDraft, setTagDraft] = useState("");
+
+  const dynamicFields = spec?.fields ?? null;
+
+  // Seed defaults (e.g. currency = INR) whenever the type changes.
+  useEffect(() => {
+    if (!dynamicFields) return;
+    const seed: Record<string, string | number> = {};
+    for (const f of dynamicFields) if (f.defaultValue != null) seed[f.key] = f.defaultValue;
+    setDyn(seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeKey]);
+
+  const setDynField = (key: string, v: string | number) =>
+    setDyn((d) => ({ ...d, [key]: v }));
+
+  // Keep calculated fields in sync with their source fields.
+  useEffect(() => {
+    if (!dynamicFields) return;
+    setDyn((d) => {
+      let next: Record<string, string | number> | null = null;
+      for (const f of dynamicFields) {
+        if (!f.calculated || !f.calcFrom) continue;
+        const a = n(String(d[f.calcFrom[0]] ?? ""));
+        const b = n(String(d[f.calcFrom[1]] ?? ""));
+        const val = f.calcOp === "subtract" ? a - b : a * b;
+        const str = a === 0 && b === 0 ? "" : String(Number(val.toFixed(4)));
+        if ((d[f.key] ?? "") !== str) {
+          next = next ?? { ...d };
+          next[f.key] = str;
+        }
+      }
+      return next ?? d;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dyn, dynamicFields]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
