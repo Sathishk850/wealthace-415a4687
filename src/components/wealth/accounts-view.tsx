@@ -26,7 +26,7 @@ import { AccountDialog } from "@/components/wealth/account-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
 import {
   ACCOUNT_TYPES, type Account, type AccountInput,
-  groupByCategory, inr, inrCompact,
+  groupByCategory, inr, inrCompact, normalizeAccountType,
   useAccounts, useBulkInsertAccounts, useDeleteAccount, useFamily,
 } from "@/lib/wealth-api";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
@@ -35,9 +35,9 @@ import { toast } from "sonner";
 const ICONS: Record<string, { Icon: any; tint: string }> = {
   "Bank Account": { Icon: Landmark, tint: "bg-blue-500/10 text-blue-400" },
   "Credit Card":  { Icon: CreditCard, tint: "bg-violet-500/10 text-violet-400" },
-  "Wallet":       { Icon: Wallet, tint: "bg-emerald-500/10 text-emerald-400" },
-  "Loan":         { Icon: HandCoins, tint: "bg-rose-500/10 text-rose-400" },
   "Cash":         { Icon: Banknote, tint: "bg-amber-500/10 text-amber-400" },
+  "Wallet":       { Icon: Wallet, tint: "bg-emerald-500/10 text-emerald-400" },
+  "Broker":       { Icon: HandCoins, tint: "bg-mint/10 text-mint" },
   "Other":        { Icon: Wallet, tint: "bg-slate-500/10 text-slate-300" },
 };
 const PIE = ["#3B82F6", "#14D8CF", "#F59E0B", "#8B5CF6", "#10B981", "#F97316", "#EF4444"];
@@ -73,26 +73,31 @@ export function AccountsView({
 
   /* ===== Derived stats ===== */
   const totals = useMemo(() => {
-    const t = { all: 0, bank: 0, card: 0, wallet: 0, loan: 0 };
+    const t = { all: 0, bank: 0, card: 0, wallet: 0, broker: 0, cash: 0 };
     for (const r of rows) {
       t.all += r.balance;
-      if (r.account_type === "Bank Account") t.bank += r.balance;
-      else if (r.account_type === "Credit Card") t.card += r.balance;
-      else if (r.account_type === "Wallet") t.wallet += r.balance;
-      else if (r.account_type === "Loan") t.loan += r.balance;
+      const k = normalizeAccountType(r.account_type);
+      if (k === "Bank Account") t.bank += r.balance;
+      else if (k === "Credit Card") t.card += r.balance;
+      else if (k === "Wallet") t.wallet += r.balance;
+      else if (k === "Broker") t.broker += r.balance;
+      else if (k === "Cash") t.cash += r.balance;
     }
     return t;
   }, [rows]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const r of rows) c[r.account_type] = (c[r.account_type] || 0) + 1;
+    for (const r of rows) {
+      const k = normalizeAccountType(r.account_type);
+      c[k] = (c[k] || 0) + 1;
+    }
     return c;
   }, [rows]);
 
   const alloc = useMemo(() => {
     return groupByCategory(
-      rows.map((r) => ({ ...r, category: r.account_type })),
+      rows.map((r) => ({ ...r, category: normalizeAccountType(r.account_type) })),
       (r) => Math.abs(r.balance),
     ).map((a, i) => ({ ...a, color: PIE[i % PIE.length] }));
   }, [rows]);
@@ -112,7 +117,7 @@ export function AccountsView({
         (x.account_number_masked ?? "").toLowerCase().includes(q),
       );
     }
-    if (type !== "all") r = r.filter((x) => x.account_type === type);
+    if (type !== "all") r = r.filter((x) => normalizeAccountType(x.account_type) === type);
     if (status !== "all") r = r.filter((x) => x.status === status);
     const sorted = [...r];
     sorted.sort((a, b) => {
@@ -190,8 +195,8 @@ export function AccountsView({
         <Stat label="Total Balance" value={isLoading ? "…" : inr(totals.all)} sub={`${rows.length} account${rows.length === 1 ? "" : "s"}`} icon={Wallet} tint="bg-mint/10 text-mint" />
         <Stat label="Bank Accounts" value={isLoading ? "…" : inr(totals.bank)} sub={`${counts["Bank Account"] || 0} account${(counts["Bank Account"] || 0) === 1 ? "" : "s"}`} icon={Landmark} tint="bg-blue-500/10 text-blue-400" />
         <Stat label="Credit Cards" value={isLoading ? "…" : inr(totals.card)} sub={`${counts["Credit Card"] || 0} card${(counts["Credit Card"] || 0) === 1 ? "" : "s"}`} icon={CreditCard} tint="bg-violet-500/10 text-violet-400" />
-        <Stat label="Wallets" value={isLoading ? "…" : inr(totals.wallet)} sub={`${counts["Wallet"] || 0} wallet${(counts["Wallet"] || 0) === 1 ? "" : "s"}`} icon={Banknote} tint="bg-emerald-500/10 text-emerald-400" />
-        <Stat label="Loans" value={isLoading ? "…" : inr(totals.loan)} sub={`${counts["Loan"] || 0} loan${(counts["Loan"] || 0) === 1 ? "" : "s"}`} icon={HandCoins} tint="bg-rose-500/10 text-rose-400" />
+        <Stat label="Wallets & Cash" value={isLoading ? "…" : inr(totals.wallet + totals.cash)} sub={`${(counts["Wallet"] || 0) + (counts["Cash"] || 0)} account${((counts["Wallet"] || 0) + (counts["Cash"] || 0)) === 1 ? "" : "s"}`} icon={Banknote} tint="bg-emerald-500/10 text-emerald-400" />
+        <Stat label="Broker Accounts" value={isLoading ? "…" : inr(totals.broker)} sub={`${counts["Broker"] || 0} account${(counts["Broker"] || 0) === 1 ? "" : "s"}`} icon={HandCoins} tint="bg-mint/10 text-mint" />
       </div>
 
       {empty ? (
@@ -236,8 +241,10 @@ export function AccountsView({
               <h3 className="text-sm font-semibold text-foreground">Account Types</h3>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 {ACCOUNT_TYPES.map((t) => {
-                  const meta = ICONS[t];
-                  const sum = rows.filter((r) => r.account_type === t).reduce((s, r) => s + r.balance, 0);
+                  const meta = ICONS[t] ?? ICONS.Other;
+                  const sum = rows
+                    .filter((r) => normalizeAccountType(r.account_type) === t)
+                    .reduce((s, r) => s + r.balance, 0);
                   const n = counts[t] || 0;
                   return (
                     <div key={t} className="flex items-center gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5">
@@ -343,7 +350,7 @@ export function AccountsView({
                     </thead>
                     <tbody>
                       {pageRows.map((a) => {
-                        const meta = ICONS[a.account_type] ?? ICONS.Other;
+                        const meta = ICONS[normalizeAccountType(a.account_type)] ?? ICONS.Other;
                         const negative = a.balance < 0;
                         return (
                           <tr key={a.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${sel.isSelected(a.id) ? "bg-mint/[0.06]" : ""}`}>
@@ -363,7 +370,7 @@ export function AccountsView({
                                 <span className="font-medium text-foreground">{a.name}</span>
                               </div>
                             </td>
-                            <td className="py-3 text-muted-foreground">{a.account_type}</td>
+                            <td className="py-3 text-muted-foreground">{normalizeAccountType(a.account_type)}</td>
                             <td className="py-3 text-muted-foreground">{a.provider ?? "—"}</td>
                             <td className="py-3 text-muted-foreground tabular-nums">{a.account_number_masked ?? "—"}</td>
                             <td className="py-3 text-muted-foreground">
