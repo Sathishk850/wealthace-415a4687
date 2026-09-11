@@ -12,19 +12,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AccountDialog } from "@/components/wealth/account-dialog";
-import { useAccounts, type Account } from "@/lib/wealth-api";
+import {
+  BANK_ACCOUNT_TYPES,
+  MARKET_ACCOUNT_TYPES,
+  normalizeAccountType,
+  useAccounts,
+  type Account,
+} from "@/lib/wealth-api";
 
 export type AccountKind = "market" | "bank" | "any";
-
-const MARKET_RE = /demat|broker|invest|trading|portfolio|other/i;
-const BANK_RE = /bank|saving|current|wallet|cash/i;
 
 /** Accounts compatible with the given asset kind. */
 export function compatibleAccounts(accounts: Account[], kind: AccountKind): Account[] {
   const active = accounts.filter((a) => (a.status ?? "active") === "active");
   if (kind === "any") return active;
-  const re = kind === "market" ? MARKET_RE : BANK_RE;
-  return active.filter((a) => re.test(`${a.account_type} ${a.provider ?? ""} ${a.name}`));
+  const allowed = kind === "market" ? MARKET_ACCOUNT_TYPES : BANK_ACCOUNT_TYPES;
+  return active.filter((a) =>
+    (allowed as string[]).includes(normalizeAccountType(a.account_type)),
+  );
 }
 
 /** Stable display + storage label: "Institution • Name". */
@@ -33,7 +38,10 @@ export function accountLabel(a: Account) {
 }
 
 function accountMeta(a: Account) {
-  return [a.account_type, a.account_number_masked ? `••••${a.account_number_masked.slice(-4)}` : null]
+  return [
+    normalizeAccountType(a.account_type),
+    a.account_number_masked ? `••••${a.account_number_masked.slice(-4)}` : null,
+  ]
     .filter(Boolean)
     .join(" · ");
 }
