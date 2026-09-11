@@ -762,6 +762,83 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
   );
 }
 
+/* ---------------- dynamic spec.fields renderer ---------------- */
+
+function DynamicFieldGrid({
+  fields,
+  values,
+  onChange,
+  sym,
+}: {
+  fields: FormField[];
+  values: Record<string, string | number>;
+  onChange: (key: string, v: string | number) => void;
+  sym: string;
+}) {
+  const visible = fields.filter(
+    (f) => !f.showWhen || String(values[f.showWhen.field] ?? "") === f.showWhen.value,
+  );
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {visible.map((f) => {
+        const label = `${f.label}${f.required ? " *" : ""}${f.type === "number" && !f.calculated ? ` (${sym})` : ""}`;
+        const v = String(values[f.key] ?? "");
+        if (f.calculated) {
+          return (
+            <Field key={f.key} label={`${f.label}${f.required ? " *" : ""} (${sym})`} className="sm:col-span-2">
+              <AmountInput value={v} onChange={() => {}} disabled placeholder="Auto-calculated" />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Auto-calculated from {f.calcFrom?.join(` ${f.calcOp === "subtract" ? "−" : "×"} `)}
+              </p>
+            </Field>
+          );
+        }
+        if (f.type === "textarea") {
+          return (
+            <Field key={f.key} label={label} className="sm:col-span-2">
+              <Textarea
+                rows={3}
+                value={v}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                placeholder={f.placeholder}
+              />
+            </Field>
+          );
+        }
+        return (
+          <Field key={f.key} label={label}>
+            {f.type === "select" ? (
+              <Select value={v} onValueChange={(val) => onChange(f.key, val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(f.options ?? []).map((o) => (
+                    <SelectItem key={o} value={o}>
+                      {o}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : f.type === "date" ? (
+              <DatePicker value={v} onChange={(val) => onChange(f.key, val || "")} />
+            ) : f.type === "number" ? (
+              <AmountInput value={v} onChange={(val) => onChange(f.key, val)} placeholder={f.placeholder} />
+            ) : (
+              <Input
+                value={v}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                placeholder={f.placeholder}
+                maxLength={200}
+              />
+            )}
+          </Field>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ---------------- small building blocks ---------------- */
 
 function Section({ children, className }: { children: React.ReactNode; className?: string }) {
