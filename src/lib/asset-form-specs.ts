@@ -10,6 +10,24 @@ import { allAssetTypes, type AssetSubType } from "@/lib/asset-types";
 
 export type NumField = { label: string; placeholder?: string };
 
+export type FormFieldType = "text" | "number" | "select" | "date" | "textarea";
+
+export type FormField = {
+  key: string;
+  label: string;
+  type: FormFieldType;
+  required?: boolean;
+  placeholder?: string;
+  options?: string[];
+  defaultValue?: string;
+  /** Auto-calculated from other fields. */
+  calculated?: boolean;
+  calcFrom?: [string, string];
+  calcOp?: "multiply" | "subtract";
+  /** Only visible when another field matches a value. */
+  showWhen?: { field: string; value: string };
+};
+
 export type AssetFormSpec = {
   key: string;
   label: string;
@@ -41,6 +59,14 @@ export type AssetFormSpec = {
   recurring?: boolean;
   /** Equity allocation % segmented control. */
   equityAllocation?: boolean;
+  /** Fully custom per-type field list (non-market asset types). */
+  fields?: FormField[];
+  /** Placeholder for the live-price ticker search box. */
+  tickerSearchPlaceholder?: string;
+  /** Label for the dividend/distribution field. */
+  dividendLabel?: string;
+  /** Show the dividend received field (market types). */
+  dividendReceived?: boolean;
 };
 
 const TOTAL_INVESTED_SHARES = {
