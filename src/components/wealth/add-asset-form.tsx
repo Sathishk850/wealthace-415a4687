@@ -27,7 +27,12 @@ import {
 import { InstrumentSearch } from "@/components/market/instrument-search";
 import { AccountSelect } from "@/components/wealth/account-select";
 import type { MarketQuote, SearchResult } from "@/lib/market/types";
-import { assetFormSpec, assetTypeMeta, type AssetFormSpec } from "@/lib/asset-form-specs";
+import {
+  assetFormSpec,
+  assetTypeMeta,
+  type AssetFormSpec,
+  type FormField,
+} from "@/lib/asset-form-specs";
 import {
   CURRENCIES,
   CURRENCY_LABEL,
@@ -119,8 +124,44 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
   const upsertInvestment = useUpsertInvestment();
   const upsertAsset = useUpsertAsset();
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [dyn, setDyn] = useState<Record<string, string | number>>({});
   const [showDetails, setShowDetails] = useState(false);
   const [tagDraft, setTagDraft] = useState("");
+
+  const dynamicFields = spec?.fields ?? null;
+
+  // Seed defaults (e.g. currency = INR) whenever the type changes.
+  useEffect(() => {
+    if (!dynamicFields) return;
+    const seed: Record<string, string | number> = {};
+    for (const f of dynamicFields) if (f.defaultValue != null) seed[f.key] = f.defaultValue;
+    setDyn(seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeKey]);
+
+  const setDynField = (key: string, v: string | number) =>
+    setDyn((d) => ({ ...d, [key]: v }));
+
+  // Keep calculated fields in sync with their source fields.
+  useEffect(() => {
+    if (!dynamicFields) return;
+    setDyn((d) => {
+      let next: Record<string, string | number> | null = null;
+      for (const f of dynamicFields) {
+        if (!f.calculated || !f.calcFrom) continue;
+        const a = n(String(d[f.calcFrom[0]] ?? ""));
+        const b = n(String(d[f.calcFrom[1]] ?? ""));
+        const val = f.calcOp === "subtract" ? a - b : a * b;
+        const str = a === 0 && b === 0 ? "" : String(Number(val.toFixed(4)));
+        if ((d[f.key] ?? "") !== str) {
+          next = next ?? { ...d };
+          next[f.key] = str;
+        }
+      }
+      return next ?? d;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dyn, dynamicFields]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -177,6 +218,37 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     }));
   };
 
+  // Map dynamic fields to the closest database columns.
+  const dynNum = (key: string) => n(String(dyn[key] ?? ""));
+  const dynCurrent = dynamicFields
+    ? dynNum(
+        ["currentValue", "currentMarketValue", "currentBalance", "outstandingAmount", "amount"].find(
+          (k) => dynamicFields.some((f) => f.key === k),
+        ) ?? "",
+      )
+    : 0;
+  const dynPurchase = dynamicFields
+    ? dynNum(
+        ["purchasePrice", "investmentValue", "loanAmount"].find((k) =>
+          dynamicFields.some((f) => f.key === k),
+        ) ?? "",
+      )
+    : 0;
+
+  const dynNoteLines = () => {
+    if (!dynamicFields) return [] as string[];
+    const lines: string[] = [];
+    for (const f of dynamicFields) {
+      if (f.key === "notes") continue;
+      const v = dyn[f.key];
+      if (v == null || v === "") continue;
+      lines.push(`${f.label}: ${v}`);
+    }
+    const extra = dyn["notes"];
+    if (typeof extra === "string" && extra.trim()) lines.push("", extra.trim());
+    return lines;
+  };
+
   const noteLines = () => {
     const lines: string[] = [];
     if (spec.accountField && form.account) lines.push(`Platform: ${form.account}`);
@@ -196,20 +268,31 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
       if (form.instalment) lines.push(`Instalment: ${form.instalment}`);
       if (form.payFrequency) lines.push(`Paid: ${form.payFrequency}`);
     }
+    if (dynamicFields) lines.push(...dynNoteLines());
     if (form.notes.trim()) lines.push("", form.notes.trim());
     return lines.join("\n");
   };
 
   const reset = () => {
     setForm(EMPTY);
+    const seed: Record<string, string | number> = {};
+    for (const f of dynamicFields ?? []) if (f.defaultValue != null) seed[f.key] = f.defaultValue;
+    setDyn(seed);
     setTagDraft("");
     setShowDetails(false);
   };
 
   const submit = async (keepOpen = false) => {
     if (!form.name.trim()) return toast.error("Name is required");
-    const current = n(form.currentValue);
-    if (!(current >= 0) || form.currentValue === "")
+    if (dynamicFields) {
+      for (const f of dynamicFields) {
+        if (f.showWhen && String(dyn[f.showWhen.field] ?? "") !== f.showWhen.value) continue;
+        if (f.required && !f.calculated && String(dyn[f.key] ?? "").trim() === "")
+          return toast.error(`${f.label} is required`);
+      }
+    }
+    const current = dynamicFields ? dynCurrent : n(form.currentValue);
+    if (dynamicFields ? !(current >= 0) : !(current >= 0) || form.currentValue === "")
       return toast.error("Current value is required");
 
     try {
@@ -246,7 +329,13 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           category: spec.dbCategory,
           sub_category: form.subClass || spec.dbSubCategory || null,
           current_value: current,
-          purchase_value: secondaryValue > 0 ? secondaryValue : null,
+          purchase_value: dynamicFields
+            ? dynPurchase > 0
+              ? dynPurchase
+              : null
+            : secondaryValue > 0
+              ? secondaryValue
+              : null,
           purchase_date: form.investmentDate || null,
           quantity: qty > 0 ? qty : null,
           location: spec.accountField ? form.account || null : null,
@@ -318,11 +407,12 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
               spec.livePrice === "fund" ? "mf_in" : spec.livePrice === "crypto" ? "crypto" : "stock_in"
             }
             placeholder={
-              spec.livePrice === "fund"
+              spec.tickerSearchPlaceholder ??
+              (spec.livePrice === "fund"
                 ? "Search mutual fund..."
                 : spec.livePrice === "crypto"
                   ? "Search crypto (e.g. BTC)..."
-                  : "Search stock ticker..."
+                  : "Search stock ticker...")
             }
             onSelect={onLinked}
           />
@@ -376,53 +466,64 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           </Field>
         )}
 
-        {spec.quantity && spec.price && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label={spec.quantity.label}>
-              <Input
-                type="number"
-                step="0.0001"
-                value={form.quantity}
-                onChange={(e) => set("quantity", e.target.value)}
-                placeholder={spec.quantity.placeholder}
-              />
-            </Field>
-            <Field label={spec.price.label}>
-              <AmountInput
-                value={form.price}
-                onChange={(v) => set("price", v)}
-                placeholder={spec.price.placeholder}
-              />
-            </Field>
-          </div>
-        )}
+        {dynamicFields ? (
+          <DynamicFieldGrid
+            fields={dynamicFields}
+            values={dyn}
+            onChange={setDynField}
+            sym={sym}
+          />
+        ) : (
+          <>
+            {spec.quantity && spec.price && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={spec.quantity.label}>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={form.quantity}
+                    onChange={(e) => set("quantity", e.target.value)}
+                    placeholder={spec.quantity.placeholder}
+                  />
+                </Field>
+                <Field label={spec.price.label}>
+                  <AmountInput
+                    value={form.price}
+                    onChange={(v) => set("price", v)}
+                    placeholder={spec.price.placeholder}
+                  />
+                </Field>
+              </div>
+            )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label={`Current Value * (${sym})`}>
-            <AmountInput
-              value={form.currentValue}
-              onChange={(v) => set("currentValue", v)}
-              placeholder="Current market value"
-            />
-          </Field>
-          <Field label={`${spec.secondary.label} (${sym})`}>
-            <AmountInput
-              value={autoSecondary ? String(qty * price) : form.secondary}
-              onChange={(v) => set("secondary", v)}
-              placeholder={spec.secondary.placeholder}
-              disabled={autoSecondary}
-            />
-            {autoSecondary ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {spec.secondary.auto === "shares"
-                  ? "Auto-calculated from shares × price"
-                  : "Auto-calculated from units × NAV"}
-              </p>
-            ) : spec.secondary.helper ? (
-              <p className="mt-1 text-xs text-muted-foreground">{spec.secondary.helper}</p>
-            ) : null}
-          </Field>
-        </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label={`Current Value * (${sym})`}>
+                <AmountInput
+                  value={form.currentValue}
+                  onChange={(v) => set("currentValue", v)}
+                  placeholder="Current market value"
+                />
+              </Field>
+              <Field label={`${spec.secondary.label} (${sym})`}>
+                <AmountInput
+                  value={autoSecondary ? String(qty * price) : form.secondary}
+                  onChange={(v) => set("secondary", v)}
+                  placeholder={spec.secondary.placeholder}
+                  disabled={autoSecondary}
+                />
+                {autoSecondary ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {spec.secondary.auto === "shares"
+                      ? "Auto-calculated from shares × price"
+                      : "Auto-calculated from units × NAV"}
+                  </p>
+                ) : spec.secondary.helper ? (
+                  <p className="mt-1 text-xs text-muted-foreground">{spec.secondary.helper}</p>
+                ) : null}
+              </Field>
+            </div>
+          </>
+        )}
 
         {spec.allocationSplit && (
           <button
@@ -657,6 +758,83 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           {pending ? "Saving…" : "Save"}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/* ---------------- dynamic spec.fields renderer ---------------- */
+
+function DynamicFieldGrid({
+  fields,
+  values,
+  onChange,
+  sym,
+}: {
+  fields: FormField[];
+  values: Record<string, string | number>;
+  onChange: (key: string, v: string | number) => void;
+  sym: string;
+}) {
+  const visible = fields.filter(
+    (f) => !f.showWhen || String(values[f.showWhen.field] ?? "") === f.showWhen.value,
+  );
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {visible.map((f) => {
+        const label = `${f.label}${f.required ? " *" : ""}${f.type === "number" && !f.calculated ? ` (${sym})` : ""}`;
+        const v = String(values[f.key] ?? "");
+        if (f.calculated) {
+          return (
+            <Field key={f.key} label={`${f.label}${f.required ? " *" : ""} (${sym})`} className="sm:col-span-2">
+              <AmountInput value={v} onChange={() => {}} disabled placeholder="Auto-calculated" />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Auto-calculated from {f.calcFrom?.join(` ${f.calcOp === "subtract" ? "−" : "×"} `)}
+              </p>
+            </Field>
+          );
+        }
+        if (f.type === "textarea") {
+          return (
+            <Field key={f.key} label={label} className="sm:col-span-2">
+              <Textarea
+                rows={3}
+                value={v}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                placeholder={f.placeholder}
+              />
+            </Field>
+          );
+        }
+        return (
+          <Field key={f.key} label={label}>
+            {f.type === "select" ? (
+              <Select value={v} onValueChange={(val) => onChange(f.key, val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(f.options ?? []).map((o) => (
+                    <SelectItem key={o} value={o}>
+                      {o}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : f.type === "date" ? (
+              <DatePicker value={v} onChange={(val) => onChange(f.key, val || "")} />
+            ) : f.type === "number" ? (
+              <AmountInput value={v} onChange={(val) => onChange(f.key, val)} placeholder={f.placeholder} />
+            ) : (
+              <Input
+                value={v}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                placeholder={f.placeholder}
+                maxLength={200}
+              />
+            )}
+          </Field>
+        );
+      })}
     </div>
   );
 }
