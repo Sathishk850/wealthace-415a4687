@@ -1100,23 +1100,46 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                         <td className="px-3 py-2"></td>
                       </tr>
                       {open
-                        ? g.items.map((h) => (
-                            <HoldingRow
-                              key={rowKey(h)}
-                              h={h}
-                              holdingId={h.id}
-                              highlight={lastTouched === h.id}
-                              allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
-                              selected={sel.isSelected(rowKey(h))}
-                              onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                              onView={() => {
-                                setDetailsTab("fundamental");
-                                setDetails(h);
-                              }}
-                              onEdit={() => openEdit(h)}
-                              onDelete={() => setConfirm(h)}
-                            />
-                          ))
+                        ? g.items.flatMap((h) => {
+                            const key = rowKey(h);
+                            const isExpanded = expandedRows.has(key);
+                            const subRows: React.ReactNode[] = [
+                              <HoldingRow
+                                key={key}
+                                h={h}
+                                holdingId={h.id}
+                                highlight={lastTouched === h.id}
+                                allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
+                                selected={sel.isSelected(key)}
+                                onSelectChange={(v) => sel.toggle(key, v)}
+                                onView={() => {
+                                  setDetailsTab("fundamental");
+                                  setDetails(h);
+                                }}
+                                onEdit={() => openEdit(h)}
+                                onDelete={() => setConfirm(h)}
+                                expanded={isExpanded}
+                                onToggleExpand={h.lots && h.lots.length > 1 ? () => toggleExpand(key) : undefined}
+                              />,
+                            ];
+                            if (isExpanded && h.lots && h.lots.length > 1) {
+                              h.lots.forEach((lot) => {
+                                subRows.push(
+                                  <LotSubRow
+                                    key={`lot-${lot.id}`}
+                                    lot={lot}
+                                    cmp={h.cmp}
+                                    quoteMap={quoteMap}
+                                    platformLabelById={platformLabelById}
+                                    onEdit={() => navigate({ to: "/wealth/add-investment", search: { id: lot.id } })}
+                                    onDelete={() => setConfirm({ ...h, id: lot.id, raw_investment: lot, lots: undefined })}
+                                    allocPct={totals.current > 0 ? ((lot.quantity * h.cmp) / totals.current) * 100 : null}
+                                  />
+                                );
+                              });
+                            }
+                            return subRows;
+                          })
                         : null}
                     </Fragment>
                   );
