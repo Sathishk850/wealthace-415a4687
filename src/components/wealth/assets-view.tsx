@@ -321,6 +321,15 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [showPicker, setShowPicker] = useState(false);
   const [prefillCategory, setPrefillCategory] = useState<string | undefined>(undefined);
   const [confirm, setConfirm] = useState<Holding | null>(null);
+  // Tracks which merged rows are expanded to show per-broker lots.
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleExpand = (key: string) =>
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   const [lastTouched, setLastTouched] = useState<string | null>(() =>
     typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(LAST_TOUCHED_KEY),
   );
@@ -1091,45 +1100,88 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                         <td className="px-3 py-2"></td>
                       </tr>
                       {open
-                        ? g.items.map((h) => (
-                            <HoldingRow
-                              key={rowKey(h)}
-                              h={h}
-                              holdingId={h.id}
-                              highlight={lastTouched === h.id}
-                              allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
-                              selected={sel.isSelected(rowKey(h))}
-                              onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                              onView={() => {
-                                setDetailsTab("fundamental");
-                                setDetails(h);
-                              }}
-                              onEdit={() => openEdit(h)}
-                              onDelete={() => setConfirm(h)}
-                            />
-                          ))
+                        ? g.items.flatMap((h) => {
+                            const key = rowKey(h);
+                            const isExpanded = expandedRows.has(key);
+                            const subRows: React.ReactNode[] = [
+                              <HoldingRow
+                                key={key}
+                                h={h}
+                                holdingId={h.id}
+                                highlight={lastTouched === h.id}
+                                allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
+                                selected={sel.isSelected(key)}
+                                onSelectChange={(v) => sel.toggle(key, v)}
+                                onView={() => {
+                                  setDetailsTab("fundamental");
+                                  setDetails(h);
+                                }}
+                                onEdit={() => openEdit(h)}
+                                onDelete={() => setConfirm(h)}
+                                expanded={isExpanded}
+                                onToggleExpand={h.lots && h.lots.length > 1 ? () => toggleExpand(key) : undefined}
+                              />,
+                            ];
+                            if (isExpanded && h.lots && h.lots.length > 1) {
+                              h.lots.forEach((lot) => {
+                                subRows.push(
+                                  <LotSubRow
+                                    key={`lot-${lot.id}`}
+                                    lot={lot}
+                                    cmp={h.cmp}
+                                    quoteMap={quoteMap}
+                                    platformLabelById={platformLabelById}
+                                    onEdit={() => navigate({ to: "/wealth/add-investment", search: { id: lot.id } })}
+                                    onDelete={() => setConfirm({ ...h, id: lot.id, raw_investment: lot, lots: undefined })}
+                                    allocPct={totals.current > 0 ? ((lot.quantity * h.cmp) / totals.current) * 100 : null}
+                                  />
+                                );
+                              });
+                            }
+                            return subRows;
+                          })
                         : null}
                     </Fragment>
                   );
                 })
               ) : (
-                sorted.map((h) => (
-                  <HoldingRow
-                    key={rowKey(h)}
-                    h={h}
-                    holdingId={h.id}
-                    highlight={lastTouched === h.id}
-                    allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
-                    selected={sel.isSelected(rowKey(h))}
-                    onSelectChange={(v) => sel.toggle(rowKey(h), v)}
-                    onView={() => {
-                      setDetailsTab("fundamental");
-                      setDetails(h);
-                    }}
-                    onEdit={() => openEdit(h)}
-                    onDelete={() => setConfirm(h)}
-                  />
-                ))
+                sorted.flatMap((h) => {
+                  const key = rowKey(h);
+                  const isExpanded = expandedRows.has(key);
+                  const rows: React.ReactNode[] = [
+                    <HoldingRow
+                      key={key}
+                      h={h}
+                      holdingId={h.id}
+                      highlight={lastTouched === h.id}
+                      allocPct={totals.current > 0 ? (h.current / totals.current) * 100 : null}
+                      selected={sel.isSelected(key)}
+                      onSelectChange={(v) => sel.toggle(key, v)}
+                      onView={() => { setDetailsTab("fundamental"); setDetails(h); }}
+                      onEdit={() => openEdit(h)}
+                      onDelete={() => setConfirm(h)}
+                      expanded={isExpanded}
+                      onToggleExpand={h.lots && h.lots.length > 1 ? () => toggleExpand(key) : undefined}
+                    />,
+                  ];
+                  if (isExpanded && h.lots && h.lots.length > 1) {
+                    h.lots.forEach((lot) => {
+                      rows.push(
+                        <LotSubRow
+                          key={`lot-${lot.id}`}
+                          lot={lot}
+                          cmp={h.cmp}
+                          quoteMap={quoteMap}
+                          platformLabelById={platformLabelById}
+                          onEdit={() => navigate({ to: "/wealth/add-investment", search: { id: lot.id } })}
+                          onDelete={() => setConfirm({ ...h, id: lot.id, raw_investment: lot, lots: undefined })}
+                          allocPct={totals.current > 0 ? ((lot.quantity * h.cmp) / totals.current) * 100 : null}
+                        />
+                      );
+                    });
+                  }
+                  return rows;
+                })
               )}
 
 
@@ -1425,7 +1477,11 @@ function MobileHoldingGroups({
         >
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold text-foreground">{h.name}</span>
-            {h.txn_count && h.txn_count > 1 ? (
+            {h.lots && h.lots.length > 1 ? (
+              <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
+                {h.lots.length} brokers
+              </span>
+            ) : h.txn_count && h.txn_count > 1 ? (
               <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
                 {h.txn_count}
               </span>
@@ -1577,6 +1633,8 @@ type RowLike = {
   platform: string | null;
   txn_count?: number;
   raw_investment?: { maturity_date?: string | null } | null;
+  /** All duplicate entries merged into this row (investments only). */
+  lots?: Investment[];
 };
 
 
@@ -1591,6 +1649,8 @@ function HoldingRow({
   holdingId,
   highlight,
   allocPct,
+  expanded,
+  onToggleExpand,
 }: {
   h: RowLike;
   onView?: () => void;
@@ -1603,6 +1663,10 @@ function HoldingRow({
   highlight?: boolean;
   /** Share of the visible portfolio's current value, in percent. */
   allocPct?: number | null;
+  /** Whether this merged row is currently expanded to show lots. */
+  expanded?: boolean;
+  /** Toggle the expanded state. Only provided when the row has >1 lot. */
+  onToggleExpand?: () => void;
 }) {
 
   const up = h.pnl >= 0;
@@ -1624,6 +1688,15 @@ function HoldingRow({
       </td>
       <td className="px-3 py-3">
         <div className="flex items-center gap-3">
+          {onToggleExpand && h.lots && (h.lots.length ?? 0) > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+              aria-label={expanded ? "Collapse lots" : "Expand lots"}
+              className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "" : "-rotate-90"}`} />
+            </button>
+          )}
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
             {h.name.slice(0, 1).toUpperCase()}
           </span>
@@ -1638,7 +1711,14 @@ function HoldingRow({
                   Matures {formatDateShort(h.raw_investment.maturity_date)}
                 </span>
               ) : null}
-              {h.txn_count && h.txn_count > 1 ? (
+              {h.lots && (h.lots.length ?? 0) > 1 ? (
+                <span
+                  title={`Held across ${h.lots.length} broker entries`}
+                  className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint"
+                >
+                  {h.lots.length} brokers
+                </span>
+              ) : h.txn_count && h.txn_count > 1 ? (
                 <span
                   title={`${h.txn_count} transactions`}
                   className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint"
@@ -1746,6 +1826,84 @@ function HoldingRow({
         </div>
       </td>
 
+    </tr>
+  );
+}
+
+
+function LotSubRow({
+  lot,
+  cmp,
+  quoteMap,
+  platformLabelById,
+  onEdit,
+  onDelete,
+  allocPct,
+}: {
+  lot: Investment;
+  cmp: number;
+  quoteMap: Map<string, MarketQuote>;
+  platformLabelById: Map<string, string>;
+  onEdit: () => void;
+  onDelete: () => void;
+  allocPct: number | null;
+}) {
+  const platform =
+    platformFromNotes(lot.notes) ??
+    (lot.payment_account_id ? (platformLabelById.get(lot.payment_account_id) ?? null) : null);
+  const key = investmentQuoteKey(lot);
+  const quote = key ? quoteMap.get(key) ?? null : null;
+  const d = deriveHolding(lot, quote);
+  const lotCmp = quote ? d.current_price : cmp;
+  const invested = d.invested;
+  const current = lot.quantity * lotCmp;
+  const pnl = current - invested;
+  const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
+  const up = pnl >= 0;
+  const ccy = lot.currency || "INR";
+
+  return (
+    <tr className="border-b border-border/20 bg-surface-2/20 last:border-0">
+      <td className="w-[44px] px-3 py-2" />
+      <td className="px-3 py-2 pl-10">
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-mint/40 shrink-0" />
+          <div>
+            <div className="text-xs font-medium text-foreground">
+              {platform ?? "Unknown broker"}
+            </div>
+            {lot.sub_category && (
+              <div className="text-[10px] text-muted-foreground">{lot.sub_category}</div>
+            )}
+          </div>
+        </div>
+      </td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{formatQty(lot.quantity)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{priceIn(lot.avg_price, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{priceIn(lotCmp, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{amountIn(invested, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs font-medium text-foreground">{amountIn(current, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs">
+        <span className={up ? "text-emerald-500" : "text-rose-500"}>
+          {up ? "+" : ""}{amountIn(pnl, ccy)}
+          <br />
+          <span className="text-[10px]">({up ? "+" : ""}{pnlPct.toFixed(2)}%)</span>
+        </span>
+      </td>
+      <td className="px-3 py-2" />
+      <td className="px-3 py-2 text-right text-xs text-muted-foreground">
+        {allocPct != null ? `${allocPct.toFixed(2)}%` : "—"}
+      </td>
+      <td className="px-3 py-2 w-[150px]">
+        <div className="flex items-center justify-end gap-1">
+          <IconBtn label="Edit this lot" onClick={onEdit}>
+            <Pencil className="h-3.5 w-3.5" />
+          </IconBtn>
+          <IconBtn label="Delete this lot" onClick={onDelete} tone="rose">
+            <Trash2 className="h-3.5 w-3.5" />
+          </IconBtn>
+        </div>
+      </td>
     </tr>
   );
 }
