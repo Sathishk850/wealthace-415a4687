@@ -1586,6 +1586,8 @@ type RowLike = {
   platform: string | null;
   txn_count?: number;
   raw_investment?: { maturity_date?: string | null } | null;
+  /** All duplicate entries merged into this row (investments only). */
+  lots?: Investment[];
 };
 
 
