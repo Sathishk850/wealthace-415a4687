@@ -1477,7 +1477,11 @@ function MobileHoldingGroups({
         >
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold text-foreground">{h.name}</span>
-            {h.txn_count && h.txn_count > 1 ? (
+            {h.lots && h.lots.length > 1 ? (
+              <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
+                {h.lots.length} brokers
+              </span>
+            ) : h.txn_count && h.txn_count > 1 ? (
               <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
                 {h.txn_count}
               </span>
