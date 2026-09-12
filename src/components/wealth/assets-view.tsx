@@ -1784,6 +1784,84 @@ function HoldingRow({
 }
 
 
+function LotSubRow({
+  lot,
+  cmp,
+  quoteMap,
+  platformLabelById,
+  onEdit,
+  onDelete,
+  allocPct,
+}: {
+  lot: Investment;
+  cmp: number;
+  quoteMap: Map<string, MarketQuote>;
+  platformLabelById: Map<string, string>;
+  onEdit: () => void;
+  onDelete: () => void;
+  allocPct: number | null;
+}) {
+  const platform =
+    platformFromNotes(lot.notes) ??
+    (lot.payment_account_id ? (platformLabelById.get(lot.payment_account_id) ?? null) : null);
+  const key = investmentQuoteKey(lot);
+  const quote = key ? quoteMap.get(key) ?? null : null;
+  const d = deriveHolding(lot, quote);
+  const lotCmp = quote ? d.current_price : cmp;
+  const invested = d.invested;
+  const current = lot.quantity * lotCmp;
+  const pnl = current - invested;
+  const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
+  const up = pnl >= 0;
+  const ccy = lot.currency || "INR";
+
+  return (
+    <tr className="border-b border-border/20 bg-surface-2/20 last:border-0">
+      <td className="w-[44px] px-3 py-2" />
+      <td className="px-3 py-2 pl-10">
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-mint/40 shrink-0" />
+          <div>
+            <div className="text-xs font-medium text-foreground">
+              {platform ?? "Unknown broker"}
+            </div>
+            {lot.sub_category && (
+              <div className="text-[10px] text-muted-foreground">{lot.sub_category}</div>
+            )}
+          </div>
+        </div>
+      </td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{formatQty(lot.quantity)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{priceIn(lot.avg_price, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{priceIn(lotCmp, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs text-foreground">{amountIn(invested, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs font-medium text-foreground">{amountIn(current, ccy)}</td>
+      <td className="px-3 py-2 text-right tabular-nums text-xs">
+        <span className={up ? "text-emerald-500" : "text-rose-500"}>
+          {up ? "+" : ""}{amountIn(pnl, ccy)}
+          <br />
+          <span className="text-[10px]">({up ? "+" : ""}{pnlPct.toFixed(2)}%)</span>
+        </span>
+      </td>
+      <td className="px-3 py-2" />
+      <td className="px-3 py-2 text-right text-xs text-muted-foreground">
+        {allocPct != null ? `${allocPct.toFixed(2)}%` : "—"}
+      </td>
+      <td className="px-3 py-2 w-[150px]">
+        <div className="flex items-center justify-end gap-1">
+          <IconBtn label="Edit this lot" onClick={onEdit}>
+            <Pencil className="h-3.5 w-3.5" />
+          </IconBtn>
+          <IconBtn label="Delete this lot" onClick={onDelete} tone="rose">
+            <Trash2 className="h-3.5 w-3.5" />
+          </IconBtn>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+
 function IconBtn({
   children,
   onClick,
