@@ -1641,6 +1641,15 @@ function HoldingRow({
       </td>
       <td className="px-3 py-3">
         <div className="flex items-center gap-3">
+          {onToggleExpand && h.lots && (h.lots.length ?? 0) > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
+              aria-label={expanded ? "Collapse lots" : "Expand lots"}
+              className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "" : "-rotate-90"}`} />
+            </button>
+          )}
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-mint/10 text-xs font-bold text-mint">
             {h.name.slice(0, 1).toUpperCase()}
           </span>
@@ -1655,7 +1664,14 @@ function HoldingRow({
                   Matures {formatDateShort(h.raw_investment.maturity_date)}
                 </span>
               ) : null}
-              {h.txn_count && h.txn_count > 1 ? (
+              {h.lots && (h.lots.length ?? 0) > 1 ? (
+                <span
+                  title={`Held across ${h.lots.length} broker entries`}
+                  className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint"
+                >
+                  {h.lots.length} brokers
+                </span>
+              ) : h.txn_count && h.txn_count > 1 ? (
                 <span
                   title={`${h.txn_count} transactions`}
                   className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint"
