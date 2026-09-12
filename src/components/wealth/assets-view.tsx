@@ -1602,6 +1602,8 @@ function HoldingRow({
   holdingId,
   highlight,
   allocPct,
+  expanded,
+  onToggleExpand,
 }: {
   h: RowLike;
   onView?: () => void;
@@ -1614,6 +1616,10 @@ function HoldingRow({
   highlight?: boolean;
   /** Share of the visible portfolio's current value, in percent. */
   allocPct?: number | null;
+  /** Whether this merged row is currently expanded to show lots. */
+  expanded?: boolean;
+  /** Toggle the expanded state. Only provided when the row has >1 lot. */
+  onToggleExpand?: () => void;
 }) {
 
   const up = h.pnl >= 0;
