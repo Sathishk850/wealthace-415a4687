@@ -70,6 +70,7 @@ type FormState = {
   instalment: string;
   payFrequency: string;
   equityAllocation: number | null;
+  dividend: string;
   // live-price link
   symbol: string | null;
   identifier: string | null;
@@ -99,6 +100,7 @@ const EMPTY: FormState = {
   instalment: "",
   payFrequency: "Monthly",
   equityAllocation: null,
+  dividend: "",
   symbol: null,
   identifier: null,
   identifierType: null,
@@ -193,6 +195,9 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
   const sym = CURRENCY_SYMBOL[form.currency] ?? "₹";
   const pending = upsertInvestment.isPending || upsertAsset.isPending;
+  // Market-linked holdings can record dividends / distributions received.
+  const showDividend =
+    spec.dividendReceived !== false && (!!spec.livePrice || !!spec.dividendLabel);
 
   const addTag = (raw: string) => {
     const t = raw.trim().replace(/,$/, "");
@@ -268,6 +273,8 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
       if (form.instalment) lines.push(`Instalment: ${form.instalment}`);
       if (form.payFrequency) lines.push(`Paid: ${form.payFrequency}`);
     }
+    if (showDividend && form.dividend)
+      lines.push(`${spec.dividendLabel ?? "Dividend Received"}: ${form.dividend}`);
     if (dynamicFields) lines.push(...dynNoteLines());
     if (form.notes.trim()) lines.push("", form.notes.trim());
     return lines.join("\n");
@@ -522,6 +529,21 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
                 ) : null}
               </Field>
             </div>
+
+            {showDividend && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={`${spec.dividendLabel ?? "Dividend Received"} (${sym})`}>
+                  <AmountInput
+                    value={form.dividend}
+                    onChange={(v) => set("dividend", v)}
+                    placeholder="Total received so far"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Optional — included in total return
+                  </p>
+                </Field>
+              </div>
+            )}
           </>
         )}
 
