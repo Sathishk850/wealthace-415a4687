@@ -195,6 +195,9 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
   const sym = CURRENCY_SYMBOL[form.currency] ?? "₹";
   const pending = upsertInvestment.isPending || upsertAsset.isPending;
+  // Market-linked holdings can record dividends / distributions received.
+  const showDividend =
+    spec.dividendReceived !== false && (!!spec.livePrice || !!spec.dividendLabel);
 
   const addTag = (raw: string) => {
     const t = raw.trim().replace(/,$/, "");
