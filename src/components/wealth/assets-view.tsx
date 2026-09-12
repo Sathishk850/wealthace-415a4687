@@ -321,6 +321,15 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [showPicker, setShowPicker] = useState(false);
   const [prefillCategory, setPrefillCategory] = useState<string | undefined>(undefined);
   const [confirm, setConfirm] = useState<Holding | null>(null);
+  // Tracks which merged rows are expanded to show per-broker lots.
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const toggleExpand = (key: string) =>
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   const [lastTouched, setLastTouched] = useState<string | null>(() =>
     typeof sessionStorage === "undefined" ? null : sessionStorage.getItem(LAST_TOUCHED_KEY),
   );
