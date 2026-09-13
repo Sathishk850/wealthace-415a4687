@@ -119,6 +119,23 @@ const n = (v: string) => {
   return Number.isFinite(x) ? x : 0;
 };
 
+/** Read the NPS three-way split stored in a holding's notes. */
+function parseNpsSplit(notes: string): { e: number; d: number; a: number } | null {
+  const grab = (label: string) => {
+    const m = notes.match(new RegExp(`^\\s*${label}\\s*:\\s*([0-9.]+)%`, "im"));
+    return m ? Number(m[1]) : null;
+  };
+  const e = grab("NPS Equity");
+  const d = grab("NPS Debt");
+  const a = grab("NPS Alternative");
+  if (e != null || d != null || a != null)
+    return { e: e ?? 0, d: d ?? Math.max(0, 100 - (e ?? 0) - (a ?? 0)), a: a ?? 0 };
+  // Legacy fallback: single "Equity allocation: X%" line.
+  const legacy = grab("Equity allocation");
+  if (legacy != null) return { e: legacy, d: Math.max(0, 100 - legacy), a: 0 };
+  return null;
+}
+
 function DynIcon({ name, className, color }: { name: string; className?: string; color?: string }) {
   const Icon = (LucideIcons as unknown as Record<string, LucideIcons.LucideIcon>)[name];
   const Fallback = LucideIcons.Boxes;
@@ -174,6 +191,32 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  // Restore a saved NPS split when notes already carry one (e.g. editing).
+  useEffect(() => {
+    if (!spec?.npsAllocation || !form.notes) return;
+    const split = parseNpsSplit(form.notes);
+    if (!split) return;
+    setForm((f) =>
+      f.npsEquity === split.e && f.npsDebt === split.d && f.npsAlt === split.a
+        ? f
+        : { ...f, npsEquity: split.e, npsDebt: split.d, npsAlt: split.a },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeKey, form.notes, spec?.npsAllocation]);
+
+  // NPS sliders auto-balance: Debt = 100 − Equity − Alternative (clamped ≥ 0).
+  const setNpsEquity = (v: number) =>
+    setForm((f) => {
+      const npsEquity = Math.min(100, Math.max(0, Math.round(v)));
+      const npsAlt = Math.min(f.npsAlt, Math.max(0, 100 - npsEquity));
+      return { ...f, npsEquity, npsAlt, npsDebt: Math.max(0, 100 - npsEquity - npsAlt) };
+    });
+  const setNpsAlt = (v: number) =>
+    setForm((f) => {
+      const npsAlt = Math.min(5, Math.max(0, Math.round(v)));
+      return { ...f, npsAlt, npsDebt: Math.max(0, 100 - f.npsEquity - npsAlt) };
+    });
 
   const qty = n(form.quantity);
   const price = n(form.price);
