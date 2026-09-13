@@ -59,6 +59,8 @@ export type AssetFormSpec = {
   recurring?: boolean;
   /** Equity allocation % segmented control. */
   equityAllocation?: boolean;
+  /** NPS three-way split sliders (Equity / Debt / Alternative). */
+  npsAllocation?: boolean;
   /** Fully custom per-type field list (non-market asset types). */
   fields?: FormField[];
   /** Placeholder for the live-price ticker search box. */
@@ -160,6 +162,8 @@ const SPECS: Record<string, Partial<AssetFormSpec>> = {
       helper: "Enables gain/loss tracking against corpus",
     },
     allocationSplit: true,
+    equityAllocation: false,
+    npsAllocation: true,
   },
   ulip: {
     namePlaceholder: "e.g. HDFC Life Click 2 Wealth",

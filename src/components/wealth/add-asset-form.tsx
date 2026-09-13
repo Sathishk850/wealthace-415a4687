@@ -70,6 +70,10 @@ type FormState = {
   instalment: string;
   payFrequency: string;
   equityAllocation: number | null;
+  // NPS three-way allocation split
+  npsEquity: number;
+  npsDebt: number;
+  npsAlt: number;
   dividend: string;
   // live-price link
   symbol: string | null;
@@ -100,6 +104,9 @@ const EMPTY: FormState = {
   instalment: "",
   payFrequency: "Monthly",
   equityAllocation: null,
+  npsEquity: 75,
+  npsDebt: 20,
+  npsAlt: 5,
   dividend: "",
   symbol: null,
   identifier: null,
@@ -111,6 +118,23 @@ const n = (v: string) => {
   const x = Number(String(v).replace(/,/g, ""));
   return Number.isFinite(x) ? x : 0;
 };
+
+/** Read the NPS three-way split stored in a holding's notes. */
+function parseNpsSplit(notes: string): { e: number; d: number; a: number } | null {
+  const grab = (label: string) => {
+    const m = notes.match(new RegExp(`^\\s*${label}\\s*:\\s*([0-9.]+)%`, "im"));
+    return m ? Number(m[1]) : null;
+  };
+  const e = grab("NPS Equity");
+  const d = grab("NPS Debt");
+  const a = grab("NPS Alternative");
+  if (e != null || d != null || a != null)
+    return { e: e ?? 0, d: d ?? Math.max(0, 100 - (e ?? 0) - (a ?? 0)), a: a ?? 0 };
+  // Legacy fallback: single "Equity allocation: X%" line.
+  const legacy = grab("Equity allocation");
+  if (legacy != null) return { e: legacy, d: Math.max(0, 100 - legacy), a: 0 };
+  return null;
+}
 
 function DynIcon({ name, className, color }: { name: string; className?: string; color?: string }) {
   const Icon = (LucideIcons as unknown as Record<string, LucideIcons.LucideIcon>)[name];
@@ -167,6 +191,32 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  // Restore a saved NPS split when notes already carry one (e.g. editing).
+  useEffect(() => {
+    if (!spec?.npsAllocation || !form.notes) return;
+    const split = parseNpsSplit(form.notes);
+    if (!split) return;
+    setForm((f) =>
+      f.npsEquity === split.e && f.npsDebt === split.d && f.npsAlt === split.a
+        ? f
+        : { ...f, npsEquity: split.e, npsDebt: split.d, npsAlt: split.a },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeKey, form.notes, spec?.npsAllocation]);
+
+  // NPS sliders auto-balance: Debt = 100 − Equity − Alternative (clamped ≥ 0).
+  const setNpsEquity = (v: number) =>
+    setForm((f) => {
+      const npsEquity = Math.min(100, Math.max(0, Math.round(v)));
+      const npsAlt = Math.min(f.npsAlt, Math.max(0, 100 - npsEquity));
+      return { ...f, npsEquity, npsAlt, npsDebt: Math.max(0, 100 - npsEquity - npsAlt) };
+    });
+  const setNpsAlt = (v: number) =>
+    setForm((f) => {
+      const npsAlt = Math.min(5, Math.max(0, Math.round(v)));
+      return { ...f, npsAlt, npsDebt: Math.max(0, 100 - f.npsEquity - npsAlt) };
+    });
 
   const qty = n(form.quantity);
   const price = n(form.price);
@@ -264,6 +314,11 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     if (form.emergencyFund) lines.push("Emergency fund: yes");
     if (spec.equityAllocation && form.equityAllocation != null)
       lines.push(`Equity allocation: ${form.equityAllocation}%`);
+    if (spec.npsAllocation) {
+      lines.push(`NPS Equity: ${form.npsEquity}%`);
+      lines.push(`NPS Debt: ${form.npsDebt}%`);
+      lines.push(`NPS Alternative: ${form.npsAlt}%`);
+    }
     if (spec.interestSection) {
       if (form.interestRate) lines.push(`Interest rate: ${form.interestRate}%`);
       if (form.compounding) lines.push(`Compounding: ${form.compounding}`);
@@ -576,6 +631,94 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
                 </button>
               ))}
             </div>
+          </Field>
+        )}
+
+        {spec.npsAllocation && (
+          <Field label="NPS Allocation Split">
+            {(() => {
+              const sum = form.npsEquity + form.npsDebt + form.npsAlt;
+              const sliders: {
+                label: string;
+                value: number;
+                max: number;
+                color: string;
+                onChange?: (v: number) => void;
+                helper?: string;
+              }[] = [
+                { label: "Equity", value: form.npsEquity, max: 100, color: "#34d399", onChange: setNpsEquity },
+                { label: "Debt", value: form.npsDebt, max: 100, color: "#94a3b8", helper: "Auto-balanced" },
+                {
+                  label: "Alternative",
+                  value: form.npsAlt,
+                  max: 5,
+                  color: "#f59e0b",
+                  onChange: setNpsAlt,
+                  helper: "PFRDA cap: 5%",
+                },
+              ];
+              return (
+                <div className="rounded-xl border border-border bg-surface-2 p-3">
+                  <div className="mb-3 flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Equity + Debt + Alternative</span>
+                    <span
+                      className={cn(
+                        "font-semibold",
+                        sum === 100 ? "text-emerald-400" : "text-red-400",
+                      )}
+                    >
+                      {sum}% / 100%
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {sliders.map((s) => (
+                      <div key={s.label}>
+                        <div className="mb-1 flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">
+                            {s.label}
+                            {s.helper ? (
+                              <span className="ml-1.5 text-[10px] opacity-70">({s.helper})</span>
+                            ) : null}
+                          </span>
+                          <span className="font-semibold text-foreground">{s.value}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={s.max}
+                          step={1}
+                          value={s.value}
+                          disabled={!s.onChange}
+                          onChange={(e) => s.onChange?.(Number(e.target.value))}
+                          className="w-full disabled:opacity-60"
+                          style={{ accentColor: s.color }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Stacked visual bar */}
+                  <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-muted/30">
+                    <div style={{ width: `${form.npsEquity}%`, background: "#34d399" }} />
+                    <div style={{ width: `${form.npsDebt}%`, background: "#94a3b8" }} />
+                    <div style={{ width: `${form.npsAlt}%`, background: "#f59e0b" }} />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ background: "#34d399" }} />
+                      Equity {form.npsEquity}%
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ background: "#94a3b8" }} />
+                      Debt {form.npsDebt}%
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ background: "#f59e0b" }} />
+                      Alternative {form.npsAlt}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </Field>
         )}
       </Section>
