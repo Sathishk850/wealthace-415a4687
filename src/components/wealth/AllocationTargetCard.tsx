@@ -11,7 +11,28 @@ const DEFAULT_TARGETS: Record<string, number> = {
   "Real Estate": 10,
   Commodities: 10,
   "Cash & Savings": 5,
+  Alternatives: 0,
 };
+
+/** Read the NPS three-way split (Equity/Debt/Alternative %) from holding notes. */
+function parseNpsSplit(
+  notes: string | null | undefined,
+): { equity: number; debt: number; alt: number } | null {
+  if (!notes) return null;
+  const grab = (label: string) => {
+    const m = notes.match(new RegExp(`^\\s*${label}\\s*:\\s*([0-9.]+)%`, "im"));
+    return m ? Number(m[1]) : null;
+  };
+  const e = grab("NPS Equity");
+  const d = grab("NPS Debt");
+  const a = grab("NPS Alternative");
+  if (e != null || d != null || a != null)
+    return { equity: e ?? 0, debt: d ?? Math.max(0, 100 - (e ?? 0) - (a ?? 0)), alt: a ?? 0 };
+  // Legacy fallback: single "Equity allocation: X%" line.
+  const legacy = grab("Equity allocation");
+  if (legacy != null) return { equity: legacy, debt: Math.max(0, 100 - legacy), alt: 0 };
+  return null;
+}
 
 // Map investment/asset category → allocation bucket
 function toBucket(category: string | null | undefined): string {
@@ -44,6 +65,7 @@ const BUCKET_COLOURS: Record<string, string> = {
   "Real Estate": "#f97316",
   Commodities: "#eab308",
   "Cash & Savings": "#6b7280",
+  Alternatives: "#D4537E",
 };
 
 function inr(n: number) {
@@ -67,6 +89,19 @@ export function AllocationTargetCard({ className }: { className?: string }) {
       if ((inv.status ?? "active") !== "active") continue;
       const v = Number(inv.current_value ?? inv.invested_value ?? 0);
       if (!Number.isFinite(v) || v <= 0) continue;
+      // NPS corpus is split across Equity / Debt / Alternatives by the saved
+      // allocation percentages; without a split it counts as Debt.
+      if ((inv.category ?? "").toLowerCase() === "nps") {
+        const split = parseNpsSplit(inv.notes);
+        if (split) {
+          map.set("Equity", (map.get("Equity") ?? 0) + (v * split.equity) / 100);
+          map.set("Debt", (map.get("Debt") ?? 0) + (v * split.debt) / 100);
+          map.set("Alternatives", (map.get("Alternatives") ?? 0) + (v * split.alt) / 100);
+        } else {
+          map.set("Debt", (map.get("Debt") ?? 0) + v);
+        }
+        continue;
+      }
       const b = toBucket(inv.category);
       map.set(b, (map.get(b) ?? 0) + v);
     }
