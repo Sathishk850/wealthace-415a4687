@@ -633,6 +633,94 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             </div>
           </Field>
         )}
+
+        {spec.npsAllocation && (
+          <Field label="NPS Allocation Split">
+            {(() => {
+              const sum = form.npsEquity + form.npsDebt + form.npsAlt;
+              const sliders: {
+                label: string;
+                value: number;
+                max: number;
+                color: string;
+                onChange?: (v: number) => void;
+                helper?: string;
+              }[] = [
+                { label: "Equity", value: form.npsEquity, max: 100, color: "#34d399", onChange: setNpsEquity },
+                { label: "Debt", value: form.npsDebt, max: 100, color: "#94a3b8", helper: "Auto-balanced" },
+                {
+                  label: "Alternative",
+                  value: form.npsAlt,
+                  max: 5,
+                  color: "#f59e0b",
+                  onChange: setNpsAlt,
+                  helper: "PFRDA cap: 5%",
+                },
+              ];
+              return (
+                <div className="rounded-xl border border-border bg-surface-2 p-3">
+                  <div className="mb-3 flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Equity + Debt + Alternative</span>
+                    <span
+                      className={cn(
+                        "font-semibold",
+                        sum === 100 ? "text-emerald-400" : "text-red-400",
+                      )}
+                    >
+                      {sum}% / 100%
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {sliders.map((s) => (
+                      <div key={s.label}>
+                        <div className="mb-1 flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">
+                            {s.label}
+                            {s.helper ? (
+                              <span className="ml-1.5 text-[10px] opacity-70">({s.helper})</span>
+                            ) : null}
+                          </span>
+                          <span className="font-semibold text-foreground">{s.value}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={s.max}
+                          step={1}
+                          value={s.value}
+                          disabled={!s.onChange}
+                          onChange={(e) => s.onChange?.(Number(e.target.value))}
+                          className="w-full disabled:opacity-60"
+                          style={{ accentColor: s.color }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Stacked visual bar */}
+                  <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-muted/30">
+                    <div style={{ width: `${form.npsEquity}%`, background: "#34d399" }} />
+                    <div style={{ width: `${form.npsDebt}%`, background: "#94a3b8" }} />
+                    <div style={{ width: `${form.npsAlt}%`, background: "#f59e0b" }} />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-4 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ background: "#34d399" }} />
+                      Equity {form.npsEquity}%
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ background: "#94a3b8" }} />
+                      Debt {form.npsDebt}%
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ background: "#f59e0b" }} />
+                      Alternative {form.npsAlt}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+          </Field>
+        )}
       </Section>
 
       {/* Interest & maturity */}
