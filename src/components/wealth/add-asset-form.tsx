@@ -70,6 +70,10 @@ type FormState = {
   instalment: string;
   payFrequency: string;
   equityAllocation: number | null;
+  // NPS three-way allocation split
+  npsEquity: number;
+  npsDebt: number;
+  npsAlt: number;
   dividend: string;
   // live-price link
   symbol: string | null;
@@ -100,6 +104,9 @@ const EMPTY: FormState = {
   instalment: "",
   payFrequency: "Monthly",
   equityAllocation: null,
+  npsEquity: 75,
+  npsDebt: 20,
+  npsAlt: 5,
   dividend: "",
   symbol: null,
   identifier: null,
@@ -264,6 +271,11 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     if (form.emergencyFund) lines.push("Emergency fund: yes");
     if (spec.equityAllocation && form.equityAllocation != null)
       lines.push(`Equity allocation: ${form.equityAllocation}%`);
+    if (spec.npsAllocation) {
+      lines.push(`NPS Equity: ${form.npsEquity}%`);
+      lines.push(`NPS Debt: ${form.npsDebt}%`);
+      lines.push(`NPS Alternative: ${form.npsAlt}%`);
+    }
     if (spec.interestSection) {
       if (form.interestRate) lines.push(`Interest rate: ${form.interestRate}%`);
       if (form.compounding) lines.push(`Compounding: ${form.compounding}`);
