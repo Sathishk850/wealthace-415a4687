@@ -6,6 +6,13 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    version: "1.10.0",
+    releaseDate: "2026-09-13",
+    changes: [
+      "Geography Lens — See how much of your portfolio is in India vs abroad — Wealth → Allocation → Geography shows a regional breakdown by value and percentage.",
+    ],
+  },
+  {
     version: "1.9.0",
     releaseDate: "2026-08-26",
     changes: [
