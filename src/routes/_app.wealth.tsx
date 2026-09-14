@@ -11,9 +11,7 @@ import { InvestmentsView as LiveInvestmentsView } from "@/components/wealth/inve
 import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insurance-view";
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { WealthOverview } from "@/components/wealth/wealth-overview";
-import { AllocationTargetCard } from "@/components/wealth/AllocationTargetCard";
-import { GeographyLensCard } from "@/components/wealth/GeographyLensCard";
-import { cn } from "@/lib/utils";
+import { AllocationView } from "@/components/wealth/AllocationView";
 import { FxRatesWidget } from "@/components/fx/FxRatesWidget";
 
 
@@ -42,11 +40,12 @@ export const Route = createFileRoute("/_app/wealth")({
   component: Wealth,
 });
 
-type TabValue = "overview" | "assets" | "liabilities" | "insurance" | "accounts" | "sip-tracker";
+type TabValue = "overview" | "assets" | "allocation" | "liabilities" | "insurance" | "accounts" | "sip-tracker";
 
 const TABS: { value: TabValue; label: string }[] = [
   { value: "overview", label: "Overview" },
   { value: "assets", label: "Assets" },
+  { value: "allocation", label: "Allocation" },
   { value: "liabilities", label: "Liabilities" },
   { value: "insurance", label: "Insurance" },
   { value: "accounts", label: "Accounts" },
@@ -88,6 +87,8 @@ function Wealth() {
       ) : tab === "assets" ? (
 
         <AssetsView registerAdd={(fn) => { addRef.current = fn; }} />
+      ) : tab === "allocation" ? (
+        <AllocationView />
       ) : tab === "liabilities" ? (
         <LiveLiabilitiesView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : tab === "insurance" ? (
@@ -95,15 +96,12 @@ function Wealth() {
       ) : tab === "accounts" ? (
         <LiveAccountsView registerAdd={(fn) => { addRef.current = fn; }} />
       ) : (
-        <>
-          <LiveInvestmentsView
-            key="sip-tracker"
-            activeSub="SIP Tracker"
-            hideSubTabs
-            registerAdd={(fn) => { addRef.current = fn; }}
-          />
-          <AllocationLensSection className="mt-6" />
-        </>
+        <LiveInvestmentsView
+          key="sip-tracker"
+          activeSub="SIP Tracker"
+          hideSubTabs
+          registerAdd={(fn) => { addRef.current = fn; }}
+        />
       )}
 
     </div>
@@ -159,40 +157,6 @@ function WealthMarketBar() {
           <span className="text-muted-foreground">· prices as of {now}</span>
         </div>
       ))}
-    </div>
-  );
-}
-
-
-/**
- * Allocation section with an Allocation | Geography pill toggle.
- */
-function AllocationLensSection({ className }: { className?: string }) {
-  const [lens, setLens] = useState<"allocation" | "geography">("allocation");
-
-  return (
-    <div className={className}>
-      <div className="mb-3 inline-flex rounded-full border border-border bg-card/60 p-1">
-        {([
-          { value: "allocation", label: "Allocation" },
-          { value: "geography", label: "Geography" },
-        ] as const).map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => setLens(o.value)}
-            className={cn(
-              "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
-              lens === o.value
-                ? "bg-[#21DBD2]/15 text-[#21DBD2]"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-      {lens === "allocation" ? <AllocationTargetCard /> : <GeographyLensCard />}
     </div>
   );
 }
