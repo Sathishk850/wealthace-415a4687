@@ -163,3 +163,36 @@ function WealthMarketBar() {
   );
 }
 
+
+/**
+ * Allocation section with an Allocation | Geography pill toggle.
+ */
+function AllocationLensSection({ className }: { className?: string }) {
+  const [lens, setLens] = useState<"allocation" | "geography">("allocation");
+
+  return (
+    <div className={className}>
+      <div className="mb-3 inline-flex rounded-full border border-border bg-card/60 p-1">
+        {([
+          { value: "allocation", label: "Allocation" },
+          { value: "geography", label: "Geography" },
+        ] as const).map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => setLens(o.value)}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
+              lens === o.value
+                ? "bg-[#21DBD2]/15 text-[#21DBD2]"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {lens === "allocation" ? <AllocationTargetCard /> : <GeographyLensCard />}
+    </div>
+  );
+}
