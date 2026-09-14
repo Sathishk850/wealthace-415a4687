@@ -12,6 +12,8 @@ import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insuranc
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { WealthOverview } from "@/components/wealth/wealth-overview";
 import { AllocationTargetCard } from "@/components/wealth/AllocationTargetCard";
+import { GeographyLensCard } from "@/components/wealth/GeographyLensCard";
+import { cn } from "@/lib/utils";
 import { FxRatesWidget } from "@/components/fx/FxRatesWidget";
 
 
@@ -100,7 +102,7 @@ function Wealth() {
             hideSubTabs
             registerAdd={(fn) => { addRef.current = fn; }}
           />
-          <AllocationTargetCard className="mt-6" />
+          <AllocationLensSection className="mt-6" />
         </>
       )}
 
