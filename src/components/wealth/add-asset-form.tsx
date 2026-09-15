@@ -1090,33 +1090,36 @@ function DynamicFieldGrid({
           );
         }
         return (
-          <Field key={f.key} label={label}>
-            {f.type === "select" ? (
-              <Select value={v} onValueChange={(val) => onChange(f.key, val)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {(f.options ?? []).map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {o}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : f.type === "date" ? (
-              <DatePicker value={v} onChange={(val) => onChange(f.key, val || "")} />
-            ) : f.type === "number" ? (
-              <AmountInput value={v} onChange={(val) => onChange(f.key, val)} placeholder={f.placeholder} />
-            ) : (
-              <Input
-                value={v}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                placeholder={f.placeholder}
-                maxLength={200}
-              />
-            )}
-          </Field>
+          <Fragment key={f.key}>
+            <Field label={label}>
+              {f.type === "select" ? (
+                <Select value={v} onValueChange={(val) => onChange(f.key, val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(f.options ?? []).map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : f.type === "date" ? (
+                <DatePicker value={v} onChange={(val) => onChange(f.key, val || "")} />
+              ) : f.type === "number" ? (
+                <AmountInput value={v} onChange={(val) => onChange(f.key, val)} placeholder={f.placeholder} />
+              ) : (
+                <Input
+                  value={v}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  maxLength={200}
+                />
+              )}
+            </Field>
+            {renderExtra?.(f.key)}
+          </Fragment>
         );
       })}
     </div>
