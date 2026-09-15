@@ -3,10 +3,10 @@
 // held-in-account, current value, secondary value, details, flags, actions);
 // only the asset-specific fields described in `asset-form-specs.ts` differ.
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import * as LucideIcons from "lucide-react";
-import { ArrowLeft, ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2, RefreshCw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ import {
 import { InstrumentSearch } from "@/components/market/instrument-search";
 import { AccountSelect } from "@/components/wealth/account-select";
 import type { MarketQuote, SearchResult } from "@/lib/market/types";
+import { fetchGoldRate, purityMultiplier } from "@/lib/gold-rate.functions";
 import {
   assetFormSpec,
   assetTypeMeta,
@@ -167,6 +168,43 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
 
   const setDynField = (key: string, v: string | number) =>
     setDyn((d) => ({ ...d, [key]: v }));
+
+  // Live gold rate (physical-gold only) — session-local, never persisted.
+  const [goldRate, setGoldRate] = useState<number | null>(null);
+  const [goldRateFetching, setGoldRateFetching] = useState(false);
+  const [goldRateSource, setGoldRateSource] = useState<string | null>(null);
+  const [goldRateError, setGoldRateError] = useState<string | null>(null);
+
+  const fetchLiveGoldRate = async () => {
+    setGoldRateFetching(true);
+    setGoldRateError(null);
+    try {
+      const result = await fetchGoldRate();
+      setGoldRate(result.pricePerGram24K);
+      setGoldRateSource(result.source);
+      // Auto-fill current rate based on the current purity selection.
+      const purity = String(dyn["purity"] ?? "24K (99.9%)");
+      const adjustedRate = Math.round(result.pricePerGram24K * purityMultiplier(purity));
+      setDynField("currentPrice", String(adjustedRate));
+      const weight = n(String(dyn["weight"] ?? "0"));
+      if (weight > 0) setDynField("currentValue", String(Math.round(weight * adjustedRate)));
+    } catch {
+      setGoldRateError("Could not fetch live rate. Enter manually.");
+    } finally {
+      setGoldRateFetching(false);
+    }
+  };
+
+  // Auto-recalculate gold current value when weight or purity changes.
+  useEffect(() => {
+    if (spec?.key !== "physical-gold" || !goldRate) return;
+    const purity = String(dyn["purity"] ?? "24K (99.9%)");
+    const adjustedRate = Math.round(goldRate * purityMultiplier(purity));
+    setDynField("currentPrice", String(adjustedRate));
+    const weight = n(String(dyn["weight"] ?? "0"));
+    if (weight > 0) setDynField("currentValue", String(Math.round(weight * adjustedRate)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dyn["purity"], dyn["weight"], goldRate, spec?.key]);
 
   // Keep calculated fields in sync with their source fields.
   useEffect(() => {
@@ -413,6 +451,74 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     }
   };
 
+  // Live NSE gold rate block shown under the purity picker (physical-gold only).
+  const goldRateBlock = (() => {
+    const purity = String(dyn["purity"] ?? "24K (99.9%)");
+    const mult = purityMultiplier(purity);
+    const isPure = mult === 1.0;
+    return (
+      <div className="rounded-xl border border-border bg-surface-2 p-3 space-y-2 sm:col-span-2">
+        {goldRate && (
+          <div className="flex items-center justify-between text-xs">
+            <div>
+              <span className="text-muted-foreground">24K rate: </span>
+              <span className="font-semibold text-foreground">
+                ₹{goldRate.toLocaleString("en-IN")}/gram
+              </span>
+            </div>
+            <div>
+              {mult < 1 && (
+                <span className="text-mint font-semibold">
+                  {purity.split(" ")[0]} rate: ₹
+                  {Math.round(goldRate * mult).toLocaleString("en-IN")}/gram
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        <button
+          type="button"
+          disabled={goldRateFetching}
+          onClick={fetchLiveGoldRate}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:border-mint/40 disabled:opacity-50 transition-colors"
+        >
+          {goldRateFetching ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" /> Fetching GOLDBEES rate…
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-3 w-3 text-mint" /> Use live NSE rate (GOLDBEES)
+            </>
+          )}
+        </button>
+        {goldRateSource && (
+          <p className="text-[10px] text-muted-foreground">
+            Source: {goldRateSource} · auto-adjusted for {purity.split(" ")[0]} purity
+          </p>
+        )}
+        {goldRateError && <p className="text-[10px] text-destructive">{goldRateError}</p>}
+        <div className="flex gap-2 text-[10px]">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5",
+              isPure ? "bg-mint/10 text-mint" : "bg-surface text-muted-foreground",
+            )}
+          >
+            24K = ₹{goldRate ? goldRate.toLocaleString("en-IN") : "—"}/g
+          </span>
+          {mult < 1 && (
+            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-amber-400">
+              {purity.split(" ")[0]} = ₹
+              {goldRate ? Math.round(goldRate * mult).toLocaleString("en-IN") : "—"}/g (
+              {(mult * 100).toFixed(1)}%)
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  })();
+
   return (
     <div className="mx-auto w-full max-w-3xl px-3 pb-28 sm:px-6">
       <div className="flex items-center gap-3 py-4 sm:py-6">
@@ -534,6 +640,11 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             values={dyn}
             onChange={setDynField}
             sym={sym}
+            renderExtra={
+              spec.key === "physical-gold"
+                ? (key) => (key === "purity" ? goldRateBlock : null)
+                : undefined
+            }
           />
         ) : (
           <>
@@ -934,11 +1045,13 @@ function DynamicFieldGrid({
   values,
   onChange,
   sym,
+  renderExtra,
 }: {
   fields: FormField[];
   values: Record<string, string | number>;
   onChange: (key: string, v: string | number) => void;
   sym: string;
+  renderExtra?: (key: string) => React.ReactNode;
 }) {
   const visible = fields.filter(
     (f) => !f.showWhen || String(values[f.showWhen.field] ?? "") === f.showWhen.value,
@@ -950,54 +1063,63 @@ function DynamicFieldGrid({
         const v = String(values[f.key] ?? "");
         if (f.calculated) {
           return (
-            <Field key={f.key} label={`${f.label}${f.required ? " *" : ""} (${sym})`} className="sm:col-span-2">
-              <AmountInput value={v} onChange={() => {}} disabled placeholder="Auto-calculated" />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Auto-calculated from {f.calcFrom?.join(` ${f.calcOp === "subtract" ? "−" : "×"} `)}
-              </p>
-            </Field>
+            <Fragment key={f.key}>
+              <Field label={`${f.label}${f.required ? " *" : ""} (${sym})`} className="sm:col-span-2">
+                <AmountInput value={v} onChange={() => {}} disabled placeholder="Auto-calculated" />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Auto-calculated from {f.calcFrom?.join(` ${f.calcOp === "subtract" ? "−" : "×"} `)}
+                </p>
+              </Field>
+              {renderExtra?.(f.key)}
+            </Fragment>
           );
         }
         if (f.type === "textarea") {
           return (
-            <Field key={f.key} label={label} className="sm:col-span-2">
-              <Textarea
-                rows={3}
-                value={v}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                placeholder={f.placeholder}
-              />
-            </Field>
+            <Fragment key={f.key}>
+              <Field label={label} className="sm:col-span-2">
+                <Textarea
+                  rows={3}
+                  value={v}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                />
+              </Field>
+              {renderExtra?.(f.key)}
+            </Fragment>
           );
         }
         return (
-          <Field key={f.key} label={label}>
-            {f.type === "select" ? (
-              <Select value={v} onValueChange={(val) => onChange(f.key, val)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {(f.options ?? []).map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {o}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : f.type === "date" ? (
-              <DatePicker value={v} onChange={(val) => onChange(f.key, val || "")} />
-            ) : f.type === "number" ? (
-              <AmountInput value={v} onChange={(val) => onChange(f.key, val)} placeholder={f.placeholder} />
-            ) : (
-              <Input
-                value={v}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                placeholder={f.placeholder}
-                maxLength={200}
-              />
-            )}
-          </Field>
+          <Fragment key={f.key}>
+            <Field label={label}>
+              {f.type === "select" ? (
+                <Select value={v} onValueChange={(val) => onChange(f.key, val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(f.options ?? []).map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : f.type === "date" ? (
+                <DatePicker value={v} onChange={(val) => onChange(f.key, val || "")} />
+              ) : f.type === "number" ? (
+                <AmountInput value={v} onChange={(val) => onChange(f.key, val)} placeholder={f.placeholder} />
+              ) : (
+                <Input
+                  value={v}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  maxLength={200}
+                />
+              )}
+            </Field>
+            {renderExtra?.(f.key)}
+          </Fragment>
         );
       })}
     </div>

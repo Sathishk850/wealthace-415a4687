@@ -6,6 +6,14 @@ export type Release = {
 
 export const releases: Release[] = [
   {
+    version: "1.11.0",
+    releaseDate: "2026-09-15",
+    changes: [
+      "Gold purity picker — choose 24K, 22K, 18K or 14K on any physical gold holding. Current value now reflects actual purity (22K jewellery = 91.7% of the 24K rate).",
+      "Live gold rate from NSE GOLDBEES ETF — tap “Use live NSE rate” to auto-fill the current price per gram at domestic Indian wholesale rates, adjusted for your purity.",
+    ],
+  },
+  {
     version: "1.10.0",
     releaseDate: "2026-09-13",
     changes: [
