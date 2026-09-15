@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import * as LucideIcons from "lucide-react";
-import { ArrowLeft, ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2, RefreshCw, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ import {
 import { InstrumentSearch } from "@/components/market/instrument-search";
 import { AccountSelect } from "@/components/wealth/account-select";
 import type { MarketQuote, SearchResult } from "@/lib/market/types";
+import { fetchGoldRate, purityMultiplier } from "@/lib/gold-rate.functions";
 import {
   assetFormSpec,
   assetTypeMeta,
