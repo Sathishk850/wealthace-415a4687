@@ -451,6 +451,74 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     }
   };
 
+  // Live NSE gold rate block shown under the purity picker (physical-gold only).
+  const goldRateBlock = (() => {
+    const purity = String(dyn["purity"] ?? "24K (99.9%)");
+    const mult = purityMultiplier(purity);
+    const isPure = mult === 1.0;
+    return (
+      <div className="rounded-xl border border-border bg-surface-2 p-3 space-y-2 sm:col-span-2">
+        {goldRate && (
+          <div className="flex items-center justify-between text-xs">
+            <div>
+              <span className="text-muted-foreground">24K rate: </span>
+              <span className="font-semibold text-foreground">
+                ₹{goldRate.toLocaleString("en-IN")}/gram
+              </span>
+            </div>
+            <div>
+              {mult < 1 && (
+                <span className="text-mint font-semibold">
+                  {purity.split(" ")[0]} rate: ₹
+                  {Math.round(goldRate * mult).toLocaleString("en-IN")}/gram
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        <button
+          type="button"
+          disabled={goldRateFetching}
+          onClick={fetchLiveGoldRate}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:border-mint/40 disabled:opacity-50 transition-colors"
+        >
+          {goldRateFetching ? (
+            <>
+              <Loader2 className="h-3 w-3 animate-spin" /> Fetching GOLDBEES rate…
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-3 w-3 text-mint" /> Use live NSE rate (GOLDBEES)
+            </>
+          )}
+        </button>
+        {goldRateSource && (
+          <p className="text-[10px] text-muted-foreground">
+            Source: {goldRateSource} · auto-adjusted for {purity.split(" ")[0]} purity
+          </p>
+        )}
+        {goldRateError && <p className="text-[10px] text-destructive">{goldRateError}</p>}
+        <div className="flex gap-2 text-[10px]">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5",
+              isPure ? "bg-mint/10 text-mint" : "bg-surface text-muted-foreground",
+            )}
+          >
+            24K = ₹{goldRate ? goldRate.toLocaleString("en-IN") : "—"}/g
+          </span>
+          {mult < 1 && (
+            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-amber-400">
+              {purity.split(" ")[0]} = ₹
+              {goldRate ? Math.round(goldRate * mult).toLocaleString("en-IN") : "—"}/g (
+              {(mult * 100).toFixed(1)}%)
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  })();
+
   return (
     <div className="mx-auto w-full max-w-3xl px-3 pb-28 sm:px-6">
       <div className="flex items-center gap-3 py-4 sm:py-6">
