@@ -572,6 +572,11 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             values={dyn}
             onChange={setDynField}
             sym={sym}
+            renderExtra={
+              spec.key === "physical-gold"
+                ? (key) => (key === "purity" ? goldRateBlock : null)
+                : undefined
+            }
           />
         ) : (
           <>
