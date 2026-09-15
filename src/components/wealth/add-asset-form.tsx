@@ -1063,24 +1063,30 @@ function DynamicFieldGrid({
         const v = String(values[f.key] ?? "");
         if (f.calculated) {
           return (
-            <Field key={f.key} label={`${f.label}${f.required ? " *" : ""} (${sym})`} className="sm:col-span-2">
-              <AmountInput value={v} onChange={() => {}} disabled placeholder="Auto-calculated" />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Auto-calculated from {f.calcFrom?.join(` ${f.calcOp === "subtract" ? "−" : "×"} `)}
-              </p>
-            </Field>
+            <Fragment key={f.key}>
+              <Field label={`${f.label}${f.required ? " *" : ""} (${sym})`} className="sm:col-span-2">
+                <AmountInput value={v} onChange={() => {}} disabled placeholder="Auto-calculated" />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Auto-calculated from {f.calcFrom?.join(` ${f.calcOp === "subtract" ? "−" : "×"} `)}
+                </p>
+              </Field>
+              {renderExtra?.(f.key)}
+            </Fragment>
           );
         }
         if (f.type === "textarea") {
           return (
-            <Field key={f.key} label={label} className="sm:col-span-2">
-              <Textarea
-                rows={3}
-                value={v}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                placeholder={f.placeholder}
-              />
-            </Field>
+            <Fragment key={f.key}>
+              <Field label={label} className="sm:col-span-2">
+                <Textarea
+                  rows={3}
+                  value={v}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                />
+              </Field>
+              {renderExtra?.(f.key)}
+            </Fragment>
           );
         }
         return (
