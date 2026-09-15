@@ -169,6 +169,43 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
   const setDynField = (key: string, v: string | number) =>
     setDyn((d) => ({ ...d, [key]: v }));
 
+  // Live gold rate (physical-gold only) — session-local, never persisted.
+  const [goldRate, setGoldRate] = useState<number | null>(null);
+  const [goldRateFetching, setGoldRateFetching] = useState(false);
+  const [goldRateSource, setGoldRateSource] = useState<string | null>(null);
+  const [goldRateError, setGoldRateError] = useState<string | null>(null);
+
+  const fetchLiveGoldRate = async () => {
+    setGoldRateFetching(true);
+    setGoldRateError(null);
+    try {
+      const result = await fetchGoldRate();
+      setGoldRate(result.pricePerGram24K);
+      setGoldRateSource(result.source);
+      // Auto-fill current rate based on the current purity selection.
+      const purity = String(dyn["purity"] ?? "24K (99.9%)");
+      const adjustedRate = Math.round(result.pricePerGram24K * purityMultiplier(purity));
+      setDynField("currentPrice", String(adjustedRate));
+      const weight = n(String(dyn["weight"] ?? "0"));
+      if (weight > 0) setDynField("currentValue", String(Math.round(weight * adjustedRate)));
+    } catch {
+      setGoldRateError("Could not fetch live rate. Enter manually.");
+    } finally {
+      setGoldRateFetching(false);
+    }
+  };
+
+  // Auto-recalculate gold current value when weight or purity changes.
+  useEffect(() => {
+    if (spec?.key !== "physical-gold" || !goldRate) return;
+    const purity = String(dyn["purity"] ?? "24K (99.9%)");
+    const adjustedRate = Math.round(goldRate * purityMultiplier(purity));
+    setDynField("currentPrice", String(adjustedRate));
+    const weight = n(String(dyn["weight"] ?? "0"));
+    if (weight > 0) setDynField("currentValue", String(Math.round(weight * adjustedRate)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dyn["purity"], dyn["weight"], goldRate, spec?.key]);
+
   // Keep calculated fields in sync with their source fields.
   useEffect(() => {
     if (!dynamicFields) return;
