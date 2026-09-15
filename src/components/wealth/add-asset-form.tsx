@@ -1045,11 +1045,13 @@ function DynamicFieldGrid({
   values,
   onChange,
   sym,
+  renderExtra,
 }: {
   fields: FormField[];
   values: Record<string, string | number>;
   onChange: (key: string, v: string | number) => void;
   sym: string;
+  renderExtra?: (key: string) => React.ReactNode;
 }) {
   const visible = fields.filter(
     (f) => !f.showWhen || String(values[f.showWhen.field] ?? "") === f.showWhen.value,
