@@ -6,7 +6,11 @@
 
 import type { Category, Transaction } from "@/lib/money-api";
 import type { PaymentAccount, PaymentAccountType } from "@/lib/payment-accounts-api";
-import { classifyMerchant, type ClassifyResult } from "@/lib/import/categorize";
+import {
+  classifyCategory,
+  type CategoryGuess,
+  type CorrectionMap,
+} from "@/lib/import/categorize";
 import type { ScanFields } from "@/lib/expense-scan.functions";
 
 export type MatchConfidence = "high" | "medium" | "low" | "none";
