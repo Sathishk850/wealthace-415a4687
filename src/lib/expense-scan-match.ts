@@ -27,7 +27,7 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 export function matchCategory(
   fields: ScanFields,
   categories: Category[],
-  learned?: Map<string, string>,
+  learned?: CorrectionMap,
 ): { categoryId: string | null; confidence: MatchConfidence; label: string | null } {
   const expenseCats = categories.filter((c) => c.kind === "expense");
   const byName = new Map(expenseCats.map((c) => [norm(c.name), c]));
@@ -44,7 +44,7 @@ export function matchCategory(
     .filter(Boolean)
     .join(" ");
   if (text) {
-    const res: ClassifyResult = classifyMerchant(text, "expense", learned);
+    const res: CategoryGuess = classifyCategory(text, "expense", learned);
     if (res.category) {
       const conf: MatchConfidence =
         res.confidence === "high" ? "high" : res.confidence === "medium" ? "medium" : "low";
