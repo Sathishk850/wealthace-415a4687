@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/date-format";
 import { scanReceipt, type ScanFields } from "@/lib/expense-scan.functions";
 import {
   buildNote,
