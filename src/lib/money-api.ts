@@ -31,6 +31,7 @@ export type Transaction = {
   note: string | null;
   payment_mode: string | null;
   payment_account_id: string | null;
+  receipt_path: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -170,7 +171,8 @@ export function useUpsertTransaction() {
       note?: string | null;
       payment_mode?: string | null;
       payment_account_id?: string | null;
-    }) => {
+      receipt_path?: string | null;
+    }): Promise<{ id: string }> => {
       const user_id = await uid();
       const payload = {
         kind: input.kind,
@@ -182,6 +184,9 @@ export function useUpsertTransaction() {
         note: input.note?.trim() || null,
         payment_mode: input.payment_mode?.trim() || null,
         payment_account_id: input.payment_account_id || null,
+        ...(input.receipt_path !== undefined
+          ? { receipt_path: input.receipt_path || null }
+          : {}),
       };
       if (input.id) {
         const { error } = await supabase
@@ -189,12 +194,15 @@ export function useUpsertTransaction() {
           .update(payload as never)
           .eq("id", input.id);
         if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("money_transactions")
-          .insert({ ...payload, user_id } as never);
-        if (error) throw error;
+        return { id: input.id };
       }
+      const { data, error } = await supabase
+        .from("money_transactions")
+        .insert({ ...payload, user_id } as never)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return { id: (data as { id: string }).id };
     },
     onSuccess: () => {
       toast.success("Transaction saved");
