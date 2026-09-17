@@ -47,6 +47,7 @@ import {
 } from "@/lib/expense-scan-match";
 import { useCategories, useTransactions, type Category } from "@/lib/money-api";
 import {
+  accountTypesForMode,
   formatAccountLabel,
   paymentModeLabel,
   PAYMENT_MODES,
@@ -126,6 +127,14 @@ export function ExpenseScanDialog({
   const categories: Category[] = categoriesQ.data ?? [];
   const expenseCats = categories.filter((c) => c.kind === "expense");
   const accounts = (accountsQ.data ?? []).filter((a) => a.is_active);
+
+  // Keep "Paid from" consistent with the detected mode (a credit-card receipt
+  // should not offer bank accounts), matching the manual form's rules.
+  const modeAccounts = useMemo(() => {
+    if (!mode) return accounts;
+    const types = accountTypesForMode(mode);
+    return accounts.filter((a) => types.includes(a.account_type));
+  }, [accounts, mode]);
 
   useEffect(() => {
     if (!open) return;
@@ -409,14 +418,21 @@ export function ExpenseScanDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Select account</SelectItem>
-                    {accounts.map((a) => (
+                    {modeAccounts.map((a) => (
                       <SelectItem key={a.id} value={a.id}>
                         {formatAccountLabel(a)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {mode && modeAccounts.length === 0 && (
+                  <div className="mt-1 text-[11px] text-amber-300">
+                    No {paymentModeLabel(mode).toLowerCase()} account saved yet — you can add
+                    one on the next screen.
+                  </div>
+                )}
               </div>
+
             </div>
 
             {mode && (
