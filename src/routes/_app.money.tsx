@@ -391,8 +391,9 @@ function Money() {
   }, [budgetRows, activeMonthKey]);
 
   // top-bar "Add" opens contextual dialog
-  const [openTx, setOpenTx] = useState<{ open: boolean; editing?: Transaction; defaultKind?: Kind }>({ open: false });
+  const [openTx, setOpenTx] = useState<{ open: boolean; editing?: Transaction; defaultKind?: Kind; prefill?: ScanHandoff }>({ open: false });
   const [openBudget, setOpenBudget] = useState<{ open: boolean; editing?: any }>({ open: false });
+  const [scanOpen, setScanOpen] = useState(false);
 
   const handleAdd = () => {
     if (tab === "Budgets") setOpenBudget({ open: true });
@@ -429,6 +430,12 @@ function Money() {
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
+            <button
+              onClick={() => setScanOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
+            >
+              <ScanLine className="h-3.5 w-3.5" /> Scan
+            </button>
             <button
               onClick={() => setImportOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
