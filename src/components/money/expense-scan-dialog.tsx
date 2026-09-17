@@ -133,7 +133,7 @@ export function ExpenseScanDialog({
   const modeAccounts = useMemo(() => {
     if (!mode) return accounts;
     const types = accountTypesForMode(mode);
-    return accounts.filter((a) => types.includes(a.type));
+    return accounts.filter((a) => types.includes(a.account_type));
   }, [accounts, mode]);
 
   useEffect(() => {
