@@ -1124,12 +1124,14 @@ function TransactionDialog({
   onOpenChange,
   editing,
   defaultKind,
+  prefill,
   categories,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing?: Transaction;
   defaultKind?: Kind;
+  prefill?: ScanHandoff;
   categories: Category[];
 }) {
   const [kind, setKind] = useState<Kind>(editing?.kind ?? defaultKind ?? "expense");
@@ -1144,6 +1146,7 @@ function TransactionDialog({
   const [err, setErr] = useState<string | null>(null);
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   const upsert = useUpsertTransaction();
   const upsertCat = useUpsertCategory();
@@ -1160,21 +1163,23 @@ function TransactionDialog({
   // reset when opening
   useMemo(() => {
     if (open) {
-      setKind(editing?.kind ?? defaultKind ?? "expense");
-      setAmount(editing ? String(editing.amount) : "");
-      setDate(editing?.occurred_on ?? todayIso());
-      setCategoryId(editing?.category_id ?? "");
-      setMerchant(editing?.merchant ?? "");
+      const scan = !editing ? prefill : undefined;
+      setKind(editing?.kind ?? (scan ? "expense" : defaultKind ?? "expense"));
+      setAmount(editing ? String(editing.amount) : scan?.amount ?? "");
+      setDate(editing?.occurred_on ?? scan?.date ?? todayIso());
+      setCategoryId(editing?.category_id ?? scan?.categoryId ?? "");
+      setMerchant(editing?.merchant ?? scan?.merchant ?? "");
       setAccount(editing?.account ?? "");
-      setNote(editing?.note ?? "");
-      setPaymentMode(editing?.payment_mode ?? null);
-      setPaymentAccountId(editing?.payment_account_id ?? null);
+      setNote(editing?.note ?? scan?.note ?? "");
+      setPaymentMode(editing?.payment_mode ?? scan?.paymentMode ?? null);
+      setPaymentAccountId(editing?.payment_account_id ?? scan?.paymentAccountId ?? null);
+      setReceiptFile(scan?.receiptFile ?? null);
       setErr(null);
       setShowNewCat(false);
       setNewCatName("");
     }
     return null;
-  }, [open, editing, defaultKind]);
+  }, [open, editing, defaultKind, prefill]);
 
   const kindCats = categories.filter((c) => c.kind === kind);
   const presets = kind === "expense" ? EXPENSE_PRESETS : INCOME_PRESETS;
