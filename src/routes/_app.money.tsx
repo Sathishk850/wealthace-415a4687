@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
+  ScanLine,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,34 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { TextTabs } from "@/components/text-tabs";
 import { useTabParam } from "@/lib/use-tab-param";
 import { BankStatementImporter } from "@/components/money/bank-statement-importer";
+import {
+  ExpenseScanDialog,
+  type ScanHandoff,
+} from "@/components/money/expense-scan-dialog";
 import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Store a scanned receipt privately under {user_id}/{expense_id}/{file} and
+ * link it to the expense. A failure here never blocks the saved expense.
+ */
+async function uploadReceipt(expenseId: string, file: File) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const ext = (file.name.split(".").pop() || "bin").toLowerCase().slice(0, 8);
+    const path = `${user.id}/${expenseId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("receipts")
+      .upload(path, file, { contentType: file.type || undefined, upsert: false });
+    if (error) throw error;
+    await supabase
+      .from("money_transactions")
+      .update({ receipt_path: path } as never)
+      .eq("id", expenseId);
+  } catch {
+    toast.warning("Expense saved, but the receipt image couldn't be attached.");
+  }
+}
 import {
   ResponsiveContainer,
   AreaChart,
