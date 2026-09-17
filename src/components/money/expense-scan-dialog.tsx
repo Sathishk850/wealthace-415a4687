@@ -127,6 +127,14 @@ export function ExpenseScanDialog({
   const expenseCats = categories.filter((c) => c.kind === "expense");
   const accounts = (accountsQ.data ?? []).filter((a) => a.is_active);
 
+  // Keep "Paid from" consistent with the detected mode (a credit-card receipt
+  // should not offer bank accounts), matching the manual form's rules.
+  const modeAccounts = useMemo(() => {
+    if (!mode) return accounts;
+    const types = accountTypesForMode(mode);
+    return accounts.filter((a) => types.includes(a.type));
+  }, [accounts, mode]);
+
   useEffect(() => {
     if (!open) return;
     setStage("pick");
