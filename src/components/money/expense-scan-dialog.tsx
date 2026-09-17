@@ -119,9 +119,6 @@ export function ExpenseScanDialog({
   const [mode, setMode] = useState<string | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
 
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const galleryRef = useRef<HTMLInputElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const categoriesQ = useCategories();
   const transactionsQ = useTransactions();
