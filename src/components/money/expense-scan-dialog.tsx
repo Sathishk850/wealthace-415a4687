@@ -230,49 +230,30 @@ export function ExpenseScanDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* hidden pickers */}
-        <input
-          ref={cameraRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => void handleFile(e.target.files?.[0])}
-        />
-        <input
-          ref={galleryRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => void handleFile(e.target.files?.[0])}
-        />
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*,application/pdf"
-          className="hidden"
-          onChange={(e) => void handleFile(e.target.files?.[0])}
-        />
-
         {stage === "pick" && (
           <div className="grid gap-2 sm:grid-cols-3">
-            <SourceButton
+            <SourcePicker
               icon={Camera}
               label="Take photo"
-              onClick={() => cameraRef.current?.click()}
+              accept="image/*"
+              capture="environment"
+              onFile={handleFile}
             />
-            <SourceButton
+            <SourcePicker
               icon={ImageIcon}
               label="From gallery"
-              onClick={() => galleryRef.current?.click()}
+              accept="image/*"
+              onFile={handleFile}
             />
-            <SourceButton
+            <SourcePicker
               icon={FileText}
               label="Upload PDF"
-              onClick={() => fileRef.current?.click()}
+              accept="application/pdf,image/*"
+              onFile={handleFile}
             />
           </div>
         )}
+
 
         {stage === "reading" && (
           <div className="grid place-items-center gap-3 py-10 text-center">
