@@ -47,6 +47,7 @@ import {
 } from "@/lib/expense-scan-match";
 import { useCategories, useTransactions, type Category } from "@/lib/money-api";
 import {
+  accountTypesForMode,
   formatAccountLabel,
   paymentModeLabel,
   PAYMENT_MODES,
