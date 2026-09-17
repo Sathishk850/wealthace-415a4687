@@ -1,12 +1,11 @@
-# Roadmap
+# Expense Scanner (Expenses module)
 
-## Expense Scanner (Expenses module, isolated)
-- [ ] 1. Inspect Expenses page, TransactionDialog, money-api, categories, payment accounts, schema
-- [ ] 2. `receipt_path` column + private `receipts` bucket with owner-only RLS
-- [ ] 3. Server-side OCR function (Lovable AI gateway, strict JSON, no receipt logging)
-- [ ] 4. Pure matching helpers: category, account, duplicate, prefill
-- [ ] 5. Scan Expense dialog: source, upload/camera, reading, review, warnings, duplicates, manual fallback
-- [ ] 6. Feed extracted values into existing TransactionDialog (no redesign)
-- [ ] 7. Receipt upload after confirm; non-blocking warning on upload failure
-- [ ] 8. Confirm manual Add Transaction flow unchanged
-- [ ] 9. Typecheck, build, browser verification
+- [x] 1. Inspect Expenses page, transaction dialog, categories, payment accounts, schema
+- [x] 2. Private `receipts` storage bucket (owner-only RLS) + `receipt_path` column
+- [x] 3. Server-side receipt reader (strict JSON, no logging of receipt contents) — verified against a real PDF
+- [x] 4. Pure matching helpers (category, payment mode/account, duplicates, note prefill)
+- [x] 5. Scan Expense dialog (source pick, reading, review, warnings, duplicates, manual fallback)
+- [x] 6. Prefill into existing Add Transaction dialog (manual flow untouched)
+- [x] 7. Receipt upload after save; non-blocking warning on failure
+- [x] 8. Manual Add Transaction flow unchanged (same fields, validation, save path)
+- [ ] 9. Signed-in browser verification — blocked: no test session can be created in this environment

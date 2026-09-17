@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
+  ScanLine,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,34 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { TextTabs } from "@/components/text-tabs";
 import { useTabParam } from "@/lib/use-tab-param";
 import { BankStatementImporter } from "@/components/money/bank-statement-importer";
+import {
+  ExpenseScanDialog,
+  type ScanHandoff,
+} from "@/components/money/expense-scan-dialog";
 import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Store a scanned receipt privately under {user_id}/{expense_id}/{file} and
+ * link it to the expense. A failure here never blocks the saved expense.
+ */
+async function uploadReceipt(expenseId: string, file: File) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const ext = (file.name.split(".").pop() || "bin").toLowerCase().slice(0, 8);
+    const path = `${user.id}/${expenseId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("receipts")
+      .upload(path, file, { contentType: file.type || undefined, upsert: false });
+    if (error) throw error;
+    await supabase
+      .from("money_transactions")
+      .update({ receipt_path: path } as never)
+      .eq("id", expenseId);
+  } catch {
+    toast.warning("Expense saved, but the receipt image couldn't be attached.");
+  }
+}
 import {
   ResponsiveContainer,
   AreaChart,
@@ -391,8 +419,9 @@ function Money() {
   }, [budgetRows, activeMonthKey]);
 
   // top-bar "Add" opens contextual dialog
-  const [openTx, setOpenTx] = useState<{ open: boolean; editing?: Transaction; defaultKind?: Kind }>({ open: false });
+  const [openTx, setOpenTx] = useState<{ open: boolean; editing?: Transaction; defaultKind?: Kind; prefill?: ScanHandoff }>({ open: false });
   const [openBudget, setOpenBudget] = useState<{ open: boolean; editing?: any }>({ open: false });
+  const [scanOpen, setScanOpen] = useState(false);
 
   const handleAdd = () => {
     if (tab === "Budgets") setOpenBudget({ open: true });
@@ -429,6 +458,12 @@ function Money() {
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
+            <button
+              onClick={() => setScanOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
+            >
+              <ScanLine className="h-3.5 w-3.5" /> Scan
+            </button>
             <button
               onClick={() => setImportOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
@@ -719,11 +754,18 @@ function Money() {
         />
       )}
 
+      <ExpenseScanDialog
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        onManual={() => setOpenTx({ open: true, defaultKind: "expense" })}
+        onConfirm={(v) => setOpenTx({ open: true, defaultKind: "expense", prefill: v })}
+      />
       <TransactionDialog
         open={openTx.open}
         onOpenChange={(o) => setOpenTx((s) => ({ ...s, open: o }))}
         editing={openTx.editing}
         defaultKind={openTx.defaultKind}
+        prefill={openTx.prefill}
         categories={categories}
       />
       <BudgetDialog
@@ -1110,12 +1152,14 @@ function TransactionDialog({
   onOpenChange,
   editing,
   defaultKind,
+  prefill,
   categories,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing?: Transaction;
   defaultKind?: Kind;
+  prefill?: ScanHandoff;
   categories: Category[];
 }) {
   const [kind, setKind] = useState<Kind>(editing?.kind ?? defaultKind ?? "expense");
@@ -1130,6 +1174,7 @@ function TransactionDialog({
   const [err, setErr] = useState<string | null>(null);
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   const upsert = useUpsertTransaction();
   const upsertCat = useUpsertCategory();
@@ -1146,21 +1191,23 @@ function TransactionDialog({
   // reset when opening
   useMemo(() => {
     if (open) {
-      setKind(editing?.kind ?? defaultKind ?? "expense");
-      setAmount(editing ? String(editing.amount) : "");
-      setDate(editing?.occurred_on ?? todayIso());
-      setCategoryId(editing?.category_id ?? "");
-      setMerchant(editing?.merchant ?? "");
+      const scan = !editing ? prefill : undefined;
+      setKind(editing?.kind ?? (scan ? "expense" : defaultKind ?? "expense"));
+      setAmount(editing ? String(editing.amount) : scan?.amount ?? "");
+      setDate(editing?.occurred_on ?? scan?.date ?? todayIso());
+      setCategoryId(editing?.category_id ?? scan?.categoryId ?? "");
+      setMerchant(editing?.merchant ?? scan?.merchant ?? "");
       setAccount(editing?.account ?? "");
-      setNote(editing?.note ?? "");
-      setPaymentMode(editing?.payment_mode ?? null);
-      setPaymentAccountId(editing?.payment_account_id ?? null);
+      setNote(editing?.note ?? scan?.note ?? "");
+      setPaymentMode(editing?.payment_mode ?? scan?.paymentMode ?? null);
+      setPaymentAccountId(editing?.payment_account_id ?? scan?.paymentAccountId ?? null);
+      setReceiptFile(scan?.receiptFile ?? null);
       setErr(null);
       setShowNewCat(false);
       setNewCatName("");
     }
     return null;
-  }, [open, editing, defaultKind]);
+  }, [open, editing, defaultKind, prefill]);
 
   const kindCats = categories.filter((c) => c.kind === kind);
   const presets = kind === "expense" ? EXPENSE_PRESETS : INCOME_PRESETS;
@@ -1246,7 +1293,7 @@ function TransactionDialog({
       }
     }
     try {
-      await upsert.mutateAsync({
+      const saved = await upsert.mutateAsync({
         id: editing?.id,
         kind,
         amount: n,
@@ -1258,6 +1305,10 @@ function TransactionDialog({
         payment_mode: kind === "expense" ? paymentMode : null,
         payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
+      if (receiptFile && saved?.id) {
+        await uploadReceipt(saved.id, receiptFile);
+        setReceiptFile(null);
+      }
       if (kind === "expense") void commitStagedPaymentPreferences();
       if (keepOpen && !editing) {
         setAmount("");
