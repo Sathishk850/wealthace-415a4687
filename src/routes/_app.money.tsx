@@ -1265,7 +1265,7 @@ function TransactionDialog({
       }
     }
     try {
-      await upsert.mutateAsync({
+      const saved = await upsert.mutateAsync({
         id: editing?.id,
         kind,
         amount: n,
@@ -1277,6 +1277,10 @@ function TransactionDialog({
         payment_mode: kind === "expense" ? paymentMode : null,
         payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
+      if (receiptFile && saved?.id) {
+        await uploadReceipt(saved.id, receiptFile);
+        setReceiptFile(null);
+      }
       if (kind === "expense") void commitStagedPaymentPreferences();
       if (keepOpen && !editing) {
         setAmount("");
