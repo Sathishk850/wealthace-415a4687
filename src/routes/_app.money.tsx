@@ -726,11 +726,18 @@ function Money() {
         />
       )}
 
+      <ExpenseScanDialog
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        onManual={() => setOpenTx({ open: true, defaultKind: "expense" })}
+        onConfirm={(v) => setOpenTx({ open: true, defaultKind: "expense", prefill: v })}
+      />
       <TransactionDialog
         open={openTx.open}
         onOpenChange={(o) => setOpenTx((s) => ({ ...s, open: o }))}
         editing={openTx.editing}
         defaultKind={openTx.defaultKind}
+        prefill={openTx.prefill}
         categories={categories}
       />
       <BudgetDialog
