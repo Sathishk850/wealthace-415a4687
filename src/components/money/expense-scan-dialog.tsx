@@ -409,14 +409,21 @@ export function ExpenseScanDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Select account</SelectItem>
-                    {accounts.map((a) => (
+                    {modeAccounts.map((a) => (
                       <SelectItem key={a.id} value={a.id}>
                         {formatAccountLabel(a)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {mode && modeAccounts.length === 0 && (
+                  <div className="mt-1 text-[11px] text-amber-300">
+                    No {paymentModeLabel(mode).toLowerCase()} account saved yet — you can add
+                    one on the next screen.
+                  </div>
+                )}
               </div>
+
             </div>
 
             {mode && (
