@@ -474,23 +474,52 @@ export function ExpenseScanDialog({
   );
 }
 
-function SourceButton({
+/**
+ * Each option is a real <label> wrapping its own file input, so the native
+ * camera / gallery / file picker is opened directly by the user's tap. This is
+ * the only reliable way inside dialogs, iframes and on iOS Safari, where a
+ * programmatic click on a display:none input is ignored.
+ */
+function SourcePicker({
   icon: Icon,
   label,
-  onClick,
+  accept,
+  capture,
+  onFile,
 }: {
   icon: typeof Camera;
   label: string;
-  onClick: () => void;
+  accept: string;
+  capture?: "environment" | "user";
+  onFile: (f: File | null | undefined) => void | Promise<void>;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="grid place-items-center gap-2 rounded-xl border border-border bg-card px-3 py-6 text-xs font-semibold text-foreground transition hover:border-mint/50 hover:bg-surface"
+    <label
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
+      className="grid cursor-pointer place-items-center gap-2 rounded-xl border border-border bg-card px-3 py-6 text-xs font-semibold text-foreground transition hover:border-mint/50 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60"
     >
       <Icon className="h-5 w-5 text-mint" />
       {label}
-    </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        {...(capture ? { capture } : {})}
+        className="absolute h-0 w-0 opacity-0"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          // allow re-picking the same file later
+          e.target.value = "";
+          void onFile(f);
+        }}
+      />
+    </label>
   );
 }
