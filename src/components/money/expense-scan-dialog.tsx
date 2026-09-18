@@ -519,7 +519,7 @@ function SourcePicker({
   onFile: (f: File | null | undefined) => void | Promise<void>;
 }) {
   return (
-    <label
+    <div
       className="relative grid min-h-20 cursor-pointer place-items-center gap-2 overflow-hidden rounded-xl border border-border bg-card px-3 py-6 text-xs font-semibold text-foreground transition hover:border-mint/50 hover:bg-surface focus-within:border-mint/50 focus-within:ring-2 focus-within:ring-mint/60"
     >
       <Icon className="pointer-events-none h-5 w-5 text-mint" aria-hidden="true" />
@@ -537,6 +537,6 @@ function SourcePicker({
           void onFile(f);
         }}
       />
-    </label>
+    </div>
   );
 }
