@@ -173,9 +173,18 @@ export function ExpenseScanDialog({
     try {
       const dataUrl = await readAsDataUrl(f);
       const res = await scanReceipt({ data: { dataUrl, filename: f.name } });
-      const cat = matchCategory(res.fields, categories, corrections);
+      // Categories / accounts may still be loading when the scan returns; match
+      // against freshly resolved lists so suggestions aren't silently skipped.
+      const catList = categories.length
+        ? categories
+        : ((await categoriesQ.refetch()).data ?? []);
+      const accList = (accountsQ.data ?? []).length
+        ? (accountsQ.data ?? [])
+        : ((await accountsQ.refetch()).data ?? []);
+      const cat = matchCategory(res.fields, catList, corrections);
       const m = matchPaymentMode(res.fields.payment_method);
-      const acc = matchPaymentAccount(res.fields, m, accountsQ.data ?? []);
+      const acc = matchPaymentAccount(res.fields, m, accList);
+
       const currencyNote =
         res.fields.currency && res.fields.currency.toUpperCase() !== "INR"
           ? `Original currency: ${res.fields.currency}`
