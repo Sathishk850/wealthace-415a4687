@@ -258,6 +258,9 @@ function Money() {
   }, [monthOffset]);
   const activeMonthKey = monthKey(activeMonth);
   const activeMonthLabel = formatMonthLabel(activeMonthKey);
+  // Navigator's month as a date range for the Income/Expenses tables
+  const navFrom = iso(activeMonth);
+  const navTo = iso(new Date(activeMonth.getFullYear(), activeMonth.getMonth() + 1, 0));
 
   const prevMonth = useMemo(() => {
     const d = new Date(activeMonth);
@@ -731,6 +734,10 @@ function Money() {
           categories={categories}
           kindFilter="income"
           onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+          overrideFrom={navFrom}
+          overrideTo={navTo}
+          overrideLabel={activeMonthLabel}
+          resetKey={monthOffset}
         />
       ) : tab === "Expenses" ? (
         <TransactionsTable
@@ -738,6 +745,10 @@ function Money() {
           categories={categories}
           kindFilter="expense"
           onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+          overrideFrom={navFrom}
+          overrideTo={navTo}
+          overrideLabel={activeMonthLabel}
+          resetKey={monthOffset}
         />
       ) : (
         <BudgetsView
