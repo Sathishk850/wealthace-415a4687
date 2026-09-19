@@ -6,7 +6,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type Priority = "low" | "normal" | "high" | "urgent";
+type Priority = "low" | "normal" | "high" | "urgent" | "info";
 
 const DAY = 86400000;
 
@@ -29,6 +29,10 @@ function dueLabel(days: number) {
 }
 function inr(n: unknown) {
   return "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
+}
+function paymentBody(days: number, amount: unknown, fallback: string) {
+  if (days < 0) return `Overdue by ${-days} day${days === -1 ? "" : "s"} — ${inr(amount)}`;
+  return Number(amount) > 0 ? fallback : "Payment upcoming";
 }
 
 export const sweepAlerts = createServerFn({ method: "POST" })
@@ -79,11 +83,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       if (days > lead) continue;
       await notifyOnce({
         title: `${r.title} ${dueLabel(days)}`,
-        body: r.amount ? `Amount ${inr(r.amount)}` : "Payment upcoming",
+        body: paymentBody(days, r.amount, `Amount ${inr(r.amount)}`),
         priority: days < 0 ? "high" : "normal",
         link: "/tools",
         dedupe: { reminder_id: r.id, due_date: r.due_date },
-        metadata: { kind: r.kind ?? "bill" },
+        metadata: { kind: r.kind ?? "bill", due_date: r.due_date, due_days: days },
       });
     }
 
@@ -99,11 +103,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       const days = dayDiff(s.sip_next_date as string, now);
       await notifyOnce({
         title: `SIP ${dueLabel(days)}: ${s.name}`,
-        body: s.sip_amount ? `Installment ${inr(s.sip_amount)}` : "SIP installment upcoming",
+        body: paymentBody(days, s.sip_amount, `Installment ${inr(s.sip_amount)}`),
         priority: days < 0 ? "high" : "normal",
         link: "/wealth",
         dedupe: { investment_id: s.id, due_date: s.sip_next_date },
-        metadata: { kind: "sip" },
+        metadata: { kind: "sip", due_date: s.sip_next_date, due_days: days },
       });
     }
 
@@ -119,11 +123,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       const days = dayDiff(l.due_date as string, now);
       await notifyOnce({
         title: `${days < 0 ? "Overdue EMI" : "EMI"} ${dueLabel(days)}: ${l.name}`,
-        body: l.emi ? `EMI ${inr(l.emi)}` : "Payment upcoming",
-        priority: days < 0 ? "urgent" : "normal",
+        body: paymentBody(days, l.emi, `EMI ${inr(l.emi)}`),
+        priority: days < 0 ? "high" : "normal",
         link: "/wealth",
         dedupe: { liability_id: l.id, due_date: l.due_date },
-        metadata: { kind: days < 0 ? "overdue" : "emi" },
+        metadata: { kind: days < 0 ? "overdue" : "emi", due_date: l.due_date, due_days: days },
       });
     }
 
@@ -139,11 +143,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       const days = dayDiff(p.renewal_date as string, now);
       await notifyOnce({
         title: `Policy renewal ${dueLabel(days)}: ${p.policy_name}`,
-        body: p.premium_amount ? `Premium ${inr(p.premium_amount)}` : "Renewal upcoming",
-        priority: days < 0 ? "urgent" : "normal",
+        body: paymentBody(days, p.premium_amount, `Premium ${inr(p.premium_amount)}`),
+        priority: days < 0 ? "high" : "normal",
         link: "/wealth",
         dedupe: { insurance_id: p.id, due_date: p.renewal_date },
-        metadata: { kind: "insurance" },
+        metadata: { kind: "insurance", due_date: p.renewal_date, due_days: days },
       });
     }
 
@@ -201,33 +205,42 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       }
     }
 
-    /* ---- 6. Rebalance check: any single asset class drifting past 60% ---- */
-    const totals = new Map<string, number>();
+    /* ---- 6. Rebalance check: holdings drifting past 60% ---- */
     let portfolio = 0;
     const { data: allInv } = await supabase
       .from("wealth_investments")
-      .select("category, current_value, invested_value, status");
+      .select("id, name, symbol, current_value, invested_value, status");
+    const valuedHoldings: Array<{ id: string; name: string; value: number }> = [];
     for (const i of allInv ?? []) {
       if ((i.status ?? "active") !== "active") continue;
       const v = Number(i.current_value ?? i.invested_value ?? 0);
-
       if (!Number.isFinite(v) || v <= 0) continue;
-      const key = String(i.category ?? "Other");
-      totals.set(key, (totals.get(key) ?? 0) + v);
+      const holding = i as typeof i & { ticker?: string | null };
+      const displayName = holding.name || holding.ticker || holding.symbol || "Unknown holding";
+      valuedHoldings.push({ id: i.id, name: displayName, value: v });
       portfolio += v;
     }
     if (portfolio > 0) {
-      for (const [cls, val] of totals) {
-        const pct = (val / portfolio) * 100;
-        if (pct < 60) continue;
+      const concentrated = valuedHoldings
+        .map((holding) => ({ ...holding, pct: (holding.value / portfolio) * 100 }))
+        .filter((holding) => holding.pct >= 60)
+        .sort((a, b) => b.pct - a.pct);
+      if (concentrated.length > 0) {
+        const first = concentrated[0];
+        const names = concentrated.map((holding) => holding.name);
         await notifyOnce({
-          title: `Rebalance suggested — ${cls} at ${pct.toFixed(0)}%`,
-          body: `${cls} is ${pct.toFixed(0)}% of your portfolio. Consider diversifying to reduce concentration risk.`,
-          priority: "normal",
+          title:
+            concentrated.length === 1
+              ? `${first.name} is ${first.pct.toFixed(0)}% of your portfolio — consider rebalancing`
+              : `${concentrated.length} holdings above concentration threshold — consider rebalancing`,
+          body:
+            concentrated.length === 1
+              ? `${first.name} exceeds the concentration threshold. Consider diversifying to reduce risk.`
+              : names.join(", "),
+          priority: "info",
           link: "/wealth",
-          // One alert per class per month, re-raised while the drift persists.
-          dedupe: { rebalance: `${cls}:${now.toISOString().slice(0, 7)}` },
-          metadata: { kind: "rebalance" },
+          dedupe: { rebalance_group: now.toISOString().slice(0, 7) },
+          metadata: { kind: "rebalance", holding_names: names },
         });
       }
     }
@@ -246,7 +259,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       await notifyOnce({
         title: `Review goal: ${g.name}`,
         body: `${progress.toFixed(0)}% funded (${inr(saved)} of ${inr(target)}). Check whether your monthly contribution still fits.`,
-        priority: "low",
+        priority: "info",
         link: "/planner",
         dedupe: { goal_review: `${g.id}:${quarter}` },
         metadata: { kind: "goal_review" },
@@ -265,7 +278,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       await notifyOnce({
         title: `Goal behind schedule: ${g.name}`,
         body: `Needs ${inr(needed)}/month to land on time — currently ${inr(contributing)}/month.`,
-        priority: monthsLeft <= 3 ? "high" : "normal",
+        priority: "info",
         link: "/planner",
         dedupe: { goal_behind: `${g.id}:${now.toISOString().slice(0, 7)}` },
         metadata: { kind: "goal_behind" },
@@ -277,7 +290,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       await notifyOnce({
         title: "Quarterly portfolio review due",
         body: `Portfolio value ${inr(portfolio)}. Check performance, allocation drift and any dormant SIPs.`,
-        priority: "low",
+        priority: "info",
         link: "/wealth",
         dedupe: { investment_review: quarter },
         metadata: { kind: "investment_review" },
@@ -297,11 +310,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       if (days < -7) continue;
       await notifyOnce({
         title: `Loan closure ${dueLabel(days)}: ${l.name}`,
-        body: `Outstanding ${inr(l.outstanding)}. Confirm the final payment and collect the no-dues certificate.`,
-        priority: days <= 7 ? "high" : "normal",
+        body: paymentBody(days, l.outstanding, `Outstanding ${inr(l.outstanding)}. Confirm the final payment and collect the no-dues certificate.`),
+        priority: days < 0 ? "high" : "normal",
         link: "/wealth",
         dedupe: { liability_maturity: `${l.id}:${l.end_date}` },
-        metadata: { kind: "maturity" },
+        metadata: { kind: "maturity", due_date: l.end_date, due_days: days },
       });
     }
 
@@ -317,11 +330,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       if (days < -7) continue;
       await notifyOnce({
         title: `Policy maturity ${dueLabel(days)}: ${p.policy_name}`,
-        body: `Cover ${inr(p.coverage_amount)} ends. Plan the payout or a replacement policy.`,
-        priority: days <= 7 ? "high" : "normal",
+        body: paymentBody(days, p.coverage_amount, `Cover ${inr(p.coverage_amount)} ends. Plan the payout or a replacement policy.`),
+        priority: days < 0 ? "high" : "normal",
         link: "/wealth",
         dedupe: { insurance_maturity: `${p.id}:${p.end_date}` },
-        metadata: { kind: "maturity" },
+        metadata: { kind: "maturity", due_date: p.end_date, due_days: days },
       });
     }
 
@@ -338,11 +351,11 @@ export const sweepAlerts = createServerFn({ method: "POST" })
       const value = Number(i.current_value ?? i.invested_value ?? 0);
       await notifyOnce({
         title: `${i.category ?? "Investment"} maturity ${dueLabel(days)}: ${i.name}`,
-        body: `${value > 0 ? `Value ${inr(value)}. ` : ""}Plan the reinvestment or withdrawal before it matures.`,
-        priority: days <= 7 ? "high" : "normal",
+        body: paymentBody(days, value, `${value > 0 ? `Value ${inr(value)}. ` : ""}Plan the reinvestment or withdrawal before it matures.`),
+        priority: days < 0 ? "high" : "normal",
         link: "/wealth",
         dedupe: { investment_maturity: `${i.id}:${i.maturity_date}` },
-        metadata: { kind: "maturity", investment_id: i.id },
+        metadata: { kind: "maturity", investment_id: i.id, due_date: i.maturity_date, due_days: days },
       });
     }
 
