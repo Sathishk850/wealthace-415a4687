@@ -904,17 +904,26 @@ function TransactionsTable({
   categories,
   kindFilter,
   onEdit,
+  overrideFrom,
+  overrideTo,
+  overrideLabel,
+  resetKey,
 }: {
   rows: Transaction[];
   categories: Category[];
   kindFilter?: Kind;
   onEdit: (tx: Transaction) => void;
+  overrideFrom?: string;
+  overrideTo?: string;
+  overrideLabel?: string;
+  resetKey?: number;
 }) {
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const isMobile = useIsMobile();
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [period, setPeriod] = useState<PeriodKey>("this_month");
+  const [periodTouched, setPeriodTouched] = useState(false);
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [sort, setSort] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
