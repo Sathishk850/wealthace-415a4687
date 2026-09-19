@@ -9,3 +9,6 @@
 - [x] 7. Receipt upload after save; non-blocking warning on failure
 - [x] 8. Manual Add Transaction flow unchanged (same fields, validation, save path)
 - [ ] 9. Signed-in browser verification — blocked: no test session can be created in this environment
+
+## Scan feature inspection (2026-09-19)
+- [ ] Report scan files, failure mode, OCR backend, console/TS errors (read-only)
