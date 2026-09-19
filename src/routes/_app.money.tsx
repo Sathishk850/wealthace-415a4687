@@ -930,7 +930,21 @@ function TransactionsTable({
   const [page, setPage] = useState(1);
   const pageSize = isMobile ? 5 : 8;
 
-  const range = useMemo(() => periodRange(period, from, to), [period, from, to]);
+  // Navigator override: applies while the Period dropdown is left at its default
+  const useOverride =
+    period === "this_month" && !periodTouched && !!overrideFrom && !!overrideTo;
+
+  // Reset to the default period when the month navigator moves
+  useEffect(() => {
+    setPeriod("this_month");
+    setPeriodTouched(false);
+    setPage(1);
+  }, [resetKey]);
+
+  const range = useMemo(
+    () => (useOverride ? { from: overrideFrom, to: overrideTo } : periodRange(period, from, to)),
+    [useOverride, overrideFrom, overrideTo, period, from, to]
+  );
 
   const filtered = useMemo(() => {
     let arr = rows;
@@ -992,8 +1006,8 @@ function TransactionsTable({
           </div>
           <div>
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Period</div>
-            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPage(1); }}>
-              <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPeriodTouched(true); setPage(1); }}>
+              <SelectTrigger className="h-9 w-[150px] text-xs">{useOverride && overrideLabel ? overrideLabel : <SelectValue />}</SelectTrigger>
               <SelectContent>
                 {PERIOD_OPTIONS.map((o) => (
                   <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
