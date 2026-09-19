@@ -22,6 +22,8 @@ export async function fireBudgetAlerts(budgets: BudgetAlertInput[]): Promise<voi
   if (!userId) return;
 
   for (const b of budgets) {
+    // Only fire when a real budget limit exists for the month
+    if (!b.limit || b.limit <= 0) continue;
     if (b.pct < 80) continue;
 
     const threshold = b.pct >= 100 ? 100 : 80;
@@ -29,6 +31,26 @@ export async function fireBudgetAlerts(budgets: BudgetAlertInput[]): Promise<voi
 
     // Already fired this threshold this month
     if (localStorage.getItem(dedupKey)) continue;
+
+    // DB-level dedupe: one alert per category/threshold/month across devices
+    try {
+      const { count } = await supabase
+        .from("notifications")
+        .select("id", { head: true, count: "exact" })
+        .eq("category", "reminder")
+        .contains("metadata", {
+          kind: "budget",
+          reference_id: b.categoryId,
+          threshold,
+          month: b.monthKey,
+        });
+      if ((count ?? 0) > 0) {
+        localStorage.setItem(dedupKey, "1");
+        continue;
+      }
+    } catch {
+      // fall through — localStorage dedupe still applies
+    }
 
     const isExceeded = threshold === 100;
     const title = isExceeded
@@ -50,6 +72,8 @@ export async function fireBudgetAlerts(budgets: BudgetAlertInput[]): Promise<voi
           kind: "budget",
           reference_type: "budget",
           reference_id: b.categoryId,
+          threshold,
+          month: b.monthKey,
         },
       });
 
