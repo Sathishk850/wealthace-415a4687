@@ -258,6 +258,9 @@ function Money() {
   }, [monthOffset]);
   const activeMonthKey = monthKey(activeMonth);
   const activeMonthLabel = formatMonthLabel(activeMonthKey);
+  // Navigator's month as a date range for the Income/Expenses tables
+  const navFrom = iso(activeMonth);
+  const navTo = iso(new Date(activeMonth.getFullYear(), activeMonth.getMonth() + 1, 0));
 
   const prevMonth = useMemo(() => {
     const d = new Date(activeMonth);
@@ -731,6 +734,10 @@ function Money() {
           categories={categories}
           kindFilter="income"
           onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+          overrideFrom={navFrom}
+          overrideTo={navTo}
+          overrideLabel={activeMonthLabel}
+          resetKey={monthOffset}
         />
       ) : tab === "Expenses" ? (
         <TransactionsTable
@@ -738,6 +745,10 @@ function Money() {
           categories={categories}
           kindFilter="expense"
           onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+          overrideFrom={navFrom}
+          overrideTo={navTo}
+          overrideLabel={activeMonthLabel}
+          resetKey={monthOffset}
         />
       ) : (
         <BudgetsView
@@ -893,24 +904,47 @@ function TransactionsTable({
   categories,
   kindFilter,
   onEdit,
+  overrideFrom,
+  overrideTo,
+  overrideLabel,
+  resetKey,
 }: {
   rows: Transaction[];
   categories: Category[];
   kindFilter?: Kind;
   onEdit: (tx: Transaction) => void;
+  overrideFrom?: string;
+  overrideTo?: string;
+  overrideLabel?: string;
+  resetKey?: number;
 }) {
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const isMobile = useIsMobile();
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [period, setPeriod] = useState<PeriodKey>("this_month");
+  const [periodTouched, setPeriodTouched] = useState(false);
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [sort, setSort] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
   const [page, setPage] = useState(1);
   const pageSize = isMobile ? 5 : 8;
 
-  const range = useMemo(() => periodRange(period, from, to), [period, from, to]);
+  // Navigator override: applies while the Period dropdown is left at its default
+  const useOverride =
+    period === "this_month" && !periodTouched && !!overrideFrom && !!overrideTo;
+
+  // Reset to the default period when the month navigator moves
+  useEffect(() => {
+    setPeriod("this_month");
+    setPeriodTouched(false);
+    setPage(1);
+  }, [resetKey]);
+
+  const range = useMemo(
+    () => (useOverride ? { from: overrideFrom, to: overrideTo } : periodRange(period, from, to)),
+    [useOverride, overrideFrom, overrideTo, period, from, to]
+  );
 
   const filtered = useMemo(() => {
     let arr = rows;
@@ -972,8 +1006,8 @@ function TransactionsTable({
           </div>
           <div>
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Period</div>
-            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPage(1); }}>
-              <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue /></SelectTrigger>
+            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPeriodTouched(true); setPage(1); }}>
+              <SelectTrigger className="h-9 w-[150px] text-xs">{useOverride && overrideLabel ? overrideLabel : <SelectValue />}</SelectTrigger>
               <SelectContent>
                 {PERIOD_OPTIONS.map((o) => (
                   <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
