@@ -41,6 +41,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
     const supabase = context.supabase;
     const userId = context.userId as string;
     const now = new Date();
+    const monthKey = now.toISOString().slice(0, 7);
     let created = 0;
 
     /** Insert only when no notification with the same dedupe key exists yet. */
@@ -86,7 +87,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         body: paymentBody(days, r.amount, `Amount ${inr(r.amount)}`),
         priority: days < 0 ? "high" : "normal",
         link: "/tools",
-        dedupe: { reminder_id: r.id, due_date: r.due_date },
+        dedupe: { reminder_id: r.id, due_date: r.due_date, month: monthKey },
         metadata: { kind: r.kind ?? "bill", due_date: r.due_date, due_days: days },
       });
     }
@@ -106,7 +107,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         body: paymentBody(days, s.sip_amount, `Installment ${inr(s.sip_amount)}`),
         priority: days < 0 ? "high" : "normal",
         link: "/wealth",
-        dedupe: { investment_id: s.id, due_date: s.sip_next_date },
+        dedupe: { investment_id: s.id, due_date: s.sip_next_date, month: monthKey },
         metadata: { kind: "sip", due_date: s.sip_next_date, due_days: days },
       });
     }
@@ -126,7 +127,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         body: paymentBody(days, l.emi, `EMI ${inr(l.emi)}`),
         priority: days < 0 ? "high" : "normal",
         link: "/wealth",
-        dedupe: { liability_id: l.id, due_date: l.due_date },
+        dedupe: { liability_id: l.id, due_date: l.due_date, month: monthKey },
         metadata: { kind: days < 0 ? "overdue" : "emi", due_date: l.due_date, due_days: days },
       });
     }
@@ -146,7 +147,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         body: paymentBody(days, p.premium_amount, `Premium ${inr(p.premium_amount)}`),
         priority: days < 0 ? "high" : "normal",
         link: "/wealth",
-        dedupe: { insurance_id: p.id, due_date: p.renewal_date },
+        dedupe: { insurance_id: p.id, due_date: p.renewal_date, month: monthKey },
         metadata: { kind: "insurance", due_date: p.renewal_date, due_days: days },
       });
     }
@@ -313,7 +314,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         body: paymentBody(days, l.outstanding, `Outstanding ${inr(l.outstanding)}. Confirm the final payment and collect the no-dues certificate.`),
         priority: days < 0 ? "high" : "normal",
         link: "/wealth",
-        dedupe: { liability_maturity: `${l.id}:${l.end_date}` },
+        dedupe: { liability_maturity: `${l.id}:${l.end_date}`, month: monthKey },
         metadata: { kind: "maturity", due_date: l.end_date, due_days: days },
       });
     }
@@ -333,7 +334,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         body: paymentBody(days, p.coverage_amount, `Cover ${inr(p.coverage_amount)} ends. Plan the payout or a replacement policy.`),
         priority: days < 0 ? "high" : "normal",
         link: "/wealth",
-        dedupe: { insurance_maturity: `${p.id}:${p.end_date}` },
+        dedupe: { insurance_maturity: `${p.id}:${p.end_date}`, month: monthKey },
         metadata: { kind: "maturity", due_date: p.end_date, due_days: days },
       });
     }
@@ -354,7 +355,7 @@ export const sweepAlerts = createServerFn({ method: "POST" })
         body: paymentBody(days, value, `${value > 0 ? `Value ${inr(value)}. ` : ""}Plan the reinvestment or withdrawal before it matures.`),
         priority: days < 0 ? "high" : "normal",
         link: "/wealth",
-        dedupe: { investment_maturity: `${i.id}:${i.maturity_date}` },
+        dedupe: { investment_maturity: `${i.id}:${i.maturity_date}`, month: monthKey },
         metadata: { kind: "maturity", investment_id: i.id, due_date: i.maturity_date, due_days: days },
       });
     }
