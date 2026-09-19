@@ -102,7 +102,7 @@ export function AlertsDigest() {
     <aside
       role="dialog"
       aria-label="Notifications"
-      className="fixed bottom-4 left-4 z-50 flex max-h-[420px] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl"
+      className="fixed bottom-4 right-4 z-50 flex max-h-[420px] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl"
     >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
