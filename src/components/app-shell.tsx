@@ -89,7 +89,7 @@ const ProfileMenuTrigger = React.forwardRef<
       type="button"
       aria-label="Profile menu"
       {...props}
-      className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-[#21DBD2]/40 bg-[rgba(33,219,210,0.10)] text-[#21DBD2] transition hover:bg-[rgba(33,219,210,0.18)]"
+      className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-primary/40 bg-primary/10 text-primary transition hover:bg-primary/20"
     >
       {url ? (
         <img src={url} alt="Account" className="h-full w-full object-cover" />
@@ -178,9 +178,9 @@ function TopBar() {
   };
 
   const iconBtn =
-    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-[rgba(33,219,210,0.12)] hover:text-[#21DBD2]";
+    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-primary/10 hover:text-primary";
   const iconBtnActive =
-    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 bg-[rgba(33,219,210,0.12)] text-[#21DBD2]";
+    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 bg-primary/10 text-primary";
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-border bg-surface-2/90 px-4 py-2.5 backdrop-blur-xl md:px-6">
@@ -195,13 +195,13 @@ function TopBar() {
               to={t.to}
               className={cn(
                 "relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium transition",
-                active ? "text-[#21DBD2]" : "text-muted-foreground hover:text-foreground",
+                active ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4" />
               <span>{t.label}</span>
               {active && (
-                <span className="absolute inset-x-3 -bottom-[10px] h-[2px] rounded-full bg-[#21DBD2]" />
+                <span className="absolute inset-x-3 -bottom-[10px] h-[2px] rounded-full bg-primary" />
               )}
             </Link>
           );
