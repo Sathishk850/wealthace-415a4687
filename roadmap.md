@@ -12,3 +12,10 @@
 
 ## Scan feature inspection (2026-09-19)
 - [ ] Report scan files, failure mode, OCR backend, console/TS errors (read-only)
+
+# Ledger theme
+
+- [ ] Add Ledger tokens and typography
+- [ ] Add Ledger to Settings and header switcher
+- [ ] Extend charts and planner palette
+- [ ] Verify desktop/mobile, persistence, typecheck, and build
