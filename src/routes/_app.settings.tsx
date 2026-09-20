@@ -247,7 +247,7 @@ function SelectField({
 }
 
 type Appearance = {
-  theme: "system" | "light" | "dark" | "ledger";
+  theme: "system" | "light" | "dark";
   compact_mode: boolean;
   default_chart_range: string;
   chart_animations: boolean;
@@ -265,14 +265,14 @@ const CHART_RANGES = ["1M", "3M", "6M", "1Y"];
 function applyTheme(theme: Appearance["theme"]) {
   if (typeof window === "undefined") return;
   const root = document.documentElement;
-  let mode: "dark" | "light" | "ledger" = "dark";
+  let mode: "dark" | "light" = "dark";
   if (theme === "system") {
     mode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   } else {
     mode = theme;
   }
   root.classList.toggle("dark", mode === "dark");
-  root.classList.toggle("ledger", mode === "ledger");
+  root.classList.remove("ledger");
   try { window.localStorage.setItem("fv-theme", mode); } catch {}
 }
 
@@ -336,8 +336,8 @@ function AppearanceTab() {
           <h3 className="text-sm font-semibold text-foreground">Theme</h3>
           <p className="text-xs text-muted-foreground">Choose how Wealth Ace looks on this account.</p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {(["system", "light", "dark", "ledger"] as const).map((t) => (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {(["system", "light", "dark"] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -349,13 +349,13 @@ function AppearanceTab() {
               }`}
             >
               <div className="mb-2 flex gap-1" aria-hidden="true">
-                {(t === "ledger" ? ["#F6F3EC", "#FFFFFF", "#2F4B3C"] : t === "dark" ? ["#000000", "#0A0A0A", "#21DBD2"] : t === "light" ? ["#F5FAFC", "#FFFFFF", "#21DBD2"] : ["#F5FAFC", "#000000", "#21DBD2"]).map((color) => (
+                {(t === "dark" ? ["#121309", "#1E2015", "#7AB894"] : t === "light" ? ["#F6F3EC", "#FFFFFF", "#2F4B3C"] : ["#F6F3EC", "#121309", "#A6813C"]).map((color) => (
                   <span key={color} className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: color }} />
                 ))}
               </div>
               <div className="font-medium capitalize">{t}</div>
               <div className="text-xs text-muted-foreground">
-                {t === "system" ? "Match device" : t === "light" ? "Always light" : t === "dark" ? "Always dark" : "Warm paper ledger"}
+                {t === "system" ? "Match device" : t === "light" ? "Warm paper ledger" : "Dark paper ledger"}
               </div>
             </button>
           ))}
