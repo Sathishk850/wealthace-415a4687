@@ -29,88 +29,25 @@ type Palette = {
 };
 
 const DARK: Palette = {
-  navy: "#000000",
-  navyMid: "#0A0A0A",
-  navyCard: "rgba(15,15,17,0.85)",
-  teal: "#00D4AA",
-  blue: "#00B4D8",
-  success: "#10B981",
-  warning: "#F59E0B",
-  danger: "#EF4444",
-  fire: "#F97316",
-  purple: "#A78BFA",
-  green: "#10B981",
-  textPrimary: "#E2E8F0",
-  textMuted: "#94A3B8",
-  textDim: "#64748B",
-  cardBorder: "rgba(0,212,170,0.12)",
-  divider: "rgba(255,255,255,0.06)",
-  inputBg: "rgba(255,255,255,0.06)",
-  inputBorder: "rgba(255,255,255,0.1)",
-  bgGradient:
-    "radial-gradient(1200px 600px at 20% 0%, rgba(0,212,170,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,180,216,0.05), transparent 60%), #000",
-  bgGradientFire:
-    "radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,0.06), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(0,212,170,0.05), transparent 60%), #000",
-  focusBorder: "rgba(0,212,170,0.5)",
-  focusBorderFire: "rgba(249,115,22,0.5)",
-  primaryBtnText: "#0A1628",
-  softBg: "rgba(255,255,255,0.03)",
+  navy: "#121309", navyMid: "#191A11", navyCard: "#1E2015",
+  teal: "#7AB894", blue: "#8FCBA6", success: "#7AB894", warning: "#D9B872",
+  danger: "#E38B6E", fire: "#E38B6E", purple: "#9A9C8B", green: "#7AB894",
+  textPrimary: "#ECE8DA", textMuted: "#9A9C8B", textDim: "#9A9C8B",
+  cardBorder: "#2E301F", divider: "#2E301F", inputBg: "#1E2015", inputBorder: "#2E301F",
+  bgGradient: "#121309", bgGradientFire: "#121309",
+  focusBorder: "rgba(122,184,148,0.55)", focusBorderFire: "rgba(227,139,110,0.55)",
+  primaryBtnText: "#121309", softBg: "#191A11",
 };
 
 const LIGHT: Palette = {
-  navy: "#F8FAFC",
-  navyMid: "#F1F5F9",
-  navyCard: "rgba(255,255,255,0.95)",
-  teal: "#0F9E85",
-  blue: "#0284C7",
-  success: "#059669",
-  warning: "#D97706",
-  danger: "#DC2626",
-  fire: "#EA580C",
-  purple: "#7C3AED",
-  green: "#059669",
-  textPrimary: "#0F172A",
-  textMuted: "#475569",
-  textDim: "#64748B",
-  cardBorder: "rgba(15,158,133,0.22)",
-  divider: "rgba(15,23,42,0.08)",
-  inputBg: "#FFFFFF",
-  inputBorder: "rgba(15,23,42,0.14)",
-  bgGradient:
-    "radial-gradient(1200px 600px at 20% 0%, rgba(15,158,133,0.10), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(2,132,199,0.08), transparent 60%), #F8FAFC",
-  bgGradientFire:
-    "radial-gradient(1200px 600px at 20% 0%, rgba(234,88,12,0.10), transparent 60%), radial-gradient(900px 500px at 80% 100%, rgba(15,158,133,0.08), transparent 60%), #F8FAFC",
-  focusBorder: "rgba(15,158,133,0.55)",
-  focusBorderFire: "rgba(234,88,12,0.55)",
-  primaryBtnText: "#FFFFFF",
-  softBg: "rgba(15,23,42,0.035)",
-};
-
-const LEDGER: Palette = {
-  navy: "#F6F3EC",
-  navyMid: "#EFEAE0",
-  navyCard: "#FFFFFF",
-  teal: "#2F4B3C",
-  blue: "#3E634F",
-  success: "#2F6B45",
-  warning: "#A6813C",
-  danger: "#A8412F",
-  fire: "#A8412F",
-  purple: "#6B6D5F",
-  green: "#2F6B45",
-  textPrimary: "#1E2019",
-  textMuted: "#6B6D5F",
-  textDim: "#6B6D5F",
-  cardBorder: "#E2DCCC",
-  divider: "#E2DCCC",
-  inputBg: "#FFFFFF",
-  inputBorder: "#E2DCCC",
-  bgGradient: "#F6F3EC",
-  bgGradientFire: "#F6F3EC",
-  focusBorder: "rgba(47,75,60,0.55)",
-  focusBorderFire: "rgba(166,65,47,0.55)",
-  primaryBtnText: "#FFFFFF",
-  softBg: "#EFEAE0",
+  navy: "#F6F3EC", navyMid: "#EFEAE0", navyCard: "#FFFFFF",
+  teal: "#2F4B3C", blue: "#3E634F", success: "#2F6B45", warning: "#A6813C",
+  danger: "#A8412F", fire: "#A8412F", purple: "#6B6D5F", green: "#2F6B45",
+  textPrimary: "#1E2019", textMuted: "#6B6D5F", textDim: "#6B6D5F",
+  cardBorder: "#E2DCCC", divider: "#E2DCCC", inputBg: "#FFFFFF", inputBorder: "#E2DCCC",
+  bgGradient: "#F6F3EC", bgGradientFire: "#F6F3EC",
+  focusBorder: "rgba(47,75,60,0.55)", focusBorderFire: "rgba(166,65,47,0.55)",
+  primaryBtnText: "#FFFFFF", softBg: "#EFEAE0",
 };
 
 function isDarkNow() {
@@ -118,15 +55,10 @@ function isDarkNow() {
   return document.documentElement.classList.contains("dark");
 }
 
-function isLedgerNow() {
-  if (typeof document === "undefined") return false;
-  return document.documentElement.classList.contains("ledger");
-}
-
 // Proxy that always resolves to the current theme's palette value.
 export const C: Palette = new Proxy({} as Palette, {
   get(_t, prop: string) {
-    const p = isDarkNow() ? DARK : isLedgerNow() ? LEDGER : LIGHT;
+    const p = isDarkNow() ? DARK : LIGHT;
     return (p as unknown as Record<string, string>)[prop];
   },
 }) as Palette;
