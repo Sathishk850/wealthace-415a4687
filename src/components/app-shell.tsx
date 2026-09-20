@@ -8,6 +8,7 @@ import {
   EyeOff,
   Sun,
   Moon,
+  BookOpen,
   Calendar,
   CalendarClock,
   User,
@@ -88,7 +89,7 @@ const ProfileMenuTrigger = React.forwardRef<
       type="button"
       aria-label="Profile menu"
       {...props}
-      className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-[#21DBD2]/40 bg-[rgba(33,219,210,0.10)] text-[#21DBD2] transition hover:bg-[rgba(33,219,210,0.18)]"
+      className="ml-1 grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-primary/40 bg-primary/10 text-primary transition hover:bg-primary/20"
     >
       {url ? (
         <img src={url} alt="Account" className="h-full w-full object-cover" />
@@ -134,10 +135,10 @@ function Brand() {
 
 
 function TopBar() {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
+  const [theme, setTheme] = useState<"dark" | "light" | "ledger">(() => {
     if (typeof window === "undefined") return "dark";
     const saved = window.localStorage.getItem("fv-theme");
-    return saved === "light" ? "light" : "dark";
+    return saved === "light" || saved === "ledger" ? saved : "dark";
   });
   const { enabled: privacy, toggle: togglePrivacy } = usePrivacy();
   const navigate = useNavigate();
@@ -147,10 +148,24 @@ function TopBar() {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
+    root.classList.toggle("dark", theme === "dark");
+    root.classList.toggle("ledger", theme === "ledger");
     try { window.localStorage.setItem("fv-theme", theme); } catch {}
   }, [theme]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const observer = new MutationObserver(() => {
+      const next = root.classList.contains("dark")
+        ? "dark"
+        : root.classList.contains("ledger")
+          ? "ledger"
+          : "light";
+      setTheme((current) => current === next ? current : next);
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   const handleSignOut = async () => {
     markIntentionalSignOut();
@@ -163,9 +178,9 @@ function TopBar() {
   };
 
   const iconBtn =
-    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-[rgba(33,219,210,0.12)] hover:text-[#21DBD2]";
+    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-primary/10 hover:text-primary";
   const iconBtnActive =
-    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 bg-[rgba(33,219,210,0.12)] text-[#21DBD2]";
+    "grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 bg-primary/10 text-primary";
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-border bg-surface-2/90 px-4 py-2.5 backdrop-blur-xl md:px-6">
@@ -180,13 +195,13 @@ function TopBar() {
               to={t.to}
               className={cn(
                 "relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium transition",
-                active ? "text-[#21DBD2]" : "text-muted-foreground hover:text-foreground",
+                active ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4" />
               <span>{t.label}</span>
               {active && (
-                <span className="absolute inset-x-3 -bottom-[10px] h-[2px] rounded-full bg-[#21DBD2]" />
+                <span className="absolute inset-x-3 -bottom-[10px] h-[2px] rounded-full bg-primary" />
               )}
             </Link>
           );
@@ -207,11 +222,11 @@ function TopBar() {
         <NotificationBell />
         <button
           aria-label="Toggle theme"
-          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+          onClick={() => setTheme((t) => t === "dark" ? "light" : t === "light" ? "ledger" : "dark")}
           className={iconBtnActive}
-          title={theme === "dark" ? "Dark mode" : "Light mode"}
+          title={`${theme === "ledger" ? "Ledger" : theme === "dark" ? "Dark" : "Light"} theme — click to switch`}
         >
-          {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          {theme === "dark" ? <Moon className="h-4 w-4" /> : theme === "ledger" ? <BookOpen className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
