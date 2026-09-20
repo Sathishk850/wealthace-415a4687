@@ -8,7 +8,6 @@ import {
   EyeOff,
   Sun,
   Moon,
-  BookOpen,
   Calendar,
   CalendarClock,
   User,
@@ -135,10 +134,10 @@ function Brand() {
 
 
 function TopBar() {
-  const [theme, setTheme] = useState<"dark" | "light" | "ledger">(() => {
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark";
     const saved = window.localStorage.getItem("fv-theme");
-    return saved === "light" || saved === "ledger" ? saved : "dark";
+    return saved === "light" || saved === "ledger" ? "light" : "dark";
   });
   const { enabled: privacy, toggle: togglePrivacy } = usePrivacy();
   const navigate = useNavigate();
@@ -149,7 +148,7 @@ function TopBar() {
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
-    root.classList.toggle("ledger", theme === "ledger");
+    root.classList.remove("ledger");
     try { window.localStorage.setItem("fv-theme", theme); } catch {}
   }, [theme]);
 
@@ -158,9 +157,7 @@ function TopBar() {
     const observer = new MutationObserver(() => {
       const next = root.classList.contains("dark")
         ? "dark"
-        : root.classList.contains("ledger")
-          ? "ledger"
-          : "light";
+        : "light";
       setTheme((current) => current === next ? current : next);
     });
     observer.observe(root, { attributes: true, attributeFilter: ["class"] });
@@ -222,11 +219,11 @@ function TopBar() {
         <NotificationBell />
         <button
           aria-label="Toggle theme"
-          onClick={() => setTheme((t) => t === "dark" ? "light" : t === "light" ? "ledger" : "dark")}
+          onClick={() => setTheme((t) => t === "dark" ? "light" : "dark")}
           className={iconBtnActive}
-          title={`${theme === "ledger" ? "Ledger" : theme === "dark" ? "Dark" : "Light"} theme — click to switch`}
+          title={`${theme === "dark" ? "Dark" : "Light"} theme — click to switch`}
         >
-          {theme === "dark" ? <Moon className="h-4 w-4" /> : theme === "ledger" ? <BookOpen className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
