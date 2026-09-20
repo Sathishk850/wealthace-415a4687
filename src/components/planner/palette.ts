@@ -86,15 +86,47 @@ const LIGHT: Palette = {
   softBg: "rgba(15,23,42,0.035)",
 };
 
+const LEDGER: Palette = {
+  navy: "#F6F3EC",
+  navyMid: "#EFEAE0",
+  navyCard: "#FFFFFF",
+  teal: "#2F4B3C",
+  blue: "#3E634F",
+  success: "#2F6B45",
+  warning: "#A6813C",
+  danger: "#A8412F",
+  fire: "#A8412F",
+  purple: "#6B6D5F",
+  green: "#2F6B45",
+  textPrimary: "#1E2019",
+  textMuted: "#6B6D5F",
+  textDim: "#6B6D5F",
+  cardBorder: "#E2DCCC",
+  divider: "#E2DCCC",
+  inputBg: "#FFFFFF",
+  inputBorder: "#E2DCCC",
+  bgGradient: "#F6F3EC",
+  bgGradientFire: "#F6F3EC",
+  focusBorder: "rgba(47,75,60,0.55)",
+  focusBorderFire: "rgba(166,65,47,0.55)",
+  primaryBtnText: "#FFFFFF",
+  softBg: "#EFEAE0",
+};
+
 function isDarkNow() {
   if (typeof document === "undefined") return true;
   return document.documentElement.classList.contains("dark");
 }
 
+function isLedgerNow() {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.classList.contains("ledger");
+}
+
 // Proxy that always resolves to the current theme's palette value.
 export const C: Palette = new Proxy({} as Palette, {
   get(_t, prop: string) {
-    const p = isDarkNow() ? DARK : LIGHT;
+    const p = isDarkNow() ? DARK : isLedgerNow() ? LEDGER : LIGHT;
     return (p as unknown as Record<string, string>)[prop];
   },
 }) as Palette;

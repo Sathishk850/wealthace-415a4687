@@ -15,7 +15,7 @@
 
 # Ledger theme
 
-- [ ] Add Ledger tokens and typography
-- [ ] Add Ledger to Settings and header switcher
-- [ ] Extend charts and planner palette
+- [x] Add Ledger tokens and typography
+- [x] Add Ledger to Settings and header switcher
+- [x] Extend charts and planner palette
 - [ ] Verify desktop/mobile, persistence, typecheck, and build
