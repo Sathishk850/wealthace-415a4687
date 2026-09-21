@@ -24,6 +24,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -124,17 +125,17 @@ function HomeRoute() {
 function Splash({ leaving }: { leaving: boolean }) {
   return (
     <div
-      className={`dark fixed inset-0 z-[100] grid place-items-center bg-[#050505] transition-opacity duration-700 ${
+      className={`dark fixed inset-0 z-[100] grid place-items-center bg-background transition-opacity duration-700 ${
         leaving ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
 
       aria-hidden={leaving}
     >
       {/* Ambient glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(20,216,207,0.12),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_55%)]" />
 
       {/* Subtle banking grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.025)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(color-mix(in_oklab,var(--primary)_3%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--primary)_3%,transparent)_1px,transparent_1px)] bg-[size:64px_64px]" />
 
       <div className="relative flex flex-col items-center gap-8">
         {/* Master logo (icon + wordmark + tagline in one image) */}
@@ -178,8 +179,8 @@ function Splash({ leaving }: { leaving: boolean }) {
           animation: splashFill 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         @keyframes splashWord {
-          0%, 100% { opacity: 0.45; color: rgba(138, 160, 179, 1); }
-          50% { opacity: 1; color: rgba(20, 216, 207, 1); }
+          0%, 100% { opacity: 0.45; color: var(--muted-foreground); }
+          50% { opacity: 1; color: var(--primary); }
         }
         .splash-word {
           animation: splashWord 2.4s ease-in-out infinite;
@@ -231,17 +232,17 @@ function Landing() {
   };
 
   return (
-    <div className="dark min-h-screen bg-black text-foreground">
+    <div className="dark min-h-screen bg-background font-sans text-foreground">
       {/* Ambient animated background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.22),transparent_65%)] blur-3xl" />
-        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,183,176,0.18),transparent_65%)] blur-3xl" />
-        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle_at_center,rgba(32,231,229,0.15),transparent_65%)] blur-3xl" />
-        <div className="grid-fade absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.05)_1px,transparent_1px)] bg-[size:56px_56px]" />
+        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-primary/20 blur-3xl" />
+        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-accent/30 blur-3xl" />
+        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-primary/15 blur-3xl" />
+        <div className="grid-fade absolute inset-0 bg-[linear-gradient(color-mix(in_oklab,var(--primary)_5%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--primary)_5%,transparent)_1px,transparent_1px)] bg-[size:56px_56px]" />
       </div>
 
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-black/70 backdrop-blur-xl load-nav">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
 
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 overflow-hidden px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
           <BrandMark to="/" size="sm" tagline className="fv-brand-rise min-w-0 shrink sm:hidden" />
@@ -254,28 +255,21 @@ function Landing() {
             <a href="#about" onClick={smoothTo("about")} className="nav-link transition-colors hover:text-foreground">About</a>
           </nav>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <Link
-              to="/auth"
-              search={{ mode: "signin" }}
-              className="btn-secondary-glow whitespace-nowrap rounded-xl border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-foreground sm:px-4 sm:py-2 sm:text-sm"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/auth"
-              search={{ mode: "signup" }}
-              className="btn-primary-glow whitespace-nowrap rounded-xl bg-mint px-2.5 py-1.5 text-xs font-semibold text-mint-foreground sm:px-4 sm:py-2 sm:text-sm"
-            >
-              Get Started
-              <span className="hidden sm:inline"> Free</span>
-            </Link>
+            <Button asChild variant="ghost" size="sm" className="whitespace-nowrap">
+              <Link to="/auth" search={{ mode: "signin" }}>Sign In</Link>
+            </Button>
+            <Button asChild variant="default" size="sm" className="whitespace-nowrap">
+              <Link to="/auth" search={{ mode: "signup" }}>
+                Get Started<span className="hidden sm:inline"> Free</span>
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(20,216,207,0.12),transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_60%)]" />
         <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-[1fr_1.1fr] lg:gap-10 lg:py-20">
           {/* Left copy */}
           <div className="relative z-10 text-center lg:text-left">
@@ -283,10 +277,10 @@ function Landing() {
               <ShieldCheck className="h-4 w-4" /> All-in-one Personal Finance Platform
             </span>
 
-            <h1 className="load-headline mt-5 font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[64px]">
+            <h1 className="load-headline mt-5 font-sans text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[64px]">
               Master Your Finances.<br />
               Grow Your{" "}
-              <span className="gradient-shimmer bg-gradient-to-r from-mint via-cyan-300 to-accent bg-clip-text text-transparent">
+              <span className="text-primary">
                 Wealth.
               </span>
             </h1>
@@ -296,20 +290,16 @@ function Landing() {
             </p>
 
             <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                className="btn-primary-glow btn-shine inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
-              >
-                Get Started Free <ArrowRight className="h-4 w-4 arrow-nudge" />
-              </Link>
-              <a
-                href="#features"
-                onClick={smoothTo("features")}
-                className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur"
-              >
-                Explore Features <LayoutGrid className="h-4 w-4" />
-              </a>
+              <Button asChild variant="default" size="lg">
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Get Started Free <ArrowRight className="h-4 w-4 arrow-nudge" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <a href="#features" onClick={smoothTo("features")}>
+                  Explore Features <LayoutGrid className="h-4 w-4" />
+                </a>
+              </Button>
             </div>
 
             <div className="load-cta mt-8 flex flex-col items-center gap-6 md:flex-row md:items-stretch md:justify-center lg:justify-start md:gap-0">
@@ -326,15 +316,15 @@ function Landing() {
                   {i > 0 && (
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute left-0 top-1/2 hidden h-10 w-px -translate-x-1/2 -translate-y-1/2 bg-[#22E6D8]/15 md:block"
+                      className="pointer-events-none absolute left-0 top-1/2 hidden h-10 w-px -translate-x-1/2 -translate-y-1/2 bg-border md:block"
                     />
                   )}
-                  <div className="hero-feature-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#0A2F32]/60">
-                    <Icon className="h-5 w-5 text-[#22E6D8]" />
+                  <div className="hero-feature-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-card">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <div className="min-w-0 text-left">
                     <div className="hero-feature-title text-sm font-semibold text-foreground">{title}</div>
-                    <div className="text-xs text-[#AAB6C4]">{desc}</div>
+                    <div className="text-xs text-muted-foreground">{desc}</div>
                   </div>
                 </div>
               ))}
@@ -353,7 +343,7 @@ function Landing() {
       {/* Features */}
       <section id="features" className="reveal mx-auto max-w-7xl px-6 py-20 scroll-mt-24">
         <div className="text-center">
-          <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">Features</h2>
+          <h2 className="font-sans text-4xl font-bold tracking-tight md:text-5xl">Features</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             Everything you need to manage your finances in one place.
           </p>
@@ -371,7 +361,7 @@ function Landing() {
               <div className="feature-icon grid h-11 w-11 place-items-center rounded-xl bg-mint/10 text-mint">
                 <f.icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-4 font-display text-base font-semibold">{f.title}</h3>
+               <h3 className="mt-4 font-sans text-base font-semibold">{f.title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
             </div>
           ))}
@@ -381,7 +371,7 @@ function Landing() {
       {/* How It Works */}
       <section id="how" className="reveal mx-auto max-w-7xl px-6 py-20 scroll-mt-24">
         <div className="text-center">
-          <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">How It Works</h2>
+          <h2 className="font-sans text-4xl font-bold tracking-tight md:text-5xl">How It Works</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Three simple steps to financial clarity.</p>
         </div>
         <div className="relative mt-14 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -399,7 +389,7 @@ function Landing() {
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-mint/10 text-mint">
                   <s.icon className="h-6 w-6" />
                 </div>
-                <h3 className="mt-4 font-display text-lg font-semibold">{s.title}</h3>
+                <h3 className="mt-4 font-sans text-lg font-semibold">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
               </div>
             </div>
@@ -421,7 +411,7 @@ function Landing() {
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <div className="grid h-36 w-32 place-items-center rounded-[24px] bg-gradient-to-b from-mint/30 to-mint/10 shadow-[0_0_40px_rgba(20,216,207,0.35)]">
                 <Shield className="h-16 w-16 text-mint" fill="currentColor" fillOpacity={0.15} />
-                <span className="absolute font-display text-3xl font-black text-mint">F</span>
+                <span className="absolute font-sans text-3xl font-black text-primary">F</span>
               </div>
             </div>
 
@@ -443,26 +433,20 @@ function Landing() {
           </div>
 
           <div>
-            <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">About Wealth Ace</h2>
-            <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Master Your Finances.</p>
+            <h2 className="font-sans text-4xl font-bold tracking-tight md:text-5xl">About Wealth Ace</h2>
+            <p className="mt-2 font-sans text-2xl font-semibold text-primary md:text-3xl">Master Your Finances.</p>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
               Wealth Ace is a modern personal finance platform that helps you track, organize and grow your wealth in one secure, intelligent dashboard. From assets and investments to expenses and financial goals, everything is designed to give you complete financial clarity.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                className="btn-primary-glow inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3 text-sm font-semibold text-mint-foreground"
-              >
-                Get Started Free <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#features"
-                onClick={smoothTo("features")}
-                className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-6 py-3 text-sm font-semibold text-foreground backdrop-blur"
-              >
-                Explore Features
-              </a>
+              <Button asChild variant="default" size="lg">
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Get Started Free <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <a href="#features" onClick={smoothTo("features")}>Explore Features</a>
+              </Button>
             </div>
           </div>
         </div>
