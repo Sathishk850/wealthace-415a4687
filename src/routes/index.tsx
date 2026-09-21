@@ -24,6 +24,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -124,17 +125,17 @@ function HomeRoute() {
 function Splash({ leaving }: { leaving: boolean }) {
   return (
     <div
-      className={`dark fixed inset-0 z-[100] grid place-items-center bg-[#050505] transition-opacity duration-700 ${
+      className={`dark fixed inset-0 z-[100] grid place-items-center bg-background transition-opacity duration-700 ${
         leaving ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
 
       aria-hidden={leaving}
     >
       {/* Ambient glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(20,216,207,0.12),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_55%)]" />
 
       {/* Subtle banking grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.025)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(color-mix(in_oklab,var(--primary)_3%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--primary)_3%,transparent)_1px,transparent_1px)] bg-[size:64px_64px]" />
 
       <div className="relative flex flex-col items-center gap-8">
         {/* Master logo (icon + wordmark + tagline in one image) */}
@@ -178,8 +179,8 @@ function Splash({ leaving }: { leaving: boolean }) {
           animation: splashFill 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         @keyframes splashWord {
-          0%, 100% { opacity: 0.45; color: rgba(138, 160, 179, 1); }
-          50% { opacity: 1; color: rgba(20, 216, 207, 1); }
+          0%, 100% { opacity: 0.45; color: var(--muted-foreground); }
+          50% { opacity: 1; color: var(--primary); }
         }
         .splash-word {
           animation: splashWord 2.4s ease-in-out infinite;
@@ -231,17 +232,17 @@ function Landing() {
   };
 
   return (
-    <div className="dark min-h-screen bg-black text-foreground">
+    <div className="dark min-h-screen bg-background font-sans text-foreground">
       {/* Ambient animated background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.22),transparent_65%)] blur-3xl" />
-        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,183,176,0.18),transparent_65%)] blur-3xl" />
-        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle_at_center,rgba(32,231,229,0.15),transparent_65%)] blur-3xl" />
-        <div className="grid-fade absolute inset-0 bg-[linear-gradient(rgba(20,216,207,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(20,216,207,0.05)_1px,transparent_1px)] bg-[size:56px_56px]" />
+        <div className="orb orb-1 absolute -left-32 top-[-10%] h-[520px] w-[520px] rounded-full bg-primary/20 blur-3xl" />
+        <div className="orb orb-2 absolute -right-40 top-[30%] h-[600px] w-[600px] rounded-full bg-accent/30 blur-3xl" />
+        <div className="orb orb-3 absolute left-[20%] bottom-[-20%] h-[560px] w-[560px] rounded-full bg-primary/15 blur-3xl" />
+        <div className="grid-fade absolute inset-0 bg-[linear-gradient(color-mix(in_oklab,var(--primary)_5%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--primary)_5%,transparent)_1px,transparent_1px)] bg-[size:56px_56px]" />
       </div>
 
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-black/70 backdrop-blur-xl load-nav">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl load-nav">
 
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 overflow-hidden px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
           <BrandMark to="/" size="sm" tagline className="fv-brand-rise min-w-0 shrink sm:hidden" />
@@ -254,28 +255,21 @@ function Landing() {
             <a href="#about" onClick={smoothTo("about")} className="nav-link transition-colors hover:text-foreground">About</a>
           </nav>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <Link
-              to="/auth"
-              search={{ mode: "signin" }}
-              className="btn-secondary-glow whitespace-nowrap rounded-xl border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-foreground sm:px-4 sm:py-2 sm:text-sm"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/auth"
-              search={{ mode: "signup" }}
-              className="btn-primary-glow whitespace-nowrap rounded-xl bg-mint px-2.5 py-1.5 text-xs font-semibold text-mint-foreground sm:px-4 sm:py-2 sm:text-sm"
-            >
-              Get Started
-              <span className="hidden sm:inline"> Free</span>
-            </Link>
+            <Button asChild variant="ghost" size="sm" className="whitespace-nowrap">
+              <Link to="/auth" search={{ mode: "signin" }}>Sign In</Link>
+            </Button>
+            <Button asChild variant="default" size="sm" className="whitespace-nowrap">
+              <Link to="/auth" search={{ mode: "signup" }}>
+                Get Started<span className="hidden sm:inline"> Free</span>
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(20,216,207,0.12),transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--primary)_12%,transparent),transparent_60%)]" />
         <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-[1fr_1.1fr] lg:gap-10 lg:py-20">
           {/* Left copy */}
           <div className="relative z-10 text-center lg:text-left">
@@ -283,10 +277,10 @@ function Landing() {
               <ShieldCheck className="h-4 w-4" /> All-in-one Personal Finance Platform
             </span>
 
-            <h1 className="load-headline mt-5 font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[64px]">
+            <h1 className="load-headline mt-5 font-sans text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-[64px]">
               Master Your Finances.<br />
               Grow Your{" "}
-              <span className="gradient-shimmer bg-gradient-to-r from-mint via-cyan-300 to-accent bg-clip-text text-transparent">
+              <span className="text-primary">
                 Wealth.
               </span>
             </h1>
@@ -296,20 +290,16 @@ function Landing() {
             </p>
 
             <div className="load-cta mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                className="btn-primary-glow btn-shine inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3.5 text-sm font-semibold text-mint-foreground"
-              >
-                Get Started Free <ArrowRight className="h-4 w-4 arrow-nudge" />
-              </Link>
-              <a
-                href="#features"
-                onClick={smoothTo("features")}
-                className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-6 py-3.5 text-sm font-semibold text-foreground backdrop-blur"
-              >
-                Explore Features <LayoutGrid className="h-4 w-4" />
-              </a>
+              <Button asChild variant="default" size="lg">
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Get Started Free <ArrowRight className="h-4 w-4 arrow-nudge" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <a href="#features" onClick={smoothTo("features")}>
+                  Explore Features <LayoutGrid className="h-4 w-4" />
+                </a>
+              </Button>
             </div>
 
             <div className="load-cta mt-8 flex flex-col items-center gap-6 md:flex-row md:items-stretch md:justify-center lg:justify-start md:gap-0">
@@ -320,21 +310,21 @@ function Landing() {
               ].map(({ Icon, title, desc }, i) => (
                 <div
                   key={title}
-                  className="hero-feature-item group relative flex flex-1 items-center gap-3 md:justify-center lg:justify-start"
+                  className="hero-feature-item group relative flex flex-1 items-center gap-3 rounded-xl border border-border bg-card px-3 py-2 md:justify-center lg:justify-start"
                   style={{ animationDelay: `${i * 120}ms` }}
                 >
                   {i > 0 && (
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute left-0 top-1/2 hidden h-10 w-px -translate-x-1/2 -translate-y-1/2 bg-[#22E6D8]/15 md:block"
+                      className="pointer-events-none absolute left-0 top-1/2 hidden h-10 w-px -translate-x-1/2 -translate-y-1/2 bg-border md:block"
                     />
                   )}
-                  <div className="hero-feature-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#0A2F32]/60">
-                    <Icon className="h-5 w-5 text-[#22E6D8]" />
+                  <div className="hero-feature-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-card">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <div className="min-w-0 text-left">
                     <div className="hero-feature-title text-sm font-semibold text-foreground">{title}</div>
-                    <div className="text-xs text-[#AAB6C4]">{desc}</div>
+                    <div className="text-xs text-muted-foreground">{desc}</div>
                   </div>
                 </div>
               ))}
@@ -353,7 +343,7 @@ function Landing() {
       {/* Features */}
       <section id="features" className="reveal mx-auto max-w-7xl px-6 py-20 scroll-mt-24">
         <div className="text-center">
-          <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">Features</h2>
+          <h2 className="font-sans text-4xl font-bold tracking-tight md:text-5xl">Features</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             Everything you need to manage your finances in one place.
           </p>
@@ -371,7 +361,7 @@ function Landing() {
               <div className="feature-icon grid h-11 w-11 place-items-center rounded-xl bg-mint/10 text-mint">
                 <f.icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-4 font-display text-base font-semibold">{f.title}</h3>
+               <h3 className="mt-4 font-sans text-base font-semibold">{f.title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
             </div>
           ))}
@@ -381,7 +371,7 @@ function Landing() {
       {/* How It Works */}
       <section id="how" className="reveal mx-auto max-w-7xl px-6 py-20 scroll-mt-24">
         <div className="text-center">
-          <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">How It Works</h2>
+          <h2 className="font-sans text-4xl font-bold tracking-tight md:text-5xl">How It Works</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Three simple steps to financial clarity.</p>
         </div>
         <div className="relative mt-14 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -392,14 +382,14 @@ function Landing() {
             { n: 3, icon: CircleCheck, title: "Grow With Confidence", desc: "Monitor your progress, achieve financial goals and make smarter financial decisions." },
           ].map((s) => (
             <div key={s.n} className="relative">
-              <div className="mx-auto mb-4 grid h-9 w-9 place-items-center rounded-full bg-mint text-sm font-bold text-mint-foreground shadow-[0_0_20px_rgba(20,216,207,0.5)]">
+              <div className="mx-auto mb-4 grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-[var(--shadow-glow)]">
                 {s.n}
               </div>
               <div className="feature-card rounded-2xl border border-border bg-card/60 p-6 text-center backdrop-blur">
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-mint/10 text-mint">
                   <s.icon className="h-6 w-6" />
                 </div>
-                <h3 className="mt-4 font-display text-lg font-semibold">{s.title}</h3>
+                <h3 className="mt-4 font-sans text-lg font-semibold">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
               </div>
             </div>
@@ -419,9 +409,9 @@ function Landing() {
 
             {/* Center shield */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="grid h-36 w-32 place-items-center rounded-[24px] bg-gradient-to-b from-mint/30 to-mint/10 shadow-[0_0_40px_rgba(20,216,207,0.35)]">
+              <div className="grid h-36 w-32 place-items-center rounded-[24px] bg-gradient-to-b from-primary/30 to-primary/10 shadow-[var(--shadow-glow)]">
                 <Shield className="h-16 w-16 text-mint" fill="currentColor" fillOpacity={0.15} />
-                <span className="absolute font-display text-3xl font-black text-mint">F</span>
+                <span className="absolute font-sans text-3xl font-black text-primary">F</span>
               </div>
             </div>
 
@@ -443,26 +433,20 @@ function Landing() {
           </div>
 
           <div>
-            <h2 className="font-display text-4xl font-bold tracking-tight md:text-5xl">About Wealth Ace</h2>
-            <p className="mt-2 font-display text-2xl font-semibold text-mint md:text-3xl">Master Your Finances.</p>
+            <h2 className="font-sans text-4xl font-bold tracking-tight md:text-5xl">About Wealth Ace</h2>
+            <p className="mt-2 font-sans text-2xl font-semibold text-primary md:text-3xl">Master Your Finances.</p>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
               Wealth Ace is a modern personal finance platform that helps you track, organize and grow your wealth in one secure, intelligent dashboard. From assets and investments to expenses and financial goals, everything is designed to give you complete financial clarity.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                className="btn-primary-glow inline-flex items-center gap-2 rounded-xl bg-mint px-6 py-3 text-sm font-semibold text-mint-foreground"
-              >
-                Get Started Free <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#features"
-                onClick={smoothTo("features")}
-                className="btn-secondary-glow inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-6 py-3 text-sm font-semibold text-foreground backdrop-blur"
-              >
-                Explore Features
-              </a>
+              <Button asChild variant="default" size="lg">
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Get Started Free <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <a href="#features" onClick={smoothTo("features")}>Explore Features</a>
+              </Button>
             </div>
           </div>
         </div>
@@ -488,8 +472,8 @@ function Landing() {
         @keyframes arrowNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
         @keyframes heroSlideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes coinPulse {
-          0%, 100% { box-shadow: 0 0 12px -2px rgba(20,216,207,0.35); }
-          50% { box-shadow: 0 0 26px 0px rgba(20,216,207,0.7); }
+          0%, 100% { box-shadow: 0 0 12px -2px color-mix(in oklab, var(--primary) 35%, transparent); }
+          50% { box-shadow: 0 0 26px 0 color-mix(in oklab, var(--primary) 70%, transparent); }
         }
         @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
@@ -500,7 +484,7 @@ function Landing() {
         @keyframes floatSlow { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(4px,-10px); } }
         @keyframes floatSlowAlt { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-6px,-14px); } }
         @keyframes floatSlow2 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(8px,-6px); } }
-        @keyframes orbPulse { 0%, 100% { filter: drop-shadow(0 0 6px rgba(20,216,207,0.4)); } 50% { filter: drop-shadow(0 0 22px rgba(20,216,207,0.85)); } }
+        @keyframes orbPulse { 0%, 100% { filter: drop-shadow(0 0 6px color-mix(in oklab, var(--primary) 40%, transparent)); } 50% { filter: drop-shadow(0 0 22px color-mix(in oklab, var(--primary) 85%, transparent)); } }
         @keyframes particleDrift { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(-40px); } }
         @keyframes trailShift { 0%, 100% { stroke-dashoffset: 0; } 50% { stroke-dashoffset: -20; } }
         @keyframes areaDraw { to { stroke-dashoffset: 0; } }
@@ -534,24 +518,24 @@ function Landing() {
         .nav-link { position: relative; }
         .nav-link::after {
           content: ""; position: absolute; left: 0; right: 0; bottom: -4px;
-          height: 1.5px; background: var(--mint, #14D8CF);
+          height: 1.5px; background: var(--primary);
           transform: scaleX(0); transform-origin: left;
           transition: transform 250ms ease-out;
         }
         .nav-link:hover::after { transform: scaleX(1); }
 
         .btn-primary-glow { transition: transform 250ms ease-out, box-shadow 250ms ease-out, opacity 200ms ease-out; will-change: transform; }
-        .btn-primary-glow:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--mint, #14D8CF) 55%, transparent); opacity: 0.95; }
+        .btn-primary-glow:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--primary) 55%, transparent); opacity: 0.95; }
         .btn-primary-glow:active { transform: translateY(-1px) scale(0.98); }
 
         .btn-secondary-glow { transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out; will-change: transform; }
-        .btn-secondary-glow:hover { transform: translateY(-2px); border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--mint, #14D8CF) 30%, transparent), 0 8px 24px -12px color-mix(in oklab, var(--mint, #14D8CF) 35%, transparent); }
+        .btn-secondary-glow:hover { transform: translateY(-2px); border-color: color-mix(in oklab, var(--primary) 45%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent), 0 8px 24px -12px color-mix(in oklab, var(--primary) 35%, transparent); }
 
         .reveal { opacity: 0; transform: translateY(20px); transition: opacity 500ms ease-out, transform 500ms ease-out; will-change: opacity, transform; }
         .reveal.is-visible { opacity: 1; transform: translateY(0); }
 
         .feature-card { transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out; }
-        .feature-card:hover { transform: translateY(-4px); border-color: color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent); box-shadow: 0 14px 40px -18px color-mix(in oklab, var(--mint, #14D8CF) 45%, transparent); }
+        .feature-card:hover { transform: translateY(-4px); border-color: color-mix(in oklab, var(--primary) 45%, transparent); box-shadow: 0 14px 40px -18px color-mix(in oklab, var(--primary) 45%, transparent); }
         .feature-icon { transition: transform 250ms ease-out; }
         .feature-card:hover .feature-icon { transform: scale(1.08); }
 
@@ -568,7 +552,7 @@ function Landing() {
         .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
         .btn-shine::before {
           content: ""; position: absolute; inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+          background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--primary-foreground) 55%, transparent), transparent);
           transform: translateX(-120%) skewX(-20deg);
           pointer-events: none;
         }
@@ -615,8 +599,8 @@ function FinanceIllustration() {
       role="img"
     >
       {/* Soft radial teal breathing glow — fades illustration into page */}
-      <div className="hero-breath pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_55%_60%,rgba(20,216,207,0.32),rgba(20,216,207,0.08)_38%,transparent_70%)]" />
-      <div className="hero-breath-2 pointer-events-none absolute inset-[10%] bg-[radial-gradient(circle_at_50%_50%,rgba(20,216,207,0.22),transparent_65%)] blur-2xl" />
+      <div className="hero-breath pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_55%_60%,color-mix(in_oklab,var(--primary)_32%,transparent),color-mix(in_oklab,var(--primary)_8%,transparent)_38%,transparent_70%)]" />
+      <div className="hero-breath-2 pointer-events-none absolute inset-[10%] bg-[radial-gradient(circle_at_50%_50%,color-mix(in_oklab,var(--primary)_22%,transparent),transparent_65%)] blur-2xl" />
 
       {/* Faint financial grid — masked to fade into background */}
       <svg
@@ -626,7 +610,7 @@ function FinanceIllustration() {
       >
         <defs>
           <pattern id="fv-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-            <path d="M32 0H0V32" stroke="rgba(20,216,207,0.18)" strokeWidth="0.6" />
+            <path d="M32 0H0V32" stroke="color-mix(in srgb, var(--primary) 18%, transparent)" strokeWidth="0.6" />
           </pattern>
         </defs>
         <rect width="400" height="400" fill="url(#fv-grid)" />
@@ -638,8 +622,8 @@ function FinanceIllustration() {
         viewBox="0 0 400 400"
         fill="none"
       >
-        <path d="M-20 320 C 90 260, 160 300, 260 220 S 380 140, 440 90" stroke="rgba(20,216,207,0.18)" strokeWidth="1.2" strokeDasharray="2 6" />
-        <path d="M-20 360 C 120 320, 220 340, 300 260 S 420 200, 460 160" stroke="rgba(20,216,207,0.12)" strokeWidth="1" strokeDasharray="2 8" />
+        <path d="M-20 320 C 90 260, 160 300, 260 220 S 380 140, 440 90" stroke="color-mix(in srgb, var(--primary) 18%, transparent)" strokeWidth="1.2" strokeDasharray="2 6" />
+        <path d="M-20 360 C 120 320, 220 340, 300 260 S 420 200, 460 160" stroke="color-mix(in srgb, var(--primary) 12%, transparent)" strokeWidth="1" strokeDasharray="2 8" />
       </svg>
 
       {/* Main chart SVG */}
@@ -651,28 +635,28 @@ function FinanceIllustration() {
       >
         <defs>
           <linearGradient id="fv-bar" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#5eead4" />
-            <stop offset="60%" stopColor="#14D8CF" />
-            <stop offset="100%" stopColor="#0e7c78" />
+            <stop offset="0%" stopColor="var(--brand-2)" />
+            <stop offset="60%" stopColor="var(--primary)" />
+            <stop offset="100%" stopColor="var(--brand)" />
           </linearGradient>
           <linearGradient id="fv-bar-top" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#a7f3ef" />
-            <stop offset="100%" stopColor="#14D8CF" />
+            <stop offset="0%" stopColor="var(--brand-2)" />
+            <stop offset="100%" stopColor="var(--primary)" />
           </linearGradient>
           <linearGradient id="fv-line" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#14D8CF" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#a7f3ef" />
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="var(--brand-2)" />
           </linearGradient>
           <radialGradient id="fv-arrow-glow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%" stopColor="#a7f3ef" stopOpacity="1" />
-            <stop offset="100%" stopColor="#14D8CF" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--brand-2)" stopOpacity="1" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
           </radialGradient>
           <filter id="fv-blur" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" />
           </filter>
           <linearGradient id="fv-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#14D8CF" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#14D8CF" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -686,12 +670,12 @@ function FinanceIllustration() {
           <path
             className="area-line"
             d="M0,220 C 40,200 70,210 100,180 S 170,150 210,160 S 290,120 330,100 S 390,70 400,60"
-            stroke="rgba(167,243,239,0.55)"
+            stroke="color-mix(in srgb, var(--brand-2) 55%, transparent)"
             strokeWidth="1.5"
             fill="none"
-            filter="drop-shadow(0 0 4px rgba(20,216,207,0.6))"
+            filter="drop-shadow(0 0 4px color-mix(in srgb, var(--primary) 60%, transparent))"
           />
-          <circle className="area-dot" r="4" fill="#a7f3ef" filter="drop-shadow(0 0 6px rgba(20,216,207,0.9))">
+          <circle className="area-dot" r="4" fill="var(--brand-2)" filter="drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 90%, transparent))">
             <animateMotion
               dur="7s"
               repeatCount="indefinite"
@@ -711,9 +695,9 @@ function FinanceIllustration() {
           return (
             <g key={i} className="bar-group" style={{ transformOrigin: `${x + barW / 2}px 240px`, animationDelay: `${300 + i * 90}ms` }}>
               {/* soft glow under bar */}
-              <ellipse cx={x + barW / 2} cy={244} rx={barW * 0.9} ry={4} fill="rgba(20,216,207,0.35)" filter="url(#fv-blur)" />
+              <ellipse cx={x + barW / 2} cy={244} rx={barW * 0.9} ry={4} fill="color-mix(in srgb, var(--primary) 35%, transparent)" filter="url(#fv-blur)" />
               {/* side face for 3D */}
-              <polygon points={`${x + barW},${y} ${x + barW + depth},${y - depth} ${x + barW + depth},${240 - depth} ${x + barW},240`} fill="rgba(20,216,207,0.35)" />
+              <polygon points={`${x + barW},${y} ${x + barW + depth},${y - depth} ${x + barW + depth},${240 - depth} ${x + barW},240`} fill="color-mix(in srgb, var(--primary) 35%, transparent)" />
               {/* top face */}
               <polygon points={`${x},${y} ${x + depth},${y - depth} ${x + barW + depth},${y - depth} ${x + barW},${y}`} fill="url(#fv-bar-top)" />
               {/* front face */}
@@ -731,7 +715,7 @@ function FinanceIllustration() {
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
-          filter="drop-shadow(0 0 6px rgba(20,216,207,0.75))"
+          filter="drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 75%, transparent))"
         />
 
         {/* Trend arrow head at end */}
@@ -739,12 +723,12 @@ function FinanceIllustration() {
           <circle cx="372" cy="42" r="22" fill="url(#fv-arrow-glow)" opacity="0.9" />
           <path
             d="M358 52 L378 32 M378 32 L366 32 M378 32 L378 44"
-            stroke="#a7f3ef"
+            stroke="var(--brand-2)"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
-            filter="drop-shadow(0 0 6px rgba(20,216,207,0.9))"
+            filter="drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 90%, transparent))"
           />
         </g>
       </svg>
@@ -764,7 +748,7 @@ function FinanceIllustration() {
             top: `${p.top}%`,
             width: `${p.size}px`,
             height: `${p.size}px`,
-            boxShadow: "0 0 8px rgba(20,216,207,0.9)",
+            boxShadow: "0 0 8px color-mix(in srgb, var(--primary) 90%, transparent)",
             animationDelay: `${p.delay}s`,
             animationDuration: `${p.dur}s`,
           }}
@@ -779,14 +763,14 @@ function CurrencyOrb({ symbol, className }: { symbol: string; className?: string
     <div className={`currency-orb z-20 ${className ?? ""}`}>
       <div className="relative h-full w-full">
         {/* glow halo */}
-        <div className="absolute inset-[-30%] rounded-full bg-[radial-gradient(circle,rgba(20,216,207,0.55),transparent_65%)] blur-md" />
+        <div className="absolute inset-[-30%] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_55%,transparent),transparent_65%)] blur-md" />
         {/* orb body */}
-        <div className="relative grid h-full w-full place-items-center rounded-full bg-[radial-gradient(circle_at_30%_28%,#a7f3ef,rgba(20,216,207,0.85)_45%,rgba(6,49,47,0.9))] shadow-[inset_0_-6px_14px_rgba(0,0,0,0.4),0_10px_30px_-6px_rgba(20,216,207,0.55)]">
+        <div className="relative grid h-full w-full place-items-center rounded-full bg-[radial-gradient(circle_at_30%_28%,var(--brand-2),color-mix(in_oklab,var(--primary)_85%,var(--card))_45%,var(--brand))] shadow-[var(--shadow-glow)]">
           {/* top highlight */}
-          <span className="pointer-events-none absolute left-[18%] top-[14%] h-[26%] w-[38%] rounded-full bg-white/60 blur-[3px]" />
+          <span className="pointer-events-none absolute left-[18%] top-[14%] h-[26%] w-[38%] rounded-full bg-primary-foreground/60 blur-[3px]" />
           {/* subtle reflection below */}
-          <span className="pointer-events-none absolute inset-x-[20%] bottom-[10%] h-[10%] rounded-full bg-white/20 blur-sm" />
-          <span className="relative font-display text-2xl font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] md:text-3xl">
+          <span className="pointer-events-none absolute inset-x-[20%] bottom-[10%] h-[10%] rounded-full bg-primary-foreground/20 blur-sm" />
+          <span className="relative font-sans text-2xl font-bold text-primary-foreground md:text-3xl">
             {symbol}
           </span>
         </div>
@@ -811,7 +795,7 @@ function _AuraLegacy() {
   return (
     <div className="aura-wrap absolute inset-0">
       {/* Outer soft halo */}
-      <div className="aura-glow absolute inset-[6%] rounded-full bg-[radial-gradient(circle_at_center,rgba(20,216,207,0.35),rgba(20,216,207,0.06)_55%,transparent_72%)] blur-2xl" />
+      <div className="aura-glow absolute inset-[6%] rounded-full bg-[radial-gradient(circle_at_center,color-mix(in_oklab,var(--primary)_35%,transparent),color-mix(in_oklab,var(--primary)_6%,transparent)_55%,transparent_72%)] blur-2xl" />
 
       {/* Rotating dashed ring */}
       <div className="aura-ring absolute inset-[10%] rounded-full border border-dashed border-mint/25" />
@@ -838,7 +822,7 @@ function _AuraLegacy() {
             width: `${p.size}px`,
             height: `${p.size}px`,
             transform: "translate(-50%, -50%)",
-            boxShadow: "0 0 8px rgba(20,216,207,0.9)",
+            boxShadow: "0 0 8px color-mix(in srgb, var(--primary) 90%, transparent)",
             animationDelay: `${p.delay}s`,
             animationDuration: `${p.dur}s`,
           }}
