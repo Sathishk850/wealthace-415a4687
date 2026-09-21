@@ -767,9 +767,9 @@ function CurrencyOrb({ symbol, className }: { symbol: string; className?: string
         {/* orb body */}
         <div className="relative grid h-full w-full place-items-center rounded-full bg-[radial-gradient(circle_at_30%_28%,var(--brand-2),color-mix(in_oklab,var(--primary)_85%,var(--card))_45%,var(--brand))] shadow-[var(--shadow-glow)]">
           {/* top highlight */}
-          <span className="pointer-events-none absolute left-[18%] top-[14%] h-[26%] w-[38%] rounded-full bg-white/60 blur-[3px]" />
+          <span className="pointer-events-none absolute left-[18%] top-[14%] h-[26%] w-[38%] rounded-full bg-primary-foreground/60 blur-[3px]" />
           {/* subtle reflection below */}
-          <span className="pointer-events-none absolute inset-x-[20%] bottom-[10%] h-[10%] rounded-full bg-white/20 blur-sm" />
+          <span className="pointer-events-none absolute inset-x-[20%] bottom-[10%] h-[10%] rounded-full bg-primary-foreground/20 blur-sm" />
           <span className="relative font-sans text-2xl font-bold text-primary-foreground md:text-3xl">
             {symbol}
           </span>
