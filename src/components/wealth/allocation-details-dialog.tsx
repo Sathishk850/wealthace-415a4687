@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { AlertTriangle, Lightbulb, PieChart as PieIcon, Target } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, Lightbulb, PieChart as PieIcon, Target } from "lucide-react";
 import {
   Dialog,
   DialogContent,
