@@ -501,11 +501,11 @@ function Dashboard() {
             />
           ) : (
             <div className="mt-3 flex flex-1 flex-col overflow-hidden">
-              <div className="grid flex-1 grid-cols-1 items-center gap-3 overflow-hidden sm:grid-cols-[130px_1fr]">
-                <div className="relative mx-auto h-[130px] w-[130px] shrink-0">
+              <div className="grid flex-1 grid-cols-[120px_1fr] items-center gap-3 overflow-hidden">
+                <div className="relative h-[120px] w-[120px] shrink-0">
                   <ResponsiveContainer>
                     <PieChart>
-                      <Pie data={allocation} dataKey="value" innerRadius={42} outerRadius={62} paddingAngle={2} stroke="none">
+                      <Pie data={allocation} dataKey="value" innerRadius={38} outerRadius={58} paddingAngle={2} stroke="none">
                         {allocation.map((a) => (
                           <Cell key={a.name} fill={a.color} />
                         ))}

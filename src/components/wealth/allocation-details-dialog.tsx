@@ -107,7 +107,7 @@ export function AllocationDetailsDialog({
                   </div>
                 ) : null}
 
-                <div className="flex flex-wrap items-center gap-5">
+                <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-5">
                   <div className="relative h-[170px] w-[170px] shrink-0">
                     <ResponsiveContainer>
                       <PieChart>
@@ -136,7 +136,7 @@ export function AllocationDetailsDialog({
                       </div>
                     </div>
                   </div>
-                  <div className="min-w-[180px] flex-1 space-y-1.5">
+                  <div className="w-full min-w-[180px] flex-1 space-y-1.5">
                     {data.map((d) => (
                       <div key={d.name} className="flex items-center gap-2 text-xs">
                         <span
