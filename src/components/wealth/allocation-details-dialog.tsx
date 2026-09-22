@@ -79,6 +79,12 @@ export function AllocationDetailsDialog({
 }) {
   const insights = buildInsights(data, title.replace(/\s*Allocation$/i, ""));
   const needsAttention = insights.some((i) => i.tone === "warn");
+  const [activeName, setActiveName] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const active = data.find((d) => d.name === activeName) ?? null;
+  const toggleActive = (name: string) => setActiveName((cur) => (cur === name ? null : name));
+  const toggleExpanded = (name: string) =>
+    setExpanded((cur) => ({ ...cur, [name]: !cur[name] }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
