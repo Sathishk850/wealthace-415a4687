@@ -155,23 +155,71 @@ function NetWorth() {
         title="Net Worth"
         description="A live view of what you own minus what you owe, captured daily."
         actions={
-          <button
-            type="button"
-            disabled={createSnap.isPending || empty}
-            onClick={() =>
-              createSnap.mutate({
-                net_worth: nw.netWorth,
-                assets_total: nw.totalAssets,
-                liabilities_total: nw.liabilitiesTotal,
-                investments_total: nw.investmentsTotal,
-                savings_total: nw.cashTotal,
-              })
-            }
-            className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-mint-foreground disabled:opacity-50"
-          >
-            <Camera className="h-3.5 w-3.5" />
-            {createSnap.isPending ? "Saving…" : "Snap now"}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Auto-snapshot cadence button */}
+            <div className="relative" data-cadence-picker>
+              <button
+                type="button"
+                onClick={() => setShowCadencePicker((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors",
+                  cadence !== "off"
+                    ? "border-mint/40 bg-mint/10 text-mint"
+                    : "border-border bg-surface text-muted-foreground hover:border-mint/40 hover:text-foreground"
+                )}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                {cadence === "off" ? "Auto: Off" : CADENCE_LABELS[cadence]}
+                {cadence !== "off" && autoFired && (
+                  <span className="ml-1 rounded-full bg-mint/20 px-1.5 py-0.5 text-[9px] font-bold text-mint">SAVED</span>
+                )}
+              </button>
+
+              {showCadencePicker && (
+                <div className="absolute right-0 top-full z-20 mt-1.5 w-48 overflow-hidden rounded-2xl border border-border bg-popover shadow-lg">
+                  <div className="border-b border-border px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Auto-snapshot cadence
+                  </div>
+                  {(Object.keys(CADENCE_LABELS) as SnapCadence[]).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => { setCadence(c); setShowCadencePicker(false); }}
+                      className={cn(
+                        "flex w-full items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-surface",
+                        cadence === c ? "text-mint font-semibold" : "text-foreground"
+                      )}
+                    >
+                      {CADENCE_LABELS[c]}
+                      {cadence === c && <Check className="h-3.5 w-3.5 text-mint" />}
+                    </button>
+                  ))}
+                  <div className="border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
+                    Snapshot fires automatically on page load when due.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Manual snap */}
+            <button
+              type="button"
+              disabled={createSnap.isPending || empty}
+              onClick={() =>
+                createSnap.mutate({
+                  net_worth: nw.netWorth,
+                  assets_total: nw.totalAssets,
+                  liabilities_total: nw.liabilitiesTotal,
+                  investments_total: nw.investmentsTotal,
+                  savings_total: nw.cashTotal,
+                })
+              }
+              className="inline-flex items-center gap-1.5 rounded-xl bg-mint px-3 py-2 text-xs font-semibold text-mint-foreground disabled:opacity-50"
+            >
+              <Camera className="h-3.5 w-3.5" />
+              {createSnap.isPending ? "Saving…" : "Snap now"}
+            </button>
+          </div>
         }
       />
 
