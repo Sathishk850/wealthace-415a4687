@@ -65,6 +65,8 @@ import {
 
 import { useTransactions } from "@/lib/money-api";
 import { useGoals } from "@/lib/planner-api";
+import { useAllocationData } from "@/hooks/use-allocation-data";
+import { AllocationDetailsDialog } from "@/components/wealth/allocation-details-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -95,6 +97,8 @@ const ALLOC_COLORS = ["#14d8cf", "#3b82f6", "#d9b800", "#ff8a3c", "#a855f7", "#0
 
 function Dashboard() {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [allocDetailOpen, setAllocDetailOpen] = useState(false);
+  const allocData = useAllocationData();
   const assetsQ = useAssets();
   const liabilitiesQ = useLiabilities();
   const investmentsQ = useInvestments();
@@ -511,7 +515,7 @@ function Dashboard() {
                   <div className="pointer-events-none absolute inset-0 grid place-items-center">
                     <div className="text-center">
                       <div className="text-[10px] text-muted-foreground">Total</div>
-                      <div className="font-display text-xs font-bold text-foreground">₹{fmt(totals.investmentsTotal)}</div>
+                      <div className="font-display text-xs font-bold text-foreground">₹{fmt(allocData.totalAllocatable)}</div>
                     </div>
                   </div>
                 </div>
@@ -528,12 +532,29 @@ function Dashboard() {
                 </div>
               </div>
               <div className="mt-2 shrink-0 text-right">
-                <Link to="/wealth" className="inline-flex items-center gap-1 text-xs font-semibold text-mint">
+                <button
+                  type="button"
+                  onClick={() => setAllocDetailOpen(true)}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-mint"
+                >
                   View Details <ArrowRight className="h-3 w-3" />
-                </Link>
+                </button>
               </div>
             </div>
           )}
+          <AllocationDetailsDialog
+            open={allocDetailOpen}
+            onOpenChange={setAllocDetailOpen}
+            title="Asset Allocation"
+            total={allocData.totalAllocatable}
+            data={allocation.map((a) => ({
+              name: a.name,
+              amt: a.value,
+              pct: a.pct,
+              color: a.color,
+              holdings: a.holdings.map((h) => ({ id: h.id, name: h.name, amt: h.currentValue })),
+            }))}
+          />
         </Card>
 
         <Card className="col-span-12 flex h-auto flex-col p-5 lg:col-span-6 lg:h-[300px]">
