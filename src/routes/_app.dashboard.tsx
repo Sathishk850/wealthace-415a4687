@@ -155,25 +155,19 @@ function Dashboard() {
 
 
 
-  // Allocation: group investments by category
-  const allocation = useMemo(() => {
-    if (!investments.length) return [] as { name: string; value: number; pct: number; color: string }[];
-    const map = new Map<string, number>();
-    for (const i of investments) {
-      const v = i.current_value ?? 0;
-      if (!v) continue;
-      map.set(i.category, (map.get(i.category) ?? 0) + v);
-    }
-    const total = Array.from(map.values()).reduce((s, v) => s + v, 0);
-    return Array.from(map.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value], idx) => ({
-        name,
-        value,
-        pct: total > 0 ? (value / total) * 100 : 0,
-        color: ALLOC_COLORS[idx % ALLOC_COLORS.length],
-      }));
-  }, [investments]);
+  // Allocation: canonical high-level asset classes (Equity / Debt / Commodity /
+  // Real Estate / Crypto / Cash & Savings / Other) across all asset holdings.
+  const allocation = useMemo(
+    () =>
+      allocData.slices.map((s) => ({
+        name: s.category,
+        value: s.currentValue,
+        pct: s.percentage,
+        color: s.color,
+        holdings: s.holdings,
+      })),
+    [allocData.slices],
+  );
 
   const netWorthSeries = useMemo(
     () => snaps.map((s, i) => ({ i, v: s.net_worth, label: s.snapshot_date })),
