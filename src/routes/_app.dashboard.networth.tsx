@@ -21,6 +21,7 @@ import {
   useSnapshots,
 } from "@/lib/networth";
 import { formatDateShort } from "@/lib/date-format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/dashboard/networth")({
   head: () => ({
