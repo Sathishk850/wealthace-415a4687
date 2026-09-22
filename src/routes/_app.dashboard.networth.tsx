@@ -68,6 +68,57 @@ function NetWorth() {
   const createSnap = useCreateSnapshot();
   const [months, setMonths] = useState<number>(12);
 
+  const [cadence, setCadenceState] = useState<SnapCadence>(
+    () => (typeof window !== "undefined"
+      ? (localStorage.getItem(PREF_KEY) as SnapCadence) ?? "off"
+      : "off")
+  );
+  const [autoFired, setAutoFired] = useState(false);
+  const [showCadencePicker, setShowCadencePicker] = useState(false);
+
+  const setCadence = (c: SnapCadence) => {
+    localStorage.setItem(PREF_KEY, c);
+    setCadenceState(c);
+  };
+
+  // Auto-snapshot: fires once per page load when cadence is due
+  useEffect(() => {
+    if (cadence === "off") return;
+    if (autoFired) return;
+    if (createSnap.isPending) return;
+    if (snapsQ.isLoading || nw.isLoading) return;
+    if (nw.totalAssets === 0 && nw.liabilitiesTotal === 0) return;
+
+    const days = CADENCE_DAYS[cadence];
+    const lastSnap = snaps[snaps.length - 1];
+
+    if (lastSnap) {
+      const lastDate = new Date(lastSnap.snapshot_date).getTime();
+      const daysSince = (Date.now() - lastDate) / 86_400_000;
+      if (daysSince < days) return; // not due yet
+    }
+    // Due — fire auto-snapshot
+    setAutoFired(true);
+    createSnap.mutate({
+      net_worth: nw.netWorth,
+      assets_total: nw.totalAssets,
+      liabilities_total: nw.liabilitiesTotal,
+      investments_total: nw.investmentsTotal,
+      savings_total: nw.cashTotal,
+    });
+  }, [cadence, autoFired, snapsQ.isLoading, nw.isLoading, snaps.length, nw.totalAssets, nw.liabilitiesTotal, nw.netWorth, nw.investmentsTotal, nw.cashTotal, createSnap]);
+
+  // Close cadence picker on outside click
+  useEffect(() => {
+    if (!showCadencePicker) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-cadence-picker]")) setShowCadencePicker(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showCadencePicker]);
+
   const snaps = snapsQ.data ?? [];
 
   const series = useMemo(() => {
