@@ -121,8 +121,6 @@ function NetWorth() {
     return () => document.removeEventListener("mousedown", handler);
   }, [showCadencePicker]);
 
-  const snaps = snapsQ.data ?? [];
-
   const series = useMemo(() => {
     const cutoff =
       months > 0 ? new Date(Date.now() - months * 30 * 86400000).toISOString().slice(0, 10) : "";
