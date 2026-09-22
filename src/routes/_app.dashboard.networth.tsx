@@ -249,6 +249,20 @@ function NetWorth() {
                 History builds up each time you take a snapshot.
               </div>
             )}
+            {cadence !== "off" && (
+              <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                Auto-snapshot {CADENCE_LABELS[cadence].toLowerCase()} ·{" "}
+                {snaps.length > 0
+                  ? `last saved ${formatDateShort(snaps[snaps.length - 1].snapshot_date)}`
+                  : "no snapshots yet"}
+                {autoFired && (
+                  <span className="ml-1 rounded-full bg-mint/15 px-1.5 py-0.5 text-mint">
+                    ✓ Saved just now
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex gap-1 rounded-xl border border-border p-1">
             {MONTH_OPTIONS.map((o) => (
