@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, TrendingUp, TrendingDown } from "lucide-react";
+import { Camera, Check, Clock, TrendingUp, TrendingDown } from "lucide-react";
 import {
   Area,
   AreaChart,
