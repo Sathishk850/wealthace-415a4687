@@ -51,6 +51,15 @@ const MONTH_OPTIONS = [
   { label: "All", months: 0 },
 ] as const;
 
+type SnapCadence = "off" | "weekly" | "biweekly" | "monthly";
+const CADENCE_DAYS: Record<SnapCadence, number> = {
+  off: 0, weekly: 7, biweekly: 14, monthly: 30,
+};
+const CADENCE_LABELS: Record<SnapCadence, string> = {
+  off: "Off", weekly: "Weekly", biweekly: "Every 2 weeks", monthly: "Monthly",
+};
+const PREF_KEY = "wa-snapshot-cadence";
+
 const COMPOSITION_COLORS = ["#14d8cf", "#3b82f6", "#d9b800", "#ff4d4d"];
 
 function NetWorth() {
