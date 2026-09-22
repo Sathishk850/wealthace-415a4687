@@ -115,7 +115,10 @@ export function AllocationDetailsDialog({
                 ) : null}
 
                 <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-5">
-                  <div className="relative h-[170px] w-[170px] shrink-0">
+                  <div
+                    className="relative h-[170px] w-[170px] shrink-0 select-none [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none"
+                    style={{ WebkitTapHighlightColor: "transparent" }}
+                  >
                     <ResponsiveContainer>
                       <PieChart>
                         <Pie
@@ -125,27 +128,60 @@ export function AllocationDetailsDialog({
                           outerRadius={82}
                           paddingAngle={2}
                           stroke="none"
+                          isAnimationActive={false}
+                          onClick={(_, idx) => {
+                            const d = data[idx];
+                            if (d) toggleActive(d.name);
+                          }}
                         >
                           {data.map((d) => (
-                            <Cell key={d.name} fill={d.color} />
+                            <Cell
+                              key={d.name}
+                              fill={d.color}
+                              cursor="pointer"
+                              opacity={activeName && activeName !== d.name ? 0.35 : 1}
+                            />
                           ))}
                         </Pie>
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
-                      <div>
-                        <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                          Total
-                        </div>
-                        <div className="font-display text-sm font-bold text-foreground">
-                          {inrCompact(total)}
-                        </div>
+                      <div className="px-8">
+                        {active ? (
+                          <>
+                            <div className="truncate text-[9px] uppercase tracking-wider text-muted-foreground">
+                              {active.name}
+                            </div>
+                            <div className="font-display text-sm font-bold text-foreground">
+                              {inrCompact(active.amt)}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {active.pct.toFixed(1)}%
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                              Total
+                            </div>
+                            <div className="font-display text-sm font-bold text-foreground">
+                              {inrCompact(total)}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="w-full min-w-[180px] flex-1 space-y-1.5">
                     {data.map((d) => (
-                      <div key={d.name} className="flex items-center gap-2 text-xs">
+                      <button
+                        key={d.name}
+                        type="button"
+                        onClick={() => toggleActive(d.name)}
+                        className={`flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs transition-colors ${
+                          activeName === d.name ? "bg-surface-2/60" : "hover:bg-surface-2/40"
+                        }`}
+                      >
                         <span
                           className="h-2 w-2 shrink-0 rounded-full"
                           style={{ background: d.color }}
@@ -154,7 +190,7 @@ export function AllocationDetailsDialog({
                         <span className="shrink-0 font-medium text-muted-foreground">
                           {d.pct.toFixed(2)}%
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
