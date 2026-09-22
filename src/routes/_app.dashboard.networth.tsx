@@ -68,6 +68,8 @@ function NetWorth() {
   const createSnap = useCreateSnapshot();
   const [months, setMonths] = useState<number>(12);
 
+  const snaps = snapsQ.data ?? [];
+
   const [cadence, setCadenceState] = useState<SnapCadence>(
     () => (typeof window !== "undefined"
       ? (localStorage.getItem(PREF_KEY) as SnapCadence) ?? "off"
