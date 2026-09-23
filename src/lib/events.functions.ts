@@ -9,17 +9,34 @@ import type { MarketEvent } from "@/lib/events/types";
 export const listMarketEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ events: MarketEvent[]; synced_at: string | null }> => {
-    // Only the current month onward — past months are pruned during sync.
+    // Upcoming events in the current + next month, plus the 2 most recent past ones.
     const now = new Date();
-    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-    const { data, error } = await context.supabase
-      .from("market_events")
-      .select("*")
-      .gte("event_time", monthStart)
-      .order("event_time", { ascending: true })
-      .limit(200);
+    const nowIso = now.toISOString();
+    const windowEnd = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1),
+    ).toISOString();
+
+    const [upcomingRes, pastRes] = await Promise.all([
+      context.supabase
+        .from("market_events")
+        .select("*")
+        .gte("event_time", nowIso)
+        .lt("event_time", windowEnd)
+        .order("event_time", { ascending: true })
+        .limit(200),
+      context.supabase
+        .from("market_events")
+        .select("*")
+        .lt("event_time", nowIso)
+        .order("event_time", { ascending: false })
+        .limit(2),
+    ]);
+    const error = upcomingRes.error ?? pastRes.error;
     if (error) throw new Error(error.message);
-    const rows = (data ?? []) as unknown as MarketEvent[];
+    const rows = [
+      ...((pastRes.data ?? []) as unknown as MarketEvent[]).reverse(),
+      ...((upcomingRes.data ?? []) as unknown as MarketEvent[]),
+    ];
     const lastSync = rows.reduce((latest, row) => {
       const t = row.last_updated ?? "";
       return t > latest ? t : latest;

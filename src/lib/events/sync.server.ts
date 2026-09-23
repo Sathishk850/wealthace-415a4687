@@ -17,9 +17,12 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
   const errors: string[] = [];
   const rows: MarketEventUpsert[] = [];
 
-  // Keep only the current month onward.
+  // Window: current month start (for the 2 kept past events) through end of next month.
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-  const keep = (r: MarketEventUpsert) => r.event_time >= monthStart;
+  const windowEnd = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1),
+  ).toISOString();
+  const keep = (r: MarketEventUpsert) => r.event_time >= monthStart && r.event_time < windowEnd;
 
   const { buildCuratedEvents } = await import("./static-calendar");
   const curated = buildCuratedEvents(now).filter(keep);
@@ -37,14 +40,16 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  // Purge anything before the current month so the table never grows stale.
+  // Purge anything outside the window so the table never grows stale.
   {
     const { error } = await supabaseAdmin
       .from("market_events")
       .delete()
-      .lt("event_time", monthStart);
+      .or(`event_time.lt.${monthStart},event_time.gte.${windowEnd}`);
     if (error) errors.push(error.message);
   }
+
+
 
 
   let upserted = 0;
@@ -56,6 +61,26 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
     if (error) errors.push(error.message);
     else upserted += chunk.length;
   }
+
+  // Keep only the 2 most recent past events; drop the rest.
+  {
+    const nowIso = now.toISOString();
+    const { data: pastRows, error } = await supabaseAdmin
+      .from("market_events")
+      .select("id")
+      .lt("event_time", nowIso)
+      .order("event_time", { ascending: false });
+    if (error) errors.push(error.message);
+    const stale = (pastRows ?? []).slice(2).map((r: { id: string }) => r.id);
+    if (stale.length > 0) {
+      const { error: delErr } = await supabaseAdmin
+        .from("market_events")
+        .delete()
+        .in("id", stale);
+      if (delErr) errors.push(delErr.message);
+    }
+  }
+
 
   let pushed = 0;
   try {
