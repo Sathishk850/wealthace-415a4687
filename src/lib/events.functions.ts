@@ -9,9 +9,13 @@ import type { MarketEvent } from "@/lib/events/types";
 export const listMarketEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ events: MarketEvent[]; synced_at: string | null }> => {
+    // Only the current month onward — past months are pruned during sync.
+    const now = new Date();
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
     const { data, error } = await context.supabase
       .from("market_events")
       .select("*")
+      .gte("event_time", monthStart)
       .order("event_time", { ascending: true })
       .limit(200);
     if (error) throw new Error(error.message);
