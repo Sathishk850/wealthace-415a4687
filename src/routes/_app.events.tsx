@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -17,7 +17,20 @@ import { cn } from "@/lib/utils";
 import { flagFor, type MarketEvent } from "@/lib/events/types";
 import { EventDetailPanel } from "@/components/events/EventDetailPanel";
 import { useMarketEvents, useSyncMarketEvents } from "@/lib/events-api";
-import { impactClass, statusClass, eventDay, eventTime } from "@/components/events/market-events-card";
+import { impactClass } from "@/components/events/market-events-card";
+import { formatDate, formatTime } from "@/lib/date-format";
+
+/** Extract a clean hostname from a URL; fall back to the raw string. */
+function sourceDomain(raw: string | null | undefined): string | null {
+  if (!raw || !raw.trim()) return null;
+  const s = raw.trim();
+  try {
+    const url = new URL(s.startsWith("http") ? s : `https://${s}`);
+    return url.hostname.replace(/^www\./, "");
+  } catch {
+    return s;
+  }
+}
 
 export const Route = createFileRoute("/_app/events")({
   head: () => ({
