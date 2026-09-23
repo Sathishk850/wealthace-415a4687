@@ -77,7 +77,7 @@ function EventsPage() {
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [selected, setSelected] = useState<MarketEvent | null>(null);
 
-  const rows = useMemo(() => {
+  const filtered = useMemo(() => {
     const all = data?.events ?? [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -109,6 +109,25 @@ function EventsPage() {
       return true;
     });
   }, [data, filter, country, dateRange]);
+
+  // Nearest upcoming first, then most recent past below.
+  const rows = useMemo(() => {
+    const now = Date.now();
+    const upcoming = filtered
+      .filter((e) => new Date(e.event_time).getTime() >= now)
+      .sort((a, b) => a.event_time.localeCompare(b.event_time));
+    const past = filtered
+      .filter((e) => new Date(e.event_time).getTime() < now)
+      .sort((a, b) => b.event_time.localeCompare(a.event_time));
+    return [...upcoming, ...past];
+  }, [filtered]);
+
+  // Show Previous/Actual columns only if at least one row has a real value.
+  const hasPrev = rows.some((e) => e.previous && e.previous.trim());
+  const hasActual = rows.some((e) => e.actual && e.actual.trim());
+  const showValueCols = hasPrev || hasActual;
+  // Columns: flag, event, country, date, category, [prev], [actual], source
+  const colCount = showValueCols ? 8 : 6;
 
   const runSync = () => {
     sync.mutate(undefined, {
