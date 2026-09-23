@@ -205,52 +205,79 @@ function EventsPage() {
               <th className="px-3 py-2.5">Country</th>
               <th className="px-3 py-2.5">Date &amp; Time</th>
               <th className="px-3 py-2.5">Category</th>
-              <th className="px-3 py-2.5 text-right">Previous</th>
-              <th className="px-3 py-2.5 text-right">Actual</th>
-              <th className="px-3 py-2.5">Status</th>
+              {showValueCols && hasPrev && (
+                <th className="px-3 py-2.5 text-right">Previous</th>
+              )}
+              {showValueCols && hasActual && (
+                <th className="px-3 py-2.5 text-right">Actual</th>
+              )}
               <th className="px-3 py-2.5">Source</th>
             </tr>
           </thead>
           <tbody className={cn(sync.isPending && "pointer-events-none opacity-50")}>
             {isLoading ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={colCount} className="px-3 py-8 text-center text-muted-foreground">
                   Loading events…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={colCount} className="px-3 py-8 text-center text-muted-foreground">
                   No events match these filters — try Sync Now.
                 </td>
               </tr>
             ) : (
-              rows.map((e) => (
-                <tr
-                  key={e.id}
-                  onClick={() => setSelected(e)}
-                  className={cn(
-                    "cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40",
-                    selected?.id === e.id && "bg-muted/50",
-                  )}
-                >
-                  <td className="px-3 py-2.5 text-base">{flagFor(e.country)}</td>
-                  <td className="px-3 py-2.5 font-medium text-foreground">{e.event_name}</td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{e.country}</td>
-                  <td className="px-3 py-2.5 text-muted-foreground">
-                    {eventDay(e.event_time)} · {eventTime(e.event_time)}
-                  </td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{e.category}</td>
-                  <td className="px-3 py-2.5 text-right text-muted-foreground">{e.previous ?? "—"}</td>
-                  <td className="px-3 py-2.5 text-right font-medium text-foreground">{e.actual ?? "—"}</td>
-                  <td className="px-3 py-2.5">
-                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", statusClass(e.status))}>
-                      {e.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{e.source}</td>
-                </tr>
-              ))
+              rows.map((e) => {
+                const domain = sourceDomain(e.source_url) ?? sourceDomain(e.source);
+                const href = e.source_url ?? (e.source && /^https?:\/\//i.test(e.source) ? e.source : null);
+                return (
+                  <tr
+                    key={e.id}
+                    onClick={() => setSelected(e)}
+                    className={cn(
+                      "cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40",
+                      selected?.id === e.id && "bg-muted/50",
+                    )}
+                  >
+                    <td className="px-3 py-2.5 text-base">{flagFor(e.country)}</td>
+                    <td className="px-3 py-2.5 font-medium text-foreground">{e.event_name}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground">{e.country}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">
+                      {formatDate(e.event_time)} · {formatTime(e.event_time)}
+                    </td>
+                    <td className="px-3 py-2.5 text-muted-foreground">{e.category}</td>
+                    {showValueCols && hasPrev && (
+                      <td className="px-3 py-2.5 text-right text-muted-foreground">
+                        {e.previous && e.previous.trim() ? e.previous : "—"}
+                      </td>
+                    )}
+                    {showValueCols && hasActual && (
+                      <td className="px-3 py-2.5 text-right font-medium text-foreground">
+                        {e.actual && e.actual.trim() ? e.actual : "—"}
+                      </td>
+                    )}
+                    <td className="px-3 py-2.5">
+                      {domain && href ? (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(ev) => ev.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline"
+                        >
+                          {domain}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : domain ? (
+                        <span className="text-muted-foreground">{domain}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
