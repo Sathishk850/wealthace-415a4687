@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { flagFor, type MarketEvent } from "@/lib/events/types";
 import { EventDetailPanel } from "@/components/events/EventDetailPanel";
 import { useMarketEvents, useSyncMarketEvents } from "@/lib/events-api";
-import { impactClass } from "@/components/events/market-events-card";
 import { formatDate, formatTime } from "@/lib/date-format";
 
 /** Extract a clean hostname from a URL; fall back to the raw string. */
