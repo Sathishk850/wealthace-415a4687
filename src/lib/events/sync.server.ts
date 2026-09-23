@@ -62,6 +62,26 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
     else upserted += chunk.length;
   }
 
+  // Keep only the 2 most recent past events; drop the rest.
+  {
+    const nowIso = now.toISOString();
+    const { data: pastRows, error } = await supabaseAdmin
+      .from("market_events")
+      .select("id")
+      .lt("event_time", nowIso)
+      .order("event_time", { ascending: false });
+    if (error) errors.push(error.message);
+    const stale = (pastRows ?? []).slice(2).map((r: { id: string }) => r.id);
+    if (stale.length > 0) {
+      const { error: delErr } = await supabaseAdmin
+        .from("market_events")
+        .delete()
+        .in("id", stale);
+      if (delErr) errors.push(delErr.message);
+    }
+  }
+
+
   let pushed = 0;
   try {
     pushed = await dispatchEventPushes(supabaseAdmin, rows, now);
