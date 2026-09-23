@@ -17,8 +17,12 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
   const errors: string[] = [];
   const rows: MarketEventUpsert[] = [];
 
+  // Keep only the current month onward.
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const keep = (r: MarketEventUpsert) => r.event_time >= monthStart;
+
   const { buildCuratedEvents } = await import("./static-calendar");
-  const curated = buildCuratedEvents(now);
+  const curated = buildCuratedEvents(now).filter(keep);
   rows.push(...curated);
 
   let fredCount = 0;
