@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -17,7 +17,19 @@ import { cn } from "@/lib/utils";
 import { flagFor, type MarketEvent } from "@/lib/events/types";
 import { EventDetailPanel } from "@/components/events/EventDetailPanel";
 import { useMarketEvents, useSyncMarketEvents } from "@/lib/events-api";
-import { impactClass, statusClass, eventDay, eventTime } from "@/components/events/market-events-card";
+import { formatDate, formatTime } from "@/lib/date-format";
+
+/** Extract a clean hostname from a URL; fall back to the raw string. */
+function sourceDomain(raw: string | null | undefined): string | null {
+  if (!raw || !raw.trim()) return null;
+  const s = raw.trim();
+  try {
+    const url = new URL(s.startsWith("http") ? s : `https://${s}`);
+    return url.hostname.replace(/^www\./, "");
+  } catch {
+    return s;
+  }
+}
 
 export const Route = createFileRoute("/_app/events")({
   head: () => ({
@@ -64,7 +76,7 @@ function EventsPage() {
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [selected, setSelected] = useState<MarketEvent | null>(null);
 
-  const rows = useMemo(() => {
+  const filtered = useMemo(() => {
     const all = data?.events ?? [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -96,6 +108,25 @@ function EventsPage() {
       return true;
     });
   }, [data, filter, country, dateRange]);
+
+  // Nearest upcoming first, then most recent past below.
+  const rows = useMemo(() => {
+    const now = Date.now();
+    const upcoming = filtered
+      .filter((e) => new Date(e.event_time).getTime() >= now)
+      .sort((a, b) => a.event_time.localeCompare(b.event_time));
+    const past = filtered
+      .filter((e) => new Date(e.event_time).getTime() < now)
+      .sort((a, b) => b.event_time.localeCompare(a.event_time));
+    return [...upcoming, ...past];
+  }, [filtered]);
+
+  // Show Previous/Actual columns only if at least one row has a real value.
+  const hasPrev = rows.some((e) => e.previous && e.previous.trim());
+  const hasActual = rows.some((e) => e.actual && e.actual.trim());
+  const showValueCols = hasPrev || hasActual;
+  // Columns: flag, event, country, date, category, [prev], [actual], source
+  const colCount = showValueCols ? 8 : 6;
 
   const runSync = () => {
     sync.mutate(undefined, {
@@ -173,52 +204,79 @@ function EventsPage() {
               <th className="px-3 py-2.5">Country</th>
               <th className="px-3 py-2.5">Date &amp; Time</th>
               <th className="px-3 py-2.5">Category</th>
-              <th className="px-3 py-2.5 text-right">Previous</th>
-              <th className="px-3 py-2.5 text-right">Actual</th>
-              <th className="px-3 py-2.5">Status</th>
+              {showValueCols && hasPrev && (
+                <th className="px-3 py-2.5 text-right">Previous</th>
+              )}
+              {showValueCols && hasActual && (
+                <th className="px-3 py-2.5 text-right">Actual</th>
+              )}
               <th className="px-3 py-2.5">Source</th>
             </tr>
           </thead>
           <tbody className={cn(sync.isPending && "pointer-events-none opacity-50")}>
             {isLoading ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={colCount} className="px-3 py-8 text-center text-muted-foreground">
                   Loading events…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={colCount} className="px-3 py-8 text-center text-muted-foreground">
                   No events match these filters — try Sync Now.
                 </td>
               </tr>
             ) : (
-              rows.map((e) => (
-                <tr
-                  key={e.id}
-                  onClick={() => setSelected(e)}
-                  className={cn(
-                    "cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40",
-                    selected?.id === e.id && "bg-muted/50",
-                  )}
-                >
-                  <td className="px-3 py-2.5 text-base">{flagFor(e.country)}</td>
-                  <td className="px-3 py-2.5 font-medium text-foreground">{e.event_name}</td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{e.country}</td>
-                  <td className="px-3 py-2.5 text-muted-foreground">
-                    {eventDay(e.event_time)} · {eventTime(e.event_time)}
-                  </td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{e.category}</td>
-                  <td className="px-3 py-2.5 text-right text-muted-foreground">{e.previous ?? "—"}</td>
-                  <td className="px-3 py-2.5 text-right font-medium text-foreground">{e.actual ?? "—"}</td>
-                  <td className="px-3 py-2.5">
-                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", statusClass(e.status))}>
-                      {e.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{e.source}</td>
-                </tr>
-              ))
+              rows.map((e) => {
+                const domain = sourceDomain(e.source_url) ?? sourceDomain(e.source);
+                const href = e.source_url ?? (e.source && /^https?:\/\//i.test(e.source) ? e.source : null);
+                return (
+                  <tr
+                    key={e.id}
+                    onClick={() => setSelected(e)}
+                    className={cn(
+                      "cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40",
+                      selected?.id === e.id && "bg-muted/50",
+                    )}
+                  >
+                    <td className="px-3 py-2.5 text-base">{flagFor(e.country)}</td>
+                    <td className="px-3 py-2.5 font-medium text-foreground">{e.event_name}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground">{e.country}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">
+                      {formatDate(e.event_time)} · {formatTime(e.event_time)}
+                    </td>
+                    <td className="px-3 py-2.5 text-muted-foreground">{e.category}</td>
+                    {showValueCols && hasPrev && (
+                      <td className="px-3 py-2.5 text-right text-muted-foreground">
+                        {e.previous && e.previous.trim() ? e.previous : "—"}
+                      </td>
+                    )}
+                    {showValueCols && hasActual && (
+                      <td className="px-3 py-2.5 text-right font-medium text-foreground">
+                        {e.actual && e.actual.trim() ? e.actual : "—"}
+                      </td>
+                    )}
+                    <td className="px-3 py-2.5">
+                      {domain && href ? (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(ev) => ev.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline"
+                        >
+                          {domain}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : domain ? (
+                        <span className="text-muted-foreground">{domain}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
