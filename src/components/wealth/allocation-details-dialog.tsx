@@ -205,25 +205,64 @@ export function AllocationDetailsDialog({
                       </tr>
                     </thead>
                     <tbody>
-                      {data.map((d) => (
-                        <tr key={d.name} className="border-b border-border/50 last:border-0">
-                          <td className="px-3 py-2.5">
-                            <span className="flex items-center gap-2 text-xs text-foreground">
-                              <span
-                                className="h-2 w-2 shrink-0 rounded-sm"
-                                style={{ background: d.color }}
-                              />
-                              {d.name}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2.5 text-right text-xs text-foreground">
-                            {inr(d.amt)}
-                          </td>
-                          <td className="px-3 py-2.5 text-right text-xs font-semibold text-foreground">
-                            {d.pct.toFixed(2)}%
-                          </td>
-                        </tr>
-                      ))}
+                      {data.map((d) => {
+                        const isOpen = !!expanded[d.name];
+                        const hasHoldings = (d.holdings?.length ?? 0) > 0;
+                        return [
+                          <tr
+                            key={d.name}
+                            onClick={() => hasHoldings && toggleExpanded(d.name)}
+                            className={`border-b border-border/50 last:border-0 ${
+                              hasHoldings ? "cursor-pointer hover:bg-surface-2/40" : ""
+                            }`}
+                          >
+                            <td className="px-3 py-2.5">
+                              <span className="flex items-center gap-2 text-xs text-foreground">
+                                {hasHoldings ? (
+                                  isOpen ? (
+                                    <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                  )
+                                ) : (
+                                  <span className="w-3 shrink-0" />
+                                )}
+                                <span
+                                  className="h-2 w-2 shrink-0 rounded-sm"
+                                  style={{ background: d.color }}
+                                />
+                                {d.name}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-right text-xs text-foreground">
+                              {inr(d.amt)}
+                            </td>
+                            <td className="px-3 py-2.5 text-right text-xs font-semibold text-foreground">
+                              {d.pct.toFixed(2)}%
+                            </td>
+                          </tr>,
+                          ...(isOpen && hasHoldings
+                            ? d.holdings!.map((h) => (
+                                <tr
+                                  key={`${d.name}-${h.id}`}
+                                  className="border-b border-border/30 bg-surface-2/30 last:border-0"
+                                >
+                                  <td className="px-3 py-2 pl-9">
+                                    <span className="block truncate text-[11px] text-muted-foreground">
+                                      {h.name}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-[11px] text-muted-foreground">
+                                    {inr(h.amt)}
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-[11px] text-muted-foreground">
+                                    {d.amt > 0 ? ((h.amt / d.amt) * 100).toFixed(1) : "0.0"}%
+                                  </td>
+                                </tr>
+                              ))
+                            : []),
+                        ];
+                      })}
                     </tbody>
                   </table>
                 </div>
