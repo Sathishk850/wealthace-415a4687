@@ -17,9 +17,12 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
   const errors: string[] = [];
   const rows: MarketEventUpsert[] = [];
 
-  // Keep only the current month onward.
+  // Window: current month start (for the 2 kept past events) through end of next month.
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-  const keep = (r: MarketEventUpsert) => r.event_time >= monthStart;
+  const windowEnd = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1),
+  ).toISOString();
+  const keep = (r: MarketEventUpsert) => r.event_time >= monthStart && r.event_time < windowEnd;
 
   const { buildCuratedEvents } = await import("./static-calendar");
   const curated = buildCuratedEvents(now).filter(keep);
@@ -37,14 +40,16 @@ export async function syncMarketEvents(now: Date = new Date()): Promise<SyncResu
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  // Purge anything before the current month so the table never grows stale.
+  // Purge anything outside the window so the table never grows stale.
   {
     const { error } = await supabaseAdmin
       .from("market_events")
       .delete()
-      .lt("event_time", monthStart);
+      .or(`event_time.lt.${monthStart},event_time.gte.${windowEnd}`);
     if (error) errors.push(error.message);
   }
+
+
 
 
   let upserted = 0;
