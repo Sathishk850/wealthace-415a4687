@@ -215,6 +215,21 @@ export function useCreateSnapshot() {
  */
 
 
+export function useDeleteSnapshot() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("wealth_snapshots").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Snapshot deleted");
+      qc.invalidateQueries({ queryKey: snapshotKeys.all });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete snapshot"),
+  });
+}
+
 /** Month-over-month trend stats derived from snapshot history. */
 export function snapshotTrend(snaps: Snapshot[]) {
   if (snaps.length === 0) {
