@@ -9,7 +9,7 @@ import {
   Pie,
   PieChart,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RTooltip,
   XAxis,
   YAxis,
 } from "recharts";
