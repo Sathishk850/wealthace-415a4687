@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, Check, Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { Camera, Check, Clock, TrendingUp, TrendingDown, Plus, Trash2, History, X, Loader2 } from "lucide-react";
 import {
   Area,
   AreaChart,
+  CartesianGrid,
   Cell,
   Pie,
   PieChart,
   ResponsiveContainer,
-  Tooltip as RTooltip,
+  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -17,6 +18,7 @@ import { inr, inrCompact, inrSigned } from "@/lib/wealth-api";
 import {
   snapshotTrend,
   useCreateSnapshot,
+  useDeleteSnapshot,
   useNetWorth,
   useSnapshots,
 } from "@/lib/networth";
@@ -66,6 +68,16 @@ function NetWorth() {
   const nw = useNetWorth();
   const snapsQ = useSnapshots();
   const createSnap = useCreateSnapshot();
+  const deleteSnap = useDeleteSnapshot();
+  const [showPastForm, setShowPastForm] = useState(false);
+  const [pastDate, setPastDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [pastAssets, setPastAssets] = useState("");
+  const [pastLiabilities, setPastLiabilities] = useState("0");
+  const [showHistory, setShowHistory] = useState(false);
   const [months, setMonths] = useState<number>(12);
 
   const snaps = snapsQ.data ?? [];
@@ -149,6 +161,27 @@ function NetWorth() {
 
   const empty = !nw.isLoading && nw.totalAssets === 0 && nw.liabilitiesTotal === 0;
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const pastAssetsNum = parseFloat(pastAssets || "0") || 0;
+  const pastLiabNum = parseFloat(pastLiabilities || "0") || 0;
+  const pastNetWorth = pastAssetsNum - pastLiabNum;
+  const pastValid = pastAssetsNum > 0 && !!pastDate && pastDate <= todayIso;
+
+  async function submitPastEntry() {
+    if (!pastValid) return;
+    await createSnap.mutateAsync({
+      snapshot_date: pastDate,
+      net_worth: pastNetWorth,
+      assets_total: pastAssetsNum,
+      liabilities_total: pastLiabNum,
+      investments_total: 0,
+      savings_total: 0,
+    });
+    setShowPastForm(false);
+    setPastAssets("");
+    setPastLiabilities("0");
+  }
+
   return (
     <>
       <PageHeader
@@ -201,6 +234,28 @@ function NetWorth() {
               )}
             </div>
 
+            <button
+              type="button"
+              onClick={() => setShowHistory((v) => !v)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors",
+                showHistory
+                  ? "border-mint/40 bg-mint/10 text-mint"
+                  : "border-border bg-surface text-muted-foreground hover:border-mint/40",
+              )}
+            >
+              <History className="h-3.5 w-3.5" />
+              {snaps.length} {snaps.length === 1 ? "entry" : "entries"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPastForm(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:border-mint/40"
+            >
+              <Plus className="h-3.5 w-3.5 text-mint" />
+              Add past entry
+            </button>
+
             {/* Manual snap */}
             <button
               type="button"
@@ -222,6 +277,118 @@ function NetWorth() {
           </div>
         }
       />
+
+      {showPastForm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 p-4 backdrop-blur-sm sm:items-center">
+          <div className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">Add Past Entry</h3>
+              <button type="button" onClick={() => setShowPastForm(false)} className="text-muted-foreground hover:text-foreground" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Enter values from your old records or spreadsheet. This backfills your net worth chart.
+            </p>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Date</label>
+              <input
+                type="date"
+                max={todayIso}
+                value={pastDate}
+                onChange={(e) => setPastDate(e.target.value)}
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-mint/40"
+              />
+              <p className="mt-0.5 text-[10px] text-muted-foreground">Past dates only. Existing entry for same date will be overwritten.</p>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Total Assets (₹)</label>
+              <input
+                type="number" min="0" step="1000" placeholder="e.g. 500000"
+                value={pastAssets}
+                onChange={(e) => setPastAssets(e.target.value)}
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-mint/40"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Total Liabilities (₹)</label>
+              <input
+                type="number" min="0" step="1000" placeholder="0"
+                value={pastLiabilities}
+                onChange={(e) => setPastLiabilities(e.target.value)}
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-mint/40"
+              />
+            </div>
+            {pastAssets && (
+              <div className={cn(
+                "flex items-center justify-between rounded-xl border px-3 py-2 text-sm font-semibold",
+                pastNetWorth >= 0 ? "border-success/30 bg-success/5 text-success" : "border-destructive/30 bg-destructive/5 text-destructive",
+              )}>
+                <span className="text-xs font-medium text-muted-foreground">Net Worth</span>
+                {inr(pastNetWorth)}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setShowPastForm(false)} className="flex-1 rounded-xl border border-border bg-surface py-2.5 text-sm font-semibold text-foreground">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitPastEntry}
+                disabled={!pastValid || createSnap.isPending}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-mint py-2.5 text-sm font-semibold text-mint-foreground disabled:opacity-50"
+              >
+                {createSnap.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Save entry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showHistory && (
+        <div className="mb-4 rounded-2xl border border-border bg-card p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Snapshot History ({snaps.length})</h3>
+            <button type="button" onClick={() => setShowHistory(false)} aria-label="Close history">
+              <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+            </button>
+          </div>
+          <div className="max-h-64 space-y-1 overflow-y-auto">
+            {snaps.length === 0 ? (
+              <p className="py-4 text-center text-xs text-muted-foreground">No snapshots yet.</p>
+            ) : (
+              [...snaps].reverse().map((s) => (
+                <div key={s.id} className="group flex items-center justify-between rounded-lg px-3 py-2 hover:bg-surface">
+                  <div>
+                    <div className="text-xs font-medium text-foreground">{formatDateShort(s.snapshot_date)}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Assets {inrCompact(s.assets_total)} · Liabilities {inrCompact(s.liabilities_total)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={cn("text-sm font-semibold", s.net_worth >= 0 ? "text-success" : "text-destructive")}>
+                      {inrCompact(s.net_worth)}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Delete snapshot"
+                      onClick={() => { if (window.confirm("Delete this snapshot?")) deleteSnap.mutate(s.id); }}
+                      className="text-muted-foreground transition hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            {snaps.length} snapshot{snaps.length !== 1 ? "s" : ""} · Deleting removes it from the chart permanently.
+          </p>
+        </div>
+      )}
+
 
       {/* Headline + history */}
       <div className="mb-6 rounded-3xl border border-border bg-card p-5 sm:p-6">
