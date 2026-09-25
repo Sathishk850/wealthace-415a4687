@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Upload,
   ScanLine,
+  CopyPlus,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
@@ -423,6 +424,20 @@ function Money() {
 
   // top-bar "Add" opens contextual dialog
   const [openTx, setOpenTx] = useState<{ open: boolean; editing?: Transaction; defaultKind?: Kind; prefill?: ScanHandoff }>({ open: false });
+  const cloneTx = (tx: Transaction) =>
+    setOpenTx({
+      open: true,
+      defaultKind: tx.kind,
+      prefill: {
+        amount: String(tx.amount),
+        date: todayIso(),
+        categoryId: tx.category_id ?? "",
+        merchant: tx.merchant,
+        note: tx.note ?? "",
+        paymentMode: tx.payment_mode ?? null,
+        paymentAccountId: tx.payment_account_id ?? null,
+      } as any,
+    });
   const [openBudget, setOpenBudget] = useState<{ open: boolean; editing?: any }>({ open: false });
   const [scanOpen, setScanOpen] = useState(false);
 
@@ -725,6 +740,7 @@ function Money() {
               rows={transactions}
               categories={categories}
               onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+              onClone={cloneTx}
             />
           </div>
         </>
@@ -734,6 +750,7 @@ function Money() {
           categories={categories}
           kindFilter="income"
           onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+          onClone={cloneTx}
           overrideFrom={navFrom}
           overrideTo={navTo}
           overrideLabel={activeMonthLabel}
@@ -745,6 +762,7 @@ function Money() {
           categories={categories}
           kindFilter="expense"
           onEdit={(tx) => setOpenTx({ open: true, editing: tx })}
+          onClone={cloneTx}
           overrideFrom={navFrom}
           overrideTo={navTo}
           overrideLabel={activeMonthLabel}
@@ -862,7 +880,7 @@ function periodRange(
   }
 }
 
-type TxSortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
+type TxSortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "desc_asc" | "desc_desc" | "account_asc" | "account_desc";
 
 function SortHeader({
   label,
@@ -871,6 +889,7 @@ function SortHeader({
   asc,
   desc,
   align = "left",
+  className = "",
 }: {
   label: string;
   sortKey: TxSortKey;
@@ -878,12 +897,13 @@ function SortHeader({
   asc: TxSortKey;
   desc: TxSortKey;
   align?: "left" | "right";
+  className?: string;
 }) {
   const active = sortKey === asc || sortKey === desc;
   const dir: "asc" | "desc" = sortKey === asc ? "asc" : "desc";
   const Arrow = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <th className={`px-4 py-2.5 font-medium ${align === "right" ? "text-right" : "text-left"}`}>
+    <th className={`px-4 py-2.5 font-medium ${align === "right" ? "text-right" : "text-left"} ${className}`}>
       <button
         onClick={() => onClick(active && dir === "desc" ? asc : desc)}
         className={`inline-flex items-center gap-1 transition-colors ${active ? "text-mint" : "text-muted-foreground hover:text-foreground"}`}
