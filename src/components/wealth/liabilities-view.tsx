@@ -60,6 +60,7 @@ import { LiabilityDialog } from "@/components/wealth/liability-dialog";
 import { LiabilityCategoryPicker } from "@/components/wealth/LiabilityCategoryPicker";
 import { LoanDashboard } from "@/components/wealth/LoanDashboard";
 import { IoMenu } from "@/components/wealth/io-menu";
+import { BrokerImportModal } from "@/components/wealth/BrokerImportModal";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
 import { toast } from "sonner";
 
@@ -120,6 +121,7 @@ export function LiabilitiesView({
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [brokerImportOpen, setBrokerImportOpen] = useState(false);
   const [editing, setEditing] = useState<Liability | null>(null);
   const [confirm, setConfirm] = useState<Liability | null>(null);
   const [details, setDetails] = useState<Liability | null>(null);
@@ -369,8 +371,11 @@ export function LiabilitiesView({
           formatOption={titleCase}
         />
         <RefreshIconButton busy={isFetching} label="Refresh liabilities" onClick={() => refetch()} />
+        <>
+          <BrokerImportModal open={brokerImportOpen} onOpenChange={setBrokerImportOpen} />
         <IoMenu
-          onImport={() => openImport("liabilities")}
+          onImportHoldings={() => setBrokerImportOpen(true)}
+          onImportBank={() => openImport("liabilities")}
           onExportCsv={() => exportCsv("liabilities", exportCols as any, sorted)}
           onExportXlsx={() => exportXlsx("liabilities", exportCols as any, sorted)}
           onExportJson={() => exportJson("liabilities", sorted)}
@@ -380,6 +385,7 @@ export function LiabilitiesView({
             })
           }
         />
+</>
         <div className="ml-auto flex items-center gap-2">
 
           <button

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { InsuranceDialog } from "@/components/wealth/insurance-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
+import { BrokerImportModal } from "@/components/wealth/BrokerImportModal";
 import {
   type Insurance, type InsuranceInput, INSURANCE_TYPES,
   daysUntil, formatDate, groupByCategory, inr, inrCompact,
@@ -66,6 +67,7 @@ export function InsuranceView({
   const [sort, setSort] = useState<Sort>("next_due");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [brokerImportOpen, setBrokerImportOpen] = useState(false);
   const [editing, setEditing] = useState<Insurance | null>(null);
   const [confirm, setConfirm] = useState<Insurance | null>(null);
 
@@ -313,8 +315,11 @@ export function InsuranceView({
                   { value: "premium_desc", label: "Premium ↓" },
                 ]}
               />
+              <>
+                <BrokerImportModal open={brokerImportOpen} onOpenChange={setBrokerImportOpen} />
               <IoMenu
-                onImport={() => openImport("insurance")}
+                onImportHoldings={() => setBrokerImportOpen(true)}
+                onImportBank={() => openImport("insurance")}
                 onExportCsv={() => exportCsv("insurance", exportCols as any, filtered)}
                 onExportXlsx={() => exportXlsx("insurance", exportCols as any, filtered)}
                 onExportJson={() => exportJson("insurance", filtered)}
@@ -324,6 +329,7 @@ export function InsuranceView({
                   })
                 }
               />
+</>
             </div>
 
             {isLoading ? (
