@@ -9,14 +9,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type Props = {
-  onImport: () => void;
+  onImportHoldings: () => void;
+  onImportBank: () => void;
   onExportCsv: () => void;
   onExportXlsx: () => void;
   onExportJson: () => void;
   onExportPdf: () => void;
 };
 
-export function IoMenu({ onImport, onExportCsv, onExportXlsx, onExportJson, onExportPdf }: Props) {
+export function IoMenu({ onImportHoldings, onImportBank, onExportCsv, onExportXlsx, onExportJson, onExportPdf }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -29,8 +30,11 @@ export function IoMenu({ onImport, onExportCsv, onExportXlsx, onExportJson, onEx
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel className="text-xs">Import</DropdownMenuLabel>
-        <DropdownMenuItem onClick={onImport} className="gap-2 text-sm">
-          <Upload className="h-4 w-4" /> Import (CSV / XLSX / JSON)
+        <DropdownMenuItem onClick={onImportHoldings} className="gap-2 text-sm">
+          <Upload className="h-4 w-4" /> Import Holdings (Broker CSV / Excel)
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onImportBank} className="gap-2 text-sm">
+          <FileText className="h-4 w-4" /> Import Bank Statement
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs">Export</DropdownMenuLabel>
