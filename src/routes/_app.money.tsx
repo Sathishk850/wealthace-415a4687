@@ -904,6 +904,7 @@ function TransactionsTable({
   categories,
   kindFilter,
   onEdit,
+  onClone,
   overrideFrom,
   overrideTo,
   overrideLabel,
@@ -913,6 +914,7 @@ function TransactionsTable({
   categories: Category[];
   kindFilter?: Kind;
   onEdit: (tx: Transaction) => void;
+  onClone: (tx: Transaction) => void;
   overrideFrom?: string;
   overrideTo?: string;
   overrideLabel?: string;
@@ -926,8 +928,9 @@ function TransactionsTable({
   const [periodTouched, setPeriodTouched] = useState(false);
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
-  const [sort, setSort] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
+  const [sort, setSort] = useState<TxSortKey>("date_desc");
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const pageSize = isMobile ? 5 : 8;
 
   // Navigator override: applies while the Period dropdown is left at its default
@@ -940,6 +943,8 @@ function TransactionsTable({
     setPeriodTouched(false);
     setPage(1);
   }, [resetKey]);
+
+  useEffect(() => { setSelected(new Set()); }, [period, q, catFilter, from, to, resetKey]);
 
   const range = useMemo(
     () => (useOverride ? { from: overrideFrom, to: overrideTo } : periodRange(period, from, to)),
@@ -969,6 +974,14 @@ function TransactionsTable({
           return b.amount - a.amount;
         case "amount_asc":
           return a.amount - b.amount;
+        case "desc_asc":
+          return a.merchant.localeCompare(b.merchant);
+        case "desc_desc":
+          return b.merchant.localeCompare(a.merchant);
+        case "account_asc":
+          return (a.account ?? "").localeCompare(b.account ?? "");
+        case "account_desc":
+          return (b.account ?? "").localeCompare(a.account ?? "");
         default:
           return b.occurred_on.localeCompare(a.occurred_on);
       }
@@ -1042,6 +1055,24 @@ function TransactionsTable({
         )}
       </div>
 
+      {selected.size > 0 && (() => {
+        const selRows = filtered.filter((r) => selected.has(r.id));
+        const income = selRows.filter((r) => r.kind === "income").reduce((s, r) => s + r.amount, 0);
+        const expense = selRows.filter((r) => r.kind === "expense").reduce((s, r) => s + r.amount, 0);
+        const total = kindFilter ? income + expense : income - expense;
+        return (
+          <div className="hidden flex-wrap items-center justify-between gap-2 border-b border-border bg-primary/5 px-4 py-2 text-xs md:flex">
+            <span className="font-medium text-foreground">{selRows.length} selected</span>
+            <div className="flex items-center gap-4">
+              {income > 0 && <span className="text-success">+{inrCompact(income)}</span>}
+              {expense > 0 && <span className="text-destructive">-{inrCompact(expense)}</span>}
+              <span className="font-semibold text-mint">{kindFilter ? "Total" : "Net"}: {inrCompact(total)}</span>
+              <button onClick={() => setSelected(new Set())} className="text-muted-foreground hover:text-foreground">Clear</button>
+            </div>
+          </div>
+        );
+      })()}
+
       {filtered.length === 0 ? (
         <EmptyState icon={Inbox} title="No transactions found" description={rows.length === 0 ? "Click Add to create your first one." : "Try adjusting your filters."} />
       ) : (
@@ -1074,6 +1105,9 @@ function TransactionsTable({
                     <button onClick={() => onEdit(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground active:bg-surface" aria-label="Edit">
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
+                    <button onClick={() => onClone(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground active:bg-surface" aria-label="Clone transaction" title="Clone transaction">
+                      <CopyPlus className="h-3.5 w-3.5" />
+                    </button>
                     <button onClick={() => setConfirmDel(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground active:bg-destructive/15" aria-label="Delete">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1087,10 +1121,23 @@ function TransactionsTable({
             <table className="w-full text-sm">
               <thead className="bg-surface/50 text-xs text-muted-foreground">
                 <tr>
+                  <th className="w-8 px-2 py-2.5">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all on this page"
+                      className="h-3.5 w-3.5 accent-primary"
+                      checked={pageRows.length > 0 && pageRows.every((r) => selected.has(r.id))}
+                      onChange={(e) => {
+                        const next = new Set(selected);
+                        pageRows.forEach((r) => (e.target.checked ? next.add(r.id) : next.delete(r.id)));
+                        setSelected(next);
+                      }}
+                    />
+                  </th>
                   <SortHeader label="Date" sortKey={sort} onClick={setSort} asc="date_asc" desc="date_desc" />
-                  <th className="px-4 py-2.5 text-left font-medium">Merchant</th>
+                  <SortHeader label="Merchant" sortKey={sort} onClick={setSort} asc="desc_asc" desc="desc_desc" />
                   <th className="px-4 py-2.5 text-left font-medium">Category</th>
-                  <th className="hidden px-4 py-2.5 text-left font-medium lg:table-cell">Account</th>
+                  <SortHeader label="Account" sortKey={sort} onClick={setSort} asc="account_asc" desc="account_desc" className="hidden lg:table-cell" />
                   <SortHeader label="Amount" sortKey={sort} onClick={setSort} asc="amount_asc" desc="amount_desc" align="right" />
                   <th className="px-4 py-2.5 text-right font-medium">Actions</th>
                 </tr>
@@ -1099,7 +1146,20 @@ function TransactionsTable({
                 {pageRows.map((r) => {
                   const cat = r.category_id ? catMap.get(r.category_id) : null;
                   return (
-                    <tr key={r.id} className="hover:bg-surface/40">
+                    <tr key={r.id} className={selected.has(r.id) ? "bg-primary/5" : "hover:bg-surface/40"}>
+                      <td className="w-8 px-2 py-2.5">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${r.merchant}`}
+                          className="h-3.5 w-3.5 accent-primary"
+                          checked={selected.has(r.id)}
+                          onChange={(e) => {
+                            const next = new Set(selected);
+                            if (e.target.checked) next.add(r.id); else next.delete(r.id);
+                            setSelected(next);
+                          }}
+                        />
+                      </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">{formatDateLabel(r.occurred_on)}</td>
                       <td className="px-4 py-2.5 text-sm font-medium text-foreground">
                         {r.merchant}
@@ -1123,6 +1183,9 @@ function TransactionsTable({
                         <div className="inline-flex items-center gap-1">
                           <button onClick={() => onEdit(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface hover:text-foreground" aria-label="Edit">
                             <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => onClone(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface hover:text-mint" aria-label="Clone transaction" title="Clone transaction">
+                            <CopyPlus className="h-3.5 w-3.5" />
                           </button>
                           <button onClick={() => setConfirmDel(r)} className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive" aria-label="Delete">
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1209,6 +1272,7 @@ function TransactionDialog({
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [amountFlash, setAmountFlash] = useState(false);
 
   const upsert = useUpsertTransaction();
   const upsertCat = useUpsertCategory();
@@ -1226,7 +1290,7 @@ function TransactionDialog({
   useMemo(() => {
     if (open) {
       const scan = !editing ? prefill : undefined;
-      setKind(editing?.kind ?? (scan ? "expense" : defaultKind ?? "expense"));
+      setKind(editing?.kind ?? defaultKind ?? "expense");
       setAmount(editing ? String(editing.amount) : scan?.amount ?? "");
       setDate(editing?.occurred_on ?? scan?.date ?? todayIso());
       setCategoryId(editing?.category_id ?? scan?.categoryId ?? "");
@@ -1389,7 +1453,31 @@ function TransactionDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="amount">Amount (₹)</Label>
-              <Input id="amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+              <Input
+                id="amount"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                onBlur={(e) => {
+                  const raw = e.target.value.trim();
+                  if (!/[+\-*/%]/.test(raw)) return;
+                  if (!/^[\d\s+\-*/.()%]+$/.test(raw)) return;
+                  try {
+                    const withPct = raw
+                      .replace(/(\d+(?:\.\d+)?)\s*([+-])\s*(\d+(?:\.\d+)?)%/g, (_, base, op, pct) => `${base}${op}(${base}*${Number(pct) / 100})`)
+                      .replace(/(\d+(?:\.\d+)?)%/g, (_, p) => `(${Number(p) / 100})`);
+                    // eslint-disable-next-line no-new-func
+                    const result = Function('"use strict"; return (' + withPct + ")")();
+                    if (typeof result === "number" && Number.isFinite(result) && result > 0) {
+                      setAmount(String(Math.round(result * 100) / 100));
+                      setAmountFlash(true);
+                      setTimeout(() => setAmountFlash(false), 600);
+                    }
+                  } catch { /* leave raw value */ }
+                }}
+                placeholder="e.g. 1200+340 or 1200+18%"
+                className={amountFlash ? "border-primary transition-colors duration-300" : "transition-colors duration-300"}
+              />
             </div>
             <div>
               <Label htmlFor="date">Date</Label>
