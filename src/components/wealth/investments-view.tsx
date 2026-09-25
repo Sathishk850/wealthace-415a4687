@@ -56,6 +56,7 @@ import {
 import { TextTabs } from "@/components/text-tabs";
 import { InvestmentDialog } from "@/components/wealth/investment-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
+import { BrokerImportModal } from "@/components/wealth/BrokerImportModal";
 import { LinkInvestmentDialog, isLinkable } from "@/components/wealth/link-investment-dialog";
 import { MarketStatus } from "@/components/market/market-status";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
@@ -105,6 +106,7 @@ export function InvestmentsView({
   const bulkInsert = useBulkInsertInvestments();
   const del = useDeleteInvestment();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [brokerImportOpen, setBrokerImportOpen] = useState(false);
   const [editing, setEditing] = useState<Investment | null>(null);
   const [confirm, setConfirm] = useState<Investment | null>(null);
   const [linkQueue, setLinkQueue] = useState<Investment[] | null>(null);
@@ -287,8 +289,11 @@ export function InvestmentsView({
 
   const showEmptyOnly = !isLoading && rows.length === 0;
   const ioMenu = (
+    <>
+      <BrokerImportModal open={brokerImportOpen} onOpenChange={setBrokerImportOpen} />
     <IoMenu
-      onImport={() => openImport("investments")}
+      onImportHoldings={() => setBrokerImportOpen(true)}
+      onImportBank={() => openImport("investments")}
       onExportCsv={() => exportCsv("investments", exportCols as any, derived.rich)}
       onExportXlsx={() => exportXlsx("investments", exportCols as any, derived.rich)}
       onExportJson={() => exportJson("investments", derived.rich)}
@@ -298,6 +303,7 @@ export function InvestmentsView({
         })
       }
     />
+</>
   );
 
   return (

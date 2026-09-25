@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FamilyDialog } from "@/components/wealth/family-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
+import { BrokerImportModal } from "@/components/wealth/BrokerImportModal";
 import {
   RELATIONSHIPS, type FamilyMember, type FamilyMemberInput,
   ageFromDob, formatDate, inrCompact,
@@ -58,6 +59,7 @@ export function FamilyView({
   const [sort, setSort] = useState<Sort>("name_asc");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [brokerImportOpen, setBrokerImportOpen] = useState(false);
   const [editing, setEditing] = useState<FamilyMember | null>(null);
   const [confirm, setConfirm] = useState<FamilyMember | null>(null);
 
@@ -277,8 +279,11 @@ export function FamilyView({
                   { value: "relationship", label: "Relationship" },
                 ]}
               />
+              <>
+                <BrokerImportModal open={brokerImportOpen} onOpenChange={setBrokerImportOpen} />
               <IoMenu
-                onImport={() => openImport("family")}
+                onImportHoldings={() => setBrokerImportOpen(true)}
+                onImportBank={() => openImport("family")}
                 onExportCsv={() => exportCsv("family", exportCols as any, filtered)}
                 onExportXlsx={() => exportXlsx("family", exportCols as any, filtered)}
                 onExportJson={() => exportJson("family", filtered)}
@@ -288,6 +293,7 @@ export function FamilyView({
                   })
                 }
               />
+</>
             </div>
 
             {isLoading ? (

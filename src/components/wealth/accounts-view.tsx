@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AccountDialog } from "@/components/wealth/account-dialog";
 import { IoMenu } from "@/components/wealth/io-menu";
+import { BrokerImportModal } from "@/components/wealth/BrokerImportModal";
 import {
   ACCOUNT_TYPES, type Account, type AccountInput,
   groupByCategory, inr, inrCompact, normalizeAccountType,
@@ -61,6 +62,7 @@ export function AccountsView({
   const [sort, setSort] = useState<Sort>("balance_desc");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [brokerImportOpen, setBrokerImportOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
   const [confirm, setConfirm] = useState<Account | null>(null);
 
@@ -306,8 +308,11 @@ export function AccountsView({
                   { value: "recent", label: "Recently updated" },
                 ]}
               />
+              <>
+                <BrokerImportModal open={brokerImportOpen} onOpenChange={setBrokerImportOpen} />
               <IoMenu
-                onImport={() => openImport("accounts")}
+                onImportHoldings={() => setBrokerImportOpen(true)}
+                onImportBank={() => openImport("accounts")}
                 onExportCsv={() => exportCsv("accounts", exportCols as any, filtered)}
                 onExportXlsx={() => exportXlsx("accounts", exportCols as any, filtered)}
                 onExportJson={() => exportJson("accounts", filtered)}
@@ -317,6 +322,7 @@ export function AccountsView({
                   })
                 }
               />
+</>
             </div>
 
             {isLoading ? (
