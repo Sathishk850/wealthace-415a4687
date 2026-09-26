@@ -860,10 +860,22 @@ function Holdings({
                   {pageRows.map((h, i) => {
                     const up = h.pnl >= 0;
                     const color = PIE[i % PIE.length];
-                    return (
-                      <tr key={h.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
-                        <td className="py-3 pl-2">
+                    const gKey = (h.symbol || h.name).toUpperCase();
+                    const isOpen = expanded.has(gKey);
+                    const renderRow = (r: HoldRow, child: boolean) => (
+                      <tr key={child ? `${gKey}:${r.id}` : h.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${child ? "opacity-80" : ""}`}>
+                        <td className={`py-3 pl-2 ${child ? "pl-8" : ""}`}>
                           <div className="flex items-center gap-3">
+                            {!child && h._grouped ? (
+                              <button
+                                type="button"
+                                onClick={() => setExpanded((prev) => { const next = new Set(prev); if (next.has(gKey)) next.delete(gKey); else next.add(gKey); return next; })}
+                                className="mr-1 shrink-0 text-muted-foreground"
+                                aria-label={isOpen ? "Collapse entries" : "Expand entries"}
+                              >
+                                <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                              </button>
+                            ) : null}
                             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: color }}>
                               {h.name.slice(0, 1)}
                             </span>
