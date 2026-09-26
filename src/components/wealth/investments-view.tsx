@@ -877,17 +877,22 @@ function Holdings({
                               </button>
                             ) : null}
                             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: color }}>
-                              {h.name.slice(0, 1)}
+                              {r.name.slice(0, 1)}
                             </span>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="truncate font-medium text-foreground">{h.name}</span>
-                                {isLinkable(h) ? (
+                                <span className="truncate font-medium text-foreground">{r.name}</span>
+                                {!child && h._grouped ? (
+                                  <span className="shrink-0 rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                                    {h._children.length} entries
+                                  </span>
+                                ) : null}
+                                {isLinkable(r) ? (
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onLink(h);
+                                      onLink(r);
                                     }}
                                     className="inline-flex shrink-0 items-center gap-1 rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/20"
                                     title="Link to a market instrument"
@@ -896,27 +901,30 @@ function Holdings({
                                   </button>
                                 ) : null}
                               </div>
-                              {(h.sub_category || h.symbol) && (
-                                <div className="text-[10px] text-muted-foreground">{h.sub_category || h.symbol}</div>
+                              {(r.sub_category || r.symbol) && (
+                                <div className="text-[10px] text-muted-foreground">{r.sub_category || r.symbol}</div>
                               )}
+                              {child && (r.exchange || r.notes) ? (
+                                <div className="text-[10px] text-muted-foreground">{r.exchange || r.notes}</div>
+                              ) : null}
                             </div>
                           </div>
                         </td>
-                        
-                        <td className="py-3 text-right text-foreground">{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
-                        <td className="py-3 text-right text-foreground">{inrPrice(h.avg_price)}</td>
+
+                        <td className="py-3 text-right text-foreground">{r.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
+                        <td className="py-3 text-right text-foreground">{inrPrice(r.avg_price)}</td>
                         <td className="py-3 text-right text-foreground">
                           <div className="flex flex-col items-end">
-                            <span>{inrPrice(h.live_price || h.current_price)}</span>
-                            {h.has_live ? (
+                            <span>{inrPrice(r.live_price || r.current_price)}</span>
+                            {r.has_live ? (
                               <span
                                 className="text-[10px] text-mint"
-                                title={h.live_as_of ? `Updated ${new Date(h.live_as_of).toLocaleString("en-GB")}` : undefined}
+                                title={r.live_as_of ? `Updated ${new Date(r.live_as_of).toLocaleString("en-GB")}` : undefined}
                               >
-                                Live · {h.live_source ?? "market"}
-                                {h.day_change_pct != null ? (
-                                  <span className={`ml-1 ${h.day_change_pct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                                    ({h.day_change_pct >= 0 ? "+" : ""}{h.day_change_pct.toFixed(2)}%)
+                                Live · {r.live_source ?? "market"}
+                                {r.day_change_pct != null ? (
+                                  <span className={`ml-1 ${r.day_change_pct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                    ({r.day_change_pct >= 0 ? "+" : ""}{r.day_change_pct.toFixed(2)}%)
                                   </span>
                                 ) : null}
                               </span>
@@ -924,43 +932,49 @@ function Holdings({
                           </div>
                         </td>
                         <td className="py-3 text-right text-foreground">
-                          {inr(h.inv)}
-                          {(h.currency as string) === "UGX" && ugxInrRate ? (
+                          {inr(r.inv)}
+                          {(r.currency as string) === "UGX" && ugxInrRate ? (
                             <div className="text-[10px] text-muted-foreground">
-                              ≈ UGX {Math.round(h.inv / ugxInrRate).toLocaleString("en-US")}
+                              ≈ UGX {Math.round(r.inv / ugxInrRate).toLocaleString("en-US")}
                             </div>
                           ) : null}
                         </td>
                         <td className="py-3 text-right font-medium text-foreground">
-                          {inr(h.cur)}
-                          {(h.currency as string) === "UGX" && ugxInrRate ? (
+                          {inr(r.cur)}
+                          {(r.currency as string) === "UGX" && ugxInrRate ? (
                             <div className="text-[10px] text-muted-foreground">
-                              ≈ UGX {Math.round(h.cur / ugxInrRate).toLocaleString("en-US")}
+                              ≈ UGX {Math.round(r.cur / ugxInrRate).toLocaleString("en-US")}
                             </div>
                           ) : null}
                         </td>
-                        <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                        <td className={`py-3 text-right font-medium ${r.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                           <span className="inline-flex items-center gap-1">
-                            {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                            {(up ? "+" : "") + inr(h.pnl)}
+                            {r.pnl >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                            {(r.pnl >= 0 ? "+" : "") + inr(r.pnl)}
                           </span>
                         </td>
-                        <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
-                          {(up ? "+" : "") + h.ret.toFixed(2)}%
+                        <td className={`py-3 text-right font-medium ${r.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {(r.pnl >= 0 ? "+" : "") + r.ret.toFixed(2)}%
                         </td>
-                        <td className={`py-3 text-right ${h.xirrPct >= 0 ? "text-mint" : "text-rose-400"}`}>
-                          {h.xirrPct !== 0 ? `${h.xirrPct >= 0 ? "+" : ""}${h.xirrPct.toFixed(2)}%` : "—"}
+                        <td className={`py-3 text-right ${r.xirrPct >= 0 ? "text-mint" : "text-rose-400"}`}>
+                          {r.xirrPct !== 0 ? `${r.xirrPct >= 0 ? "+" : ""}${r.xirrPct.toFixed(2)}%` : "—"}
                         </td>
                         <td className="py-3 text-right text-muted-foreground">
-                          {totalCurrent > 0 ? `${((h.cur / totalCurrent) * 100).toFixed(2)}%` : "—"}
+                          {totalCurrent > 0 ? `${((r.cur / totalCurrent) * 100).toFixed(2)}%` : "—"}
                         </td>
 
-                        <td className="py-3 text-muted-foreground">{h.has_live && h.live_as_of ? formatDate(h.live_as_of) : formatDate(h.last_updated)}</td>
+                        <td className="py-3 text-muted-foreground">{r.has_live && r.live_as_of ? formatDate(r.live_as_of) : formatDate(r.last_updated)}</td>
 
                         <td className="py-3 pr-2">
-                          <RowMenu onEdit={() => onEdit(h)} onDelete={() => onDelete(h)} />
+                          <RowMenu onEdit={() => onEdit(r)} onDelete={() => onDelete(r)} />
                         </td>
                       </tr>
+                    );
+                    return (
+                      <Fragment key={h.id}>
+                        {renderRow(h, false)}
+                        {h._grouped && isOpen ? h._children.map((c) => renderRow(c, true)) : null}
+                      </Fragment>
                     );
                   })}
                 </tbody>
