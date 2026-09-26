@@ -1331,6 +1331,21 @@ function TransactionDialog({
   }, [open, editing, defaultKind, prefill]);
 
   const kindCats = categories.filter((c) => c.kind === kind);
+
+  const merchantSuggestions = useMemo(() => {
+    if (!merchant.trim() || merchant.trim().length < 2) return [];
+    const term = merchant.trim().toLowerCase();
+    const seen = new Set<string>();
+    const results: string[] = [];
+    for (const t of transactions) {
+      const m = t.merchant?.trim();
+      if (!m || seen.has(m)) continue;
+      seen.add(m);
+      if (m.toLowerCase().includes(term) && m !== merchant) results.push(m);
+      if (results.length >= 5) break;
+    }
+    return results;
+  }, [merchant, transactions]);
   const presets = kind === "expense" ? EXPENSE_PRESETS : INCOME_PRESETS;
   const existingNames = new Set(kindCats.map((c) => c.name.toLowerCase()));
   const missingPresets = presets.filter((p) => !existingNames.has(p.toLowerCase()));
@@ -1510,7 +1525,24 @@ function TransactionDialog({
 
           <div>
             <Label htmlFor="merchant">{kind === "income" ? "Source" : "Merchant"}</Label>
-            <Input id="merchant" value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder={kind === "income" ? "Employer, client…" : "Zomato, Amazon…"} />
+            <div className="relative">
+              <Input id="merchant" value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder={kind === "income" ? "Employer, client…" : "Zomato, Amazon…"} autoComplete="off" />
+              {merchantSuggestions.length > 0 && (
+                <ul className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
+                  {merchantSuggestions.map((s) => (
+                    <li key={s}>
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+                        onMouseDown={(e) => { e.preventDefault(); setMerchant(s); }}
+                      >
+                        {s}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           <div>
