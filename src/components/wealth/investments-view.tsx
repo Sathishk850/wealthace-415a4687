@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { openImport } from "@/components/import/import-host";
 import { useNavigate } from "@tanstack/react-router";
 import { smartXAxisProps } from "@/lib/chart-axis";
@@ -32,6 +32,7 @@ import {
   Trash2,
   Link2,
   RefreshCw,
+  Layers,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -668,6 +669,8 @@ function Holdings({
   const [cat, setCat] = useState<string>("all");
   const [sort, setSort] = useState<HSort>("latest");
   const [page, setPage] = useState(1);
+  const [groupByStock, setGroupByStock] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const { data: fxData } = useFxRates();
   const ugxInrRate = getRateFor(fxData?.rates ?? [], "UGX", "INR");
@@ -700,8 +703,42 @@ function Holdings({
     return sorted;
   }, [rows, q, cat, sort]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
-  const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
+  type GroupedRow = HoldRow & { _grouped: boolean; _children: HoldRow[] };
+
+  const displayRows = useMemo<GroupedRow[]>(() => {
+    if (!groupByStock) return filtered.map((h) => ({ ...h, _grouped: false, _children: [] }));
+    const groups = new Map<string, HoldRow[]>();
+    for (const inv of filtered) {
+      const key = (inv.symbol || inv.name).trim().toUpperCase();
+      const group = groups.get(key) ?? [];
+      group.push(inv);
+      groups.set(key, group);
+    }
+    return [...groups.values()].map((group) => {
+      if (group.length === 1) return { ...group[0], _grouped: false, _children: [] };
+      const totalQty = group.reduce((s, r) => s + (r.quantity ?? 0), 0);
+      const totalInvested = group.reduce((s, r) => s + r.inv, 0);
+      const totalCurrent = group.reduce((s, r) => s + r.cur, 0);
+      const avgPrice = totalQty > 0 ? totalInvested / totalQty : 0;
+      const pnl = totalCurrent - totalInvested;
+      const ret = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
+      return {
+        ...group[0],
+        quantity: totalQty,
+        inv: totalInvested,
+        cur: totalCurrent,
+        avg_price: avgPrice,
+        pnl,
+        ret,
+        _grouped: true,
+        _children: group,
+        notes: `${group.length} entries across brokers`,
+      };
+    });
+  }, [filtered, groupByStock]);
+
+  const pageCount = Math.max(1, Math.ceil(displayRows.length / PAGE));
+  const pageRows = displayRows.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
 
   const unlinked = useMemo(() => rows.filter(isLinkable), [rows]);
@@ -762,6 +799,19 @@ function Holdings({
               Refresh Now
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => { setGroupByStock((v) => !v); setExpanded(new Set()); setPage(1); }}
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              groupByStock
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-muted-foreground"
+            }`}
+            title="Merge multiple entries of the same stock into one row"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Group by Stock
+          </button>
           {ioMenu}
         </div>
 
@@ -810,22 +860,39 @@ function Holdings({
                   {pageRows.map((h, i) => {
                     const up = h.pnl >= 0;
                     const color = PIE[i % PIE.length];
-                    return (
-                      <tr key={h.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
-                        <td className="py-3 pl-2">
+                    const gKey = (h.symbol || h.name).toUpperCase();
+                    const isOpen = expanded.has(gKey);
+                    const renderRow = (r: HoldRow, child: boolean) => (
+                      <tr key={child ? `${gKey}:${r.id}` : h.id} className={`border-b border-border/50 last:border-0 hover:bg-surface-2/40 ${child ? "opacity-80" : ""}`}>
+                        <td className={`py-3 pl-2 ${child ? "pl-8" : ""}`}>
                           <div className="flex items-center gap-3">
+                            {!child && h._grouped ? (
+                              <button
+                                type="button"
+                                onClick={() => setExpanded((prev) => { const next = new Set(prev); if (next.has(gKey)) next.delete(gKey); else next.add(gKey); return next; })}
+                                className="mr-1 shrink-0 text-muted-foreground"
+                                aria-label={isOpen ? "Collapse entries" : "Expand entries"}
+                              >
+                                <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                              </button>
+                            ) : null}
                             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: color }}>
-                              {h.name.slice(0, 1)}
+                              {r.name.slice(0, 1)}
                             </span>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="truncate font-medium text-foreground">{h.name}</span>
-                                {isLinkable(h) ? (
+                                <span className="truncate font-medium text-foreground">{r.name}</span>
+                                {!child && h._grouped ? (
+                                  <span className="shrink-0 rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                                    {h._children.length} entries
+                                  </span>
+                                ) : null}
+                                {isLinkable(r) ? (
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onLink(h);
+                                      onLink(r);
                                     }}
                                     className="inline-flex shrink-0 items-center gap-1 rounded-md border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/20"
                                     title="Link to a market instrument"
@@ -834,27 +901,30 @@ function Holdings({
                                   </button>
                                 ) : null}
                               </div>
-                              {(h.sub_category || h.symbol) && (
-                                <div className="text-[10px] text-muted-foreground">{h.sub_category || h.symbol}</div>
+                              {(r.sub_category || r.symbol) && (
+                                <div className="text-[10px] text-muted-foreground">{r.sub_category || r.symbol}</div>
                               )}
+                              {child && (r.exchange || r.notes) ? (
+                                <div className="text-[10px] text-muted-foreground">{r.exchange || r.notes}</div>
+                              ) : null}
                             </div>
                           </div>
                         </td>
-                        
-                        <td className="py-3 text-right text-foreground">{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
-                        <td className="py-3 text-right text-foreground">{inrPrice(h.avg_price)}</td>
+
+                        <td className="py-3 text-right text-foreground">{r.quantity.toLocaleString("en-IN", { maximumFractionDigits: 4 })}</td>
+                        <td className="py-3 text-right text-foreground">{inrPrice(r.avg_price)}</td>
                         <td className="py-3 text-right text-foreground">
                           <div className="flex flex-col items-end">
-                            <span>{inrPrice(h.live_price || h.current_price)}</span>
-                            {h.has_live ? (
+                            <span>{inrPrice(r.live_price || r.current_price)}</span>
+                            {r.has_live ? (
                               <span
                                 className="text-[10px] text-mint"
-                                title={h.live_as_of ? `Updated ${new Date(h.live_as_of).toLocaleString("en-GB")}` : undefined}
+                                title={r.live_as_of ? `Updated ${new Date(r.live_as_of).toLocaleString("en-GB")}` : undefined}
                               >
-                                Live · {h.live_source ?? "market"}
-                                {h.day_change_pct != null ? (
-                                  <span className={`ml-1 ${h.day_change_pct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                                    ({h.day_change_pct >= 0 ? "+" : ""}{h.day_change_pct.toFixed(2)}%)
+                                Live · {r.live_source ?? "market"}
+                                {r.day_change_pct != null ? (
+                                  <span className={`ml-1 ${r.day_change_pct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                                    ({r.day_change_pct >= 0 ? "+" : ""}{r.day_change_pct.toFixed(2)}%)
                                   </span>
                                 ) : null}
                               </span>
@@ -862,43 +932,49 @@ function Holdings({
                           </div>
                         </td>
                         <td className="py-3 text-right text-foreground">
-                          {inr(h.inv)}
-                          {(h.currency as string) === "UGX" && ugxInrRate ? (
+                          {inr(r.inv)}
+                          {(r.currency as string) === "UGX" && ugxInrRate ? (
                             <div className="text-[10px] text-muted-foreground">
-                              ≈ UGX {Math.round(h.inv / ugxInrRate).toLocaleString("en-US")}
+                              ≈ UGX {Math.round(r.inv / ugxInrRate).toLocaleString("en-US")}
                             </div>
                           ) : null}
                         </td>
                         <td className="py-3 text-right font-medium text-foreground">
-                          {inr(h.cur)}
-                          {(h.currency as string) === "UGX" && ugxInrRate ? (
+                          {inr(r.cur)}
+                          {(r.currency as string) === "UGX" && ugxInrRate ? (
                             <div className="text-[10px] text-muted-foreground">
-                              ≈ UGX {Math.round(h.cur / ugxInrRate).toLocaleString("en-US")}
+                              ≈ UGX {Math.round(r.cur / ugxInrRate).toLocaleString("en-US")}
                             </div>
                           ) : null}
                         </td>
-                        <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                        <td className={`py-3 text-right font-medium ${r.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                           <span className="inline-flex items-center gap-1">
-                            {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                            {(up ? "+" : "") + inr(h.pnl)}
+                            {r.pnl >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                            {(r.pnl >= 0 ? "+" : "") + inr(r.pnl)}
                           </span>
                         </td>
-                        <td className={`py-3 text-right font-medium ${up ? "text-emerald-400" : "text-rose-400"}`}>
-                          {(up ? "+" : "") + h.ret.toFixed(2)}%
+                        <td className={`py-3 text-right font-medium ${r.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                          {(r.pnl >= 0 ? "+" : "") + r.ret.toFixed(2)}%
                         </td>
-                        <td className={`py-3 text-right ${h.xirrPct >= 0 ? "text-mint" : "text-rose-400"}`}>
-                          {h.xirrPct !== 0 ? `${h.xirrPct >= 0 ? "+" : ""}${h.xirrPct.toFixed(2)}%` : "—"}
+                        <td className={`py-3 text-right ${r.xirrPct >= 0 ? "text-mint" : "text-rose-400"}`}>
+                          {r.xirrPct !== 0 ? `${r.xirrPct >= 0 ? "+" : ""}${r.xirrPct.toFixed(2)}%` : "—"}
                         </td>
                         <td className="py-3 text-right text-muted-foreground">
-                          {totalCurrent > 0 ? `${((h.cur / totalCurrent) * 100).toFixed(2)}%` : "—"}
+                          {totalCurrent > 0 ? `${((r.cur / totalCurrent) * 100).toFixed(2)}%` : "—"}
                         </td>
 
-                        <td className="py-3 text-muted-foreground">{h.has_live && h.live_as_of ? formatDate(h.live_as_of) : formatDate(h.last_updated)}</td>
+                        <td className="py-3 text-muted-foreground">{r.has_live && r.live_as_of ? formatDate(r.live_as_of) : formatDate(r.last_updated)}</td>
 
                         <td className="py-3 pr-2">
-                          <RowMenu onEdit={() => onEdit(h)} onDelete={() => onDelete(h)} />
+                          <RowMenu onEdit={() => onEdit(r)} onDelete={() => onDelete(r)} />
                         </td>
                       </tr>
+                    );
+                    return (
+                      <Fragment key={h.id}>
+                        {renderRow(h, false)}
+                        {h._grouped && isOpen ? h._children.map((c) => renderRow(c, true)) : null}
+                      </Fragment>
                     );
                   })}
                 </tbody>
