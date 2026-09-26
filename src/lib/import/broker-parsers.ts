@@ -177,6 +177,54 @@ function parseZerodhaKite(raw: Record<string, unknown>[]): BrokerRow[] {
   }).filter(valid);
 }
 
+function parseVested(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const symbol = get(r, "symbol");
+    const name = get(r, "company name", "name") || symbol;
+    if (!symbol && !name) return null;
+    const qty = num(r, "quantity", "qty");
+    const avgPrice = num(r, "average price", "avg price", "avg. price");
+    const ltp = num(r, "current price", "ltp");
+    const curVal = num(r, "market value", "current value");
+    const investedVal = num(r, "invested amount", "invested value", "cost");
+    const iv = isinVal(r, "isin") ?? null;
+    return {
+      _broker: "Vested", _isin: iv,
+      name, symbol,
+      category: "Stocks", quantity: qty || 1,
+      avg_price: avgPrice, current_price: ltp || (qty > 0 ? curVal / qty : 0),
+      invested_value: investedVal || null, current_value: curVal || null,
+      exchange: "NYSE/NASDAQ", purchase_date: TODAY,
+      identifier: iv ?? symbol, identifier_type: iv ? "ISIN" : "SYMBOL",
+      currency: "USD", notes: "Geography: United States",
+    };
+  }).filter(valid);
+}
+
+function parseTickertape(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const symbol = get(r, "ticker", "symbol");
+    const name = get(r, "security name", "company", "name") || symbol;
+    if (!symbol && !name) return null;
+    const qty = num(r, "quantity", "shares", "qty");
+    const avgCost = num(r, "cost basis", "average cost", "avg cost", "avg. cost");
+    const ltp = num(r, "current price", "price");
+    const curVal = num(r, "current value", "market value");
+    const iv = isinVal(r, "isin") ?? null;
+    return {
+      _broker: "Tickertape", _isin: iv,
+      name, symbol,
+      category: "Stocks", quantity: qty || 1,
+      avg_price: avgCost, current_price: ltp || (qty > 0 ? curVal / qty : 0),
+      invested_value: qty > 0 && avgCost > 0 ? qty * avgCost : null,
+      current_value: curVal || null,
+      exchange: "NYSE/NASDAQ", purchase_date: TODAY,
+      identifier: iv ?? symbol, identifier_type: iv ? "ISIN" : "SYMBOL",
+      currency: "USD", notes: "Geography: United States",
+    };
+  }).filter(valid);
+}
+
 const SIGNATURES: Array<{
   broker: string;
   mustHave: string[][];
@@ -185,6 +233,8 @@ const SIGNATURES: Array<{
   { broker: "MFCentral CAS", mustHave: [["folio number", "folio no"], ["amc"], ["scheme name", "fund name"]], parse: parseMFCentral },
   { broker: "Kuvera", mustHave: [["folio"], ["avg nav", "average nav", "purchase nav"], ["scheme name", "fund name"]], parse: parseKuvera },
   { broker: "Zerodha Kite", mustHave: [["instrument", "tradingsymbol"], ["avg. cost", "avg cost", "average price"], ["product"]], parse: parseZerodhaKite },
+  { broker: "Vested", mustHave: [["symbol"], ["average price", "avg price", "avg. price"], ["market value"], ["p&l", "p&l %"]], parse: parseVested },
+  { broker: "Tickertape", mustHave: [["ticker", "symbol"], ["cost basis", "average cost"], ["gain/loss", "gain loss", "gain / loss"]], parse: parseTickertape },
   { broker: "5paisa", mustHave: [["scrip name", "script name", "scheme name"], ["buy avg", "avg buy price"]], parse: parse5paisa },
   { broker: "Dhan", mustHave: [["net qty", "avg cost price", "trading symbol", "stock symbol"], ["isin"]], parse: parseDhan },
 ];

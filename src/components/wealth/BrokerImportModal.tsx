@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { detectBroker, type BrokerRow } from "@/lib/import/broker-parsers";
 import { useBulkInsertInvestments, type InvestmentInput } from "@/lib/wealth-api";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 async function parseFile(file: File): Promise<{ headers: string[]; rows: Record<string, unknown>[] }> {
@@ -93,6 +94,31 @@ export function BrokerImportModal({ open, onOpenChange }: Props) {
     const inputs: InvestmentInput[] = allRows.map(
       ({ _broker: _b, _isin: _i, invested_value: _iv, current_value: _cv, ...rest }) => rest,
     );
+
+    // Dedup: warn when holdings with the same ISIN already exist
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const isins = allRows.map((r) => r._isin).filter((v): v is string => !!v);
+      if (isins.length > 0) {
+        const { data: existing } = await supabase
+          .from("wealth_investments")
+          .select("identifier")
+          .eq("user_id", user.id)
+          .eq("identifier_type", "ISIN")
+          .in("identifier", isins);
+        const existingSet = new Set((existing ?? []).map((r) => r.identifier));
+        const dupes = allRows.filter((r) => r._isin && existingSet.has(r._isin));
+        if (dupes.length > 0) {
+          const dupeNames = dupes.slice(0, 3).map((r) => r.name).join(", ");
+          const more = dupes.length > 3 ? ` and ${dupes.length - 3} more` : "";
+          const proceed = window.confirm(
+            `${dupes.length} holding${dupes.length > 1 ? "s" : ""} already exist in your portfolio:\n${dupeNames}${more}\n\nImport anyway? Duplicates will be added as separate rows.`,
+          );
+          if (!proceed) return;
+        }
+      }
+    }
+
     try {
       await insertMut.mutateAsync(inputs);
       onOpenChange(false); reset();
@@ -107,7 +133,7 @@ export function BrokerImportModal({ open, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle>Import Holdings from Broker</DialogTitle>
           <DialogDescription>
-            Supports 5paisa, Kuvera, Dhan, MFCentral CAS, and Zerodha Kite exports (CSV or Excel).
+            Supports 5paisa, Kuvera, Dhan, MFCentral CAS, Zerodha Kite, Vested, and Tickertape exports (CSV or Excel).
           </DialogDescription>
         </DialogHeader>
 
