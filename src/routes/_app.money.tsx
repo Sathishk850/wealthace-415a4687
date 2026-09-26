@@ -796,6 +796,7 @@ function Money() {
         defaultKind={openTx.defaultKind}
         prefill={openTx.prefill}
         categories={categories}
+        transactions={transactions}
       />
       <BudgetDialog
         open={openBudget.open}
@@ -1271,6 +1272,7 @@ function TransactionDialog({
   defaultKind,
   prefill,
   categories,
+  transactions,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -1278,6 +1280,7 @@ function TransactionDialog({
   defaultKind?: Kind;
   prefill?: ScanHandoff;
   categories: Category[];
+  transactions: Transaction[];
 }) {
   const [kind, setKind] = useState<Kind>(editing?.kind ?? defaultKind ?? "expense");
   const [amount, setAmount] = useState<string>(editing ? String(editing.amount) : "");
