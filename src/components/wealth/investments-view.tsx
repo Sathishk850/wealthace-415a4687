@@ -703,8 +703,42 @@ function Holdings({
     return sorted;
   }, [rows, q, cat, sort]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
-  const pageRows = filtered.slice((page - 1) * PAGE, page * PAGE);
+  type GroupedRow = HoldRow & { _grouped: boolean; _children: HoldRow[] };
+
+  const displayRows = useMemo<GroupedRow[]>(() => {
+    if (!groupByStock) return filtered.map((h) => ({ ...h, _grouped: false, _children: [] }));
+    const groups = new Map<string, HoldRow[]>();
+    for (const inv of filtered) {
+      const key = (inv.symbol || inv.name).trim().toUpperCase();
+      const group = groups.get(key) ?? [];
+      group.push(inv);
+      groups.set(key, group);
+    }
+    return [...groups.values()].map((group) => {
+      if (group.length === 1) return { ...group[0], _grouped: false, _children: [] };
+      const totalQty = group.reduce((s, r) => s + (r.quantity ?? 0), 0);
+      const totalInvested = group.reduce((s, r) => s + r.inv, 0);
+      const totalCurrent = group.reduce((s, r) => s + r.cur, 0);
+      const avgPrice = totalQty > 0 ? totalInvested / totalQty : 0;
+      const pnl = totalCurrent - totalInvested;
+      const ret = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
+      return {
+        ...group[0],
+        quantity: totalQty,
+        inv: totalInvested,
+        cur: totalCurrent,
+        avg_price: avgPrice,
+        pnl,
+        ret,
+        _grouped: true,
+        _children: group,
+        notes: `${group.length} entries across brokers`,
+      };
+    });
+  }, [filtered, groupByStock]);
+
+  const pageCount = Math.max(1, Math.ceil(displayRows.length / PAGE));
+  const pageRows = displayRows.slice((page - 1) * PAGE, page * PAGE);
   if (page > pageCount) setTimeout(() => setPage(1), 0);
 
   const unlinked = useMemo(() => rows.filter(isLinkable), [rows]);
@@ -765,6 +799,19 @@ function Holdings({
               Refresh Now
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => { setGroupByStock((v) => !v); setExpanded(new Set()); setPage(1); }}
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              groupByStock
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-muted-foreground"
+            }`}
+            title="Merge multiple entries of the same stock into one row"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Group by Stock
+          </button>
           {ioMenu}
         </div>
 
