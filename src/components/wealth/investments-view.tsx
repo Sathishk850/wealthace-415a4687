@@ -32,6 +32,7 @@ import {
   Trash2,
   Link2,
   RefreshCw,
+  Layers,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -668,6 +669,8 @@ function Holdings({
   const [cat, setCat] = useState<string>("all");
   const [sort, setSort] = useState<HSort>("latest");
   const [page, setPage] = useState(1);
+  const [groupByStock, setGroupByStock] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const { data: fxData } = useFxRates();
   const ugxInrRate = getRateFor(fxData?.rates ?? [], "UGX", "INR");
