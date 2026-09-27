@@ -251,6 +251,7 @@ type Appearance = {
   compact_mode: boolean;
   default_chart_range: string;
   chart_animations: boolean;
+  text_size: "small" | "normal" | "large" | "xlarge";
 };
 
 const APPEARANCE_DEFAULTS: Appearance = {
@@ -258,6 +259,7 @@ const APPEARANCE_DEFAULTS: Appearance = {
   compact_mode: false,
   default_chart_range: "3M",
   chart_animations: true,
+  text_size: "normal",
 };
 
 const CHART_RANGES = ["1M", "3M", "6M", "1Y"];
@@ -295,7 +297,7 @@ function AppearanceTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("theme, compact_mode, default_chart_range, chart_animations")
+        .select("theme, compact_mode, default_chart_range, chart_animations, text_size")
         .eq("user_id", userQuery.data!.id)
         .maybeSingle();
       if (error) throw error;
@@ -311,6 +313,14 @@ function AppearanceTab() {
     const root = document.documentElement;
     root.classList.toggle("compact", form.compact_mode);
   }, [form.compact_mode]);
+
+  useEffect(() => {
+    const sizes: Record<Appearance["text_size"], string> = {
+      small: "14px", normal: "16px", large: "18px", xlarge: "20px",
+    };
+    document.documentElement.style.setProperty("font-size", sizes[form.text_size] ?? "16px");
+    try { window.localStorage.setItem("wa-text-size", form.text_size); } catch {}
+  }, [form.text_size]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -388,6 +398,19 @@ function AppearanceTab() {
                 {CHART_RANGES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid gap-1.5 sm:max-w-xs">
+            <Label className="text-xs font-medium text-muted-foreground">Text size</Label>
+            <Select value={form.text_size} onValueChange={(v) => set("text_size", v as Appearance["text_size"])}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small</SelectItem>
+                <SelectItem value="normal">Normal (default)</SelectItem>
+                <SelectItem value="large">Large</SelectItem>
+                <SelectItem value="xlarge">Extra Large</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">Scales text across every screen. Sticks to this device.</p>
           </div>
         </div>
         <div className="mt-6 flex justify-end">
