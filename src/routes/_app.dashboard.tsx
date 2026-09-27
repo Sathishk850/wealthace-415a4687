@@ -73,6 +73,7 @@ import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { MarketEventsCard } from "@/components/events/market-events-card";
 import { PushPermissionBanner } from "@/components/push/push-permission-banner";
+import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -684,6 +685,7 @@ function Dashboard() {
 
         {/* Upcoming Reminders + Financial Insights */}
         <div className="col-span-12 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <HealthScoreCard className="lg:col-span-2" />
           <Card className="p-6">
             <CardHeader title="Upcoming Reminders" tip="SIPs, EMIs and goal deadlines coming up soon." />
             {reminders.length === 0 ? (
