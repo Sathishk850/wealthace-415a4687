@@ -127,7 +127,7 @@ export function HealthScoreCard({ className }: { className?: string }) {
           })}
         </ul>
       </div>
-      <p className="mt-4 text-[11px] text-muted-foreground">Last calculated just now</p>
+      <p className="mt-4 text-xs text-muted-foreground">Recalculates on each visit</p>
     </Card>
   );
 }
