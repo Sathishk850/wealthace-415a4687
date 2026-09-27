@@ -69,7 +69,12 @@ function Settings() {
         onChange={setTab}
       />
       <div className="mt-4">
-        {tab === "general" && <GeneralTab />}
+        {tab === "general" && (
+          <div className="space-y-4">
+            <GeneralTab />
+            <AutoSnapshotsCard />
+          </div>
+        )}
         {tab === "payments" && <PaymentAccountsPanel />}
         {tab === "notifications" && <NotificationPreferencesForm />}
         {tab === "appearance" && <AppearanceTab />}
@@ -434,6 +439,70 @@ function ToggleRow({
       </div>
       <Switch checked={checked} onCheckedChange={onChange} />
     </div>
+  );
+}
+
+function AutoSnapshotsCard() {
+  const [snapshots, setSnapshots] = useState<{ enabled: boolean; frequency: "weekly" | "monthly" }>({
+    enabled: false,
+    frequency: "monthly",
+  });
+  const [savingSnapshots, setSavingSnapshots] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("snapshot_preferences").select("enabled, frequency").maybeSingle();
+      if (data) setSnapshots({ enabled: data.enabled, frequency: data.frequency === "weekly" ? "weekly" : "monthly" });
+    })();
+  }, []);
+
+  const saveSnapshots = async () => {
+    setSavingSnapshots(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from("snapshot_preferences")
+        .upsert({ user_id: u.user.id, enabled: snapshots.enabled, frequency: snapshots.frequency });
+      if (error) throw error;
+      toast.success("Snapshot schedule saved");
+    } catch (e) {
+      toast.error((e as Error).message || "Failed to save");
+    } finally {
+      setSavingSnapshots(false);
+    }
+  };
+
+  return (
+    <Card className="glass-card border-[var(--border)] p-6">
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold">Automatic Net Worth Snapshots</h3>
+        <ToggleRow
+          label="Enable automatic snapshots"
+          description="Capture your net worth automatically on a schedule."
+          checked={snapshots.enabled}
+          onChange={(v) => setSnapshots((s) => ({ ...s, enabled: v }))}
+        />
+        {snapshots.enabled && (
+          <div className="grid gap-1.5 pl-4 sm:max-w-xs">
+            <Label className="text-xs text-muted-foreground">Frequency</Label>
+            <Select
+              value={snapshots.frequency}
+              onValueChange={(v) => setSnapshots((s) => ({ ...s, frequency: v as "weekly" | "monthly" }))}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly (every Sunday)</SelectItem>
+                <SelectItem value="monthly">Monthly (1st of month)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <Button size="sm" onClick={saveSnapshots} disabled={savingSnapshots}>
+          {savingSnapshots ? "Saving…" : "Save"}
+        </Button>
+      </div>
+    </Card>
   );
 }
 
