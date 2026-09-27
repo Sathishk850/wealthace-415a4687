@@ -77,7 +77,9 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePaymentAccounts } from "@/lib/payment-accounts-api";
+import { keys as moneyKeys } from "@/lib/money-api";
 import { PaymentFields } from "@/components/payment/payment-fields";
 import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import { toast } from "sonner";
@@ -244,6 +246,16 @@ function Money() {
   const categories = categoriesQ.data ?? [];
   const transactions = transactionsQ.data ?? [];
   const budgets = budgetsQ.data ?? [];
+  const accountsQ = usePaymentAccounts();
+  const accounts = accountsQ.data ?? [];
+  const [insightAccount, setInsightAccount] = useState<string>("all");
+  useEffect(() => { setInsightAccount("all"); }, [monthOffset]);
+  const insightTxns = useMemo(
+    () => insightAccount === "all"
+      ? transactions
+      : transactions.filter((t) => t.payment_account_id === insightAccount),
+    [transactions, insightAccount]
+  );
 
   const catMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -272,8 +284,8 @@ function Money() {
   const prevMonthLabel = formatMonthLabel(prevMonthKey);
 
   const inMonth = (iso: string, mk: string) => iso.slice(0, 7) === mk.slice(0, 7);
-  const txThisMonth = transactions.filter((t) => inMonth(t.occurred_on, activeMonthKey));
-  const txPrevMonth = transactions.filter((t) => inMonth(t.occurred_on, prevMonthKey));
+  const txThisMonth = insightTxns.filter((t) => inMonth(t.occurred_on, activeMonthKey));
+  const txPrevMonth = insightTxns.filter((t) => inMonth(t.occurred_on, prevMonthKey));
 
   const sum = (arr: Transaction[], k?: Kind) =>
     arr.filter((t) => !k || t.kind === k).reduce((s, t) => s + t.amount, 0);
@@ -296,7 +308,7 @@ function Money() {
   // Monthly average spend across all recorded months
   const avgMonthlySpend = useMemo(() => {
     const months = new Map<string, number>();
-    for (const t of transactions) {
+    for (const t of insightTxns) {
       if (t.kind !== "expense") continue;
       const k = t.occurred_on.slice(0, 7);
       months.set(k, (months.get(k) ?? 0) + Number(t.amount || 0));
@@ -305,7 +317,7 @@ function Money() {
     let total = 0;
     for (const v of months.values()) total += v;
     return total / months.size;
-  }, [transactions]);
+  }, [insightTxns]);
 
   // Trend across active month (weekly buckets)
   const trend = useMemo(() => {
@@ -518,6 +530,20 @@ function Money() {
         </div>
       ) : tab === "Overview" ? (
         <>
+          {accounts.length > 1 && (
+            <div className="flex items-center gap-2 pb-1">
+              <span className="shrink-0 text-xs text-muted-foreground">Filter by account:</span>
+              <Select value={insightAccount} onValueChange={setInsightAccount}>
+                <SelectTrigger className="h-7 w-44 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Accounts</SelectItem>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {/* KPI cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
             <KpiCard icon={TrendingUp} label="Total Income" value={inr(income)} delta={{ pct: pctDelta(income, prevIncome), label: deltaLabel }} tone="positive" />
@@ -1014,8 +1040,65 @@ function TransactionsTable({
   const safePage = Math.min(page, totalPages);
   const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const delMut = useDeleteTransaction();
+  const queryClient = useQueryClient();
   const [confirmDel, setConfirmDel] = useState<Transaction | null>(null);
+  const pendingDeleteRef = useRef<{ tx: Transaction; timeoutId: ReturnType<typeof setTimeout> } | null>(null);
+
+  const commitDelete = useCallback(async (tx: Transaction) => {
+    const { error } = await supabase.from("money_transactions").delete().eq("id", tx.id);
+    if (error) {
+      toast.error("Failed to delete — please try again");
+      queryClient.invalidateQueries({ queryKey: moneyKeys.transactions });
+    }
+  }, [queryClient]);
+
+  const deleteTransaction = useCallback((tx: Transaction) => {
+    if (pendingDeleteRef.current) {
+      clearTimeout(pendingDeleteRef.current.timeoutId);
+      void commitDelete(pendingDeleteRef.current.tx);
+      pendingDeleteRef.current = null;
+    }
+    queryClient.setQueriesData<Transaction[]>(
+      { queryKey: moneyKeys.transactions, exact: false },
+      (old) => (old ? old.filter((t) => t.id !== tx.id) : []),
+    );
+    const toastId = toast(
+      <div className="flex w-full items-center justify-between gap-3">
+        <span className="text-sm">Deleted <strong className="font-medium">{tx.merchant || "transaction"}</strong></span>
+        <button
+          type="button"
+          className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-muted"
+          onClick={() => {
+            if (pendingDeleteRef.current?.tx.id === tx.id) {
+              clearTimeout(pendingDeleteRef.current.timeoutId);
+              pendingDeleteRef.current = null;
+            }
+            toast.dismiss(toastId);
+            toast.success("Deletion undone");
+            queryClient.invalidateQueries({ queryKey: moneyKeys.transactions });
+          }}
+        >
+          Undo
+        </button>
+      </div>,
+      { duration: 5000 },
+    );
+    const timeoutId = setTimeout(() => {
+      pendingDeleteRef.current = null;
+      void commitDelete(tx);
+    }, 5000);
+    pendingDeleteRef.current = { tx, timeoutId };
+  }, [commitDelete, queryClient]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingDeleteRef.current) {
+        clearTimeout(pendingDeleteRef.current.timeoutId);
+        void commitDelete(pendingDeleteRef.current.tx);
+        pendingDeleteRef.current = null;
+      }
+    };
+  }, [commitDelete]);
 
   const filteredCats = kindFilter ? categories.filter((c) => c.kind === kindFilter) : categories;
 
@@ -1241,15 +1324,15 @@ function TransactionsTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDel ? `${confirmDel.merchant} · ${inrCompact(confirmDel.amount)} on ${formatDateLabel(confirmDel.occurred_on)}` : ""}. This cannot be undone.
+              {confirmDel ? `${confirmDel.merchant} · ${inrCompact(confirmDel.amount)} on ${formatDateLabel(confirmDel.occurred_on)}` : ""}. You can undo for 5 seconds.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={async () => {
+              onClick={() => {
                 if (!confirmDel) return;
-                await delMut.mutateAsync(confirmDel.id);
+                deleteTransaction(confirmDel);
                 setConfirmDel(null);
               }}
             >

@@ -121,6 +121,11 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var s=localStorage.getItem("wa-text-size");var m={small:"14px",normal:"16px",large:"18px",xlarge:"20px"};if(s&&m[s])document.documentElement.style.fontSize=m[s];}catch(e){}`,
+          }}
+        />
       </head>
       <body>
         {children}

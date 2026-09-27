@@ -805,6 +805,7 @@ export type Database = {
           number_format: string
           phone: string | null
           pin_skipped: boolean
+          text_size: string | null
           theme: string
           timezone: string
           updated_at: string
@@ -823,6 +824,7 @@ export type Database = {
           number_format?: string
           phone?: string | null
           pin_skipped?: boolean
+          text_size?: string | null
           theme?: string
           timezone?: string
           updated_at?: string
@@ -841,6 +843,7 @@ export type Database = {
           number_format?: string
           phone?: string | null
           pin_skipped?: boolean
+          text_size?: string | null
           theme?: string
           timezone?: string
           updated_at?: string
