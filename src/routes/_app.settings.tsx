@@ -69,7 +69,12 @@ function Settings() {
         onChange={setTab}
       />
       <div className="mt-4">
-        {tab === "general" && <GeneralTab />}
+        {tab === "general" && (
+          <div className="space-y-4">
+            <GeneralTab />
+            <AutoSnapshotsCard />
+          </div>
+        )}
         {tab === "payments" && <PaymentAccountsPanel />}
         {tab === "notifications" && <NotificationPreferencesForm />}
         {tab === "appearance" && <AppearanceTab />}

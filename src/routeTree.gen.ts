@@ -37,6 +37,7 @@ import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
 import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
 import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slug'
 import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
+import { Route as ApiPublicHooksSnapshotCronRouteImport } from './routes/api/public/hooks/snapshot-cron'
 import { Route as ApiPublicHooksReleaseNotesRouteImport } from './routes/api/public/hooks/release-notes'
 import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
 import { Route as ApiPublicHooksEventsSyncRouteImport } from './routes/api/public/hooks/events-sync'
@@ -181,6 +182,12 @@ const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
   path: '/networth',
   getParentRoute: () => AppDashboardRoute,
 } as any)
+const ApiPublicHooksSnapshotCronRoute =
+  ApiPublicHooksSnapshotCronRouteImport.update({
+    id: '/api/public/hooks/snapshot-cron',
+    path: '/api/public/hooks/snapshot-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksReleaseNotesRoute =
   ApiPublicHooksReleaseNotesRouteImport.update({
     id: '/api/public/hooks/release-notes',
@@ -231,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
+  '/api/public/hooks/snapshot-cron': typeof ApiPublicHooksSnapshotCronRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -262,6 +270,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
+  '/api/public/hooks/snapshot-cron': typeof ApiPublicHooksSnapshotCronRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -296,6 +305,7 @@ export interface FileRoutesById {
   '/api/public/hooks/events-sync': typeof ApiPublicHooksEventsSyncRoute
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
+  '/api/public/hooks/snapshot-cron': typeof ApiPublicHooksSnapshotCronRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
+    | '/api/public/hooks/snapshot-cron'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
+    | '/api/public/hooks/snapshot-cron'
   id:
     | '__root__'
     | '/'
@@ -394,6 +406,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/events-sync'
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
+    | '/api/public/hooks/snapshot-cron'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -407,6 +420,7 @@ export interface RootRouteChildren {
   ApiPublicHooksEventsSyncRoute: typeof ApiPublicHooksEventsSyncRoute
   ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
   ApiPublicHooksReleaseNotesRoute: typeof ApiPublicHooksReleaseNotesRoute
+  ApiPublicHooksSnapshotCronRoute: typeof ApiPublicHooksSnapshotCronRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -607,6 +621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardNetworthRouteImport
       parentRoute: typeof AppDashboardRoute
     }
+    '/api/public/hooks/snapshot-cron': {
+      id: '/api/public/hooks/snapshot-cron'
+      path: '/api/public/hooks/snapshot-cron'
+      fullPath: '/api/public/hooks/snapshot-cron'
+      preLoaderRoute: typeof ApiPublicHooksSnapshotCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/release-notes': {
       id: '/api/public/hooks/release-notes'
       path: '/api/public/hooks/release-notes'
@@ -722,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksEventsSyncRoute: ApiPublicHooksEventsSyncRoute,
   ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
   ApiPublicHooksReleaseNotesRoute: ApiPublicHooksReleaseNotesRoute,
+  ApiPublicHooksSnapshotCronRoute: ApiPublicHooksSnapshotCronRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
