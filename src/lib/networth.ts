@@ -134,6 +134,7 @@ export type Snapshot = {
   liabilities_total: number;
   investments_total: number;
   savings_total: number;
+  annotation?: string | null;
 };
 
 export const snapshotKeys = { all: ["wealth", "snapshots"] as const };
@@ -155,12 +156,13 @@ export function useSnapshots() {
         liabilities_total: num(r.liabilities_total),
         investments_total: num(r.investments_total),
         savings_total: num(r.savings_total),
+        annotation: (r as { annotation?: string | null }).annotation ?? null,
       }));
     },
   });
 }
 
-export type SnapshotInput = Omit<Snapshot, "id" | "snapshot_date"> & { snapshot_date?: string };
+export type SnapshotInput = Omit<Snapshot, "id" | "snapshot_date" | "annotation"> & { snapshot_date?: string };
 
 /**
  * Writes today's snapshot. Idempotent per day: an existing row for the same
@@ -256,4 +258,20 @@ export function snapshotTrend(snaps: Snapshot[]) {
     worst,
     hasHistory: snaps.length >= 2,
   };
+}
+
+
+export function useUpdateSnapshotAnnotation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, annotation }: { id: string; annotation: string | null }) => {
+      const { error } = await supabase.from("wealth_snapshots").update({ annotation }).eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast.success("Annotation saved");
+      qc.invalidateQueries({ queryKey: snapshotKeys.all });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to save annotation"),
+  });
 }
