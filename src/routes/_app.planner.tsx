@@ -276,6 +276,23 @@ function EmptyState({
 }
 
 /* ---------- helpers ---------- */
+/** Goals with linked investments' current value added to saved_amount. */
+function useEffectiveGoals() {
+  const q = useGoals();
+  const invQ = useInvestments();
+  const data = useMemo(() => {
+    const invs = invQ.data ?? [];
+    return (q.data ?? []).map((g) => {
+      const ids = g.linked_investment_ids ?? [];
+      const linkedValue = invs
+        .filter((inv) => ids.includes(inv.id))
+        .reduce((s, inv) => s + (inv.current_value ?? 0), 0);
+      return { ...g, manual_saved_amount: g.saved_amount, saved_amount: (g.saved_amount ?? 0) + linkedValue };
+    });
+  }, [q.data, invQ.data]);
+  return { ...q, data };
+}
+
 function goalProgressPct(g: Goal) {
   if (g.target_amount <= 0) return 0;
   return Math.min(100, Math.round((g.saved_amount / g.target_amount) * 100));
@@ -324,7 +341,7 @@ function writeClearMarker(key: string, value: boolean) {
 
 /* ---------- OVERVIEW ---------- */
 function OverviewView({ onAddGoal }: { onAddGoal: () => void }) {
-  const goalsQ = useGoals();
+  const goalsQ = useEffectiveGoals();
   const retQ = useRetirementPlan();
   const fireQ = useFirePlan();
 
@@ -505,7 +522,7 @@ function GoalsView({
   onAddGoal: () => void;
   onEditGoal: (g: Goal) => void;
 }) {
-  const q = useGoals();
+  const q = useEffectiveGoals();
   const del = useDeleteGoal();
 
   if (q.isLoading) return <LoadingBlock label="Loading goals…" />;
@@ -624,6 +641,11 @@ function GoalCard({
           </AlertDialog>
         </div>
       </div>
+      {(goal.linked_investment_ids?.length ?? 0) > 0 && (
+        <span className="mt-2 inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          {goal.linked_investment_ids!.length} investment{goal.linked_investment_ids!.length > 1 ? "s" : ""} linked
+        </span>
+      )}
       <div className="mt-2 text-xs text-muted-foreground">
         {inr(goal.saved_amount)} of {inr(goal.target_amount)}
         {goal.monthly_contribution > 0 && (
@@ -657,10 +679,12 @@ function GoalDialog({
   const [name, setName] = useState(goal?.name ?? "");
   const [goalType, setGoalType] = useState<GoalType>(goal?.goal_type ?? "custom");
   const [target, setTarget] = useState(String(goal?.target_amount ?? ""));
-  const [saved, setSaved] = useState(String(goal?.saved_amount ?? "0"));
+  const [saved, setSaved] = useState(String(goal?.manual_saved_amount ?? goal?.saved_amount ?? "0"));
   const [date, setDate] = useState(goal?.target_date ?? "");
   const [monthly, setMonthly] = useState(String(goal?.monthly_contribution ?? "0"));
   const [notes, setNotes] = useState(goal?.notes ?? "");
+  const [linkedIds, setLinkedIds] = useState<string[]>(goal?.linked_investment_ids ?? []);
+  const invListQ = useInvestments();
 
   // Re-seed when opening a different goal
   useMemo(() => {
@@ -668,10 +692,11 @@ function GoalDialog({
       setName(goal?.name ?? "");
       setGoalType(goal?.goal_type ?? "custom");
       setTarget(String(goal?.target_amount ?? ""));
-      setSaved(String(goal?.saved_amount ?? "0"));
+      setSaved(String(goal?.manual_saved_amount ?? goal?.saved_amount ?? "0"));
       setDate(goal?.target_date ?? "");
       setMonthly(String(goal?.monthly_contribution ?? "0"));
       setNotes(goal?.notes ?? "");
+      setLinkedIds(goal?.linked_investment_ids ?? []);
     }
   }, [open, goal?.id]);
 
@@ -692,6 +717,7 @@ function GoalDialog({
         target_date: date || null,
         monthly_contribution: mly,
         notes,
+        linked_investment_ids: linkedIds,
       },
       { onSuccess: () => onOpenChange(false) }
     );
@@ -743,6 +769,30 @@ function GoalDialog({
             <Label>Notes</Label>
             <Textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} maxLength={500} rows={2} />
           </div>
+          {(invListQ.data ?? []).length > 0 && (
+            <div className="grid gap-1.5">
+              <Label>Link investments</Label>
+              <p className="text-[11px] text-muted-foreground">Their current value counts toward this goal.</p>
+              <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
+                {(invListQ.data ?? []).map((inv) => {
+                  const on = linkedIds.includes(inv.id);
+                  return (
+                    <label key={inv.id} className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-xs hover:bg-muted">
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={(e) =>
+                          setLinkedIds((prev) => e.target.checked ? [...prev, inv.id] : prev.filter((x) => x !== inv.id))
+                        }
+                      />
+                      <span className="min-w-0 flex-1 truncate">{inv.name}</span>
+                      <span className="tabular-nums text-muted-foreground">{inr(inv.current_value ?? 0)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

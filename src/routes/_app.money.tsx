@@ -1042,6 +1042,22 @@ function TransactionsTable({
 
   const queryClient = useQueryClient();
   const [confirmDel, setConfirmDel] = useState<Transaction | null>(null);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkDesc, setBulkDesc] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const saveBulkDesc = async () => {
+    const ids = [...selected];
+    if (!bulkDesc.trim() || ids.length === 0) return;
+    setBulkSaving(true);
+    const { error } = await supabase.from("money_transactions").update({ merchant: bulkDesc.trim() }).in("id", ids);
+    setBulkSaving(false);
+    if (error) { toast.error("Failed to update descriptions"); return; }
+    queryClient.invalidateQueries({ queryKey: moneyKeys.transactions });
+    setSelected(new Set());
+    setBulkEditOpen(false);
+    setBulkDesc("");
+    toast.success(`Updated ${ids.length} transaction${ids.length > 1 ? "s" : ""}`);
+  };
   const pendingDeleteRef = useRef<{ tx: Transaction; timeoutId: ReturnType<typeof setTimeout> } | null>(null);
 
   const commitDelete = useCallback(async (tx: Transaction) => {
@@ -1104,6 +1120,19 @@ function TransactionsTable({
 
   return (
     <div className="rounded-2xl border border-border bg-card">
+      <Dialog open={bulkEditOpen} onOpenChange={(v) => { setBulkEditOpen(v); if (!v) setBulkDesc(""); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit description for {selected.size} transaction{selected.size > 1 ? "s" : ""}</DialogTitle>
+          </DialogHeader>
+          <Input autoFocus value={bulkDesc} onChange={(e) => setBulkDesc(e.target.value)} placeholder="New description" maxLength={120}
+            onKeyDown={(e) => { if (e.key === "Enter") void saveBulkDesc(); }} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkEditOpen(false)}>Cancel</Button>
+            <Button onClick={() => void saveBulkDesc()} disabled={bulkSaving || !bulkDesc.trim()}>{bulkSaving ? "Updating…" : "Update"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="space-y-2 border-b border-border p-3">
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[180px] flex-1">
@@ -1171,6 +1200,10 @@ function TransactionsTable({
               {income > 0 && <span className="text-success">+{inrCompact(income)}</span>}
               {expense > 0 && <span className="text-destructive">-{inrCompact(expense)}</span>}
               <span className="font-semibold text-mint">{kindFilter ? "Total" : "Net"}: {inrCompact(total)}</span>
+              <button type="button" className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-muted"
+                onClick={() => setBulkEditOpen(true)}>
+                Edit description ({selected.size})
+              </button>
               <button onClick={() => setSelected(new Set())} className="text-muted-foreground hover:text-foreground">Clear</button>
             </div>
           </div>

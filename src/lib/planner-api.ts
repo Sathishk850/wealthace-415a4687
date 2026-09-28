@@ -39,6 +39,9 @@ export type Goal = {
   target_date: string | null;
   monthly_contribution: number;
   notes: string | null;
+  linked_investment_ids?: string[] | null;
+  /** Manually entered saved amount (before linked investments are added). */
+  manual_saved_amount?: number;
   created_at: string;
   updated_at: string;
 };
@@ -137,6 +140,7 @@ export function useUpsertGoal() {
       target_date: string | null;
       monthly_contribution: number;
       notes?: string | null;
+      linked_investment_ids?: string[];
     }) => {
       const user_id = await uid();
       const payload = {
@@ -147,6 +151,7 @@ export function useUpsertGoal() {
         target_date: input.target_date,
         monthly_contribution: input.monthly_contribution,
         notes: input.notes?.trim() || null,
+        linked_investment_ids: input.linked_investment_ids ?? [],
       };
       if (input.id) {
         const { error } = await supabase
