@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useUndoDelete } from "@/lib/use-undo-delete";
+import { wealthKeys } from "@/lib/wealth-api";
 import { openImport } from "@/components/import/import-host";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
@@ -131,7 +132,6 @@ export function LiabilitiesView({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [brokerImportOpen, setBrokerImportOpen] = useState(false);
   const [editing, setEditing] = useState<Liability | null>(null);
-  const [confirm, setConfirm] = useState<Liability | null>(null);
   const [details, setDetails] = useState<Liability | null>(null);
 
   const [showPicker, setShowPicker] = useState(false);

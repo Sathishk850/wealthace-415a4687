@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUndoDelete } from "@/lib/use-undo-delete";
+import { wealthKeys } from "@/lib/wealth-api";
 import { formatDateShort } from "@/lib/date-format";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
@@ -321,7 +322,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [prefillCategory, setPrefillCategory] = useState<string | undefined>(undefined);
-  const [confirm, setConfirm] = useState<Holding | null>(null);
   // Tracks which merged rows are expanded to show per-broker lots.
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const toggleExpand = (key: string) =>
@@ -749,9 +749,8 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     commit: (h) => delAsset.mutateAsync(h.id),
     label: (h) => h.name,
   });
-  const assetDeleteRef = useRef(setConfirm);
-  assetDeleteRef.current = (h) => {
-    if (!h || typeof h === "function") return;
+  const assetDeleteRef = useRef<(h: Holding) => void>(() => {});
+  assetDeleteRef.current = (h: Holding) => {
     if (h.source === "investment") undoInvDelete(h);
     else undoAssetDelete(h);
   };
