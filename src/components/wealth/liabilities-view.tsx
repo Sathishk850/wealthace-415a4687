@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useUndoDelete } from "@/lib/use-undo-delete";
+import { wealthKeys } from "@/lib/wealth-api";
 import { openImport } from "@/components/import/import-host";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
@@ -101,6 +103,13 @@ export function LiabilitiesView({
   const { data: rows = [], isLoading, isError, error, refetch, isFetching } = useLiabilities();
   const bulkInsert = useBulkInsertLiabilities();
   const del = useDeleteLiability();
+  const undoLiabilityDelete = useUndoDelete<Liability>({
+    queryKey: wealthKeys.liabilities,
+    commit: (l) => del.mutateAsync(l.id),
+    label: (l) => l.name,
+  });
+  const liabilityDeleteRef = useRef(undoLiabilityDelete);
+  liabilityDeleteRef.current = undoLiabilityDelete;
 
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window === "undefined") return "All";
@@ -123,7 +132,6 @@ export function LiabilitiesView({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [brokerImportOpen, setBrokerImportOpen] = useState(false);
   const [editing, setEditing] = useState<Liability | null>(null);
-  const [confirm, setConfirm] = useState<Liability | null>(null);
   const [details, setDetails] = useState<Liability | null>(null);
 
   const [showPicker, setShowPicker] = useState(false);
@@ -417,7 +425,7 @@ export function LiabilitiesView({
                 setEditing(l);
                 setDialogOpen(true);
               }}
-              onDelete={(l) => setConfirm(l)}
+              onDelete={(l) => liabilityDeleteRef.current(l)}
             />
           )}
         </div>
@@ -534,7 +542,7 @@ export function LiabilitiesView({
                                 <Pencil className="mr-2 h-4 w-4" /> Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => setConfirm(l)}
+                                onClick={() => liabilityDeleteRef.current(l)}
                                 className="text-rose-500 focus:text-rose-500"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -619,30 +627,6 @@ export function LiabilitiesView({
         }}
       />
 
-      <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete liability?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove <strong>{confirm?.name}</strong>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={del.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-rose-500 text-white hover:bg-rose-600"
-              disabled={del.isPending}
-              onClick={async () => {
-                if (!confirm) return;
-                await del.mutateAsync(confirm.id);
-                setConfirm(null);
-              }}
-            >
-              {del.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

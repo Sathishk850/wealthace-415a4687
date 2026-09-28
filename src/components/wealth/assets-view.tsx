@@ -1,4 +1,6 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useUndoDelete } from "@/lib/use-undo-delete";
+import { wealthKeys } from "@/lib/wealth-api";
 import { formatDateShort } from "@/lib/date-format";
 import { useBulkSelection } from "@/lib/bulk/use-bulk-selection";
 import { useBulkDeleteRows, useBulkUpdateRows } from "@/lib/bulk/use-bulk-mutations";
@@ -320,7 +322,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const [assetDialogOpen, setAssetDialogOpen] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [prefillCategory, setPrefillCategory] = useState<string | undefined>(undefined);
-  const [confirm, setConfirm] = useState<Holding | null>(null);
   // Tracks which merged rows are expanded to show per-broker lots.
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const toggleExpand = (key: string) =>
@@ -738,14 +739,20 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     }
   };
 
-  const doDelete = async () => {
-    if (!confirm) return;
-    if (confirm.source === "investment") {
-      await delInv.mutateAsync(confirm.id);
-    } else {
-      await delAsset.mutateAsync(confirm.id);
-    }
-    setConfirm(null);
+  const undoInvDelete = useUndoDelete<Holding>({
+    queryKey: wealthKeys.investments,
+    commit: (h) => delInv.mutateAsync(h.id),
+    label: (h) => h.name,
+  });
+  const undoAssetDelete = useUndoDelete<Holding>({
+    queryKey: wealthKeys.assets,
+    commit: (h) => delAsset.mutateAsync(h.id),
+    label: (h) => h.name,
+  });
+  const assetDeleteRef = useRef<(h: Holding) => void>(() => {});
+  assetDeleteRef.current = (h: Holding) => {
+    if (h.source === "investment") undoInvDelete(h);
+    else undoAssetDelete(h);
   };
 
   const isLoading = invLoading || assetLoading;
@@ -955,7 +962,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                 setDetails(h);
               }}
                onEdit={(h) => openEdit(h)}
-               onDelete={(h) => setConfirm(h)}
+               onDelete={(h) => assetDeleteRef.current(h)}
                tab={tab}
              />
           )}
@@ -1117,7 +1124,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                                   setDetails(h);
                                 }}
                                 onEdit={() => openEdit(h)}
-                                onDelete={() => setConfirm(h)}
+                                onDelete={() => assetDeleteRef.current(h)}
                                 expanded={isExpanded}
                                 onToggleExpand={h.lots && h.lots.length > 1 ? () => toggleExpand(key) : undefined}
                               />,
@@ -1132,7 +1139,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                                     quoteMap={quoteMap}
                                     platformLabelById={platformLabelById}
                                     onEdit={() => navigate({ to: "/wealth/add-investment", search: { id: lot.id } })}
-                                    onDelete={() => setConfirm({ ...h, id: lot.id, raw_investment: lot, lots: undefined })}
+                                    onDelete={() => assetDeleteRef.current({ ...h, id: lot.id, raw_investment: lot, lots: undefined })}
                                     allocPct={totals.current > 0 ? ((lot.quantity * h.cmp) / totals.current) * 100 : null}
                                   />
                                 );
@@ -1159,7 +1166,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                       onSelectChange={(v) => sel.toggle(key, v)}
                       onView={() => { setDetailsTab("fundamental"); setDetails(h); }}
                       onEdit={() => openEdit(h)}
-                      onDelete={() => setConfirm(h)}
+                      onDelete={() => assetDeleteRef.current(h)}
                       expanded={isExpanded}
                       onToggleExpand={h.lots && h.lots.length > 1 ? () => toggleExpand(key) : undefined}
                     />,
@@ -1174,7 +1181,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                           quoteMap={quoteMap}
                           platformLabelById={platformLabelById}
                           onEdit={() => navigate({ to: "/wealth/add-investment", search: { id: lot.id } })}
-                          onDelete={() => setConfirm({ ...h, id: lot.id, raw_investment: lot, lots: undefined })}
+                          onDelete={() => assetDeleteRef.current({ ...h, id: lot.id, raw_investment: lot, lots: undefined })}
                           allocPct={totals.current > 0 ? ((lot.quantity * h.cmp) / totals.current) * 100 : null}
                         />
                       );
@@ -1261,28 +1268,6 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         }
       />
 
-      <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete holding?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove <strong>{confirm?.name}</strong>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={delInv.isPending || delAsset.isPending}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-rose-500 text-white hover:bg-rose-600"
-              disabled={delInv.isPending || delAsset.isPending}
-              onClick={doDelete}
-            >
-              {delInv.isPending || delAsset.isPending ? "Deleting…" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
     </div>
   );

@@ -8,6 +8,7 @@ import {
   Cell,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip as RTooltip,
   XAxis,
@@ -21,6 +22,7 @@ import {
   useDeleteSnapshot,
   useNetWorth,
   useSnapshots,
+  useUpdateSnapshotAnnotation,
 } from "@/lib/networth";
 import { formatDateShort } from "@/lib/date-format";
 import { cn } from "@/lib/utils";
@@ -139,6 +141,9 @@ function NetWorth() {
     return snaps
       .filter((s) => (cutoff ? s.snapshot_date >= cutoff : true))
       .map((s) => ({
+        id: s.id,
+        annotation: s.annotation ?? null,
+        date: s.snapshot_date,
         t: new Date(s.snapshot_date).getTime(),
         net: s.net_worth,
         assets: s.assets_total,
@@ -147,6 +152,15 @@ function NetWorth() {
   }, [snaps, months]);
 
   const trend = useMemo(() => snapshotTrend(snaps), [snaps]);
+  const saveAnnotation = useUpdateSnapshotAnnotation();
+  const [annotTarget, setAnnotTarget] = useState<{ id: string; date: string } | null>(null);
+  const [annotText, setAnnotText] = useState("");
+  const pickAnnotTarget = (id: string | undefined) => {
+    const p = series.find((x) => x.id === id);
+    if (!p) return;
+    setAnnotTarget({ id: p.id, date: p.date });
+    setAnnotText(p.annotation ?? "");
+  };
 
   const composition = useMemo(
     () =>
@@ -463,7 +477,14 @@ function NetWorth() {
             </div>
           ) : (
             <ResponsiveContainer>
-              <AreaChart data={series} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <AreaChart
+                data={series}
+                margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                onClick={(e) => {
+                  const idx = Number((e as { activeTooltipIndex?: number | string } | null)?.activeTooltipIndex);
+                  if (Number.isFinite(idx)) pickAnnotTarget(series[idx]?.id);
+                }}
+              >
                 <defs>
                   <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#14d8cf" stopOpacity={0.45} />
@@ -507,8 +528,44 @@ function NetWorth() {
                   strokeWidth={2}
                   fill="url(#nwGrad)"
                 />
+                {series.filter((p) => p.annotation).map((p) => (
+                  <ReferenceLine
+                    key={p.id}
+                    x={p.t}
+                    stroke="#22d3ee"
+                    strokeDasharray="4 2"
+                    strokeWidth={1.5}
+                    label={{ value: p.annotation!, position: "insideTopLeft", fontSize: 10, fill: "#22d3ee" }}
+                  />
+                ))}
               </AreaChart>
             </ResponsiveContainer>
+          )}
+          {series.length >= 2 && (
+            annotTarget ? (
+              <form
+                className="mt-2 flex flex-wrap items-center gap-2 text-xs"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  await saveAnnotation.mutateAsync({ id: annotTarget.id, annotation: annotText.trim() || null });
+                  setAnnotTarget(null);
+                }}
+              >
+                <span className="text-muted-foreground">Note for {formatDateShort(annotTarget.date)}:</span>
+                <input
+                  autoFocus
+                  value={annotText}
+                  onChange={(e) => setAnnotText(e.target.value)}
+                  maxLength={60}
+                  placeholder="e.g. Bought house"
+                  className="h-7 min-w-[160px] flex-1 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                />
+                <button type="submit" disabled={saveAnnotation.isPending} className="rounded-md bg-primary px-2.5 py-1 font-semibold text-primary-foreground">Save</button>
+                <button type="button" onClick={() => setAnnotTarget(null)} className="rounded-md border border-border px-2.5 py-1 font-semibold">Cancel</button>
+              </form>
+            ) : (
+              <p className="mt-2 text-[11px] text-muted-foreground">Tap a point on the chart to add or edit a note.</p>
+            )
           )}
         </div>
       </div>
