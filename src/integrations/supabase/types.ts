@@ -655,6 +655,7 @@ export type Database = {
           created_at: string
           goal_type: string
           id: string
+          linked_investment_ids: string[]
           monthly_contribution: number
           name: string
           notes: string | null
@@ -668,6 +669,7 @@ export type Database = {
           created_at?: string
           goal_type?: string
           id?: string
+          linked_investment_ids?: string[]
           monthly_contribution?: number
           name: string
           notes?: string | null
@@ -681,6 +683,7 @@ export type Database = {
           created_at?: string
           goal_type?: string
           id?: string
+          linked_investment_ids?: string[]
           monthly_contribution?: number
           name?: string
           notes?: string | null
@@ -1775,6 +1778,7 @@ export type Database = {
       }
       wealth_snapshots: {
         Row: {
+          annotation: string | null
           assets_total: number
           created_at: string
           id: string
@@ -1787,6 +1791,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          annotation?: string | null
           assets_total?: number
           created_at?: string
           id?: string
@@ -1799,6 +1804,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          annotation?: string | null
           assets_total?: number
           created_at?: string
           id?: string
