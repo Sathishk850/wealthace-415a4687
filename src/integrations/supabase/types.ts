@@ -660,6 +660,7 @@ export type Database = {
           name: string
           notes: string | null
           saved_amount: number
+          step_up_pct: number | null
           target_amount: number
           target_date: string | null
           updated_at: string
@@ -674,6 +675,7 @@ export type Database = {
           name: string
           notes?: string | null
           saved_amount?: number
+          step_up_pct?: number | null
           target_amount?: number
           target_date?: string | null
           updated_at?: string
@@ -688,6 +690,7 @@ export type Database = {
           name?: string
           notes?: string | null
           saved_amount?: number
+          step_up_pct?: number | null
           target_amount?: number
           target_date?: string | null
           updated_at?: string

@@ -1,0 +1,1 @@
+alter table public.planner_goals add column if not exists step_up_pct numeric default 0;
