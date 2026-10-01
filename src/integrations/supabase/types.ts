@@ -379,6 +379,7 @@ export type Database = {
           payment_account_id: string | null
           payment_mode: string | null
           receipt_path: string | null
+          tags: string[]
           updated_at: string
           user_id: string
         }
@@ -395,6 +396,7 @@ export type Database = {
           payment_account_id?: string | null
           payment_mode?: string | null
           receipt_path?: string | null
+          tags?: string[]
           updated_at?: string
           user_id: string
         }
@@ -411,6 +413,7 @@ export type Database = {
           payment_account_id?: string | null
           payment_mode?: string | null
           receipt_path?: string | null
+          tags?: string[]
           updated_at?: string
           user_id?: string
         }
