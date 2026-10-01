@@ -65,16 +65,21 @@ export const refreshMyHoldings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ refreshed: number; total: number }> => {
     const { supabase } = context;
+    const { isSgb } = await import("./sgb");
     const { data: rows, error } = await supabase
       .from("wealth_investments")
-      .select("identifier_type, identifier, exchange, status")
-      .not("identifier", "is", null);
+      .select("id, name, symbol, sub_category, identifier_type, identifier, exchange, status");
     if (error) throw error;
 
     const items: QuoteRequestItem[] = [];
     const seen = new Set<string>();
+    const sgbIds: string[] = [];
     for (const r of rows ?? []) {
       if ((r.status ?? "active") !== "active") continue;
+      if (isSgb(r)) {
+        sgbIds.push(r.id as string);
+        continue;
+      }
       if (!r.identifier || !r.identifier_type) continue;
       const key = `${r.identifier_type}:${r.identifier}`;
       if (seen.has(key)) continue;
@@ -86,11 +91,36 @@ export const refreshMyHoldings = createServerFn({ method: "POST" })
       });
     }
 
-    if (items.length === 0) return { refreshed: 0, total: 0 };
+    if (items.length === 0 && sgbIds.length === 0) return { refreshed: 0, total: 0 };
 
     const { getQuotes } = await import("./market/service.server");
-    const quotes = await getQuotes(items, { force: true, mirror: true });
-    return { refreshed: quotes.filter((q) => q.latest_price != null).length, total: items.length };
+    let refreshed = 0;
+    if (items.length > 0) {
+      const quotes = await getQuotes(items, { force: true, mirror: true });
+      refreshed += quotes.filter((q) => q.latest_price != null).length;
+    }
+
+    // SGBs: 1 unit = 1 gram of gold → price via the NSE GOLDBEES ETF.
+    if (sgbIds.length > 0) {
+      const [gb] = await getQuotes(
+        [{ identifier_type: "stock_in", identifier: "GOLDBEES", exchange: "NSE" }],
+        { force: true },
+      );
+      const price = gb?.latest_price ?? null;
+      if (price && price > 0) {
+        const { error: upErr } = await supabase
+          .from("wealth_investments")
+          .update({
+            current_price: price,
+            previous_close: gb.previous_close ?? null,
+            price_source: "GOLDBEES",
+            price_updated_at: new Date().toISOString(),
+          })
+          .in("id", sgbIds);
+        if (!upErr) refreshed += sgbIds.length;
+      }
+    }
+    return { refreshed, total: items.length + sgbIds.length };
   });
 
 const fundamentalsSchema = z.object({
