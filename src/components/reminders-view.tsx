@@ -174,7 +174,7 @@ function ReminderRow({
             {reminder.recurrence !== "none" && (
               <Badge variant="outline" className="border-[var(--border)] gap-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
                 <Repeat className="h-2.5 w-2.5" />
-                {reminder.recurrence}
+                {reminder.recurrence === "every_2_months" ? "every 2 months" : reminder.recurrence}
               </Badge>
             )}
           </div>

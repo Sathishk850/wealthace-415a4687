@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { isSgb } from "@/lib/sgb";
 import { useUndoDelete } from "@/lib/use-undo-delete";
 import { wealthKeys } from "@/lib/wealth-api";
 import { formatDateShort } from "@/lib/date-format";
@@ -1741,6 +1742,14 @@ function HoldingRow({
       <td className="px-3 py-3 text-right tabular-nums text-foreground">
         <span className="inline-flex items-center gap-1">
           {priceIn(h.cmp, h.currency)}
+          {isSgb({ name: h.name, symbol: h.symbol }) && (
+            <span
+              title="Priced via GOLDBEES · NSE 24K gold rate"
+              className="ml-1 rounded-full bg-yellow-500/15 px-1.5 py-0.5 text-[9px] font-medium text-yellow-600 dark:text-yellow-400"
+            >
+              GOLDBEES
+            </span>
+          )}
           {h.price_stale && (
             <span
               title="Live price unavailable — showing last known price"

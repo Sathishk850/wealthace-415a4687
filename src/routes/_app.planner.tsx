@@ -89,6 +89,7 @@ import {
   inr,
   inrFull,
   projectCorpus,
+  projectedCorpus,
   retirementCorpusNeeded,
   useFirePlan,
   useDeleteGoal,
@@ -652,6 +653,17 @@ function GoalCard({
           <span> · {inr(goal.monthly_contribution)}/mo</span>
         )}
       </div>
+      {(goal.step_up_pct ?? 0) > 0 && goal.monthly_contribution > 0 && goal.target_date && (() => {
+        const now = new Date();
+        const t = new Date(goal.target_date);
+        const months = Math.max(0, (t.getFullYear() - now.getFullYear()) * 12 + (t.getMonth() - now.getMonth()));
+        const proj = goal.saved_amount + projectedCorpus(goal.monthly_contribution, 0, months, goal.step_up_pct ?? 0);
+        return (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Step-up: {goal.step_up_pct}% per year applied to SIP projection · ~{inr(proj)} by target
+          </p>
+        );
+      })()}
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
         <div className={`h-full ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
@@ -684,6 +696,7 @@ function GoalDialog({
   const [monthly, setMonthly] = useState(String(goal?.monthly_contribution ?? "0"));
   const [notes, setNotes] = useState(goal?.notes ?? "");
   const [linkedIds, setLinkedIds] = useState<string[]>(goal?.linked_investment_ids ?? []);
+  const [stepUpPct, setStepUpPct] = useState<number>(goal?.step_up_pct ?? 0);
   const invListQ = useInvestments();
 
   // Re-seed when opening a different goal
@@ -697,6 +710,7 @@ function GoalDialog({
       setMonthly(String(goal?.monthly_contribution ?? "0"));
       setNotes(goal?.notes ?? "");
       setLinkedIds(goal?.linked_investment_ids ?? []);
+      setStepUpPct(goal?.step_up_pct ?? 0);
     }
   }, [open, goal?.id]);
 
@@ -718,6 +732,7 @@ function GoalDialog({
         monthly_contribution: mly,
         notes,
         linked_investment_ids: linkedIds,
+        step_up_pct: stepUpPct,
       },
       { onSuccess: () => onOpenChange(false) }
     );
@@ -764,6 +779,21 @@ function GoalDialog({
               <Label>Monthly Contribution (₹)</Label>
               <Input type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} />
             </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Annual step-up % (optional)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={50}
+              step={1}
+              value={stepUpPct || ""}
+              onChange={(e) => setStepUpPct(Math.min(50, Math.max(0, Number(e.target.value) || 0)))}
+              placeholder="e.g. 10"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Increase your SIP by this % each year. 10% on ₹5,000 → ₹5,500 next year.
+            </p>
           </div>
           <div className="grid gap-1.5">
             <Label>Notes</Label>
