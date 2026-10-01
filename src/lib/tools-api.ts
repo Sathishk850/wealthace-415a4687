@@ -79,7 +79,7 @@ export const REMINDER_KIND_LABEL: Record<ReminderKind, string> = {
   custom: "Custom",
 };
 
-export type Recurrence = "none" | "weekly" | "monthly" | "quarterly" | "yearly";
+export type Recurrence = "none" | "weekly" | "monthly" | "every_2_months" | "quarterly" | "yearly";
 
 export type Reminder = {
   id: string;
@@ -227,6 +227,7 @@ function advanceDate(iso: string, rec: Recurrence): string {
   const d = new Date(iso + "T00:00:00");
   if (rec === "weekly") d.setDate(d.getDate() + 7);
   else if (rec === "monthly") d.setMonth(d.getMonth() + 1);
+  else if (rec === "every_2_months") d.setMonth(d.getMonth() + 2);
   else if (rec === "quarterly") d.setMonth(d.getMonth() + 3);
   else if (rec === "yearly") d.setFullYear(d.getFullYear() + 1);
   return d.toISOString().slice(0, 10);

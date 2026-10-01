@@ -36,6 +36,7 @@ const RECS: { value: Recurrence; label: string }[] = [
   { value: "none", label: "One-time" },
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
+  { value: "every_2_months", label: "Every 2 months" },
   { value: "quarterly", label: "Quarterly" },
   { value: "yearly", label: "Yearly" },
 ];
