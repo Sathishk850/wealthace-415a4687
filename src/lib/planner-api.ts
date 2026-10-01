@@ -40,6 +40,7 @@ export type Goal = {
   monthly_contribution: number;
   notes: string | null;
   linked_investment_ids?: string[] | null;
+  step_up_pct?: number | null;
   /** Manually entered saved amount (before linked investments are added). */
   manual_saved_amount?: number;
   created_at: string;
@@ -122,7 +123,7 @@ export function useGoals() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((r) =>
-        num(r, ["target_amount", "saved_amount", "monthly_contribution"])
+        num(r, ["target_amount", "saved_amount", "monthly_contribution", "step_up_pct"])
       ) as Goal[];
     },
   });
@@ -141,6 +142,7 @@ export function useUpsertGoal() {
       monthly_contribution: number;
       notes?: string | null;
       linked_investment_ids?: string[];
+      step_up_pct?: number;
     }) => {
       const user_id = await uid();
       const payload = {
@@ -152,6 +154,7 @@ export function useUpsertGoal() {
         monthly_contribution: input.monthly_contribution,
         notes: input.notes?.trim() || null,
         linked_investment_ids: input.linked_investment_ids ?? [],
+        step_up_pct: input.step_up_pct ?? 0,
       };
       if (input.id) {
         const { error } = await supabase
@@ -351,6 +354,23 @@ export function projectCorpus(
   const fvLump = currentCorpus * Math.pow(1 + r, n);
   const fvSip = r === 0 ? monthlySip * n : monthlySip * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
   return fvLump + fvSip;
+}
+
+/** Corpus from a monthly SIP that steps up by `stepUpPct` every 12 months. */
+export function projectedCorpus(
+  monthlySip: number,
+  annualReturnPct: number,
+  months: number,
+  stepUpPct = 0,
+): number {
+  let corpus = 0;
+  let sip = monthlySip;
+  const r = annualReturnPct / 100 / 12;
+  for (let m = 0; m < months; m++) {
+    if (m > 0 && m % 12 === 0 && stepUpPct > 0) sip = sip * (1 + stepUpPct / 100);
+    corpus = corpus * (1 + r) + sip;
+  }
+  return corpus;
 }
 
 /** Years required for current corpus + SIP to grow to target. */
