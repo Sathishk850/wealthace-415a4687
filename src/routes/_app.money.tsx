@@ -27,6 +27,7 @@ import {
   Upload,
   ScanLine,
   CopyPlus,
+  X,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";
@@ -978,6 +979,7 @@ function TransactionsTable({
   const [sort, setSort] = useState<TxSortKey>("date_desc");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const pageSize = isMobile ? 5 : 8;
 
   // Navigator override: applies while the Period dropdown is left at its default
@@ -992,6 +994,7 @@ function TransactionsTable({
   }, [resetKey]);
 
   useEffect(() => { setSelected(new Set()); }, [period, q, catFilter, from, to, resetKey]);
+  useEffect(() => { setTagFilter(null); }, [period, q]);
 
   const range = useMemo(
     () => (useOverride ? { from: overrideFrom, to: overrideTo } : periodRange(period, from, to)),
@@ -1012,6 +1015,7 @@ function TransactionsTable({
           (r.account ?? "").toLowerCase().includes(term)
       );
     }
+    if (tagFilter) arr = arr.filter((t) => (t.tags ?? []).includes(tagFilter));
     const sorted = [...arr];
     sorted.sort((a, b) => {
       switch (sort) {
@@ -1034,7 +1038,7 @@ function TransactionsTable({
       }
     });
     return sorted;
-  }, [rows, q, catFilter, sort, range]);
+  }, [rows, q, catFilter, sort, range, tagFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -1173,6 +1177,19 @@ function TransactionsTable({
               </SelectContent>
             </Select>
           </div>
+          {tagFilter && (
+            <div className="flex items-center gap-1.5 self-end pb-1">
+              <span className="text-xs text-muted-foreground">Tag:</span>
+              <button
+                type="button"
+                onClick={() => { setTagFilter(null); setPage(1); }}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20"
+              >
+                {tagFilter}
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
         </div>
         {period === "custom" && (
           <div className="flex flex-wrap items-end gap-2">
@@ -1234,6 +1251,25 @@ function TransactionsTable({
                         </>
                       )}
                     </div>
+                    {(r.tags ?? []).length > 0 && (
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        {(r.tags ?? []).map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); setPage(1); }}
+                            className={cn(
+                              "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
+                              tagFilter === tag
+                                ? "border-primary/40 bg-primary/10 text-primary"
+                                : "border-border bg-muted/40 text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className={`shrink-0 text-[13px] font-semibold tabular-nums ${r.kind === "income" ? "text-success" : "text-destructive"}`}>
                     {r.kind === "income" ? "+" : "-"}{inrCompact(r.amount)}
@@ -1301,6 +1337,25 @@ function TransactionsTable({
                       <td className="px-4 py-2.5 text-sm font-medium text-foreground">
                         {r.merchant}
                         {r.note && <div className="text-[11px] text-muted-foreground">{r.note}</div>}
+                        {(r.tags ?? []).length > 0 && (
+                          <div className="mt-0.5 flex flex-wrap gap-1">
+                            {(r.tags ?? []).map((tag) => (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); setPage(1); }}
+                                className={cn(
+                                  "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
+                                  tagFilter === tag
+                                    ? "border-primary/40 bg-primary/10 text-primary"
+                                    : "border-border bg-muted/40 text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-xs">
                         {cat ? (
@@ -1405,6 +1460,8 @@ function TransactionDialog({
   const [merchant, setMerchant] = useState<string>(editing?.merchant ?? "");
   const [account, setAccount] = useState<string>(editing?.account ?? "");
   const [note, setNote] = useState<string>(editing?.note ?? "");
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>(editing?.tags ?? []);
   const [paymentMode, setPaymentMode] = useState<string | null>(editing?.payment_mode ?? null);
   const [paymentAccountId, setPaymentAccountId] = useState<string | null>(editing?.payment_account_id ?? null);
   const [err, setErr] = useState<string | null>(null);
@@ -1436,6 +1493,8 @@ function TransactionDialog({
       setMerchant(editing?.merchant ?? scan?.merchant ?? "");
       setAccount(editing?.account ?? "");
       setNote(editing?.note ?? scan?.note ?? "");
+      setTags(editing?.tags ?? []);
+      setTagInput("");
       setPaymentMode(editing?.payment_mode ?? scan?.paymentMode ?? null);
       setPaymentAccountId(editing?.payment_account_id ?? scan?.paymentAccountId ?? null);
       setReceiptFile(scan?.receiptFile ?? null);
@@ -1554,6 +1613,7 @@ function TransactionDialog({
         merchant,
         account,
         note,
+        tags: tags ?? [],
         payment_mode: kind === "expense" ? paymentMode : null,
         payment_account_id: kind === "expense" ? paymentAccountId : null,
       });
@@ -1567,6 +1627,8 @@ function TransactionDialog({
         setMerchant("");
         setAccount("");
         setNote("");
+        setTags([]);
+        setTagInput("");
         setCategoryId("");
         setPaymentMode(null);
         setPaymentAccountId(null);
@@ -1706,6 +1768,45 @@ function TransactionDialog({
           <div>
             <Label htmlFor="note">Note (optional)</Label>
             <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Tags</Label>
+            <div
+              className="flex min-h-[38px] flex-wrap gap-1 rounded-lg border border-border bg-background p-1.5 cursor-text"
+              onClick={() => document.getElementById("tag-input")?.focus()}
+            >
+              {tags.map((t) => (
+                <span key={t} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium">
+                  {t}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setTags((prev) => prev.filter((x) => x !== t)); }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                id="tag-input"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+                    e.preventDefault();
+                    const t = tagInput.trim().replace(/,+$/, "");
+                    if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
+                    setTagInput("");
+                  }
+                  if (e.key === "Backspace" && !tagInput && tags.length) {
+                    setTags((prev) => prev.slice(0, -1));
+                  }
+                }}
+                placeholder={tags.length === 0 ? "Type and press Enter to add tags…" : ""}
+                className="min-w-[100px] flex-1 bg-transparent text-[11px] outline-none placeholder:text-muted-foreground py-0.5"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">e.g. travel, tax, reimbursable</p>
           </div>
           {err && <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">{err}</div>}
         </div>
