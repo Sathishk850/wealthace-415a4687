@@ -372,6 +372,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           id: string
+          is_transfer: boolean
           kind: string
           merchant: string
           note: string | null
@@ -380,6 +381,7 @@ export type Database = {
           payment_mode: string | null
           receipt_path: string | null
           tags: string[]
+          transfer_ref: string | null
           updated_at: string
           user_id: string
         }
@@ -389,6 +391,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           id?: string
+          is_transfer?: boolean
           kind: string
           merchant: string
           note?: string | null
@@ -397,6 +400,7 @@ export type Database = {
           payment_mode?: string | null
           receipt_path?: string | null
           tags?: string[]
+          transfer_ref?: string | null
           updated_at?: string
           user_id: string
         }
@@ -406,6 +410,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           id?: string
+          is_transfer?: boolean
           kind?: string
           merchant?: string
           note?: string | null
@@ -414,6 +419,7 @@ export type Database = {
           payment_mode?: string | null
           receipt_path?: string | null
           tags?: string[]
+          transfer_ref?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -571,6 +577,7 @@ export type Database = {
           account_type: string
           color: string | null
           created_at: string
+          currency: string
           icon: string | null
           id: string
           institution: string | null
@@ -586,6 +593,7 @@ export type Database = {
           account_type: string
           color?: string | null
           created_at?: string
+          currency?: string
           icon?: string | null
           id?: string
           institution?: string | null
@@ -601,6 +609,7 @@ export type Database = {
           account_type?: string
           color?: string | null
           created_at?: string
+          currency?: string
           icon?: string | null
           id?: string
           institution?: string | null
