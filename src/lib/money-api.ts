@@ -32,6 +32,7 @@ export type Transaction = {
   payment_mode: string | null;
   payment_account_id: string | null;
   receipt_path: string | null;
+  tags: string[];
   created_at: string;
   updated_at: string;
 };
@@ -152,6 +153,7 @@ export function useTransactions() {
       return (data ?? []).map((r) => ({
         ...(r as any),
         amount: Number((r as any).amount),
+        tags: ((r as any).tags ?? []) as string[],
       })) as Transaction[];
     },
   });
@@ -172,6 +174,7 @@ export function useUpsertTransaction() {
       payment_mode?: string | null;
       payment_account_id?: string | null;
       receipt_path?: string | null;
+      tags?: string[];
     }): Promise<{ id: string }> => {
       const user_id = await uid();
       const payload = {
@@ -184,6 +187,7 @@ export function useUpsertTransaction() {
         note: input.note?.trim() || null,
         payment_mode: input.payment_mode?.trim() || null,
         payment_account_id: input.payment_account_id || null,
+        tags: input.tags ?? [],
         ...(input.receipt_path !== undefined
           ? { receipt_path: input.receipt_path || null }
           : {}),
