@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, ChevronLeft, ChevronRight, ArrowUpDown, MoreVertical, Trash2, Camera, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -207,6 +207,18 @@ export function SnapshotHistoryDialog({
             </div>
           ) : (
             <>
+              {isRangeEmpty && (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2 text-xs text-amber-400">
+                  <span>No snapshots in this range — showing all {snapshots.length}</span>
+                  <button
+                    type="button"
+                    className="shrink-0 font-semibold underline underline-offset-2"
+                    onClick={setAllRange}
+                  >
+                    Switch to All
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-[35%_30%_25%_10%] border-b border-border/60 bg-[#02101c] px-3 py-3 text-[14px] font-semibold text-muted-foreground sm:px-4">
                 <button className="flex items-center gap-1 text-left">
                   Date <ArrowUpDown className="h-3 w-3" />
