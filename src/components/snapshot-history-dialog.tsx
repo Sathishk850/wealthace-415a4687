@@ -232,7 +232,7 @@ export function SnapshotHistoryDialog({
                 <span />
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto">
-                {rows.map((r) => (
+                {displayRows.map((r) => (
                   <div
                     key={r.id}
                     className="grid min-h-[56px] grid-cols-[35%_30%_25%_10%] items-center border-b border-border/30 px-3 py-3 text-[16px] last:border-b-0 hover:bg-surface/40 sm:px-4"
@@ -279,7 +279,9 @@ export function SnapshotHistoryDialog({
         {hasAny && (
           <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-2.5 sm:px-6 sm:py-3">
             <div className="text-[12px] text-muted-foreground">
-              {rows.length} of {snapshots.length} snapshot{snapshots.length === 1 ? "" : "s"}
+              {isRangeEmpty
+                ? `Showing all ${snapshots.length} snapshots (none in selected range)`
+                : `${displayRows.length} snapshot${displayRows.length !== 1 ? "s" : ""}`}
             </div>
             <button
               onClick={() => {
