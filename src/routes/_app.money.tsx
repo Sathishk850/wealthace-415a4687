@@ -30,6 +30,8 @@ import {
   X,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { TransferDialog } from "@/components/money/TransferDialog";
+import { ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -234,6 +236,8 @@ function KpiCard({
 function Money() {
   const [tab, setTab] = useTabParam<Tab>("Overview", tabs);
   const [importOpen, setImportOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const moneyQc = useQueryClient();
   const locationHash = useRouterState({ select: (st) => st.location.hash });
   useEffect(() => {
     if (locationHash === "import" || locationHash === "#import") setImportOpen(true);
@@ -500,6 +504,12 @@ function Money() {
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
             >
               <Upload className="h-3.5 w-3.5" /> Import
+            </button>
+            <button
+              onClick={() => setTransferOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
+            >
+              <ArrowLeftRight className="h-3.5 w-3.5" /> Transfer
             </button>
             <button
               onClick={handleAdd}
@@ -834,6 +844,12 @@ function Money() {
         transactions={transactions}
       />
       <BankStatementImporter open={importOpen} onOpenChange={setImportOpen} />
+      <TransferDialog
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        accounts={accounts.filter((a) => a.is_active)}
+        onSuccess={() => moneyQc.invalidateQueries({ queryKey: ["money", "transactions"] })}
+      />
     </>
   );
 }
@@ -1238,7 +1254,11 @@ function TransactionsTable({
               return (
                 <li key={r.id} className="flex items-center gap-2 px-3 py-2.5">
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-medium text-foreground">{r.merchant || cat?.name || "—"}</div>
+                    <div className="truncate text-[13px] font-medium text-foreground">{r.merchant || cat?.name || "—"}{r.is_transfer && (
+                          <span className={cn("ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-medium", r.note?.includes("Rate:") ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground")}>
+                            {r.note?.includes("Rate:") ? "FX" : "Transfer"}
+                          </span>
+                        )}</div>
                     <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
                       <span>{formatDateLabel(r.occurred_on)}</span>
                       {cat && (
@@ -1336,6 +1356,11 @@ function TransactionsTable({
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-muted-foreground">{formatDateLabel(r.occurred_on)}</td>
                       <td className="px-4 py-2.5 text-sm font-medium text-foreground">
                         {r.merchant}
+                        {r.is_transfer && (
+                          <span className={cn("ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-medium", r.note?.includes("Rate:") ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground")}>
+                            {r.note?.includes("Rate:") ? "FX" : "Transfer"}
+                          </span>
+                        )}
                         {r.note && <div className="text-[11px] text-muted-foreground">{r.note}</div>}
                         {(r.tags ?? []).length > 0 && (
                           <div className="mt-0.5 flex flex-wrap gap-1">

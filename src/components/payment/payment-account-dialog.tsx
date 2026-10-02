@@ -53,6 +53,7 @@ const emptyFor = (t: PaymentAccountType = "bank"): PaymentAccountInput => ({
   is_active: true,
   is_default: false,
   notes: "",
+  currency: "INR",
 });
 
 const OTHER_VALUE = "__other__";
@@ -138,6 +139,7 @@ export function PaymentAccountDialog({
         is_active: existing.is_active,
         is_default: existing.is_default,
         notes: existing.notes ?? "",
+        currency: existing.currency ?? "INR",
       });
       // notes stores the optional nickname (no schema change).
       setNickname(existing.notes ?? "");
@@ -205,6 +207,7 @@ export function PaymentAccountDialog({
           is_active: form.is_active ?? true,
           is_default: form.is_default ?? false,
           notes: finalNotes,
+          currency: form.currency || "INR",
         } as never)
         .select("id")
         .single();
@@ -283,6 +286,22 @@ export function PaymentAccountDialog({
                     {t.label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="sm:col-span-2">
+            <Label className="mb-1.5 block text-xs">Currency</Label>
+            <Select value={form.currency ?? "INR"} onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="INR">₹ INR — Indian Rupee</SelectItem>
+                <SelectItem value="USD">$ USD — US Dollar</SelectItem>
+                <SelectItem value="EUR">€ EUR — Euro</SelectItem>
+                <SelectItem value="GBP">£ GBP — British Pound</SelectItem>
+                <SelectItem value="SGD">SGD — Singapore Dollar</SelectItem>
+                <SelectItem value="AED">AED — UAE Dirham</SelectItem>
+                <SelectItem value="UGX">USh UGX — Ugandan Shilling</SelectItem>
               </SelectContent>
             </Select>
           </div>

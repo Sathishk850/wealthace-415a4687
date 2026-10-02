@@ -33,6 +33,8 @@ export type Transaction = {
   payment_account_id: string | null;
   receipt_path: string | null;
   tags: string[];
+  is_transfer: boolean;
+  transfer_ref: string | null;
   created_at: string;
   updated_at: string;
 };
