@@ -125,6 +125,21 @@ export function SnapshotHistoryDialog({
     );
   }, [range, snapshots]);
 
+  // Smart fallback — if the selected range hides all snapshots but data exists,
+  // show the full history instead of an empty table.
+  const isRangeEmpty = rows.length === 0 && snapshots.length > 0;
+  const displayRows = isRangeEmpty ? snapshots : rows;
+
+  const setAllRange = () => {
+    setRange({ key: "CUSTOM", start: null, end: new Date(), label: "Since Beginning" });
+  };
+
+  // Auto-correct on first load: default 1M would show nothing when snapshots
+  // are all older than a month.
+  useEffect(() => {
+    if (snapshots.length > 0 && rows.length === 0) setAllRange();
+  }, [snapshots.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const hasAny = snapshots.length > 0;
 
   return (
