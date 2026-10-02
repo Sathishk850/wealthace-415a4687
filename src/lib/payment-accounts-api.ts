@@ -22,6 +22,7 @@ export type PaymentAccount = {
   is_active: boolean;
   is_default: boolean;
   notes: string | null;
+  currency: string;
   created_at: string;
   updated_at: string;
 };
@@ -37,6 +38,7 @@ export type PaymentAccountInput = {
   is_active?: boolean;
   is_default?: boolean;
   notes?: string | null;
+  currency?: string;
 };
 
 export const PAYMENT_ACCOUNT_TYPES: {
@@ -273,6 +275,7 @@ export function useUpsertPaymentAccount() {
         is_active: input.is_active ?? true,
         is_default: input.is_default ?? false,
         notes: input.notes?.trim() || null,
+        currency: input.currency || "INR",
       };
       if (input.is_default) {
         // clear other defaults for this user first
