@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, ChevronLeft, ChevronRight, ArrowUpDown, MoreVertical, Trash2, Camera, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -125,6 +125,21 @@ export function SnapshotHistoryDialog({
     );
   }, [range, snapshots]);
 
+  // Smart fallback — if the selected range hides all snapshots but data exists,
+  // show the full history instead of an empty table.
+  const isRangeEmpty = rows.length === 0 && snapshots.length > 0;
+  const displayRows = isRangeEmpty ? snapshots : rows;
+
+  const setAllRange = () => {
+    setRange({ key: "CUSTOM", start: null, end: new Date(), label: "Since Beginning" });
+  };
+
+  // Auto-correct on first load: default 1M would show nothing when snapshots
+  // are all older than a month.
+  useEffect(() => {
+    if (snapshots.length > 0 && rows.length === 0) setAllRange();
+  }, [snapshots.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const hasAny = snapshots.length > 0;
 
   return (
@@ -192,6 +207,18 @@ export function SnapshotHistoryDialog({
             </div>
           ) : (
             <>
+              {isRangeEmpty && (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2 text-xs text-amber-400">
+                  <span>No snapshots in this range — showing all {snapshots.length}</span>
+                  <button
+                    type="button"
+                    className="shrink-0 font-semibold underline underline-offset-2"
+                    onClick={setAllRange}
+                  >
+                    Switch to All
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-[35%_30%_25%_10%] border-b border-border/60 bg-[#02101c] px-3 py-3 text-[14px] font-semibold text-muted-foreground sm:px-4">
                 <button className="flex items-center gap-1 text-left">
                   Date <ArrowUpDown className="h-3 w-3" />
@@ -205,7 +232,7 @@ export function SnapshotHistoryDialog({
                 <span />
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto">
-                {rows.map((r) => (
+                {displayRows.map((r) => (
                   <div
                     key={r.id}
                     className="grid min-h-[56px] grid-cols-[35%_30%_25%_10%] items-center border-b border-border/30 px-3 py-3 text-[16px] last:border-b-0 hover:bg-surface/40 sm:px-4"
@@ -252,7 +279,9 @@ export function SnapshotHistoryDialog({
         {hasAny && (
           <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-2.5 sm:px-6 sm:py-3">
             <div className="text-[12px] text-muted-foreground">
-              {rows.length} of {snapshots.length} snapshot{snapshots.length === 1 ? "" : "s"}
+              {isRangeEmpty
+                ? `Showing all ${snapshots.length} snapshots (none in selected range)`
+                : `${displayRows.length} snapshot${displayRows.length !== 1 ? "s" : ""}`}
             </div>
             <button
               onClick={() => {
