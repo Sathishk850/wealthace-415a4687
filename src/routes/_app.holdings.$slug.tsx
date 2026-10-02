@@ -15,7 +15,9 @@ export const Route = createFileRoute("/_app/holdings/$slug")({
     <div className="p-8 text-sm text-muted-foreground">Holding not found.</div>
   ),
   errorComponent: ({ error }) => (
-    <div className="p-8 text-sm text-rose-400">{error.message}</div>
+    <div className="p-8 text-sm text-rose-400">
+      {error instanceof Error ? error.message : "Unable to load this holding."}
+    </div>
   ),
 });
 
