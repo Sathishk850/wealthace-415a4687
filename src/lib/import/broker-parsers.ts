@@ -245,7 +245,7 @@ function parseGroww(raw: Record<string, unknown>[]): BrokerRow[] {
       current_price: ltp || (qty > 0 ? curVal / qty : 0),
       invested_value: invested || null, current_value: curVal || null,
       purchase_date: TODAY,
-      identifier: iv ?? symbol || undefined,
+      identifier: iv ?? (symbol || undefined),
       identifier_type: iv ? "ISIN" : (symbol ? "SYMBOL" : undefined),
       currency: "INR", notes: `Geography: ${geo(iv)}`,
     };
