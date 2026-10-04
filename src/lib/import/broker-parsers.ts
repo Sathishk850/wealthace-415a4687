@@ -225,6 +225,81 @@ function parseTickertape(raw: Record<string, unknown>[]): BrokerRow[] {
   }).filter(valid);
 }
 
+function parseAngelOne(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const symbol = get(r, "trading symbol", "symbol", "scrip");
+    const name = get(r, "company name", "stock name", "name") || symbol;
+    if (!name) return null;
+    const qty = num(r, "qty", "net qty", "quantity");
+    const avg = num(r, "buy avg", "avg price", "avg. price", "average price");
+    const cmp = num(r, "cmp", "ltp", "current price");
+    const curVal = num(r, "current value", "market value");
+    const iv = isinVal(r, "isin") ?? null;
+    return {
+      _broker: "Angel One", _isin: iv,
+      name, symbol: symbol || null,
+      category: guessCat(name, iv), quantity: qty || 1,
+      avg_price: avg,
+      current_price: cmp || (qty > 0 ? curVal / qty : 0),
+      invested_value: qty > 0 && avg > 0 ? qty * avg : null,
+      current_value: curVal || null,
+      exchange: "NSE", purchase_date: TODAY,
+      identifier: iv ?? (symbol || undefined),
+      identifier_type: iv ? "ISIN" : (symbol ? "SYMBOL" : undefined),
+      currency: "INR", notes: `Geography: ${geo(iv)}`,
+    };
+  }).filter(valid);
+}
+
+function parseUpstox(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const name = get(r, "instrument name", "stock / fund name", "stock name", "fund name", "company name");
+    if (!name) return null;
+    const qty = num(r, "quantity", "qty");
+    const avg = num(r, "average price", "avg cost price", "avg price");
+    const ltp = num(r, "last price", "current market price", "ltp", "cmp");
+    const curVal = num(r, "market value", "current value");
+    const iv = isinVal(r, "isin") ?? null;
+    const cat = iv?.startsWith("INF") ? mfCat(name) : guessCat(name, iv);
+    return {
+      _broker: "Upstox", _isin: iv,
+      name, symbol: null,
+      category: cat, quantity: qty || 1,
+      avg_price: avg,
+      current_price: ltp || (qty > 0 ? curVal / qty : 0),
+      invested_value: qty > 0 && avg > 0 ? qty * avg : null,
+      current_value: curVal || null,
+      purchase_date: TODAY,
+      identifier: iv ?? undefined, identifier_type: iv ? "ISIN" : undefined,
+      currency: "INR", notes: `Geography: ${geo(iv)}`,
+    };
+  }).filter(valid);
+}
+
+function parseKotakNeo(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const name = get(r, "script name", "scrip", "company name", "stock name");
+    if (!name) return null;
+    const qty = num(r, "quantity", "net qty", "qty");
+    const avg = num(r, "purchase rate", "avg buy price", "avg price", "average price");
+    const ltp = num(r, "current rate", "ltp", "cmp", "current price");
+    const curVal = num(r, "current value", "market value");
+    const iv = isinVal(r, "isin code", "isin") ?? null;
+    return {
+      _broker: "Kotak Neo", _isin: iv,
+      name, symbol: null,
+      category: guessCat(name, iv), quantity: qty || 1,
+      avg_price: avg,
+      current_price: ltp || (qty > 0 ? curVal / qty : 0),
+      invested_value: qty > 0 && avg > 0 ? qty * avg : null,
+      current_value: curVal || null,
+      exchange: "NSE", purchase_date: TODAY,
+      identifier: iv ?? undefined, identifier_type: iv ? "ISIN" : undefined,
+      currency: "INR", notes: `Geography: India`,
+    };
+  }).filter(valid);
+}
+
 function parseGroww(raw: Record<string, unknown>[]): BrokerRow[] {
   return raw.map((r): BrokerRow | null => {
     const name = get(r, "holding name", "scheme name", "company name", "scrip name");
@@ -287,6 +362,9 @@ const SIGNATURES: Array<{
   { broker: "Zerodha Kite", mustHave: [["instrument", "tradingsymbol"], ["avg. cost", "avg cost", "average price"], ["product"]], parse: parseZerodhaKite },
   { broker: "Vested", mustHave: [["symbol"], ["average price", "avg price", "avg. price"], ["market value"], ["p&l", "p&l %"]], parse: parseVested },
   { broker: "Tickertape", mustHave: [["ticker", "symbol"], ["cost basis", "average cost"], ["gain/loss", "gain loss", "gain / loss"]], parse: parseTickertape },
+  { broker: "Angel One", mustHave: [["trading symbol", "symbol"], ["buy avg", "avg price"], ["p&l", "p&l %"]], parse: parseAngelOne },
+  { broker: "Upstox", mustHave: [["instrument name", "stock / fund name", "stock name"], ["average price", "avg cost price"], ["last price", "current market price", "ltp"]], parse: parseUpstox },
+  { broker: "Kotak Neo", mustHave: [["script name", "scrip"], ["purchase rate", "avg buy price"], ["current rate", "ltp"]], parse: parseKotakNeo },
   { broker: "Groww", mustHave: [["holding name", "scheme name", "company name"], ["average price", "avg price", "avg. price"], ["ltp", "current price"]], parse: parseGroww },
   { broker: "mstock", mustHave: [["stock name", "scrip name"], ["average cost", "avg rate"], ["cmp", "current price"]], parse: parseMstock },
   { broker: "5paisa", mustHave: [["scrip name", "script name", "scheme name"], ["buy avg", "avg buy price"]], parse: parse5paisa },
