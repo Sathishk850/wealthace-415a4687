@@ -225,6 +225,58 @@ function parseTickertape(raw: Record<string, unknown>[]): BrokerRow[] {
   }).filter(valid);
 }
 
+function parseGroww(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const name = get(r, "holding name", "scheme name", "company name", "scrip name");
+    if (!name) return null;
+    const qty = num(r, "quantity", "units", "qty");
+    const avg = num(r, "average price", "avg price", "avg. price");
+    const ltp = num(r, "ltp", "current price", "cmp");
+    const curVal = num(r, "current value", "market value");
+    const invested = num(r, "invested value", "amount invested", "purchase value");
+    const iv = isinVal(r, "isin") ?? null;
+    const symbol = get(r, "symbol", "scrip code", "trading symbol");
+    const cat = iv?.startsWith("INF") ? mfCat(name) : guessCat(name, iv);
+    return {
+      _broker: "Groww", _isin: iv,
+      name, symbol: symbol || null,
+      category: cat, quantity: qty || 1,
+      avg_price: avg,
+      current_price: ltp || (qty > 0 ? curVal / qty : 0),
+      invested_value: invested || null, current_value: curVal || null,
+      purchase_date: TODAY,
+      identifier: iv ?? (symbol || undefined),
+      identifier_type: iv ? "ISIN" : (symbol ? "SYMBOL" : undefined),
+      currency: "INR", notes: `Geography: ${geo(iv)}`,
+    };
+  }).filter(valid);
+}
+
+function parseMstock(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const name = get(r, "stock name", "scrip name", "company name");
+    if (!name) return null;
+    const qty = num(r, "qty", "quantity", "net qty");
+    const avg = num(r, "average cost", "avg rate", "avg cost", "avg price");
+    const cmp = num(r, "cmp", "current price", "ltp");
+    const curVal = num(r, "current value", "market value");
+    const iv = isinVal(r, "isin") ?? null;
+    const exch = get(r, "exchange");
+    return {
+      _broker: "mstock", _isin: iv,
+      name, symbol: get(r, "symbol", "scrip code") || null,
+      category: guessCat(name, iv), quantity: qty || 1,
+      avg_price: avg,
+      current_price: cmp || (qty > 0 ? curVal / qty : 0),
+      invested_value: qty > 0 && avg > 0 ? qty * avg : null,
+      current_value: curVal || null,
+      exchange: exch || "NSE", purchase_date: TODAY,
+      identifier: iv ?? undefined, identifier_type: iv ? "ISIN" : undefined,
+      currency: "INR", notes: `Geography: ${geo(iv)}`,
+    };
+  }).filter(valid);
+}
+
 const SIGNATURES: Array<{
   broker: string;
   mustHave: string[][];
@@ -235,6 +287,8 @@ const SIGNATURES: Array<{
   { broker: "Zerodha Kite", mustHave: [["instrument", "tradingsymbol"], ["avg. cost", "avg cost", "average price"], ["product"]], parse: parseZerodhaKite },
   { broker: "Vested", mustHave: [["symbol"], ["average price", "avg price", "avg. price"], ["market value"], ["p&l", "p&l %"]], parse: parseVested },
   { broker: "Tickertape", mustHave: [["ticker", "symbol"], ["cost basis", "average cost"], ["gain/loss", "gain loss", "gain / loss"]], parse: parseTickertape },
+  { broker: "Groww", mustHave: [["holding name", "scheme name", "company name"], ["average price", "avg price", "avg. price"], ["ltp", "current price"]], parse: parseGroww },
+  { broker: "mstock", mustHave: [["stock name", "scrip name"], ["average cost", "avg rate"], ["cmp", "current price"]], parse: parseMstock },
   { broker: "5paisa", mustHave: [["scrip name", "script name", "scheme name"], ["buy avg", "avg buy price"]], parse: parse5paisa },
   { broker: "Dhan", mustHave: [["net qty", "avg cost price", "trading symbol", "stock symbol"], ["isin"]], parse: parseDhan },
 ];
