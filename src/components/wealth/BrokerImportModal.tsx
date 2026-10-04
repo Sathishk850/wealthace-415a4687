@@ -133,7 +133,7 @@ export function BrokerImportModal({ open, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle>Import Holdings from Broker</DialogTitle>
           <DialogDescription>
-            Supports Angel One, Upstox, Kotak Neo, 5paisa, Groww, Kuvera, Dhan, MFCentral CAS, mstock, Zerodha Kite, Vested, and Tickertape exports (CSV or Excel).
+            Supports Aionion, Angel One, Upstox, Kotak Neo, 5paisa, Groww, Kuvera, Dhan, MFCentral CAS, mstock, Zerodha Kite, Vested, and Tickertape exports (CSV or Excel).
           </DialogDescription>
         </DialogHeader>
 

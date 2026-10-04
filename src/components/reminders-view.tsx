@@ -22,9 +22,15 @@ import {
   type Reminder,
   inr,
   daysUntil,
+  toolsKeys,
 } from "@/lib/tools-api";
 import { TextTabs } from "@/components/text-tabs";
 import { ReminderDialog } from "@/components/reminder-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function RemindersView() {
   const q = useReminders();
@@ -33,6 +39,7 @@ export function RemindersView() {
   const [tab, setTab] = useState<"upcoming" | "completed" | "all">("upcoming");
   const [search, setSearch] = useState("");
   const [dialog, setDialog] = useState<{ open: boolean; reminder?: Reminder }>({ open: false });
+  const [rescheduling, setRescheduling] = useState<Reminder | null>(null);
 
   const reminders = useMemo(() => {
     const list = q.data ?? [];
@@ -130,7 +137,20 @@ export function RemindersView() {
           ))}
         </Card>
       )}
-REPLACE_TAIL
+
+      {!q.isLoading && !q.error && reminders.length > 0 && view === "calendar" && (
+        <CalendarGrid
+          reminders={reminders}
+          onPick={(r) => setDialog({ open: true, reminder: r })}
+        />
+      )}
+
+      <ReminderDialog
+        open={dialog.open}
+        onOpenChange={(o) => setDialog({ open: o, reminder: o ? dialog.reminder : undefined })}
+        reminder={dialog.reminder}
+      />
+      <RescheduleDialog reminder={rescheduling} onClose={() => setRescheduling(null)} />
     </div>
   );
 }

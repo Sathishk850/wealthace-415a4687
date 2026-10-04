@@ -225,6 +225,32 @@ function parseTickertape(raw: Record<string, unknown>[]): BrokerRow[] {
   }).filter(valid);
 }
 
+function parseAionion(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const name = get(r, "instrument", "symbol", "stock name", "company name", "scrip name", "scheme name");
+    if (!name) return null;
+    const qty = num(r, "quantity", "qty", "units", "net qty");
+    const avg = num(r, "avg cost", "average price", "nav/price", "avg price", "purchase price");
+    const ltp = num(r, "ltp", "close price", "current nav", "current price", "cmp");
+    const curVal = num(r, "current value", "market value", "portfolio value");
+    const iv = isinVal(r, "isin") ?? null;
+    const isDebt = /bond|ncd|debenture|debt/i.test(name);
+    const cat = isDebt ? "Bonds" : (iv?.startsWith("INF") ? mfCat(name) : guessCat(name, iv));
+    return {
+      _broker: "Aionion", _isin: iv,
+      name, symbol: get(r, "symbol", "instrument") || null,
+      category: cat, quantity: qty || 1,
+      avg_price: avg,
+      current_price: ltp || (qty > 0 ? curVal / qty : 0),
+      invested_value: qty > 0 && avg > 0 ? qty * avg : null,
+      current_value: curVal || null,
+      purchase_date: TODAY,
+      identifier: iv ?? undefined, identifier_type: iv ? "ISIN" : undefined,
+      currency: "INR", notes: `Geography: ${geo(iv)}`,
+    };
+  }).filter(valid);
+}
+
 function parseAngelOne(raw: Record<string, unknown>[]): BrokerRow[] {
   return raw.map((r): BrokerRow | null => {
     const symbol = get(r, "trading symbol", "symbol", "scrip");
@@ -362,6 +388,7 @@ const SIGNATURES: Array<{
   { broker: "Zerodha Kite", mustHave: [["instrument", "tradingsymbol"], ["avg. cost", "avg cost", "average price"], ["product"]], parse: parseZerodhaKite },
   { broker: "Vested", mustHave: [["symbol"], ["average price", "avg price", "avg. price"], ["market value"], ["p&l", "p&l %"]], parse: parseVested },
   { broker: "Tickertape", mustHave: [["ticker", "symbol"], ["cost basis", "average cost"], ["gain/loss", "gain loss", "gain / loss"]], parse: parseTickertape },
+  { broker: "Aionion", mustHave: [["instrument", "stock name", "symbol"], ["avg cost", "average price", "nav/price"], ["isin"]], parse: parseAionion },
   { broker: "Angel One", mustHave: [["trading symbol", "symbol"], ["buy avg", "avg price"], ["p&l", "p&l %"]], parse: parseAngelOne },
   { broker: "Upstox", mustHave: [["instrument name", "stock / fund name", "stock name"], ["average price", "avg cost price"], ["last price", "current market price", "ltp"]], parse: parseUpstox },
   { broker: "Kotak Neo", mustHave: [["script name", "scrip"], ["purchase rate", "avg buy price"], ["current rate", "ltp"]], parse: parseKotakNeo },
