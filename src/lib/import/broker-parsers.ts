@@ -287,6 +287,8 @@ const SIGNATURES: Array<{
   { broker: "Zerodha Kite", mustHave: [["instrument", "tradingsymbol"], ["avg. cost", "avg cost", "average price"], ["product"]], parse: parseZerodhaKite },
   { broker: "Vested", mustHave: [["symbol"], ["average price", "avg price", "avg. price"], ["market value"], ["p&l", "p&l %"]], parse: parseVested },
   { broker: "Tickertape", mustHave: [["ticker", "symbol"], ["cost basis", "average cost"], ["gain/loss", "gain loss", "gain / loss"]], parse: parseTickertape },
+  { broker: "Groww", mustHave: [["holding name", "scheme name", "company name"], ["average price", "avg price", "avg. price"], ["ltp", "current price"]], parse: parseGroww },
+  { broker: "mstock", mustHave: [["stock name", "scrip name"], ["average cost", "avg rate"], ["cmp", "current price"]], parse: parseMstock },
   { broker: "5paisa", mustHave: [["scrip name", "script name", "scheme name"], ["buy avg", "avg buy price"]], parse: parse5paisa },
   { broker: "Dhan", mustHave: [["net qty", "avg cost price", "trading symbol", "stock symbol"], ["isin"]], parse: parseDhan },
 ];
