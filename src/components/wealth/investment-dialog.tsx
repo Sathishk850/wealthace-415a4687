@@ -261,6 +261,24 @@ const empty: InvestmentInput = {
   currency: "INR",
 };
 
+function detectGeography(ticker: string, isin?: string): string | null {
+  if (isin) {
+    if (isin.startsWith("IN")) return "India";
+    if (isin.startsWith("US")) return "United States";
+    if (isin.startsWith("GB")) return "United Kingdom";
+    if (isin.startsWith("DE")) return "Eurozone";
+    if (isin.startsWith("JP")) return "Japan";
+    if (isin.startsWith("CN")) return "China";
+    return "Global";
+  }
+  const t = ticker.trim().toUpperCase();
+  if (!t) return null;
+  if (t.startsWith("$")) return "United States";
+  if (/^[A-Z0-9&]{2,20}(-EQ|-BE|-N1|-N2|-SM)?$/.test(t)) return "India";
+  if (/^[A-Z]{1,5}$/.test(t)) return "United States";
+  return null;
+}
+
 function searchKindFor(category: string): IdentifierType | null {
   if (category === "Stocks") return "stock_in";
   if (category === "Mutual Funds") return "mf_in";
@@ -304,6 +322,23 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
     );
   }, [open, existing]);
 
+  const [geography, setGeography] = useState("");
+  const [geoAutoDetected, setGeoAutoDetected] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const m = existing?.notes?.match(/^Geography:\s*(.+)$/m);
+    setGeography(m ? m[1].trim() : "");
+    setGeoAutoDetected(false);
+  }, [open, existing]);
+
+  const applyGeoDetect = (ticker: string, isin?: string | null) => {
+    const detected = detectGeography(ticker, isin ?? undefined);
+    if (detected && (!geography || geography === "Global")) {
+      setGeography(detected);
+      setGeoAutoDetected(true);
+    }
+  };
+
   const searchKind = searchKindFor(form.category);
   const isLinked = !!(form.identifier && form.identifier_type);
 
@@ -316,6 +351,7 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
       identifier: r.identifier,
       exchange: r.exchange ?? null,
     }));
+    applyGeoDetect(r.identifier, /^[A-Z]{2}[A-Z0-9]{9}\d$/.test(r.identifier) ? r.identifier : null);
     toast.success("Instrument linked");
   };
 
@@ -330,9 +366,11 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
     if (Number(form.avg_price) < 0 || Number(form.current_price) < 0)
       return toast.error("Prices cannot be negative");
     try {
-      await upsert.mutateAsync(form);
+      const baseNotes = (form.notes ?? "").replace(/^Geography:.*$\n?/m, "").trim();
+      const notes = geography ? [`Geography: ${geography}`, baseNotes].filter(Boolean).join("\n") : baseNotes;
+      await upsert.mutateAsync({ ...form, notes });
       void commitStagedPaymentPreferences();
-      if (keepOpen && !existing) setForm(empty);
+      if (keepOpen && !existing) { setForm(empty); setGeography(""); setGeoAutoDetected(false); }
       else onOpenChange(false);
     } catch {
       /* hook toast */
@@ -436,9 +474,30 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             <Input
               value={form.symbol ?? ""}
               onChange={(e) => setForm({ ...form, symbol: e.target.value })}
+              onBlur={() => applyGeoDetect(form.symbol ?? "")}
               placeholder="e.g. HDFCBANK"
             />
           </Field>
+          <div className="grid gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Label className="text-xs text-muted-foreground">Geography</Label>
+              {geoAutoDetected && (
+                <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">Auto-detected</span>
+              )}
+            </div>
+            <Select value={geography} onValueChange={(v) => { setGeography(v); setGeoAutoDetected(false); }}>
+              <SelectTrigger><SelectValue placeholder="Select geography" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="India">🇮🇳 India</SelectItem>
+                <SelectItem value="United States">🇺🇸 United States</SelectItem>
+                <SelectItem value="United Kingdom">🇬🇧 United Kingdom</SelectItem>
+                <SelectItem value="Eurozone">🇪🇺 Eurozone</SelectItem>
+                <SelectItem value="Japan">🇯🇵 Japan</SelectItem>
+                <SelectItem value="China">🇨🇳 China</SelectItem>
+                <SelectItem value="Global">🌍 Global</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Field label="Purchase date">
             <DatePicker
               value={form.purchase_date ?? ""}
