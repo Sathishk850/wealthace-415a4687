@@ -125,24 +125,77 @@ export function RemindersView() {
               reminder={r}
               onEdit={() => setDialog({ open: true, reminder: r })}
               onComplete={() => complete.mutate(r)}
+              onReschedule={() => setRescheduling(r)}
             />
           ))}
         </Card>
       )}
-
-      {!q.isLoading && !q.error && reminders.length > 0 && view === "calendar" && (
-        <CalendarGrid
-          reminders={reminders}
-          onPick={(r) => setDialog({ open: true, reminder: r })}
-        />
-      )}
-
-      <ReminderDialog
-        open={dialog.open}
-        onOpenChange={(o) => setDialog({ open: o, reminder: o ? dialog.reminder : undefined })}
-        reminder={dialog.reminder}
-      />
+REPLACE_TAIL
     </div>
+  );
+}
+
+function nextOccurrence(day: number): string {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const candidate = new Date(now.getFullYear(), now.getMonth(), day);
+  if (candidate <= now) candidate.setMonth(candidate.getMonth() + 1);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${candidate.getFullYear()}-${p(candidate.getMonth() + 1)}-${p(candidate.getDate())}`;
+}
+
+function RescheduleDialog({ reminder, onClose }: { reminder: Reminder | null; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [newDay, setNewDay] = useState(1);
+  const [saving, setSaving] = useState(false);
+  React.useEffect(() => {
+    if (reminder) setNewDay(Math.min(28, Math.max(1, Number(reminder.due_date.slice(8, 10)) || 1)));
+  }, [reminder]);
+  return (
+    <Dialog open={!!reminder} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-xs">
+        <DialogHeader>
+          <DialogTitle>Change day of month</DialogTitle>
+          <DialogDescription>
+            Move "{reminder?.title}" to a different day each month. Future entries will use the new day.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-1.5 py-2">
+          <Label className="text-xs text-muted-foreground">Day of month (1–28)</Label>
+          <Input
+            type="number"
+            min={1}
+            max={28}
+            value={newDay}
+            onChange={(e) => setNewDay(Math.min(28, Math.max(1, Number(e.target.value) || 1)))}
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Capped at 28 to avoid end-of-month issues (Feb, 30-day months).
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            disabled={saving}
+            onClick={async () => {
+              if (!reminder) return;
+              setSaving(true);
+              const { error } = await supabase
+                .from("tools_reminders" as any)
+                .update({ due_date: nextOccurrence(newDay) })
+                .eq("id", reminder.id);
+              setSaving(false);
+              if (error) return toast.error(error.message);
+              qc.invalidateQueries({ queryKey: toolsKeys.reminders });
+              toast.success(`"${reminder.title}" moved to day ${newDay}`);
+              onClose();
+            }}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -150,10 +203,12 @@ function ReminderRow({
   reminder,
   onEdit,
   onComplete,
+  onReschedule,
 }: {
   reminder: Reminder;
   onEdit: () => void;
   onComplete: () => void;
+  onReschedule?: () => void;
 }) {
   const dleft = daysUntil(reminder.due_date);
   const overdue = reminder.status === "upcoming" && dleft < 0;
@@ -194,7 +249,17 @@ function ReminderRow({
           </p>
         </div>
       </button>
-      <div className="flex shrink-0 gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
+        {reminder.recurrence !== "none" && reminder.status === "upcoming" && onReschedule && (
+          <button
+            type="button"
+            title="Change day"
+            onClick={onReschedule}
+            className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+          </button>
+        )}
         {reminder.status === "upcoming" && (
           <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={onComplete}>
             <CheckCircle2 className="h-3.5 w-3.5" /> {reminder.recurrence === "none" ? "Done" : "Mark Paid"}
