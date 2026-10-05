@@ -9,51 +9,42 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/_app'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BrandRouteImport } from './routes/brand'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
-import { Route as AppEventsRouteImport } from './routes/_app.events'
-import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
-import { Route as AppInsightsRouteImport } from './routes/_app.insights'
-import { Route as AppMoneyRouteImport } from './routes/_app.money'
-import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
-import { Route as AppPlannerRouteImport } from './routes/_app.planner'
-import { Route as AppProfileRouteImport } from './routes/_app.profile'
-import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppToolsRouteImport } from './routes/_app.tools'
-import { Route as AppWealthRouteImport } from './routes/_app.wealth'
+import { Route as BrandRouteImport } from './routes/brand'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWhatsNewRouteImport } from './routes/_app.whats-new'
-import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
-import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slug'
-import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
-import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
-import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
+import { Route as AppWealthRouteImport } from './routes/_app.wealth'
+import { Route as AppToolsRouteImport } from './routes/_app.tools'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
+import { Route as AppPlannerRouteImport } from './routes/_app.planner'
+import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
+import { Route as AppMoneyRouteImport } from './routes/_app.money'
+import { Route as AppInsightsRouteImport } from './routes/_app.insights'
+import { Route as AppFeedbackRouteImport } from './routes/_app.feedback'
+import { Route as AppEventsRouteImport } from './routes/_app.events'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppToolsIndexRouteImport } from './routes/_app.tools.index'
-import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
-import { Route as AppWealthAddAssetRouteImport } from './routes/_app.wealth_.add-asset'
-import { Route as AppWealthAddInvestmentRouteImport } from './routes/_app.wealth_.add-investment'
-import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
+import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
 import { Route as ApiPushUnsubscribeRouteImport } from './routes/api/push/unsubscribe'
-import { Route as ApiPublicHooksEventsSyncRouteImport } from './routes/api/public/hooks/events-sync'
-import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
-import { Route as ApiPublicHooksReleaseNotesRouteImport } from './routes/api/public/hooks/release-notes'
+import { Route as ApiPushSubscribeRouteImport } from './routes/api/push/subscribe'
+import { Route as AppWealthAddInvestmentRouteImport } from './routes/_app.wealth_.add-investment'
+import { Route as AppWealthAddAssetRouteImport } from './routes/_app.wealth_.add-asset'
+import { Route as AppToolsFinancialCalculatorRouteImport } from './routes/_app.tools.financial-calculator'
+import { Route as AppReportsIdRouteImport } from './routes/_app.reports.$id'
+import { Route as AppMoneyTransactionsRouteImport } from './routes/_app.money.transactions'
+import { Route as AppHoldingsSlugRouteImport } from './routes/_app.holdings.$slug'
+import { Route as AppDashboardNetworthRouteImport } from './routes/_app.dashboard.networth'
 import { Route as ApiPublicHooksSnapshotCronRouteImport } from './routes/api/public/hooks/snapshot-cron'
+import { Route as ApiPublicHooksReleaseNotesRouteImport } from './routes/api/public/hooks/release-notes'
+import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
+import { Route as ApiPublicHooksEventsSyncRouteImport } from './routes/api/public/hooks/events-sync'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrandRoute = BrandRouteImport.update({
@@ -61,59 +52,23 @@ const BrandRoute = BrandRouteImport.update({
   path: '/brand',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AppRoute,
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppEventsRoute = AppEventsRouteImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => AppRoute,
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppFeedbackRoute = AppFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppInsightsRoute = AppInsightsRouteImport.update({
-  id: '/insights',
-  path: '/insights',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMoneyRoute = AppMoneyRouteImport.update({
-  id: '/money',
-  path: '/money',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotificationsRoute = AppNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPlannerRoute = AppPlannerRouteImport.update({
-  id: '/planner',
-  path: '/planner',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProfileRoute = AppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppToolsRoute = AppToolsRouteImport.update({
-  id: '/tools',
-  path: '/tools',
+const AppWhatsNewRoute = AppWhatsNewRouteImport.update({
+  id: '/whats-new',
+  path: '/whats-new',
   getParentRoute: () => AppRoute,
 } as any)
 const AppWealthRoute = AppWealthRouteImport.update({
@@ -121,34 +76,54 @@ const AppWealthRoute = AppWealthRouteImport.update({
   path: '/wealth',
   getParentRoute: () => AppRoute,
 } as any)
-const AppWhatsNewRoute = AppWhatsNewRouteImport.update({
-  id: '/whats-new',
-  path: '/whats-new',
+const AppToolsRoute = AppToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
   getParentRoute: () => AppRoute,
 } as any)
-const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
-  id: '/networth',
-  path: '/networth',
-  getParentRoute: () => AppDashboardRoute,
-} as any)
-const AppHoldingsSlugRoute = AppHoldingsSlugRouteImport.update({
-  id: '/holdings/$slug',
-  path: '/holdings/$slug',
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppMoneyTransactionsRoute = AppMoneyTransactionsRouteImport.update({
-  id: '/transactions',
-  path: '/transactions',
-  getParentRoute: () => AppMoneyRoute,
-} as any)
-const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
-  id: '/reports/',
-  path: '/reports/',
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
-const AppReportsIdRoute = AppReportsIdRouteImport.update({
-  id: '/reports/$id',
-  path: '/reports/$id',
+const AppPlannerRoute = AppPlannerRouteImport.update({
+  id: '/planner',
+  path: '/planner',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMoneyRoute = AppMoneyRouteImport.update({
+  id: '/money',
+  path: '/money',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInsightsRoute = AppInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFeedbackRoute = AppFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEventsRoute = AppEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
 const AppToolsIndexRoute = AppToolsIndexRouteImport.update({
@@ -156,42 +131,61 @@ const AppToolsIndexRoute = AppToolsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppToolsRoute,
 } as any)
-const AppToolsFinancialCalculatorRoute =
-  AppToolsFinancialCalculatorRouteImport.update({
-    id: '/financial-calculator',
-    path: '/financial-calculator',
-    getParentRoute: () => AppToolsRoute,
-  } as any)
-const AppWealthAddAssetRoute = AppWealthAddAssetRouteImport.update({
-  id: '/wealth_/add-asset',
-  path: '/wealth/add-asset',
+const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
   getParentRoute: () => AppRoute,
-} as any)
-const AppWealthAddInvestmentRoute = AppWealthAddInvestmentRouteImport.update({
-  id: '/wealth_/add-investment',
-  path: '/wealth/add-investment',
-  getParentRoute: () => AppRoute,
-} as any)
-const ApiPushSubscribeRoute = ApiPushSubscribeRouteImport.update({
-  id: '/api/push/subscribe',
-  path: '/api/push/subscribe',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPushUnsubscribeRoute = ApiPushUnsubscribeRouteImport.update({
   id: '/api/push/unsubscribe',
   path: '/api/push/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksEventsSyncRoute =
-  ApiPublicHooksEventsSyncRouteImport.update({
-    id: '/api/public/hooks/events-sync',
-    path: '/api/public/hooks/events-sync',
-    getParentRoute: () => rootRouteImport,
+const ApiPushSubscribeRoute = ApiPushSubscribeRouteImport.update({
+  id: '/api/push/subscribe',
+  path: '/api/push/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppWealthAddInvestmentRoute = AppWealthAddInvestmentRouteImport.update({
+  id: '/wealth_/add-investment',
+  path: '/wealth/add-investment',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWealthAddAssetRoute = AppWealthAddAssetRouteImport.update({
+  id: '/wealth_/add-asset',
+  path: '/wealth/add-asset',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppToolsFinancialCalculatorRoute =
+  AppToolsFinancialCalculatorRouteImport.update({
+    id: '/financial-calculator',
+    path: '/financial-calculator',
+    getParentRoute: () => AppToolsRoute,
   } as any)
-const ApiPublicHooksNotificationCronRoute =
-  ApiPublicHooksNotificationCronRouteImport.update({
-    id: '/api/public/hooks/notification-cron',
-    path: '/api/public/hooks/notification-cron',
+const AppReportsIdRoute = AppReportsIdRouteImport.update({
+  id: '/reports/$id',
+  path: '/reports/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMoneyTransactionsRoute = AppMoneyTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AppMoneyRoute,
+} as any)
+const AppHoldingsSlugRoute = AppHoldingsSlugRouteImport.update({
+  id: '/holdings/$slug',
+  path: '/holdings/$slug',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardNetworthRoute = AppDashboardNetworthRouteImport.update({
+  id: '/networth',
+  path: '/networth',
+  getParentRoute: () => AppDashboardRoute,
+} as any)
+const ApiPublicHooksSnapshotCronRoute =
+  ApiPublicHooksSnapshotCronRouteImport.update({
+    id: '/api/public/hooks/snapshot-cron',
+    path: '/api/public/hooks/snapshot-cron',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksReleaseNotesRoute =
@@ -200,10 +194,16 @@ const ApiPublicHooksReleaseNotesRoute =
     path: '/api/public/hooks/release-notes',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksSnapshotCronRoute =
-  ApiPublicHooksSnapshotCronRouteImport.update({
-    id: '/api/public/hooks/snapshot-cron',
-    path: '/api/public/hooks/snapshot-cron',
+const ApiPublicHooksNotificationCronRoute =
+  ApiPublicHooksNotificationCronRouteImport.update({
+    id: '/api/public/hooks/notification-cron',
+    path: '/api/public/hooks/notification-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksEventsSyncRoute =
+  ApiPublicHooksEventsSyncRouteImport.update({
+    id: '/api/public/hooks/events-sync',
+    path: '/api/public/hooks/events-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -425,25 +425,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/brand': {
@@ -453,81 +439,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BrandRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/events': {
-      id: '/_app/events'
-      path: '/events'
-      fullPath: '/events'
-      preLoaderRoute: typeof AppEventsRouteImport
-      parentRoute: typeof AppRoute
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/feedback': {
-      id: '/_app/feedback'
-      path: '/feedback'
-      fullPath: '/feedback'
-      preLoaderRoute: typeof AppFeedbackRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/insights': {
-      id: '/_app/insights'
-      path: '/insights'
-      fullPath: '/insights'
-      preLoaderRoute: typeof AppInsightsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/money': {
-      id: '/_app/money'
-      path: '/money'
-      fullPath: '/money'
-      preLoaderRoute: typeof AppMoneyRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notifications': {
-      id: '/_app/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AppNotificationsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/planner': {
-      id: '/_app/planner'
-      path: '/planner'
-      fullPath: '/planner'
-      preLoaderRoute: typeof AppPlannerRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/profile': {
-      id: '/_app/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/tools': {
-      id: '/_app/tools'
-      path: '/tools'
-      fullPath: '/tools'
-      preLoaderRoute: typeof AppToolsRouteImport
+    '/_app/whats-new': {
+      id: '/_app/whats-new'
+      path: '/whats-new'
+      fullPath: '/whats-new'
+      preLoaderRoute: typeof AppWhatsNewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/wealth': {
@@ -537,46 +474,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWealthRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/whats-new': {
-      id: '/_app/whats-new'
-      path: '/whats-new'
-      fullPath: '/whats-new'
-      preLoaderRoute: typeof AppWhatsNewRouteImport
+    '/_app/tools': {
+      id: '/_app/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof AppToolsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/dashboard/networth': {
-      id: '/_app/dashboard/networth'
-      path: '/networth'
-      fullPath: '/dashboard/networth'
-      preLoaderRoute: typeof AppDashboardNetworthRouteImport
-      parentRoute: typeof AppDashboardRoute
-    }
-    '/_app/holdings/$slug': {
-      id: '/_app/holdings/$slug'
-      path: '/holdings/$slug'
-      fullPath: '/holdings/$slug'
-      preLoaderRoute: typeof AppHoldingsSlugRouteImport
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/money/transactions': {
-      id: '/_app/money/transactions'
-      path: '/transactions'
-      fullPath: '/money/transactions'
-      preLoaderRoute: typeof AppMoneyTransactionsRouteImport
-      parentRoute: typeof AppMoneyRoute
-    }
-    '/_app/reports/': {
-      id: '/_app/reports/'
-      path: '/reports'
-      fullPath: '/reports/'
-      preLoaderRoute: typeof AppReportsIndexRouteImport
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/reports/$id': {
-      id: '/_app/reports/$id'
-      path: '/reports/$id'
-      fullPath: '/reports/$id'
-      preLoaderRoute: typeof AppReportsIdRouteImport
+    '/_app/planner': {
+      id: '/_app/planner'
+      path: '/planner'
+      fullPath: '/planner'
+      preLoaderRoute: typeof AppPlannerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/money': {
+      id: '/_app/money'
+      path: '/money'
+      fullPath: '/money'
+      preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/insights': {
+      id: '/_app/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AppInsightsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/feedback': {
+      id: '/_app/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AppFeedbackRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/events': {
+      id: '/_app/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof AppEventsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/tools/': {
@@ -586,33 +551,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppToolsIndexRouteImport
       parentRoute: typeof AppToolsRoute
     }
-    '/_app/tools/financial-calculator': {
-      id: '/_app/tools/financial-calculator'
-      path: '/financial-calculator'
-      fullPath: '/tools/financial-calculator'
-      preLoaderRoute: typeof AppToolsFinancialCalculatorRouteImport
-      parentRoute: typeof AppToolsRoute
-    }
-    '/_app/wealth_/add-asset': {
-      id: '/_app/wealth_/add-asset'
-      path: '/wealth/add-asset'
-      fullPath: '/wealth/add-asset'
-      preLoaderRoute: typeof AppWealthAddAssetRouteImport
+    '/_app/reports/': {
+      id: '/_app/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AppReportsIndexRouteImport
       parentRoute: typeof AppRoute
-    }
-    '/_app/wealth_/add-investment': {
-      id: '/_app/wealth_/add-investment'
-      path: '/wealth/add-investment'
-      fullPath: '/wealth/add-investment'
-      preLoaderRoute: typeof AppWealthAddInvestmentRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/api/push/subscribe': {
-      id: '/api/push/subscribe'
-      path: '/api/push/subscribe'
-      fullPath: '/api/push/subscribe'
-      preLoaderRoute: typeof ApiPushSubscribeRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/push/unsubscribe': {
       id: '/api/push/unsubscribe'
@@ -621,18 +565,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPushUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/events-sync': {
-      id: '/api/public/hooks/events-sync'
-      path: '/api/public/hooks/events-sync'
-      fullPath: '/api/public/hooks/events-sync'
-      preLoaderRoute: typeof ApiPublicHooksEventsSyncRouteImport
+    '/api/push/subscribe': {
+      id: '/api/push/subscribe'
+      path: '/api/push/subscribe'
+      fullPath: '/api/push/subscribe'
+      preLoaderRoute: typeof ApiPushSubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/notification-cron': {
-      id: '/api/public/hooks/notification-cron'
-      path: '/api/public/hooks/notification-cron'
-      fullPath: '/api/public/hooks/notification-cron'
-      preLoaderRoute: typeof ApiPublicHooksNotificationCronRouteImport
+    '/_app/wealth_/add-investment': {
+      id: '/_app/wealth_/add-investment'
+      path: '/wealth/add-investment'
+      fullPath: '/wealth/add-investment'
+      preLoaderRoute: typeof AppWealthAddInvestmentRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/wealth_/add-asset': {
+      id: '/_app/wealth_/add-asset'
+      path: '/wealth/add-asset'
+      fullPath: '/wealth/add-asset'
+      preLoaderRoute: typeof AppWealthAddAssetRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tools/financial-calculator': {
+      id: '/_app/tools/financial-calculator'
+      path: '/financial-calculator'
+      fullPath: '/tools/financial-calculator'
+      preLoaderRoute: typeof AppToolsFinancialCalculatorRouteImport
+      parentRoute: typeof AppToolsRoute
+    }
+    '/_app/reports/$id': {
+      id: '/_app/reports/$id'
+      path: '/reports/$id'
+      fullPath: '/reports/$id'
+      preLoaderRoute: typeof AppReportsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/money/transactions': {
+      id: '/_app/money/transactions'
+      path: '/transactions'
+      fullPath: '/money/transactions'
+      preLoaderRoute: typeof AppMoneyTransactionsRouteImport
+      parentRoute: typeof AppMoneyRoute
+    }
+    '/_app/holdings/$slug': {
+      id: '/_app/holdings/$slug'
+      path: '/holdings/$slug'
+      fullPath: '/holdings/$slug'
+      preLoaderRoute: typeof AppHoldingsSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard/networth': {
+      id: '/_app/dashboard/networth'
+      path: '/networth'
+      fullPath: '/dashboard/networth'
+      preLoaderRoute: typeof AppDashboardNetworthRouteImport
+      parentRoute: typeof AppDashboardRoute
+    }
+    '/api/public/hooks/snapshot-cron': {
+      id: '/api/public/hooks/snapshot-cron'
+      path: '/api/public/hooks/snapshot-cron'
+      fullPath: '/api/public/hooks/snapshot-cron'
+      preLoaderRoute: typeof ApiPublicHooksSnapshotCronRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/release-notes': {
@@ -642,11 +635,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksReleaseNotesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/snapshot-cron': {
-      id: '/api/public/hooks/snapshot-cron'
-      path: '/api/public/hooks/snapshot-cron'
-      fullPath: '/api/public/hooks/snapshot-cron'
-      preLoaderRoute: typeof ApiPublicHooksSnapshotCronRouteImport
+    '/api/public/hooks/notification-cron': {
+      id: '/api/public/hooks/notification-cron'
+      path: '/api/public/hooks/notification-cron'
+      fullPath: '/api/public/hooks/notification-cron'
+      preLoaderRoute: typeof ApiPublicHooksNotificationCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/events-sync': {
+      id: '/api/public/hooks/events-sync'
+      path: '/api/public/hooks/events-sync'
+      fullPath: '/api/public/hooks/events-sync'
+      preLoaderRoute: typeof ApiPublicHooksEventsSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
