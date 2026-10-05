@@ -274,8 +274,10 @@ function detectGeography(ticker: string, isin?: string): string | null {
   const t = ticker.trim().toUpperCase();
   if (!t) return null;
   if (t.startsWith("$")) return "United States";
-  if (/^[A-Z0-9&]{2,20}(-EQ|-BE|-N1|-N2|-SM)?$/.test(t)) return "India";
+  // US first — pure alpha 1-5 chars (NYSE/NASDAQ tickers) or $ prefix
   if (/^[A-Z]{1,5}$/.test(t)) return "United States";
+  // Indian NSE/BSE — alphanumeric, may have suffix, often includes numbers or & (e.g. M&M)
+  if (/^[A-Z0-9&]{2,20}(-EQ|-BE|-N1|-N2|-SM)?$/.test(t)) return "India";
   return null;
 }
 
