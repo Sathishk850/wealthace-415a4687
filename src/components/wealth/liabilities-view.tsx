@@ -52,6 +52,7 @@ import {
   type LiabilityInput,
   dueSoon,
   inr,
+  inrCompact,
   useBulkInsertLiabilities,
   useDeleteLiability,
   useLiabilities,
@@ -213,6 +214,19 @@ export function LiabilitiesView({
     };
   }, [sorted]);
 
+  const loanSummary = useMemo(() => {
+    const active = rows.filter((liability) => (Number(liability.outstanding) || 0) > 0);
+    return {
+      count: active.length,
+      outstanding: active.reduce((sum, liability) => sum + (Number(liability.outstanding) || 0), 0),
+      emi: active.reduce((sum, liability) => sum + (Number(liability.emi) || 0), 0),
+      highestRate: active.reduce(
+        (highest, liability) => Math.max(highest, Number(liability.interest_rate) || 0),
+        0,
+      ),
+    };
+  }, [rows]);
+
   /* Global bulk selection */
   const sel = useBulkSelection(
     sorted,
@@ -299,6 +313,18 @@ export function LiabilitiesView({
 
   return (
     <div className="space-y-4">
+      {rows.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <SummaryTile label="Active Loans" value={String(loanSummary.count)} />
+          <SummaryTile label="Total Outstanding" value={inrCompact(loanSummary.outstanding)} tone="rose" />
+          <SummaryTile label="Monthly EMI" value={loanSummary.emi > 0 ? inrCompact(loanSummary.emi) : "—"} tone="orange" />
+          <SummaryTile
+            label="Highest Rate"
+            value={loanSummary.highestRate > 0 ? `${loanSummary.highestRate}%` : "—"}
+            tone={loanSummary.highestRate > 18 ? "rose" : "muted"}
+          />
+        </div>
+      )}
       {/* ============ CATEGORY TABS ============ */}
       <div className="-mx-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <TextTabs
@@ -627,6 +653,28 @@ export function LiabilitiesView({
         }}
       />
 
+    </div>
+  );
+}
+
+function SummaryTile({
+  label,
+  value,
+  tone = "muted",
+}: {
+  label: string;
+  value: string;
+  tone?: "rose" | "orange" | "muted";
+}) {
+  const tones = {
+    rose: "text-destructive",
+    orange: "text-warning",
+    muted: "text-foreground",
+  };
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`mt-0.5 text-lg font-bold ${tones[tone]}`}>{value}</p>
     </div>
   );
 }
