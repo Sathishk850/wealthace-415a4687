@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { TransferDialog } from "@/components/money/TransferDialog";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, LayoutList } from "lucide-react";
+import { BulkAddSheet } from "@/components/money/BulkAddSheet";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -237,6 +238,7 @@ function Money() {
   const [tab, setTab] = useTabParam<Tab>("Overview", tabs);
   const [importOpen, setImportOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const moneyQc = useQueryClient();
   const locationHash = useRouterState({ select: (st) => st.location.hash });
   useEffect(() => {
@@ -510,6 +512,12 @@ function Money() {
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
             >
               <ArrowLeftRight className="h-3.5 w-3.5" /> Transfer
+            </button>
+            <button
+              onClick={() => setBulkOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface"
+            >
+              <LayoutList className="h-3.5 w-3.5" /> Bulk Add
             </button>
             <button
               onClick={handleAdd}
@@ -849,6 +857,12 @@ function Money() {
         onOpenChange={setTransferOpen}
         accounts={accounts.filter((a) => a.is_active)}
         onSuccess={() => moneyQc.invalidateQueries({ queryKey: ["money", "transactions"] })}
+      />
+      <BulkAddSheet
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        categories={categories}
+        accounts={accounts.filter((a) => a.is_active)}
       />
     </>
   );

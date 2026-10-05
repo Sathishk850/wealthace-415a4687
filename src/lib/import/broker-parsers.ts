@@ -225,6 +225,40 @@ function parseTickertape(raw: Record<string, unknown>[]): BrokerRow[] {
   }).filter(valid);
 }
 
+function parseCdslCas(raw: Record<string, unknown>[]): BrokerRow[] {
+  return raw.map((r): BrokerRow | null => {
+    const name = get(r, "security description", "name", "security name", "company name", "instrument", "scrip name", "description");
+    if (!name) return null;
+    const qty = num(r, "balance", "quantity", "qty", "units", "free balance", "closing balance");
+    const price = num(r, "closing price", "market price", "current price", "ltp", "nav", "rate");
+    const curVal = num(r, "market value", "current value", "value");
+    const faceVal = num(r, "face value");
+    const iv = isinVal(r, "isin") ?? null;
+    const typeCol = get(r, "type", "instrument type", "security type", "asset type").toLowerCase();
+    const isEtf = /etf|exchange traded/.test(typeCol) || /bees$/i.test(name);
+    const isBond = /bond|ncd|debenture|gsec|g-sec|gilt|t-bill|treasury|sgb|sovereign/.test(typeCol) || /bond|ncd|debenture/i.test(name);
+    const isMf = /mutual fund|mf/.test(typeCol) || !!iv?.startsWith("INF");
+    const cat = isEtf ? "ETFs" : isBond ? "Bonds" : isMf ? mfCat(name) : "Stocks";
+    const avgPrice = num(r, "average price", "avg price", "buy price", "purchase price", "rate");
+    return {
+      _broker: "CDSL CAS", _isin: iv,
+      name: name.trim(),
+      symbol: get(r, "symbol", "scrip code", "trading symbol") || null,
+      category: cat,
+      quantity: qty || 1,
+      avg_price: avgPrice,
+      current_price: price || (qty > 0 && curVal > 0 ? curVal / qty : faceVal || 0),
+      invested_value: avgPrice > 0 && qty > 0 ? avgPrice * qty : null,
+      current_value: curVal || null,
+      purchase_date: TODAY,
+      identifier: iv ?? undefined,
+      identifier_type: iv ? "ISIN" : undefined,
+      currency: "INR",
+      notes: "Geography: India",
+    };
+  }).filter(valid);
+}
+
 function parseAionion(raw: Record<string, unknown>[]): BrokerRow[] {
   return raw.map((r): BrokerRow | null => {
     const name = get(r, "instrument", "symbol", "stock name", "company name", "scrip name", "scheme name");
@@ -388,6 +422,15 @@ const SIGNATURES: Array<{
   { broker: "Zerodha Kite", mustHave: [["instrument", "tradingsymbol"], ["avg. cost", "avg cost", "average price"], ["product"]], parse: parseZerodhaKite },
   { broker: "Vested", mustHave: [["symbol"], ["average price", "avg price", "avg. price"], ["market value"], ["p&l", "p&l %"]], parse: parseVested },
   { broker: "Tickertape", mustHave: [["ticker", "symbol"], ["cost basis", "average cost"], ["gain/loss", "gain loss", "gain / loss"]], parse: parseTickertape },
+  {
+    broker: "CDSL CAS",
+    mustHave: [
+      ["isin"],
+      ["balance", "quantity", "qty", "free balance", "closing balance"],
+      ["security description", "security name", "description"],
+    ],
+    parse: parseCdslCas,
+  },
   { broker: "Aionion", mustHave: [["instrument", "stock name", "symbol"], ["avg cost", "average price", "nav/price"], ["isin"]], parse: parseAionion },
   { broker: "Angel One", mustHave: [["trading symbol", "symbol"], ["buy avg", "avg price"], ["p&l", "p&l %"]], parse: parseAngelOne },
   { broker: "Upstox", mustHave: [["instrument name", "stock / fund name", "stock name"], ["average price", "avg cost price"], ["last price", "current market price", "ltp"]], parse: parseUpstox },
