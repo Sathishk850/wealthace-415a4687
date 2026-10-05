@@ -12,7 +12,6 @@ import { InsuranceView as LiveInsuranceView } from "@/components/wealth/insuranc
 import { AccountsView as LiveAccountsView } from "@/components/wealth/accounts-view";
 import { WealthOverview } from "@/components/wealth/wealth-overview";
 import { AllocationView } from "@/components/wealth/AllocationView";
-import { SnapshotsView } from "@/components/wealth/SnapshotsView";
 import { FxRatesWidget } from "@/components/fx/FxRatesWidget";
 
 
@@ -41,12 +40,11 @@ export const Route = createFileRoute("/_app/wealth")({
   component: Wealth,
 });
 
-type TabValue = "overview" | "assets" | "snapshots" | "allocation" | "liabilities" | "insurance" | "accounts" | "sip-tracker";
+type TabValue = "overview" | "assets" | "allocation" | "liabilities" | "insurance" | "accounts" | "sip-tracker";
 
 const TABS: { value: TabValue; label: string }[] = [
   { value: "overview", label: "Overview" },
   { value: "assets", label: "Assets" },
-  { value: "snapshots", label: "Snapshots" },
   { value: "allocation", label: "Allocation" },
   { value: "liabilities", label: "Liabilities" },
   { value: "insurance", label: "Insurance" },
@@ -89,9 +87,7 @@ function Wealth() {
       ) : tab === "assets" ? (
 
         <AssetsView registerAdd={(fn) => { addRef.current = fn; }} />
-      ) : tab === "snapshots" ? (
-        <SnapshotsView />
-      ) : tab === "allocation" ? (
+            ) : tab === "allocation" ? (
         <AllocationView />
       ) : tab === "liabilities" ? (
         <LiveLiabilitiesView registerAdd={(fn) => { addRef.current = fn; }} />
