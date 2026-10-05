@@ -1080,19 +1080,23 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
   const active = sips.filter((s) => s.sip_active);
   const paused = sips.filter((s) => !s.sip_active);
   const monthly = active.reduce((a, b) => a + monthlySipAmount(b), 0);
+  const totalInvested = active.reduce(
+    (sum, sip) => sum + (Number(sip.sip_amount) || 0) * sipPeriodsElapsed(sip.sip_start_date, sip.sip_frequency),
+    0,
+  );
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-card px-5 py-4">
         {[
-          { k: "Monthly SIP", v: inr(monthly) },
           { k: "Active SIPs", v: String(active.length) },
+          { k: "Monthly Commitment", v: inrCompact(monthly) },
+          { k: "Total Invested", v: inrCompact(totalInvested) },
           { k: "Paused", v: String(paused.length) },
-          { k: "Yearly Outflow", v: inr(monthly * 12) },
         ].map((m) => (
-          <div key={m.k} className="rounded-2xl border border-border bg-card p-4">
-            <div className="text-xs text-muted-foreground">{m.k}</div>
-            <div className="mt-1 font-display text-xl font-bold text-foreground">{m.v}</div>
+          <div key={m.k} className="min-w-32 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{m.k}</div>
+            <div className="mt-0.5 text-lg font-bold text-foreground">{m.v}</div>
           </div>
         ))}
       </div>
@@ -1105,7 +1109,7 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
                 <th className="py-3 pl-2 font-medium">Scheme</th>
                 <th className="py-3 font-medium">Frequency</th>
                 <th className="py-3 text-right font-medium">Amount</th>
-                <th className="py-3 font-medium">Next Date</th>
+                <th className="py-3 text-right font-medium">XIRR</th>
                 <th className="py-3 font-medium">Status</th>
                 <th className="py-3 pr-2 font-medium">Actions</th>
               </tr>
@@ -1115,6 +1119,9 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
                 <tr><td colSpan={6} className="py-10 text-center text-sm text-muted-foreground">No SIPs configured. Enable SIP on an investment to track it here.</td></tr>
               ) : sips.map((s, i) => {
                 const color = PIE[i % PIE.length];
+                const nextDate = s.sip_start_date
+                  ? nextSipDate(s.sip_start_date, s.sip_frequency ?? "monthly")
+                  : null;
                 return (
                   <tr key={s.id} className="border-b border-border/50 last:border-0 hover:bg-surface-2/40">
                     <td className="py-3 pl-2">
@@ -1123,9 +1130,16 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
                         <span className="font-medium text-foreground">{s.name}</span>
                       </div>
                     </td>
-                    <td className="py-3 text-muted-foreground capitalize">{s.sip_frequency ?? "monthly"}</td>
+                    <td className="py-3 text-muted-foreground">
+                      <div className="capitalize">{s.sip_frequency ?? "monthly"}</div>
+                      {nextDate && (
+                        <span className="text-xs text-muted-foreground">
+                          Next: {nextDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3 text-right font-medium text-foreground">{inr(Number(s.sip_amount) || 0)}</td>
-                    <td className="py-3 text-muted-foreground">{s.sip_next_date ? formatDate(s.sip_next_date) : "—"}</td>
+                    <td className="py-3 text-right font-medium text-foreground">{s.xirrPct ? `${s.xirrPct.toFixed(2)}%` : "—"}</td>
                     <td className="py-3">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${s.sip_active ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"}`}>
                         {s.sip_active ? "Active" : "Paused"}
@@ -1150,11 +1164,44 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
 function monthlySipAmount(s: HoldRow) {
   const amt = Number(s.sip_amount) || 0;
   switch (s.sip_frequency) {
-    case "weekly": return amt * 4.345;
-    case "quarterly": return amt / 3;
-    case "yearly": return amt / 12;
+    case "daily": return amt * 30.44;
+    case "weekly": return amt * 4.33;
+    case "biweekly": return amt * 2.17;
+    case "every_2_months": return amt * 0.5;
+    case "quarterly": return amt * 0.333;
+    case "half-yearly": return amt * 0.167;
+    case "yearly": return amt * 0.083;
     default: return amt;
   }
+}
+
+const SIP_FREQUENCY_DAYS: Record<string, number> = {
+  daily: 1,
+  weekly: 7,
+  biweekly: 14,
+  monthly: 30.44,
+  every_2_months: 60.88,
+  quarterly: 91.31,
+  "half-yearly": 182.63,
+  yearly: 365.25,
+};
+
+function sipPeriodsElapsed(startDate: string | null, frequency: string | null): number {
+  if (!startDate) return 0;
+  const start = new Date(startDate);
+  const now = new Date();
+  if (Number.isNaN(start.getTime()) || start > now) return 0;
+  const days = (now.getTime() - start.getTime()) / 86_400_000;
+  return Math.floor(days / (SIP_FREQUENCY_DAYS[frequency ?? "monthly"] ?? 30.44));
+}
+
+function nextSipDate(startDate: string, frequency: string): Date {
+  const start = new Date(startDate);
+  const now = new Date();
+  if (Number.isNaN(start.getTime()) || start > now) return start;
+  const period = SIP_FREQUENCY_DAYS[frequency] ?? 30.44;
+  const periods = Math.floor((now.getTime() - start.getTime()) / 86_400_000 / period);
+  return new Date(start.getTime() + (periods + 1) * period * 86_400_000);
 }
 
 /* =================== PERFORMANCE =================== */
