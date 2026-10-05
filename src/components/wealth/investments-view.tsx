@@ -1109,7 +1109,6 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
                 <th className="py-3 pl-2 font-medium">Scheme</th>
                 <th className="py-3 font-medium">Frequency</th>
                 <th className="py-3 text-right font-medium">Amount</th>
-                <th className="py-3 font-medium">Next Date</th>
                 <th className="py-3 text-right font-medium">XIRR</th>
                 <th className="py-3 font-medium">Status</th>
                 <th className="py-3 pr-2 font-medium">Actions</th>
@@ -1117,7 +1116,7 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
             </thead>
             <tbody>
               {sips.length === 0 ? (
-                <tr><td colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No SIPs configured. Enable SIP on an investment to track it here.</td></tr>
+                <tr><td colSpan={6} className="py-10 text-center text-sm text-muted-foreground">No SIPs configured. Enable SIP on an investment to track it here.</td></tr>
               ) : sips.map((s, i) => {
                 const color = PIE[i % PIE.length];
                 const nextDate = s.sip_start_date
@@ -1140,7 +1139,6 @@ function SipTracker({ rows, onEdit }: { rows: HoldRow[]; onEdit: (r: Investment)
                       )}
                     </td>
                     <td className="py-3 text-right font-medium text-foreground">{inr(Number(s.sip_amount) || 0)}</td>
-                    <td className="py-3 text-muted-foreground">{nextDate ? formatDate(nextDate.toISOString()) : "—"}</td>
                     <td className="py-3 text-right font-medium text-foreground">{s.xirrPct ? `${s.xirrPct.toFixed(2)}%` : "—"}</td>
                     <td className="py-3">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${s.sip_active ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"}`}>
