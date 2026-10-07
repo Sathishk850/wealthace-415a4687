@@ -411,6 +411,22 @@ export function WealthOverview({
         </div>
       </div>
 
+      {(() => {
+        const netWorth = totalAssets - totalLiabilities;
+        return (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <QuickTile label="Net Worth" value={inrCompact(netWorth)} sub={netWorth >= 0 ? "↑ Positive" : "↓ Negative"} tone={netWorth >= 0 ? "teal" : "rose"} />
+            <QuickTile label="Invested" value={inrCompact(investmentsInvested)} sub="Total invested" tone="muted" />
+            <QuickTile label="Current Value" value={inrCompact(investmentsCurrent)} sub="Live portfolio value" tone="muted" />
+            <QuickTile
+              label="Unrealised P&L"
+              value={inrCompact(Math.abs(overallPnl))}
+              sub={`${overallPct >= 0 ? "+" : "-"}${Math.abs(overallPct).toFixed(1)}%`}
+              tone={overallPnl >= 0 ? "emerald" : "rose"}
+            />
+          </div>
+        );
+      })()}
 
 
       {/* ROW 1 — KPI CARDS */}
@@ -874,6 +890,16 @@ function InsightCard({
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+function QuickTile({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: "teal" | "emerald" | "rose" | "muted" }) {
+  const colors = { teal: "text-primary", emerald: "text-success", rose: "text-destructive", muted: "text-foreground" };
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`mt-0.5 font-mono text-lg font-bold tabular-nums ${colors[tone]}`}>{value}</p>
+      <p className="text-[10px] text-muted-foreground">{sub}</p>
     </div>
   );
 }
