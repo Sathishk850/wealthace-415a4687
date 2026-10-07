@@ -491,7 +491,10 @@ function Dashboard() {
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />
                         <span className="truncate">{a.name}</span>
                       </span>
-                      <span className="shrink-0 text-xs font-semibold text-foreground">{a.pct.toFixed(1)}%</span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <ClassSparkline snapshots={snaps} pct={a.pct} />
+                        <span className="text-xs font-semibold text-foreground">{a.pct.toFixed(1)}%</span>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -688,6 +691,31 @@ function DeltaPill({ amount, pct, label, hasData = true }: { amount: number; pct
       <Icon className="h-3.5 w-3.5" /> ₹{fmt(Math.abs(safeAmount))} ({safePct >= 0 ? "+" : ""}{safePct.toFixed(2)}%)
       <span className="text-muted-foreground font-normal"> {label}</span>
     </span>
+  );
+}
+
+function ClassSparkline({ snapshots, pct }: { snapshots: { snapshot_date: string; net_worth: number }[]; pct: number }) {
+  const data = useMemo(
+    () => snapshots.slice(-6).map((s) => ({ v: s.net_worth * (pct / 100) })),
+    [snapshots, pct],
+  );
+  if (data.length < 2) {
+    return (
+      <svg width="80" height="32" aria-hidden>
+        <line x1="0" y1="16" x2="80" y2="16" stroke="var(--muted-foreground, #64748b)" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.5" />
+      </svg>
+    );
+  }
+  const up = data[data.length - 1].v >= data[0].v;
+  const color = up ? "var(--color-success, #22c55e)" : "var(--color-danger, #ef4444)";
+  return (
+    <div className="h-8 w-20" aria-hidden>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
+          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} fill={color} fillOpacity={0.15} isAnimationActive={false} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 

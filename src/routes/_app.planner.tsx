@@ -31,11 +31,14 @@ import {
 import {
   ResponsiveContainer,
   AreaChart,
+  Bar,
+  BarChart,
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
+  Cell,
   LineChart,
   Line,
   Legend,
@@ -592,6 +595,7 @@ function GoalCard({
   onDelete: () => void;
   deleting: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const Icon = ICON_BY_TYPE[goal.goal_type];
   const pct = goalProgressPct(goal);
   const tone = goalTone(goal);
@@ -670,6 +674,60 @@ function GoalCard({
       <div className="mt-2 flex items-center justify-between text-xs">
         <span className="text-muted-foreground">{pct}% complete</span>
         <span className="font-medium text-mint">{inr(Math.max(0, goal.target_amount - goal.saved_amount))} left</span>
+      </div>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-border/60 py-1 text-[11px] font-medium text-muted-foreground transition hover:text-mint"
+      >
+        {expanded ? "Hide details" : "View details"}
+        <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
+      </button>
+      {expanded && <GoalDetail goal={goal} pct={pct} />}
+    </div>
+  );
+}
+
+function GoalDetail({ goal, pct }: { goal: Goal; pct: number }) {
+  const milestones = [25, 50, 75, 100].map((p) => ({
+    pct: p,
+    label: p === 100 ? "🎉 Goal Reached!" : `${p}%`,
+    achieved: pct >= p,
+  }));
+  // No per-goal contribution history table exists, so show saved vs target as a single comparison bar.
+  const barData = [
+    { name: "Saved", value: goal.saved_amount },
+    { name: "Target", value: goal.target_amount },
+  ];
+  return (
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <div className="mb-3 flex flex-wrap gap-2">
+        {milestones.map((m) => (
+          <span
+            key={m.pct}
+            className={cn(
+              "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+              m.achieved
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border bg-muted/30 text-muted-foreground opacity-50",
+            )}
+          >
+            {m.label}
+          </span>
+        ))}
+      </div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Progress vs target</div>
+      <div className="mt-1 h-[120px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={barData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={(v: number) => inrCompact(v)} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={56} />
+            <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+              <Cell fill="var(--color-mint, #2dd4a0)" />
+              <Cell fill="var(--muted-foreground, #64748b)" opacity={0.35} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
