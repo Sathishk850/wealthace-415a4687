@@ -20,6 +20,6 @@
 - [x] Extend charts and planner palette
 - [ ] Verify desktop/mobile, persistence, typecheck, and build
 
-- [ ] Goal milestones + contribution trend in goal detail view
-- [ ] Dashboard per-asset-class sparklines from existing snapshots
-- [ ] Settings Notifications section (prefs + push toggle)
+- [x] Goal milestones + contribution trend in goal detail view
+- [x] Dashboard per-asset-class sparklines from existing snapshots
+- [x] Settings Notifications section (prefs + push toggle)
