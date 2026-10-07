@@ -106,7 +106,7 @@ import {
   type GoalType,
   type PlannerSettings,
 } from "@/lib/planner-api";
-import { useInvestments } from "@/lib/wealth-api";
+import { useInvestments, inrCompact } from "@/lib/wealth-api";
 import RetirementPlanTab from "@/components/planner/retirement-plan-tab";
 import FIREPlanTab from "@/components/planner/fire-plan-tab";
 
