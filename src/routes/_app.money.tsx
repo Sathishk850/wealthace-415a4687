@@ -294,6 +294,21 @@ function Money() {
   const txThisMonth = insightTxns.filter((t) => inMonth(t.occurred_on, activeMonthKey));
   const txPrevMonth = insightTxns.filter((t) => inMonth(t.occurred_on, prevMonthKey));
 
+  const spendByDay = useMemo(() => {
+    const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const totals = new Array(7).fill(0) as number[];
+    let count = 0;
+    for (const tx of txThisMonth) {
+      if (tx.kind !== "expense") continue;
+      count++;
+      totals[new Date(`${tx.occurred_on.slice(0, 10)}T00:00:00`).getDay()] += Number(tx.amount) || 0;
+    }
+    const data = labels.map((name, i) => ({ name, total: totals[i] }));
+    const max = Math.max(...totals);
+    const top = data.reduce((a, b) => (a.total >= b.total ? a : b)).name;
+    return { data, count, max, top };
+  }, [txThisMonth]);
+
   const sum = (arr: Transaction[], k?: Kind) =>
     arr.filter((t) => !k || t.kind === k).reduce((s, t) => s + t.amount, 0);
 
@@ -637,6 +652,36 @@ function Money() {
                 </div>
               )}
             </ChartCard>
+
+            {spendByDay.count >= 7 && (
+              <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-full">
+                <h3 className="mb-1 text-sm font-semibold text-foreground">Spending by Day</h3>
+                <p className="mb-4 text-[11px] text-muted-foreground">Based on {spendByDay.count} expense transactions in the selected period</p>
+                <div className="h-[160px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={spendByDay.data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={(v) => inrCompact(Number(v))} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <Bar dataKey="total" radius={[4, 4, 0, 0]} maxBarSize={36}>
+                        {spendByDay.data.map((entry, idx) => (
+                          <Cell key={idx} fill={entry.total === spendByDay.max ? "var(--primary)" : "var(--muted)"} />
+                        ))}
+                      </Bar>
+                      <Tooltip
+                        cursor={{ fill: "transparent" }}
+                        contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 11 }}
+                        formatter={(v) => [inrCompact(Number(v)), "Spent"]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Most spending on <span className="font-semibold text-foreground">{spendByDay.top}</span>
+                </p>
+              </div>
+            )}
+
+
 
             <ChartCard title="Expense Breakdown" className="lg:col-span-2">
               {expenseCats.length === 0 ? (
