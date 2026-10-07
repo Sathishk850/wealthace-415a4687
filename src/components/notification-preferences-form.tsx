@@ -18,6 +18,14 @@ import { REMINDER_KINDS, REMINDER_KIND_LABEL, type ReminderKind } from "@/lib/to
 
 const FUTURE_CHANNELS: Channel[] = ["push", "sms", "whatsapp"];
 
+const ALERT_TYPES = [
+  { key: "high_impact_events", label: "High impact market events", desc: "FOMC, RBI, CPI, NFP decisions" },
+  { key: "portfolio_events", label: "Events affecting portfolio", desc: "Events that may affect your holdings" },
+  { key: "goal_milestones", label: "Goal milestones", desc: "25%, 50%, 75%, 100% reached" },
+  { key: "payment_reminders", label: "Payment reminders", desc: "EMI, SIP, and bill due dates" },
+  { key: "snapshot_reminders", label: "Snapshot reminders", desc: "Weekly/monthly snapshot nudge" },
+] as const;
+
 export function NotificationPreferencesForm() {
   const { data: prefs, isLoading } = usePreferences();
   const update = useUpdatePreferences();
@@ -92,6 +100,35 @@ export function NotificationPreferencesForm() {
       </Card>
 
       <PushSettingsSection />
+
+      <Card className="glass-card border-[var(--border)] p-5">
+        <h3 className="mb-2 text-sm font-semibold text-foreground">Alert Types</h3>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Choose which alerts Wealth Ace sends you. Saved with your notification preferences.
+        </p>
+        <div className="space-y-2">
+          {ALERT_TYPES.map((a) => {
+            const on = (perType as Record<string, unknown>)[`alert:${a.key}`] !== false;
+            return (
+              <label
+                key={a.key}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface/40 px-3 py-2.5"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm">{a.label}</span>
+                  <span className="block text-xs text-muted-foreground">{a.desc}</span>
+                </span>
+                <Switch
+                  checked={on}
+                  onCheckedChange={(v) =>
+                    setPerType((s) => ({ ...s, [`alert:${a.key}`]: v }) as typeof s)
+                  }
+                />
+              </label>
+            );
+          })}
+        </div>
+      </Card>
 
       <Card className="glass-card border-[var(--border)] p-5">
         <h3 className="mb-2 text-sm font-semibold text-foreground">Reminder Types</h3>
