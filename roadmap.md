@@ -19,3 +19,7 @@
 - [x] Add Ledger to Settings and header switcher
 - [x] Extend charts and planner palette
 - [ ] Verify desktop/mobile, persistence, typecheck, and build
+
+- [x] Goal milestones + contribution trend in goal detail view
+- [x] Dashboard per-asset-class sparklines from existing snapshots
+- [x] Settings Notifications section (prefs + push toggle)
