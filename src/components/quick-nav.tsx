@@ -21,7 +21,7 @@ export function navigateToShortcut(
   navigate({ to, ...(hash ? { hash } : {}) } as never);
 }
 
-type Hit = { id: string; title: string; meta: string; to: string; search?: Record<string, string> };
+type Hit = { id: string; title: string; meta: string; to: string; hash?: string };
 type Results = { investments: Hit[]; transactions: Hit[]; goals: Hit[]; liabilities: Hit[]; recurring: Hit[] };
 const EMPTY: Results = { investments: [], transactions: [], goals: [], liabilities: [], recurring: [] };
 
@@ -50,8 +50,8 @@ async function searchData(raw: string): Promise<Results> {
   ]);
   return {
     investments: [
-      ...(inv.data ?? []).map((r) => ({ id: `i-${r.id}`, title: r.name, meta: inrCompact(Number(r.current_value) || 0), to: "/wealth", search: { tab: "assets" } })),
-      ...(assets.data ?? []).map((r) => ({ id: `a-${r.id}`, title: r.name, meta: inrCompact(Number(r.current_value) || 0), to: "/wealth", search: { tab: "assets" } })),
+      ...(inv.data ?? []).map((r) => ({ id: `i-${r.id}`, title: r.name, meta: inrCompact(Number(r.current_value) || 0), to: "/wealth", hash: "assets" })),
+      ...(assets.data ?? []).map((r) => ({ id: `a-${r.id}`, title: r.name, meta: inrCompact(Number(r.current_value) || 0), to: "/wealth", hash: "assets" })),
     ],
     transactions: (tx.data ?? []).map((r) => ({
       id: `t-${r.id}`,
@@ -62,9 +62,9 @@ async function searchData(raw: string): Promise<Results> {
     goals: (goals.data ?? []).map((r) => {
       const t = Number(r.target_amount) || 0;
       const pct = t > 0 ? Math.min(100, ((Number(r.saved_amount) || 0) / t) * 100) : 0;
-      return { id: `g-${r.id}`, title: r.name, meta: `${pct.toFixed(0)}%`, to: "/planner" };
+      return { id: `g-${r.id}`, title: r.name, meta: `${pct.toFixed(0)}%`, to: "/planner", hash: "goals" };
     }),
-    liabilities: (liab.data ?? []).map((r) => ({ id: `l-${r.id}`, title: r.name, meta: inrCompact(Number(r.outstanding) || 0), to: "/wealth", search: { tab: "liabilities" } })),
+    liabilities: (liab.data ?? []).map((r) => ({ id: `l-${r.id}`, title: r.name, meta: inrCompact(Number(r.outstanding) || 0), to: "/wealth", hash: "liabilities" })),
     recurring: (rec.data ?? []).map((r) => ({ id: `r-${r.id}`, title: r.title, meta: r.recurrence, to: "/tools" })),
   };
 }
@@ -160,7 +160,7 @@ export function QuickNav() {
                     value={`${h.id} ${h.title} ${query}`}
                     onSelect={() => {
                       setOpen(false);
-                      navigate({ to: h.to, ...(h.search ? { search: h.search } : {}) } as never);
+                      navigate({ to: h.to, ...(h.hash ? { hash: h.hash } : {}) } as never);
                     }}
                   >
                     <span className="truncate">{h.title}</span>
