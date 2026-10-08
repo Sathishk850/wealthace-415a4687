@@ -958,6 +958,9 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
               rowKey={rowKey}
               isSelected={(k) => sel.isSelected(k)}
               onSelectChange={(k, v) => sel.toggle(k, v)}
+              allSelected={sel.allSelected}
+              someSelected={sel.someSelected}
+              onSelectAll={(v) => sel.toggleAll(v)}
               onView={(h) => {
                 setDetailsTab("fundamental");
                 setDetails(h);
@@ -1076,7 +1079,20 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   return (
                     <Fragment key={g.label}>
                       <tr className="border-b border-border bg-surface-2/40">
-                        <td className="px-3 py-2"></td>
+                        <td className="px-3 py-2">
+                          {(() => {
+                            const keys = g.items.map(rowKey);
+                            const n = keys.filter((k) => sel.isSelected(k)).length;
+                            return (
+                              <SelectCheckbox
+                                label={`Select all in ${g.label}`}
+                                checked={n === keys.length && n > 0}
+                                indeterminate={n > 0 && n < keys.length}
+                                onChange={(v) => keys.forEach((k) => sel.toggle(k, v))}
+                              />
+                            );
+                          })()}
+                        </td>
                         <td className="px-3 py-2">
                           <button
                             onClick={() => deskCollapse.toggle(g.label)}
@@ -1312,12 +1328,6 @@ function firstUsable(...candidates: (string | null | undefined)[]): string | nul
   return null;
 }
 
-/** Fund house / AMC inferred from a scheme name ("HDFC Mid Cap …" → "HDFC"). */
-function fundHouseFromName(name: string): string | null {
-  const first = name.trim().split(/[\s\-—·|]+/)[0];
-  if (!first || first.length < 2) return null;
-  return first.toUpperCase() === first && first.length <= 4 ? first : first;
-}
 
 /** What each tab groups by, shown in the grouped-view header. */
 export const GROUP_FIELD_LABEL: Partial<Record<AssetTab, string>> = {
@@ -1449,7 +1459,13 @@ function MobileHoldingGroups({
   onEdit,
   onDelete,
   tab,
+  allSelected,
+  someSelected,
+  onSelectAll,
 }: {
+  allSelected: boolean;
+  someSelected: boolean;
+  onSelectAll: (v: boolean) => void;
   rows: Holding[];
   rowKey: (h: Holding) => string;
   isSelected: (key: string) => boolean;
@@ -1558,6 +1574,13 @@ function MobileHoldingGroups({
     <div className="divide-y divide-border">
       {/* View toggle + expand/collapse */}
       <div className="flex items-center justify-between gap-2 px-3 py-2">
+        <div className="flex items-center gap-2">
+        <SelectCheckbox
+          label="Select all holdings"
+          checked={allSelected}
+          indeterminate={someSelected && !allSelected}
+          onChange={onSelectAll}
+        />
         <div className="inline-flex rounded-lg border border-border bg-surface-2 p-0.5">
           {(["grouped", "flat"] as const).map((v) => (
             <button
@@ -1571,6 +1594,7 @@ function MobileHoldingGroups({
               {v === "grouped" ? "Grouped" : "List"}
             </button>
           ))}
+        </div>
         </div>
         {view === "grouped" ? (
           <button
@@ -1590,10 +1614,23 @@ function MobileHoldingGroups({
             const open = isOpen(g.label);
             const up = g.pct >= 0;
             return (
-              <div key={g.label}>
+              <div key={g.label} className="flex flex-col">
+                <div className="flex items-center gap-2 pl-3">
+                {(() => {
+                  const keys = g.items.map(rowKey);
+                  const n = keys.filter((k) => isSelected(k)).length;
+                  return (
+                    <SelectCheckbox
+                      label={`Select all in ${g.label}`}
+                      checked={n === keys.length && n > 0}
+                      indeterminate={n > 0 && n < keys.length}
+                      onChange={(v) => keys.forEach((k) => onSelectChange(k, v))}
+                    />
+                  );
+                })()}
                 <button
                   onClick={() => toggle(g.label)}
-                  className="flex w-full items-center gap-2 px-3 py-3 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-2 py-3 pr-3 text-left"
                 >
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
@@ -1612,6 +1649,7 @@ function MobileHoldingGroups({
                     {g.pct.toFixed(1)}%
                   </span>
                 </button>
+                </div>
 
                 {open ? g.items.map((h) => row(h, false)) : null}
               </div>
