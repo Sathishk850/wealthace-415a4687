@@ -70,6 +70,8 @@ type FormState = {
   autoUpdate: boolean;
   instalment: string;
   payFrequency: string;
+  sip: boolean;
+  sipStart: string;
   equityAllocation: number | null;
   // NPS three-way allocation split
   npsEquity: number;
@@ -104,6 +106,8 @@ const EMPTY: FormState = {
   autoUpdate: true,
   instalment: "",
   payFrequency: "Monthly",
+  sip: false,
+  sipStart: "",
   equityAllocation: null,
   npsEquity: 75,
   npsDebt: 20,
@@ -395,16 +399,36 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
     if (dynamicFields ? !(current >= 0) : !(current >= 0) || form.currentValue === "")
       return toast.error("Current value is required");
 
+    const sipOn = !spec.recurring && form.sip;
+    if (sipOn && !(n(form.instalment) > 0)) return toast.error("Enter the SIP amount");
+    const sipFields = sipOn
+      ? {
+          is_sip: true,
+          sip_amount: n(form.instalment),
+          sip_frequency: form.payFrequency.toLowerCase(),
+          sip_start_date: form.sipStart || form.investmentDate || null,
+          sip_active: true,
+        }
+      : spec.recurring && form.instalment
+        ? {
+            is_sip: true,
+            sip_amount: n(form.instalment),
+            sip_frequency: form.payFrequency.toLowerCase(),
+            sip_active: true,
+          }
+        : {};
+
     try {
-      if (spec.module === "investment") {
+      if (spec.module === "investment" || sipOn) {
         const quantity = qty > 0 ? qty : 1;
+        const purchase = dynamicFields ? dynPurchase : secondaryValue;
         await upsertInvestment.mutateAsync({
           name: form.name.trim(),
           symbol: form.symbol,
           category: spec.dbCategory,
           sub_category: form.subClass || spec.dbSubCategory || null,
           quantity,
-          avg_price: secondaryValue > 0 ? secondaryValue / quantity : price || current / quantity,
+          avg_price: purchase > 0 ? purchase / quantity : price || current / quantity,
           current_price: current / quantity,
           purchase_date: form.investmentDate || null,
           maturity_date: form.maturityDate || null,
@@ -414,14 +438,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           identifier_type: form.identifierType,
           exchange: form.exchange,
           currency: form.currency,
-          ...(spec.recurring && form.instalment
-            ? {
-                is_sip: true,
-                sip_amount: n(form.instalment),
-                sip_frequency: form.payFrequency.toLowerCase(),
-                sip_active: true,
-              }
-            : {}),
+          ...sipFields,
         });
       } else {
         await upsertAsset.mutateAsync({
@@ -906,6 +923,49 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
                     ))}
                   </SelectContent>
                 </Select>
+              </Field>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* SIP toggle — any asset type can be tracked as a recurring contribution */}
+      {!spec.recurring && (
+        <Section className="mt-4">
+          <CheckRow
+            checked={form.sip}
+            onChange={(v) => set("sip", v)}
+            label="This is a SIP (recurring investment)"
+            helper="Turn on to track it automatically in the SIP Tracker."
+          />
+          {form.sip && (
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Field label={`SIP Amount (${sym})`}>
+                <AmountInput
+                  value={form.instalment}
+                  onChange={(v) => set("instalment", v)}
+                  placeholder="e.g. 5000"
+                />
+              </Field>
+              <Field label="Frequency">
+                <Select value={form.payFrequency} onValueChange={(v) => set("payFrequency", v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAY_FREQUENCY.map((f) => (
+                      <SelectItem key={f} value={f}>
+                        {f}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="SIP Start Date">
+                <DatePicker
+                  value={form.sipStart}
+                  onChange={(v) => set("sipStart", v || "")}
+                />
               </Field>
             </div>
           )}
