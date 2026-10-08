@@ -726,6 +726,31 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     sel.clear();
   };
 
+  /** Sub-category choices for the active tab (fund type, segment, property type…). */
+  const subCategoryOptions = useMemo(() => {
+    if (tab === "Mutual Funds") return MF_FUND_TYPES;
+    if (tab === "Stocks") return STOCK_SEGMENTS;
+    if (tab === "Real Estate") return REAL_ESTATE_TYPES;
+    if (tab === "All Holdings") return [];
+    const set = new Set<string>();
+    for (const r of filtered) {
+      const l = groupLabelFor(r, tab);
+      if (l !== UNCATEGORISED) set.add(l);
+    }
+    return [...set].sort();
+  }, [tab, filtered]);
+
+  const bulkSubCategory = async (value: string) => {
+    const { inv, ast } = splitSelection();
+    let invPatch: Record<string, unknown> = { sub_category: value };
+    if (tab === "Stocks") invPatch = { category: value === "ETF" ? "ETFs" : "Stocks", sub_category: value };
+    if (tab === "Real Estate" && (value === "REIT" || value === "InvIT"))
+      invPatch = { category: value, sub_category: value };
+    if (inv.length) await bulkUpdInv.mutateAsync({ ids: inv, patch: invPatch });
+    if (ast.length) await bulkUpdAsset.mutateAsync({ ids: ast, patch: { sub_category: value } });
+    sel.clear();
+  };
+
   const bulkBusy =
     bulkDelInv.isPending ||
     bulkDelAsset.isPending ||
@@ -1237,6 +1262,15 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         onClear={sel.clear}
         onDelete={bulkDelete}
         fieldActions={[
+          ...(subCategoryOptions.length
+            ? [
+                {
+                  label: SUBCATEGORY_ACTION_LABEL[tab] ?? "Change Category",
+                  options: subCategoryOptions.map((o) => ({ value: o, label: o })),
+                  onSelect: bulkSubCategory,
+                },
+              ]
+            : []),
           {
             label: "Change Asset Classification",
             options: ASSET_CLASSIFICATIONS.map((o) => ({ value: o, label: o })),
@@ -1316,6 +1350,11 @@ function compactAmount(v: number, currency: string): string {
  * readable "Uncategorised" bucket instead of a stray dash.
  */
 const UNCATEGORISED = "Uncategorised";
+const SUBCATEGORY_ACTION_LABEL: Partial<Record<AssetTab, string>> = {
+  "Mutual Funds": "Change Fund Type",
+  Stocks: "Change Segment",
+  "Real Estate": "Change Property Type",
+};
 
 const PLACEHOLDER_RE = /^(-+|_+|n\/?a|na|null|none|others?|unknown)$/i;
 
@@ -1386,13 +1425,23 @@ export function groupLabelFor(h: Holding, tab: AssetTab): string {
 }
 
 function isEtf(h: Holding): boolean {
+  const sub = (h.raw_investment?.sub_category ?? h.raw_asset?.sub_category ?? "").trim();
+  if (sub === "Equity") return false;
+  if (sub === "ETF") return true;
   const cat = normalizeInvestmentCategory(h.raw_investment?.category);
   if (cat === "ETFs") return true;
   return /\b(etf|exchange traded)\b|bees\b/i.test(`${h.name} ${h.symbol ?? ""} ${h.type}`);
 }
 
 /** Fund type for a mutual fund: Index, Debt, Hybrid, ELSS, Liquid, Equity… */
+export const MF_FUND_TYPES = ["Equity", "Index", "Debt", "Hybrid", "ELSS", "Liquid", "Commodity", "International"];
+export const STOCK_SEGMENTS = ["Equity", "ETF"];
+export const REAL_ESTATE_TYPES = ["REIT", "InvIT", "Property"];
+
 function fundTypeFor(h: Holding): string {
+  // A manually chosen fund type always wins over name-based guessing.
+  const explicit = (h.raw_investment?.sub_category ?? h.raw_asset?.sub_category ?? "").trim();
+  if (MF_FUND_TYPES.includes(explicit)) return explicit;
   const t = `${h.name} ${h.type} ${h.segment} ${h.raw_investment?.sub_category ?? ""} ${h.raw_investment?.notes ?? ""}`.toLowerCase();
   if (/\b(index|nifty|sensex|etf|fof)\b/.test(t)) return "Index";
   if (/\b(elss|tax ?saver)\b/.test(t)) return "ELSS";
@@ -1406,6 +1455,8 @@ function fundTypeFor(h: Holding): string {
 }
 
 function realEstateType(h: Holding): string {
+  const explicit = (h.raw_investment?.sub_category ?? h.raw_asset?.sub_category ?? "").trim();
+  if (REAL_ESTATE_TYPES.includes(explicit)) return explicit;
   const t = `${h.name} ${h.type} ${h.raw_investment?.category ?? ""}`.toLowerCase();
   if (/\breits?\b/.test(t)) return "REIT";
   if (/\binvits?\b/.test(t)) return "InvIT";
