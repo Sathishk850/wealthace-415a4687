@@ -1307,11 +1307,36 @@ function TransactionsTable({
       ) : (
         <>
           {/* Mobile: compact rows, no horizontal scrolling */}
+          <div className="flex items-center gap-2 border-b border-border px-3 py-2 md:hidden">
+            <input
+              type="checkbox"
+              aria-label="Select all on this page"
+              className="h-3.5 w-3.5 accent-primary"
+              checked={pageRows.length > 0 && pageRows.every((r) => selected.has(r.id))}
+              onChange={(e) => {
+                const next = new Set(selected);
+                pageRows.forEach((r) => (e.target.checked ? next.add(r.id) : next.delete(r.id)));
+                setSelected(next);
+              }}
+            />
+            <span className="text-[11px] font-medium text-muted-foreground">Select all</span>
+          </div>
           <ul className="divide-y divide-border md:hidden">
             {pageRows.map((r) => {
               const cat = r.category_id ? catMap.get(r.category_id) : null;
               return (
-                <li key={r.id} className="flex items-center gap-2 px-3 py-2.5">
+                <li key={r.id} className={cn("flex items-center gap-2 px-3 py-2.5", selected.has(r.id) && "bg-primary/5")}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${r.merchant}`}
+                    className="h-3.5 w-3.5 shrink-0 accent-primary"
+                    checked={selected.has(r.id)}
+                    onChange={(e) => {
+                      const next = new Set(selected);
+                      if (e.target.checked) next.add(r.id); else next.delete(r.id);
+                      setSelected(next);
+                    }}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13px] font-medium text-foreground">{r.merchant || cat?.name || "—"}{r.is_transfer && (
                           <span className={cn("ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-medium", r.note?.includes("Rate:") ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground")}>
