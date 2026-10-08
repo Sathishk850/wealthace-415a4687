@@ -145,10 +145,8 @@ const ASSET_TABS: AssetTab[] = [
   "All Holdings",
   "Stocks",
   "Mutual Funds",
-  "ETFs",
   "Commodities",
   "Bonds",
-  "REIT",
   "Crypto",
   "Real Estate",
   "Savings",
@@ -197,28 +195,30 @@ function classifyInvestment(
   const text = `${name ?? ""} ${symbol ?? ""} ${sub}`.toLowerCase();
 
   if (canonical === "Bonds") return "Bonds";
-  if (canonical === "ETFs") return sub.includes("bond") ? "Bonds" : "ETFs";
+  if (canonical === "ETFs") return sub.includes("bond") ? "Bonds" : "Stocks";
   if (canonical === "Stocks") return "Stocks";
   if (canonical === "Mutual Funds") return "Mutual Funds";
   if (canonical === "Crypto") return "Crypto";
   if (canonical === "Gold" || canonical === "Commodities") return "Commodities";
-  if (canonical === "REIT") return "REIT";
-  if (canonical === "InvIT") return "Other Assets";
+  if (canonical === "REIT" || canonical === "InvIT") return "Real Estate";
+  // Asset-type categories saved as investments (e.g. when tracked as a SIP).
+  if (["Real Estate", "Property", "Savings", "Cash", "EPF", "PPF", "Other"].includes(category))
+    return classifyAsset(category);
 
   // Legacy broker exports often save no useful category. Use the remaining
   // normalized fields so existing rows appear in the same tab as new imports.
-  if (/\b(etf|index fund|bees)\b/.test(text)) return "ETFs";
+  if (/\b(etf|bees)\b/.test(text)) return "Stocks";
   if (/\b(fund|scheme|mutual fund|direct plan|folio)\b/.test(text)) return "Mutual Funds";
-  if (/\b(reit|invit)\b/.test(text)) return "Other Assets";
+  if (/\b(reit|invit)\b/.test(text)) return "Real Estate";
   if (symbol || name || subCategory) return "Stocks";
   return "Other Assets";
 }
 
 
 function classifyAsset(cat: string): AssetTab {
-  if (cat === "Property") return "Real Estate";
-  if (cat === "Cash" || cat === "EPF" || cat === "PPF") return "Savings";
-  if (cat === "Gold") return "Commodities";
+  if (cat === "Property" || cat === "Real Estate" || /\b(reit|invit)\b/i.test(cat)) return "Real Estate";
+  if (cat === "Cash" || cat === "EPF" || cat === "PPF" || cat === "Savings") return "Savings";
+  if (cat === "Gold" || cat === "Commodity" || cat === "Commodities") return "Commodities";
   return "Other Assets";
 }
 
@@ -1321,14 +1321,14 @@ function fundHouseFromName(name: string): string | null {
 
 /** What each tab groups by, shown in the grouped-view header. */
 export const GROUP_FIELD_LABEL: Partial<Record<AssetTab, string>> = {
-  Stocks: "Market Cap",
+  Stocks: "Segment",
 
-  "Mutual Funds": "Fund House",
+  "Mutual Funds": "Fund Type",
   ETFs: "Category",
   Commodities: "Commodity Type",
   Bonds: "Issuer / Type",
   REIT: "Property Type",
-  "Real Estate": "Property Type",
+  "Real Estate": "Type",
   Savings: "Type",
   "Other Assets": "Asset Type",
   "All Holdings": "Asset Class",
@@ -1343,12 +1343,15 @@ export function groupLabelFor(h: Holding, tab: AssetTab): string {
   let label: string | null = null;
   switch (tab) {
     case "Stocks":
-      // Stocks group by market cap; sector shows as the row subtitle.
-      label = firstUsable(h.market_cap);
+      // Stocks group by segment: Equity vs ETF (ETFs live inside Stocks).
+      label = isEtf(h) ? "ETF" : "Equity";
       break;
 
     case "Mutual Funds":
-      label = firstUsable(fundHouseFromName(h.name), h.type, h.segment);
+      label = fundTypeFor(h);
+      break;
+    case "Real Estate":
+      label = realEstateType(h);
       break;
     case "ETFs":
       label = firstUsable(h.sector, h.type, h.segment);
@@ -1356,7 +1359,6 @@ export function groupLabelFor(h: Holding, tab: AssetTab): string {
     case "Commodities":
     case "Savings":
     case "Other Assets":
-    case "Real Estate":
     case "REIT":
     case "InvIT":
       label = firstUsable(h.type, h.sector, h.segment);
@@ -1371,6 +1373,33 @@ export function groupLabelFor(h: Holding, tab: AssetTab): string {
       label = firstUsable(h.sector, h.segment, h.type);
   }
   return label ?? UNCATEGORISED;
+}
+
+function isEtf(h: Holding): boolean {
+  const cat = normalizeInvestmentCategory(h.raw_investment?.category);
+  if (cat === "ETFs") return true;
+  return /\b(etf|exchange traded)\b|bees\b/i.test(`${h.name} ${h.symbol ?? ""} ${h.type}`);
+}
+
+/** Fund type for a mutual fund: Index, Debt, Hybrid, ELSS, Liquid, Equity… */
+function fundTypeFor(h: Holding): string {
+  const t = `${h.name} ${h.type} ${h.segment} ${h.raw_investment?.sub_category ?? ""} ${h.raw_investment?.notes ?? ""}`.toLowerCase();
+  if (/\b(index|nifty|sensex|etf|fof)\b/.test(t)) return "Index";
+  if (/\b(elss|tax ?saver)\b/.test(t)) return "ELSS";
+  if (/\b(liquid|overnight|money market)\b/.test(t)) return "Liquid";
+  if (/\b(hybrid|balanced|multi asset|arbitrage|equity savings|asset allocat)\b/.test(t)) return "Hybrid";
+  if (/\b(debt|bond|gilt|duration|credit risk|corporate|banking & psu|banking and psu|income|dynamic bond|floater)\b/.test(t)) return "Debt";
+  if (/\b(gold|silver|commodit)\b/.test(t)) return "Commodity";
+  if (/\b(international|global|us |nasdaq|overseas)\b/.test(t)) return "International";
+  if (/\b(equity|cap|flexi|focused|value|contra|dividend yield|sectoral|thematic|bluechip|growth)\b/.test(t)) return "Equity";
+  return UNCATEGORISED;
+}
+
+function realEstateType(h: Holding): string {
+  const t = `${h.name} ${h.type} ${h.raw_investment?.category ?? ""}`.toLowerCase();
+  if (/\breits?\b/.test(t)) return "REIT";
+  if (/\binvits?\b/.test(t)) return "InvIT";
+  return firstUsable(h.type, h.sector) ?? "Property";
 }
 
 export type HoldingGroup = {
