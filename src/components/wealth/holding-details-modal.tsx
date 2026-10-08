@@ -963,7 +963,7 @@ function CorporateTab({ investment }: { investment: Investment }) {
           <table className="w-full text-sm">
             <thead className="bg-surface-2/50">
               <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="px-3 py-2 font-medium">Date</th>
+                <th className="px-3 py-2 font-medium">Ex Date</th>
                 <th className="px-3 py-2 font-medium">Action</th>
                 <th className="px-3 py-2 text-right font-medium">Details</th>
               </tr>
