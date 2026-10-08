@@ -536,6 +536,9 @@ type FormState = {
   notes: string;
 
   is_sip: boolean;
+  sip_amount: string;
+  sip_frequency: string;
+  sip_start_date: string;
   status: string;
 
   payment_mode: string | null;
@@ -569,6 +572,9 @@ const EMPTY: FormState = {
   avg_price: "",
   notes: "",
   is_sip: false,
+  sip_amount: "",
+  sip_frequency: "monthly",
+  sip_start_date: "",
   status: "active",
   payment_mode: null,
   payment_account_id: null,
@@ -614,6 +620,9 @@ function investmentToForm(inv: Investment): FormState {
     avg_price: String(inv.avg_price ?? ""),
     notes: rest,
     is_sip: !!inv.is_sip,
+    sip_amount: inv.sip_amount != null ? String(inv.sip_amount) : "",
+    sip_frequency: inv.sip_frequency || "monthly",
+    sip_start_date: inv.sip_start_date || "",
     status: inv.status || "active",
     payment_mode: inv.payment_mode ?? null,
     payment_account_id: inv.payment_account_id ?? null,
@@ -931,6 +940,10 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       notes: noteLines.join("\n"),
       status: form.status || "active",
       is_sip: form.is_sip,
+      sip_active: form.is_sip,
+      sip_amount: form.is_sip && form.sip_amount ? Number(form.sip_amount) : null,
+      sip_frequency: form.is_sip ? form.sip_frequency : null,
+      sip_start_date: form.is_sip ? form.sip_start_date || form.purchase_date || null : null,
       identifier_type: form.identifier_type,
       identifier: form.identifier,
       exchange: form.exchange,
@@ -1478,6 +1491,40 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   label="SIP tracking"
                 />
               </div>
+              {form.is_sip && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={labelCls}>SIP amount</label>
+                    <AmountInput
+                      value={form.sip_amount}
+                      onChange={(v) => setForm((f) => ({ ...f, sip_amount: v }))}
+                      placeholder="e.g. 5000"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Frequency</label>
+                    <select
+                      className={selectCls}
+                      value={form.sip_frequency}
+                      onChange={(e) => setForm((f) => ({ ...f, sip_frequency: e.target.value }))}
+                    >
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className={labelCls}>SIP start date</label>
+                    <input
+                      type="date"
+                      className={inputCls}
+                      value={form.sip_start_date}
+                      onChange={(e) => setForm((f) => ({ ...f, sip_start_date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className={labelCls}>Status</label>
