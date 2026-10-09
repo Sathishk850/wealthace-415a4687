@@ -84,6 +84,9 @@ import {
 } from "@/lib/wealth-api";
 import { exportCsv, exportJson, exportPdf, exportXlsx, pickAndParse } from "@/lib/wealth-io";
 import { toast } from "sonner";
+import { useAssets, type Asset } from "@/lib/wealth-api";
+import { assetSipHolding } from "@/lib/holding-sip";
+import { HoldingSipDialog } from "@/components/wealth/holding-sip-settings";
 
 
 const PIE = ["#3B82F6", "#14D8CF", "#F59E0B", "#8B5CF6", "#10B981", "#F97316", "#EF4444", "#94A3B8"];
@@ -104,6 +107,8 @@ export function InvestmentsView({
   const [subState, setSub] = useState<InvestmentsSub>("Overview");
   const sub = activeSub ?? subState;
   const { data: rows = [], isLoading, isError, error, refetch } = useInvestments();
+  const { data: assets = [] } = useAssets();
+  const [sipAsset, setSipAsset] = useState<Asset | null>(null);
   const bulkInsert = useBulkInsertInvestments();
   const del = useDeleteInvestment();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -173,6 +178,16 @@ export function InvestmentsView({
     const portXirr = portfolioXirr(rows);
     return { rich, invested, current, pnl, overallRet, portXirr };
   }, [rows, quoteMap]);
+
+  const assetSips = useMemo(() => assets.flatMap((asset) => {
+    const r = assetSipHolding(asset);
+    if (!r) return [];
+    const inv = asset.purchase_value ?? 0;
+    const cur = asset.current_value;
+    return [{ ...r, inv, cur, pnl: cur - inv, ret: inv > 0 ? (cur - inv) / inv * 100 : 0,
+      cagr: 0, xirrPct: singleXirr(r), live_price: r.current_price,
+      day_change: null, day_change_pct: null, live_source: null, live_as_of: null, has_live: false }];
+  }), [assets]);
 
 
   /* ===== Allocation breakdown ===== */
@@ -373,7 +388,11 @@ export function InvestmentsView({
         )}
 
         {sub === "SIP Tracker" && (
-          <SipTracker rows={derived.rich} onEdit={(r) => { setEditing(r); setDialogOpen(true); }} />
+          <SipTracker rows={[...derived.rich, ...assetSips]} onEdit={(r) => {
+            const asset = assets.find((a) => a.id === r.id);
+            if (asset) setSipAsset(asset);
+            else { setEditing(r); setDialogOpen(true); }
+          }} />
         )}
         {sub === "Performance" && (
           <Performance rows={derived.rich} portXirr={derived.portXirr} overallRet={derived.overallRet} />
@@ -383,6 +402,7 @@ export function InvestmentsView({
         )}
       </div>
 
+      {sipAsset && <HoldingSipDialog asset={sipAsset} open onOpenChange={(v) => { if (!v) setSipAsset(null); }} />}
       <InvestmentDialog
         open={dialogOpen}
         onOpenChange={(v) => {

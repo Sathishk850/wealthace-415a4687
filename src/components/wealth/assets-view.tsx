@@ -54,6 +54,7 @@ import {
 import { TextTabs } from "@/components/text-tabs";
 import { AssetDialog } from "@/components/wealth/asset-dialog";
 import { HoldingDetailsModal } from "@/components/wealth/holding-details-modal";
+import { HoldingSipButton } from "@/components/wealth/holding-sip-settings";
 import { useInvestmentQuotes, useRefreshHoldings } from "@/lib/market/use-market-data";
 import { deriveHolding, investmentQuoteKey } from "@/lib/market/derive";
 import { fundCategory, marketCapBand, sectorFromNotes } from "@/lib/holding-meta";
@@ -2130,7 +2131,8 @@ function AssetDetailsModal({
   onClose: () => void;
   onEdit: () => void;
 }) {
-  const a = holding.raw_asset!;
+  const a = holding.raw_asset;
+  if (!a) return null;
   const up = holding.pnl >= 0;
   const ccy = holding.currency;
   return (
@@ -2164,6 +2166,7 @@ function AssetDetailsModal({
           </div>
         ) : null}
         <AlertDialogFooter>
+          <HoldingSipButton asset={a} />
           <AlertDialogCancel>Close</AlertDialogCancel>
           <AlertDialogAction
             onClick={onEdit}

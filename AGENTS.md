@@ -11,3 +11,4 @@
 
 - Keep Wealth snapshot reads and mutations in the dedicated snapshots API module so every snapshot surface shares one query key and the database's `snapshot_date` model.
 - Keep cashflow bucketing and holding-performance ranking in pure financial-insights helpers so rules can be tested without fetching or rendering.
+- Existing asset SIP settings stay in asset notes and are projected into SIP Tracker only; patch investment SIP columns separately to avoid duplicating holdings or changing valuation.

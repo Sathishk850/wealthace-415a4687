@@ -42,6 +42,7 @@ import { deriveHolding } from "@/lib/market/derive";
 import { useCorporateActions, useInstrumentFundamentals } from "@/lib/market/use-market-data";
 import type { IdentifierType, InstrumentFundamentals, MarketQuote } from "@/lib/market/types";
 import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
+import { HoldingSipButton } from "@/components/wealth/holding-sip-settings";
 
 type Props = {
   open: boolean;
@@ -259,7 +260,8 @@ export function HoldingDetailsModal({
 
         </div>
 
-        <div className="shrink-0 border-t border-border bg-card px-6 py-3 flex justify-end">
+        <div className="shrink-0 border-t border-border bg-card px-6 py-3 flex flex-wrap justify-end gap-2">
+          <HoldingSipButton investment={inv} />
           <Button variant="outline" onClick={requestClose}>
             Close
           </Button>
