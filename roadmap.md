@@ -26,8 +26,8 @@
 
 # Financial insights additions
 
-- [ ] Verify existing monthly comparison, gainers/losers, and FIRE readiness before adding anything
-- [ ] Add missing Money six-month income/expense comparison using loaded transactions
-- [ ] Add missing Wealth gainers/losers using loaded holding valuations
-- [ ] Add FIRE readiness only if an equivalent card does not already exist
+- [x] Verify existing monthly comparison, gainers/losers, and FIRE readiness before adding anything
+- [x] Add missing Money six-month income/expense comparison using loaded transactions
+- [x] Add missing Wealth gainers/losers using loaded holding valuations
+- [x] Skip duplicate FIRE readiness: existing Planner overview and FIRE tab already show number, progress and years to FI
 - [ ] Run requested TypeScript check and verify affected views
