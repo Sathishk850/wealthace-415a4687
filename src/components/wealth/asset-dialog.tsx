@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { PaymentFields } from "@/components/payment/payment-fields";
+import { HoldingSipButton } from "@/components/wealth/holding-sip-settings";
 import { commitStagedPaymentPreferences } from "@/lib/user-payment-prefs-api";
 import {
   ASSET_CATEGORIES,
@@ -241,6 +242,7 @@ export function AssetDialog({ open, onOpenChange, existing, defaultCategory }: P
         </div>
 
         <DialogFooter>
+          {existing && <HoldingSipButton asset={existing} />}
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>
             Cancel
           </Button>

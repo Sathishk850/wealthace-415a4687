@@ -43,11 +43,12 @@ export const ASSET_CATEGORIES: Category[] = [
     icon: "PieChart",
     ...EQUITY,
     types: [
-      { key: "thematic-mf", label: "Thematic / Sectoral MF", icon: "Layers" },
+      { key: "equity-mf", label: "Equity", icon: "TrendingUp" },
       { key: "index-fund", label: "Index Fund", icon: "LineChart" },
       { key: "intl-mf", label: "International MF", icon: "Globe" },
       { key: "elss", label: "ELSS (Tax Saver)", icon: "Receipt" },
       { key: "hybrid-fund", label: "Hybrid Fund", icon: "Blend" },
+      { key: "thematic-mf", label: "Thematic / Sectoral MF", icon: "Layers" },
       { key: "arbitrage-fund", label: "Arbitrage Fund", icon: "Shuffle" },
       { key: "debt-fund", label: "Debt MF", icon: "PieChart" },
       { key: "liquid-fund", label: "Liquid Fund", icon: "Droplets" },
@@ -148,7 +149,7 @@ export function DynIcon({
     string,
     React.ComponentType<{ className?: string; style?: React.CSSProperties }>
   >;
-  const Cmp = icons[name] ?? icons["Boxes"]!;
+  const Cmp = icons[name] ?? LucideIcons.Boxes;
   return <Cmp className={className} style={color ? { color } : undefined} />;
 }
 

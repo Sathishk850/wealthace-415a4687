@@ -31,3 +31,10 @@
 - [x] Add missing Wealth gainers/losers using loaded holding valuations
 - [x] Skip duplicate FIRE readiness: existing Planner overview and FIRE tab already show number, progress and years to FI
 - [ ] Run requested TypeScript check and verify affected views
+
+# Fund picker and existing asset SIP
+
+- [ ] Put Equity first and Thematic immediately after Hybrid
+- [ ] Add accessible SIP settings to existing asset and investment details
+- [ ] Show enabled existing assets in SIP Tracker without moving or duplicating holdings
+- [ ] Verify SIP rules and preview

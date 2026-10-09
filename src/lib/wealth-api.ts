@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { writeAssetSip, type SipSettings } from "./holding-sip";
 
 /* =================== Types =================== */
 export type AssetCategory =
@@ -202,6 +203,36 @@ export function useUpsertAsset() {
       qc.invalidateQueries({ queryKey: wealthKeys.assets });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to save asset"),
+  });
+}
+
+/** Patch only SIP metadata: never resave quantities, pricing, ownership or payments. */
+export function useSaveHoldingSip() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, source, settings }: { id: string; source: "asset" | "investment"; settings: SipSettings }) => {
+      if (settings.enabled && (!Number.isFinite(settings.amount) || settings.amount <= 0 || !settings.startDate))
+        throw new Error("A positive amount and start date are required");
+      if (source === "asset") {
+        const { data, error: readError } = await supabase.from("wealth_assets").select("notes").eq("id", id).single();
+        if (readError) throw readError;
+        const { error } = await supabase.from("wealth_assets").update({ notes: writeAssetSip(data.notes, settings) }).eq("id", id).select("id").single();
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("wealth_investments").update({
+          is_sip: settings.enabled, sip_active: settings.enabled && settings.active,
+          sip_amount: settings.amount || null, sip_frequency: settings.frequency,
+          sip_start_date: settings.startDate || null, sip_next_date: null,
+        }).eq("id", id).select("id").single();
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: wealthKeys.assets });
+      qc.invalidateQueries({ queryKey: wealthKeys.investments });
+      toast.success("SIP settings saved");
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not save SIP"),
   });
 }
 
