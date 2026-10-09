@@ -23,3 +23,11 @@
 - [x] Goal milestones + contribution trend in goal detail view
 - [x] Dashboard per-asset-class sparklines from existing snapshots
 - [x] Settings Notifications section (prefs + push toggle)
+
+# Financial insights additions
+
+- [x] Verify existing monthly comparison, gainers/losers, and FIRE readiness before adding anything
+- [x] Add missing Money six-month income/expense comparison using loaded transactions
+- [x] Add missing Wealth gainers/losers using loaded holding valuations
+- [x] Skip duplicate FIRE readiness: existing Planner overview and FIRE tab already show number, progress and years to FI
+- [ ] Run requested TypeScript check and verify affected views

@@ -2,6 +2,7 @@ import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { fireBudgetAlerts } from "@/lib/budget-alerts";
 import { smartXAxisProps } from "@/lib/chart-axis";
+import { monthlyCashflow } from "@/lib/financial-insights";
 import {
   TrendingUp,
   Plus,
@@ -77,6 +78,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   PieChart,
   Pie,
   Cell,
@@ -146,6 +148,10 @@ export const Route = createFileRoute("/_app/money")({
     meta: [
       { title: "Money · Wealth Ace" },
       { name: "description", content: "Track cashflow, income, expenses and every transaction." },
+      { property: "og:title", content: "Money · Wealth Ace" },
+      { property: "og:description", content: "Track cashflow, income, expenses and every transaction." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Money,
@@ -278,6 +284,10 @@ function Money() {
   }, [monthOffset]);
   const activeMonthKey = monthKey(activeMonth);
   const activeMonthLabel = formatMonthLabel(activeMonthKey);
+  const monthlyComparison = useMemo(
+    () => monthlyCashflow(insightTxns, activeMonth),
+    [insightTxns, activeMonth],
+  );
   // Navigator's month as a date range for the Income/Expenses tables
   const navFrom = iso(activeMonth);
   const navTo = iso(new Date(activeMonth.getFullYear(), activeMonth.getMonth() + 1, 0));
@@ -652,6 +662,27 @@ function Money() {
                 </div>
               )}
             </ChartCard>
+
+            {monthlyComparison.filter((month) => month.count > 0).length >= 2 && (
+              <ChartCard title="Income vs Expense" subtitle="Last 6 months" className="lg:col-span-full">
+                <div className="h-[160px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyComparison} margin={{ top: 4, right: 4, left: -16, bottom: 0 }} barGap={2}>
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={(v) => inrCompact(Number(v))} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        cursor={{ fill: "var(--muted)", fillOpacity: 0.3 }}
+                        contentStyle={{ background: "var(--popover)", color: "var(--popover-foreground)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 11 }}
+                        formatter={(v, name) => [inrCompact(Number(v)), name]}
+                      />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                      <Bar name="Income" dataKey="income" radius={[4, 4, 0, 0]} maxBarSize={28} fill="var(--success)" fillOpacity={0.8} />
+                      <Bar name="Expense" dataKey="expense" radius={[4, 4, 0, 0]} maxBarSize={28} fill="var(--danger)" fillOpacity={0.8} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartCard>
+            )}
 
             {spendByDay.count >= 7 && (
               <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-full">

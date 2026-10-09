@@ -41,6 +41,7 @@ import {
 } from "@/components/wealth/allocation-details-dialog";
 import { marketCapBand, sectorFromNotes, segmentFromNotes } from "@/lib/holding-meta";
 import { smartXAxisProps } from "@/lib/chart-axis";
+import { holdingPerformers } from "@/lib/financial-insights";
 import {
   cagrPct,
   groupByCategory,
@@ -157,6 +158,12 @@ export function WealthOverview({
       return { ...r, inv, cur, pnl, ret };
     });
   }, [rows, quoteMap]);
+
+  const { ranked: rankedHoldings, gainers, losers } = useMemo(
+    () => holdingPerformers(rich.filter((holding) => holding.invested_value != null && holding.current_value != null)
+      .map((holding) => ({ ...holding, cur: deriveHolding(holding, quoteMap.get(investmentQuoteKey(holding) ?? "") ?? null).current_value }))),
+    [rich, quoteMap],
+  );
 
 
   const investmentsCurrent = rich.reduce((s, r) => s + r.cur, 0);
@@ -427,6 +434,31 @@ export function WealthOverview({
           </div>
         );
       })()}
+
+      {rankedHoldings.length >= 4 && (
+        <section className="rounded-2xl border border-border bg-card p-5" aria-label="Top Gainers & Losers">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Top Gainers &amp; Losers</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {([
+              { label: "Top Gainers", holdings: gainers, tone: "text-success" },
+              { label: "Top Losers", holdings: losers, tone: "text-destructive" },
+            ]).map((group) => (
+              <div key={group.label} className="min-w-0">
+                <p className={`mb-2 text-[10px] font-bold uppercase ${group.tone}`}>{group.label}</p>
+                {group.holdings.length === 0 ? <p className="text-xs text-muted-foreground">{group.label === "Top Gainers" ? "No holdings in gain" : "No holdings in loss"}</p> : group.holdings.map((holding) => (
+                  <div key={holding.id} className="mb-2 flex items-center justify-between gap-3">
+                    <span className="min-w-0 truncate text-xs text-foreground" title={holding.name}>{holding.name}</span>
+                    <div className={`shrink-0 text-right font-ledger-mono text-xs ${group.tone}`}>
+                      <div className="font-semibold">{holding.pnl > 0 ? "+" : "−"}{inrCompact(Math.abs(holding.pnl))}</div>
+                      <div className="text-[10px]">{holding.pnlPct > 0 ? "+" : ""}{holding.pnlPct.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
 
       {/* ROW 1 — KPI CARDS */}
