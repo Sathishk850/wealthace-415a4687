@@ -98,7 +98,7 @@ export function LinkInvestmentDialog({ open, onOpenChange, queue }: Props) {
             onSelect={onSelect}
             placeholder={
               kind === "mf_in"
-                ? "Search scheme name, AMC, or plan…"
+                ? "Enter first 5 letters of fund or AMC…"
                 : "Search company name or ticker…"
             }
             autoFocus
