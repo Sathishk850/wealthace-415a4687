@@ -74,6 +74,7 @@ import { Link } from "@tanstack/react-router";
 import { MarketEventsCard } from "@/components/events/market-events-card";
 import { PushPermissionBanner } from "@/components/push/push-permission-banner";
 import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
