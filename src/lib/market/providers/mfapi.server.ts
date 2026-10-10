@@ -9,7 +9,7 @@ import { fetchWithTimeout, normalizePrice } from "../normalize";
 const BASE = "https://api.mfapi.in";
 const TIMEOUT_MS = 15_000;
 
-export async function mfapiSearch(query: string): Promise<SearchResult[]> {
+async function mfapiSearchRaw(query: string): Promise<Array<{ schemeCode: number; schemeName: string }>> {
   const url = `${BASE}/mf/search?q=${encodeURIComponent(query)}`;
   let res: Response;
   try {
@@ -22,8 +22,33 @@ export async function mfapiSearch(query: string): Promise<SearchResult[]> {
     console.error(`[mfapi] search HTTP ${res.status}`);
     return [];
   }
-  const rows = (await res.json()) as Array<{ schemeCode: number; schemeName: string }>;
-  return (rows ?? []).slice(0, 40).map((r) => ({
+  return ((await res.json()) as Array<{ schemeCode: number; schemeName: string }>) ?? [];
+}
+
+// True when every typed word matches the start of some word in the scheme name,
+// so partial typing like "parag parikh conservat" still matches.
+function matchesAllWords(name: string, words: string[]): boolean {
+  const nameWords = name.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  return words.every((w) => nameWords.some((nw) => nw.startsWith(w)));
+}
+
+export async function mfapiSearch(query: string): Promise<SearchResult[]> {
+  let rows = await mfapiSearchRaw(query);
+  // MFAPI only matches literal substrings, so long partial queries return
+  // nothing. Fall back to the AMC (first word) and filter client-side.
+  if (rows.length === 0) {
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    if (words.length > 1) {
+      rows = (await mfapiSearchRaw(words[0])).filter((r) => matchesAllWords(r.schemeName, words));
+      // If the user is mid-word on the AMC itself, widen to its first 5 letters.
+      if (rows.length === 0 && words[0].length > 5) {
+        rows = (await mfapiSearchRaw(words[0].slice(0, 5))).filter((r) =>
+          matchesAllWords(r.schemeName, words),
+        );
+      }
+    }
+  }
+  return rows.slice(0, 40).map((r) => ({
     identifier_type: "mf_in" as const,
     identifier: String(r.schemeCode),
     name: r.schemeName,
