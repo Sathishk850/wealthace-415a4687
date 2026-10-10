@@ -1848,7 +1848,7 @@ function HoldingRow({
                 </div>
               );
             })()}
-            <HoldingLinkLine inv={h.raw_investment} price={h.cmp} live={!!h.live_price} formatPrice={(n) => priceIn(n, h.currency)} />
+            <HoldingLinkLine inv={(h as unknown as Holding).raw_investment} price={h.cmp} live={!!(h as unknown as Holding).live_price} formatPrice={(n) => priceIn(n, h.currency)} />
 
           </div>
 
