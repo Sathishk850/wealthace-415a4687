@@ -665,6 +665,7 @@ export type Database = {
       planner_goals: {
         Row: {
           created_at: string
+          emoji: string
           goal_type: string
           id: string
           linked_investment_ids: string[]
@@ -672,6 +673,7 @@ export type Database = {
           name: string
           notes: string | null
           saved_amount: number
+          sort_order: string
           step_up_pct: number | null
           target_amount: number
           target_date: string | null
@@ -680,6 +682,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          emoji?: string
           goal_type?: string
           id?: string
           linked_investment_ids?: string[]
@@ -687,6 +690,7 @@ export type Database = {
           name: string
           notes?: string | null
           saved_amount?: number
+          sort_order?: string
           step_up_pct?: number | null
           target_amount?: number
           target_date?: string | null
@@ -695,6 +699,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          emoji?: string
           goal_type?: string
           id?: string
           linked_investment_ids?: string[]
@@ -702,6 +707,7 @@ export type Database = {
           name?: string
           notes?: string | null
           saved_amount?: number
+          sort_order?: string
           step_up_pct?: number | null
           target_amount?: number
           target_date?: string | null

@@ -74,6 +74,7 @@ import { Link } from "@tanstack/react-router";
 import { MarketEventsCard } from "@/components/events/market-events-card";
 import { PushPermissionBanner } from "@/components/push/push-permission-banner";
 import { HealthScoreCard } from "@/components/dashboard/HealthScoreCard";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -99,6 +100,7 @@ const ALLOC_COLORS = ["#14d8cf", "#3b82f6", "#d9b800", "#ff8a3c", "#a855f7", "#0
 function Dashboard() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [allocDetailOpen, setAllocDetailOpen] = useState(false);
+  const [holdingsFilter, setHoldingsFilter] = useState("all");
   const allocData = useAllocationData();
   const assetsQ = useAssets();
   const liabilitiesQ = useLiabilities();
@@ -173,6 +175,9 @@ function Dashboard() {
       })),
     [allocData.slices],
   );
+  const allocationFilters = useMemo(() => ["all", ...allocation.map((a) => a.name)], [allocation]);
+  const filteredAllocation = holdingsFilter === "all" ? allocation : allocation.filter((a) => a.name === holdingsFilter);
+  const filteredAllocationTotal = filteredAllocation.reduce((sum, a) => sum + a.value, 0);
 
   const netWorthSeries = useMemo(
     () => snaps.map((s, i) => ({ i, v: s.net_worth, label: s.snapshot_date })),
@@ -458,6 +463,12 @@ function Dashboard() {
         {/* Asset Allocation + Portfolio Performance */}
         <Card className="col-span-12 flex h-auto flex-col p-5 lg:col-span-6 lg:h-[300px]">
           <CardHeader title="Asset Allocation" tip="Breakdown of your investments by asset class." />
+          {allocation.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">
+            {allocationFilters.map((f) => <Button key={f} type="button" size="sm"
+              variant={holdingsFilter === f ? "secondary" : "outline"} onClick={() => setHoldingsFilter(f)}>
+              {f === "all" ? "All" : f}
+            </Button>)}
+          </div>}
           {allocation.length === 0 ? (
             <EmptyState
               className="mt-4"
@@ -470,8 +481,8 @@ function Dashboard() {
                 <div className="relative h-[120px] w-[120px] shrink-0">
                   <ResponsiveContainer>
                     <PieChart>
-                      <Pie data={allocation} dataKey="value" innerRadius={38} outerRadius={58} paddingAngle={2} stroke="none">
-                        {allocation.map((a) => (
+                      <Pie data={filteredAllocation} dataKey="value" innerRadius={38} outerRadius={58} paddingAngle={2} stroke="none">
+                        {filteredAllocation.map((a) => (
                           <Cell key={a.name} fill={a.color} />
                         ))}
                       </Pie>
@@ -480,12 +491,12 @@ function Dashboard() {
                   <div className="pointer-events-none absolute inset-0 grid place-items-center">
                     <div className="text-center">
                       <div className="text-[10px] text-muted-foreground">Total</div>
-                      <div className="font-display text-xs font-bold text-foreground">₹{fmt(allocData.totalAllocatable)}</div>
+                      <div className="font-display text-xs font-bold text-foreground">₹{fmt(filteredAllocationTotal)}</div>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-1.5 overflow-y-auto text-sm">
-                  {allocation.map((a) => (
+                  {filteredAllocation.map((a) => (
                     <div key={a.name} className="flex items-center justify-between">
                       <span className="inline-flex items-center gap-2 truncate text-xs text-muted-foreground">
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: a.color }} />

@@ -30,11 +30,19 @@
 - [x] Add missing Money six-month income/expense comparison using loaded transactions
 - [x] Add missing Wealth gainers/losers using loaded holding valuations
 - [x] Skip duplicate FIRE readiness: existing Planner overview and FIRE tab already show number, progress and years to FI
-- [ ] Run requested TypeScript check and verify affected views
+- [x] Run requested TypeScript check and verify affected views
 
 # Fund picker and existing asset SIP
 
-- [ ] Put Equity first and Thematic immediately after Hybrid
-- [ ] Add accessible SIP settings to existing asset and investment details
-- [ ] Show enabled existing assets in SIP Tracker without moving or duplicating holdings
-- [ ] Verify SIP rules and preview
+- [x] Put Equity first and Thematic immediately after Hybrid
+- [x] Add accessible SIP settings to existing asset and investment details
+- [x] Show enabled existing assets in SIP Tracker without moving or duplicating holdings
+- [x] Verify SIP rules and preview
+
+# High-priority UX gaps
+
+- [x] Add Money bulk re-categorize action
+- [x] Sort transaction categories by recent same-kind usage
+- [x] Add goal emoji, notes, sorting and achieved-goal collapse
+- [x] Add Dashboard holdings asset-class filters
+- [x] Run TypeScript check and verify affected views

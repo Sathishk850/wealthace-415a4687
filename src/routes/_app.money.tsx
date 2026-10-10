@@ -1155,6 +1155,9 @@ function TransactionsTable({
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [bulkDesc, setBulkDesc] = useState("");
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkCatOpen, setBulkCatOpen] = useState(false);
+  const [bulkCatId, setBulkCatId] = useState("");
+  const [bulkCatSaving, setBulkCatSaving] = useState(false);
   const saveBulkDesc = async () => {
     const ids = [...selected];
     if (!bulkDesc.trim() || ids.length === 0) return;
@@ -1243,6 +1246,34 @@ function TransactionsTable({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={bulkCatOpen} onOpenChange={(v) => { setBulkCatOpen(v); if (!v) setBulkCatId(""); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Re-categorize {selected.size} transaction{selected.size > 1 ? "s" : ""}</DialogTitle>
+          </DialogHeader>
+          <Select value={bulkCatId} onValueChange={setBulkCatId}>
+            <SelectTrigger><SelectValue placeholder="Choose new category" /></SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setBulkCatOpen(false)}>Cancel</Button>
+            <Button disabled={!bulkCatId || bulkCatSaving} onClick={async () => {
+              setBulkCatSaving(true);
+              const ids = [...selected];
+              const { error } = await supabase.from("money_transactions").update({ category_id: bulkCatId }).in("id", ids);
+              setBulkCatSaving(false);
+              if (error) { toast.error("Failed to re-categorize"); return; }
+              await queryClient.invalidateQueries({ queryKey: moneyKeys.transactions });
+              setSelected(new Set());
+              setBulkCatOpen(false);
+              setBulkCatId("");
+              toast.success(`Re-categorized ${ids.length} transaction${ids.length > 1 ? "s" : ""}`);
+            }}>{bulkCatSaving ? "Saving…" : "Apply"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="space-y-2 border-b border-border p-3">
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[180px] flex-1">
@@ -1326,6 +1357,10 @@ function TransactionsTable({
               <button type="button" className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-muted"
                 onClick={() => setBulkEditOpen(true)}>
                 Edit description ({selected.size})
+              </button>
+              <button type="button" className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-muted"
+                onClick={() => setBulkCatOpen(true)}>
+                Re-categorize ({selected.size})
               </button>
               <button onClick={() => setSelected(new Set())} className="text-muted-foreground hover:text-foreground">Clear</button>
             </div>
@@ -1646,6 +1681,20 @@ function TransactionDialog({
   }, [open, editing, defaultKind, prefill]);
 
   const kindCats = categories.filter((c) => c.kind === kind);
+  const categoryUsage = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+    const counts = new Map<string, number>();
+    for (const t of transactions) {
+      if (t.kind !== kind || !t.category_id || new Date(t.occurred_on) < cutoff) continue;
+      counts.set(t.category_id, (counts.get(t.category_id) ?? 0) + 1);
+    }
+    return {
+      counts,
+      sorted: [...kindCats].sort((a, b) =>
+        (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0) || a.name.localeCompare(b.name)),
+    };
+  }, [kindCats, transactions, kind]);
 
   const merchantSuggestions = useMemo(() => {
     if (!merchant.trim() || merchant.trim().length < 2) return [];
@@ -1876,9 +1925,15 @@ function TransactionDialog({
                   <SelectTrigger className="flex-1"><SelectValue placeholder={kind === "income" ? "Choose source" : "Choose category"} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Uncategorized</SelectItem>
-                    {kindCats.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
+                    {categoryUsage.sorted.some((c) => (categoryUsage.counts.get(c.id) ?? 0) > 0) &&
+                      <SelectItem value="__hdr_used" disabled className="text-[10px] uppercase text-muted-foreground">Recent</SelectItem>}
+                    {categoryUsage.sorted.filter((c) => (categoryUsage.counts.get(c.id) ?? 0) > 0).map((c) =>
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    {categoryUsage.sorted.some((c) => (categoryUsage.counts.get(c.id) ?? 0) > 0) &&
+                      categoryUsage.sorted.some((c) => (categoryUsage.counts.get(c.id) ?? 0) === 0) &&
+                      <SelectItem value="__hdr_all" disabled className="text-[10px] uppercase text-muted-foreground">All</SelectItem>}
+                    {categoryUsage.sorted.filter((c) => (categoryUsage.counts.get(c.id) ?? 0) === 0).map((c) =>
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     {missingPresets.map((p) => (
                       <SelectItem key={`preset:${p}`} value={`preset:${p}`}>{p}</SelectItem>
                     ))}
