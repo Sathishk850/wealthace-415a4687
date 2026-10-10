@@ -38,3 +38,11 @@
 - [ ] Add accessible SIP settings to existing asset and investment details
 - [ ] Show enabled existing assets in SIP Tracker without moving or duplicating holdings
 - [ ] Verify SIP rules and preview
+
+# High-priority UX gaps
+
+- [ ] Add Money bulk re-categorize action
+- [ ] Sort transaction categories by recent same-kind usage
+- [ ] Add goal emoji, notes, sorting and achieved-goal collapse
+- [ ] Add Dashboard Top Holdings asset-class filters
+- [ ] Run TypeScript check and verify affected views
