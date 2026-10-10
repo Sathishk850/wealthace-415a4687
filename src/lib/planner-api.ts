@@ -39,6 +39,8 @@ export type Goal = {
   target_date: string | null;
   monthly_contribution: number;
   notes: string | null;
+  emoji: string;
+  sort_order: string;
   linked_investment_ids?: string[] | null;
   step_up_pct?: number | null;
   /** Manually entered saved amount (before linked investments are added). */
@@ -141,6 +143,8 @@ export function useUpsertGoal() {
       target_date: string | null;
       monthly_contribution: number;
       notes?: string | null;
+      emoji?: string;
+      sort_order?: string;
       linked_investment_ids?: string[];
       step_up_pct?: number;
     }) => {
@@ -153,6 +157,8 @@ export function useUpsertGoal() {
         target_date: input.target_date,
         monthly_contribution: input.monthly_contribution,
         notes: input.notes?.trim() || null,
+        emoji: input.emoji || "🎯",
+        sort_order: input.sort_order || "progress",
         linked_investment_ids: input.linked_investment_ids ?? [],
         step_up_pct: input.step_up_pct ?? 0,
       };

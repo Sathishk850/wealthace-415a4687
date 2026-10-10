@@ -25,6 +25,7 @@ import {
   Wallet,
   Info,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Landmark,
 } from "lucide-react";
@@ -528,6 +529,8 @@ function GoalsView({
 }) {
   const q = useEffectiveGoals();
   const del = useDeleteGoal();
+  const [goalSort, setGoalSort] = useState<"progress" | "date" | "name">("progress");
+  const [showAchieved, setShowAchieved] = useState(false);
 
   if (q.isLoading) return <LoadingBlock label="Loading goals…" />;
   if (q.error) return <ErrorBlock error={q.error as Error} onRetry={() => q.refetch()} />;
@@ -536,6 +539,15 @@ function GoalsView({
   const totalCurrent = goals.reduce((s, g) => s + g.saved_amount, 0);
   const totalTarget = goals.reduce((s, g) => s + g.target_amount, 0);
   const onTrack = goals.filter((g) => goalProgressPct(g) >= 50).length;
+  const sortedGoals = useMemo(() => [...goals].sort((a, b) => {
+    if (goalSort === "progress") return goalProgressPct(b) - goalProgressPct(a);
+    if (goalSort === "date") return (a.target_date ?? "9999-12-31").localeCompare(b.target_date ?? "9999-12-31");
+    return a.name.localeCompare(b.name);
+  }), [goals, goalSort]);
+  const activeGoals = sortedGoals.filter((g) => goalProgressPct(g) < 100);
+  const achievedGoals = sortedGoals.filter((g) => goalProgressPct(g) >= 100);
+  const renderGoal = (g: Goal) => <GoalCard key={g.id} goal={g} onEdit={() => onEditGoal(g)}
+    onDelete={() => del.mutate(g.id)} deleting={del.isPending} />;
 
   return (
     <div className="space-y-6">
@@ -559,25 +571,27 @@ function GoalsView({
           action={<Button size="sm" className="bg-mint text-mint-foreground hover:bg-mint/90" onClick={onAddGoal}><Plus className="h-4 w-4" /> Add Your First Goal</Button>}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {goals.map((g) => (
-            <GoalCard
-              key={g.id}
-              goal={g}
-              onEdit={() => onEditGoal(g)}
-              onDelete={() => del.mutate(g.id)}
-              deleting={del.isPending}
-            />
-          ))}
-          <button
-            onClick={onAddGoal}
-            className="grid min-h-[180px] place-items-center rounded-2xl border-2 border-dashed border-border bg-card/40 text-muted-foreground transition hover:border-mint/40 hover:text-mint"
-          >
-            <div className="flex flex-col items-center gap-2">
-              <Plus className="h-6 w-6" />
-              <span className="text-sm font-medium">Add New Goal</span>
-            </div>
-          </button>
+        <div>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Sort:</span>
+            {(["progress", "date", "name"] as const).map((s) => <Button key={s} type="button" size="sm"
+              variant={goalSort === s ? "secondary" : "ghost"} onClick={() => setGoalSort(s)}>
+              {s === "progress" ? "Progress" : s === "date" ? "Target date" : "Name"}
+            </Button>)}
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {activeGoals.map(renderGoal)}
+            <button onClick={onAddGoal}
+              className="grid min-h-[180px] place-items-center rounded-2xl border-2 border-dashed border-border bg-card/40 text-muted-foreground transition hover:border-mint/40 hover:text-mint">
+              <div className="flex flex-col items-center gap-2"><Plus className="h-6 w-6" /><span className="text-sm font-medium">Add New Goal</span></div>
+            </button>
+          </div>
+          {achievedGoals.length > 0 && <div className="mt-4">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowAchieved((v) => !v)}>
+              {showAchieved ? <ChevronDown /> : <ChevronRight />} 🎉 Achieved Goals ({achievedGoals.length})
+            </Button>
+            {showAchieved && <div className="mt-2 grid grid-cols-1 gap-4 opacity-70 md:grid-cols-2 lg:grid-cols-3">{achievedGoals.map(renderGoal)}</div>}
+          </div>}
         </div>
       )}
     </div>
@@ -596,7 +610,6 @@ function GoalCard({
   deleting: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const Icon = ICON_BY_TYPE[goal.goal_type];
   const pct = goalProgressPct(goal);
   const tone = goalTone(goal);
   const barColor = tone === "positive" ? "bg-success" : tone === "warn" ? "bg-amber-400" : "bg-mint";
@@ -604,7 +617,7 @@ function GoalCard({
     <div className="group rounded-2xl border border-border bg-card p-5 transition hover:border-mint/40">
       <div className="flex items-start justify-between">
         <div className="grid h-11 w-11 place-items-center rounded-xl bg-mint/10 text-mint">
-          <Icon className="h-5 w-5" />
+          <span className="text-xl" aria-hidden>{goal.emoji || "🎯"}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -701,6 +714,7 @@ function GoalDetail({ goal, pct }: { goal: Goal; pct: number }) {
   ];
   return (
     <div className="mt-3 border-t border-border/60 pt-3">
+      {goal.notes && <p className="mb-3 whitespace-pre-wrap text-xs text-muted-foreground">{goal.notes}</p>}
       <div className="mb-3 flex flex-wrap gap-2">
         {milestones.map((m) => (
           <span
@@ -753,6 +767,8 @@ function GoalDialog({
   const [date, setDate] = useState(goal?.target_date ?? "");
   const [monthly, setMonthly] = useState(String(goal?.monthly_contribution ?? "0"));
   const [notes, setNotes] = useState(goal?.notes ?? "");
+  const [emoji, setEmoji] = useState(goal?.emoji ?? "🎯");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [linkedIds, setLinkedIds] = useState<string[]>(goal?.linked_investment_ids ?? []);
   const [stepUpPct, setStepUpPct] = useState<number>(goal?.step_up_pct ?? 0);
   const invListQ = useInvestments();
@@ -767,6 +783,8 @@ function GoalDialog({
       setDate(goal?.target_date ?? "");
       setMonthly(String(goal?.monthly_contribution ?? "0"));
       setNotes(goal?.notes ?? "");
+      setEmoji(goal?.emoji ?? "🎯");
+      setShowEmojiPicker(false);
       setLinkedIds(goal?.linked_investment_ids ?? []);
       setStepUpPct(goal?.step_up_pct ?? 0);
     }
@@ -789,6 +807,8 @@ function GoalDialog({
         target_date: date || null,
         monthly_contribution: mly,
         notes,
+        emoji,
+        sort_order: "progress",
         linked_investment_ids: linkedIds,
         step_up_pct: stepUpPct,
       },
@@ -805,7 +825,15 @@ function GoalDialog({
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
             <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Emergency Fund" maxLength={80} />
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="icon" onClick={() => setShowEmojiPicker((v) => !v)} className="text-xl">{emoji}</Button>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Emergency Fund" maxLength={80} className="flex-1" />
+            </div>
+            {showEmojiPicker && <div className="grid grid-cols-5 gap-1 rounded-xl border border-border bg-popover p-2 shadow-lg">
+              {["🏠","🚗","✈️","📚","💍","👶","🏥","💰","🎯","⛵","🏋️","🎓","💻","📱","🛡️","🌍","🏦","🎪","🏖️","🎁"].map((e) =>
+                <Button key={e} type="button" variant={emoji === e ? "secondary" : "ghost"} size="icon" className="text-lg"
+                  onClick={() => { setEmoji(e); setShowEmojiPicker(false); }}>{e}</Button>)}
+            </div>}
           </div>
           <div className="grid gap-1.5">
             <Label>Type</Label>
@@ -854,8 +882,8 @@ function GoalDialog({
             </p>
           </div>
           <div className="grid gap-1.5">
-            <Label>Notes</Label>
-            <Textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} maxLength={500} rows={2} />
+            <Label className="text-xs text-muted-foreground">Notes (optional)</Label>
+            <Textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} maxLength={500} rows={2} placeholder="Why this goal matters, milestones, strategy…" />
           </div>
           {(invListQ.data ?? []).length > 0 && (
             <div className="grid gap-1.5">
@@ -895,6 +923,7 @@ function GoalDialog({
               setDate("");
               setMonthly("0");
               setNotes("");
+              setEmoji("🎯");
             }}
           />
           <Button onClick={submit} disabled={!valid || upsert.isPending} className="bg-mint text-mint-foreground hover:bg-mint/90">
