@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isSgb } from "@/lib/sgb";
+import { HoldingLinkLine } from "@/components/wealth/holding-link-line";
 import { useUndoDelete } from "@/lib/use-undo-delete";
 import { wealthKeys } from "@/lib/wealth-api";
 import { formatDateShort } from "@/lib/date-format";
@@ -1573,6 +1574,7 @@ function MobileHoldingGroups({
           <div className="truncate text-[11px] text-muted-foreground">
             {[h.symbol?.toUpperCase(), h.type].filter(Boolean).join(" · ")}
           </div>
+          <HoldingLinkLine inv={h.raw_investment} price={h.cmp} live={!!h.live_price} formatPrice={(n) => priceIn(n, h.currency)} />
           {detailed ? (
             <div className="mt-0.5 truncate text-[11px] tabular-nums text-muted-foreground">
               Qty {formatQty(h.quantity)} · Avg {priceIn(h.avg_price, h.currency)}
@@ -1846,6 +1848,7 @@ function HoldingRow({
                 </div>
               );
             })()}
+            <HoldingLinkLine inv={(h as unknown as Holding).raw_investment} price={h.cmp} live={!!(h as unknown as Holding).live_price} formatPrice={(n) => priceIn(n, h.currency)} />
 
           </div>
 
