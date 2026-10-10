@@ -29,6 +29,15 @@ function toYahooSymbol(item: QuoteRequestItem): string {
 
 type YahooQuoteRow = Record<string, unknown>;
 
+function priorSessionClose(closes: unknown[], current: unknown): number | null {
+  const valid = closes.map((v) => normalizePrice(v)).filter((v): v is number => v != null);
+  if (valid.length < 2) return null;
+  // Last daily bar is the current/most recent session; the one before it is the prior close.
+  const last = valid[valid.length - 1];
+  const cur = normalizePrice(current);
+  return cur != null && Math.abs(last - cur) > 1e-6 && valid.length >= 1 ? last : valid[valid.length - 2];
+}
+
 function quoteFromRow(
   row: YahooQuoteRow,
   req: QuoteRequestItem,
@@ -111,7 +120,9 @@ async function yahooChartQuote(
       {
         ...meta,
         regularMarketPrice: meta.regularMarketPrice ?? lastClose,
-        regularMarketPreviousClose: meta.previousClose ?? meta.chartPreviousClose,
+        // chartPreviousClose is the close BEFORE the whole 5-day range, so it
+        // overstates the day change. Use the prior session's daily close.
+        regularMarketPreviousClose: meta.previousClose ?? priorSessionClose(closes, meta.regularMarketPrice) ?? meta.chartPreviousClose,
       },
       req,
       symbol,

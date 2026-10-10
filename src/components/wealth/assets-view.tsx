@@ -1583,7 +1583,7 @@ function MobileHoldingGroups({
         </button>
         <div className="shrink-0 text-right">
           <div className="text-sm font-semibold tabular-nums text-foreground">
-            {compactAmount(h.current, h.currency)}
+            {priceIn(h.current, h.currency)}
           </div>
           <div
             className={`text-[11px] font-medium tabular-nums ${rowUp ? "text-emerald-500" : "text-rose-500"}`}
@@ -1593,7 +1593,7 @@ function MobileHoldingGroups({
           </div>
           <div className="text-[10px] tabular-nums text-muted-foreground">
             {rowUp ? "+" : ""}
-            {compactAmount(h.pnl, h.currency)}
+            {priceIn(h.pnl, h.currency)}
           </div>
         </div>
         <DropdownMenu>
