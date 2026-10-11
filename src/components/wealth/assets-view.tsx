@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { isSgb } from "@/lib/sgb";
 import { HoldingLinkLine } from "@/components/wealth/holding-link-line";
 import { useUndoDelete } from "@/lib/use-undo-delete";
