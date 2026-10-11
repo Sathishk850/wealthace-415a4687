@@ -373,6 +373,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
   const { data: assets = [], isLoading: assetLoading, refetch: refetchAssets } = useAssets();
   const { data: paymentAccounts = [] } = usePaymentAccounts();
 
+  const [tickerFilter, setTickerFilter] = useState<"all" | "missing">("all");
   const delInv = useDeleteInvestment();
   const delAsset = useDeleteAsset();
 
