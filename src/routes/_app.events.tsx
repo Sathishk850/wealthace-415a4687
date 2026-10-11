@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { flagFor, type MarketEvent } from "@/lib/events/types";
+import { UpcomingResultsCard } from "@/components/events/upcoming-results-card";
 import { EventDetailPanel } from "@/components/events/EventDetailPanel";
 import { useMarketEvents, useSyncMarketEvents } from "@/lib/events-api";
 import { formatDate, formatTime } from "@/lib/date-format";
@@ -160,6 +161,8 @@ function EventsPage() {
       </div>
 
       <PushPermissionBanner />
+
+      <UpcomingResultsCard />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <TextTabs items={FILTERS} value={filter} onChange={setFilter} />
