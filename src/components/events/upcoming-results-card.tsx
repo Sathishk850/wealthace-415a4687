@@ -34,7 +34,7 @@ export function UpcomingResultsCard() {
         <div>
           <h2 className="font-serif text-lg font-semibold">This week's Q results</h2>
           <p className="text-xs text-muted-foreground">
-            Upcoming earnings for your holdings &amp; watchlist (next 7 days)
+            All companies reporting in the next 7 days — yours are highlighted
           </p>
         </div>
         <button
@@ -73,11 +73,19 @@ export function UpcomingResultsCard() {
                   <p className="text-sm text-muted-foreground">
                     {items.map((r, i) => (
                       <span key={r.symbol}>
-                        <span className="font-medium text-foreground" title={r.name}>
+                        <span
+                          className={cn(
+                            "font-medium",
+                            r.source === "market" ? "text-muted-foreground" : "text-primary",
+                          )}
+                          title={r.name}
+                        >
                           {r.symbol}
                         </span>
-                        {r.source !== "holding" && (
-                          <span className="text-[10px] text-muted-foreground"> (watch)</span>
+                        {r.source !== "market" && (
+                          <span className="text-[10px] text-primary">
+                            {r.source === "watchlist" ? " (watch)" : " (yours)"}
+                          </span>
                         )}
                         {i < items.length - 1 && ", "}
                       </span>
