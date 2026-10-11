@@ -250,6 +250,16 @@ export async function yahooSearch(query: string, kind: IdentifierType): Promise<
           exchange: "BSE",
           currency: "INR",
         });
+      } else if (!symbol.includes(".") && (q.quoteType === "EQUITY" || q.quoteType === "ETF")) {
+        // Also surface international (US) stocks/ETFs so tickers like QQQM
+        // are findable from Indian stock/ETF forms.
+        results.push({
+          identifier_type: "stock_us",
+          identifier: symbol,
+          name,
+          exchange: q.exchDisp ?? q.exchange ?? "US",
+          currency: "USD",
+        });
       }
     } else if (kind === "stock_us") {
       if (!symbol.includes(".") && (q.quoteType === "EQUITY" || q.quoteType === "ETF")) {
