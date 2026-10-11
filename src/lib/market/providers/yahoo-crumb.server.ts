@@ -110,6 +110,41 @@ export async function yahooAuthedJson<T>(urlWithoutCrumb: string): Promise<T | n
   return null;
 }
 
+/** POST JSON on an endpoint that requires cookie + crumb; retries once with a fresh session. */
+export async function yahooAuthedPost<T>(urlWithoutCrumb: string, body: unknown): Promise<T | null> {
+  for (const force of [false, true]) {
+    const session = await getYahooSession(force);
+    if (!session) continue;
+    const sep = urlWithoutCrumb.includes("?") ? "&" : "?";
+    const url = `${urlWithoutCrumb}${sep}crumb=${encodeURIComponent(session.crumb)}`;
+    try {
+      const res = await fetchWithTimeout(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "User-Agent": UA,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Cookie: session.cookie,
+          },
+          body: JSON.stringify(body),
+        },
+        TIMEOUT_MS,
+      );
+      if (res.status === 401 || res.status === 403) {
+        cached = null;
+        continue; // retry with a fresh session
+      }
+      if (!res.ok) return null;
+      return (await res.json()) as T;
+    } catch (err) {
+      console.warn("[yahoo] authed post failed", err);
+    }
+  }
+  return null;
+}
+
 /** Map an internal instrument reference to a Yahoo ticker. */
 export function toYahooSymbol(item: QuoteRequestItem): string {
   if (item.identifier_type === "stock_in") {

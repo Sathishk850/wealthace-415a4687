@@ -1,6 +1,7 @@
-// Upcoming quarterly results for the user's holdings + watchlist.
-// Computed live from Yahoo calendarEvents — nothing is stored, so past
-// results simply drop out on the next fetch.
+// Upcoming quarterly results across the whole market (next 7 days).
+// Fetched live from Yahoo's earnings calendar — nothing is stored, so past
+// results simply drop out on the next fetch. Holdings/watchlist symbols are
+// tagged so the user can spot their own companies.
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -9,15 +10,17 @@ export type UpcomingResult = {
   symbol: string;
   name: string;
   date: string; // YYYY-MM-DD (IST)
-  source: "holding" | "watchlist" | "both";
+  source: "holding" | "watchlist" | "both" | "market";
 };
 
-type Calendar = {
-  quoteSummary?: {
-    result?: Array<{
-      calendarEvents?: { earnings?: { earningsDate?: Array<{ raw?: number }> } };
-    }>;
-  };
+type CalendarRow = {
+  ticker?: string;
+  companyshortname?: string;
+  startdatetime?: string; // ISO timestamp
+};
+
+type CalendarResponse = {
+  finance?: { result?: Array<{ documents?: Array<{ rows?: CalendarRow[] }> }> };
 };
 
 const istDate = (ms: number) =>
@@ -27,70 +30,93 @@ export const getUpcomingResults = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<UpcomingResult[]> => {
     const { supabase } = context;
+
+    // User's own symbols, for tagging.
     const [inv, wl] = await Promise.all([
       supabase
         .from("wealth_investments")
-        .select("name, symbol, identifier, identifier_type, exchange, status")
+        .select("symbol, identifier, identifier_type, exchange, status")
         .in("identifier_type", ["stock_in", "stock_us"]),
-      supabase.from("user_watchlist").select("symbol, name, category, market"),
+      supabase.from("user_watchlist").select("symbol, category, market"),
     ]);
 
-    const map = new Map<string, { name: string; holding: boolean; watch: boolean }>();
-    const add = (ysym: string, name: string, kind: "holding" | "watch") => {
-      const k = ysym.toUpperCase();
-      const cur = map.get(k) ?? { name, holding: false, watch: false };
-      if (kind === "holding") cur.holding = true;
-      else cur.watch = true;
-      map.set(k, cur);
-    };
+    const holdings = new Set<string>();
+    const watchlist = new Set<string>();
+    const key = (s: string) => s.toUpperCase().replace(/\.(NS|BO)$/i, "");
 
     for (const r of inv.data ?? []) {
       if (r.status && r.status !== "active") continue;
       const id = (r.identifier || r.symbol || "").trim();
-      if (!id) continue;
-      const ysym =
-        r.identifier_type === "stock_in" && !/\.(NS|BO)$/i.test(id)
-          ? `${id}${r.exchange === "BSE" ? ".BO" : ".NS"}`
-          : id;
-      add(ysym, r.name, "holding");
+      if (id) holdings.add(key(id));
     }
     for (const w of wl.data ?? []) {
       const s = (w.symbol || "").trim();
       if (!s || s.startsWith("^") || s.includes("=") || s.includes("-")) continue;
-      const cat = (w.category || "").toLowerCase();
-      if (cat && !/stock|equity|share|in|us/.test(cat)) continue;
-      const mkt = (w.market || "").toUpperCase();
-      const ysym = s.includes(".") || mkt === "US" || mkt === "NASDAQ" || mkt === "NYSE" ? s : `${s}.NS`;
-      add(ysym, w.name, "watch");
+      watchlist.add(key(s));
     }
 
-    const { yahooAuthedJson } = await import("./market/providers/yahoo-crumb.server");
+    // Market-wide earnings calendar for the next 7 days.
+    const { yahooAuthedPost } = await import("./market/providers/yahoo-crumb.server");
     const now = Date.now();
     const today = istDate(now);
     const horizon = istDate(now + 7 * 86400_000);
-    const entries = [...map.entries()].slice(0, 80);
-    const out: UpcomingResult[] = [];
+    const mmddyyyy = (d: string) => {
+      const [y, m, day] = d.split("-");
+      return `${m}/${day}/${y}`;
+    };
 
-    for (let i = 0; i < entries.length; i += 8) {
-      await Promise.all(
-        entries.slice(i, i + 8).map(async ([sym, meta]) => {
-          const body = await yahooAuthedJson<Calendar>(
-            `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(sym)}?modules=calendarEvents`,
-          );
-          const dates = body?.quoteSummary?.result?.[0]?.calendarEvents?.earnings?.earningsDate ?? [];
-          const raw = dates.map((d) => Number(d.raw)).filter((n) => n > 0).sort()[0];
-          if (!raw) return;
-          const date = istDate(raw * 1000);
-          if (date < today || date > horizon) return; // drop past + far future
-          out.push({
-            symbol: sym.replace(/\.(NS|BO)$/i, ""),
-            name: meta.name,
-            date,
-            source: meta.holding && meta.watch ? "both" : meta.holding ? "holding" : "watchlist",
-          });
-        }),
-      );
+    const body = await yahooAuthedPost<CalendarResponse>(
+      "https://query2.finance.yahoo.com/v1/finance/visualization",
+      {
+        size: 250,
+        offset: 0,
+        sortField: "intradaymarketcap",
+        sortType: "DESC",
+        quoteType: "EQUITY",
+        query: {
+          operator: "AND",
+          operands: [
+            { operator: "gte", operands: ["earningsDate", mmddyyyy(today)] },
+            { operator: "lt", operands: ["earningsDate", mmddyyyy(istDate(now + 8 * 86400_000))] },
+          ],
+        },
+        userId: "",
+        userIdType: "guid",
+      },
+    );
+
+    const rows = body?.finance?.result?.[0]?.documents?.[0]?.rows ?? [];
+    const out: UpcomingResult[] = [];
+    const seen = new Set<string>();
+
+    for (const row of rows) {
+      const ticker = (row.ticker ?? "").trim();
+      if (!ticker || !row.startdatetime) continue;
+      const date = istDate(Date.parse(row.startdatetime));
+      if (date < today || date > horizon) continue; // drop past + far future
+      const k = key(ticker);
+      if (seen.has(`${k}:${date}`)) continue;
+      seen.add(`${k}:${date}`);
+      const isHolding = holdings.has(k);
+      const isWatch = watchlist.has(k);
+      out.push({
+        symbol: k,
+        name: (row.companyshortname ?? "").trim() || k,
+        date,
+        source: isHolding && isWatch ? "both" : isHolding ? "holding" : isWatch ? "watchlist" : "market",
+      });
     }
-    out.sort((a, b) => (a.date === b.date ? a.symbol.localeCompare(b.symbol) : a.date < b.date ? -1 : 1));
+
+    // Own companies first within each date, then by symbol.
+    const rank = (s: UpcomingResult["source"]) => (s === "market" ? 1 : 0);
+    out.sort((a, b) =>
+      a.date !== b.date
+        ? a.date < b.date
+          ? -1
+          : 1
+        : rank(a.source) !== rank(b.source)
+          ? rank(a.source) - rank(b.source)
+          : a.symbol.localeCompare(b.symbol),
+    );
     return out;
   });
