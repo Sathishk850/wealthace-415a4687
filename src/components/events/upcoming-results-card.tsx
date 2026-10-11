@@ -52,7 +52,7 @@ export function UpcomingResultsCard() {
         <p className="text-sm text-destructive">Couldn't load result dates.</p>
       ) : groups.size === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No quarterly results scheduled this week for your companies.
+          No quarterly results scheduled in the next 7 days.
         </p>
       ) : (
         <ul className="space-y-3">
