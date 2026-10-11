@@ -1095,7 +1095,6 @@ function TransactionsTable({
   useEffect(() => {
     setPeriod("this_month");
     setPeriodTouched(false);
-    setPage(1);
   }, [resetKey]);
 
   useEffect(() => { setSelected(new Set()); }, [period, q, catFilter, from, to, resetKey]);
@@ -1299,7 +1298,6 @@ function TransactionsTable({
                 value={q}
                 onChange={(e) => {
                   setQ(e.target.value);
-                  setPage(1);
                 }}
                 placeholder="Search merchant, note…"
                 className="h-9 pl-8 text-xs"
@@ -1308,7 +1306,7 @@ function TransactionsTable({
           </div>
           <div>
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Period</div>
-            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPeriodTouched(true); setPage(1); }}>
+            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPeriodTouched(true); }}>
               <SelectTrigger className="h-9 w-[150px] text-xs">{useOverride && overrideLabel ? overrideLabel : <SelectValue />}</SelectTrigger>
               <SelectContent>
                 {PERIOD_OPTIONS.map((o) => (
@@ -1319,7 +1317,7 @@ function TransactionsTable({
           </div>
           <div>
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Category</div>
-            <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); setPage(1); }}>
+            <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); }}>
               <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All categories</SelectItem>
@@ -1334,7 +1332,7 @@ function TransactionsTable({
               <span className="text-xs text-muted-foreground">Tag:</span>
               <button
                 type="button"
-                onClick={() => { setTagFilter(null); setPage(1); }}
+                onClick={() => { setTagFilter(null); }}
                 className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20"
               >
                 {tagFilter}
@@ -1347,11 +1345,11 @@ function TransactionsTable({
           <div className="flex flex-wrap items-end gap-2">
             <div>
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">From</div>
-              <DatePicker value={from} onChange={(v) => { setFrom(v); setPage(1); }} placeholder="Start date" className="h-9 w-[150px] text-xs" />
+              <DatePicker value={from} onChange={(v) => { setFrom(v); }} placeholder="Start date" className="h-9 w-[150px] text-xs" />
             </div>
             <div>
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">To</div>
-              <DatePicker value={to} onChange={(v) => { setTo(v); setPage(1); }} placeholder="End date" className="h-9 w-[150px] text-xs" />
+              <DatePicker value={to} onChange={(v) => { setTo(v); }} placeholder="End date" className="h-9 w-[150px] text-xs" />
             </div>
           </div>
         )}
@@ -1442,7 +1440,7 @@ function TransactionsTable({
                           <button
                             key={tag}
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); setPage(1); }}
+                            onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); }}
                             className={cn(
                               "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
                               tagFilter === tag
@@ -1533,7 +1531,7 @@ function TransactionsTable({
                               <button
                                 key={tag}
                                 type="button"
-                                onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); setPage(1); }}
+                                onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); }}
                                 className={cn(
                                   "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
                                   tagFilter === tag
