@@ -1052,6 +1052,8 @@ function SortHeader({
 /* ============================================================
  * Transactions table (used by Transactions/Income/Expenses tabs)
  * ========================================================== */
+const TX_PAGE_SIZE = 20;
+
 function TransactionsTable({
 
   rows,

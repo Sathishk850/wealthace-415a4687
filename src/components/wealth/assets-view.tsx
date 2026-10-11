@@ -572,9 +572,22 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     [tabRows],
   );
 
+  const missingTickerIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const inv of investments as any[]) {
+      if (!inv.ticker && !inv.symbol && !inv.identifier && ["Stocks", "Mutual Funds", "ETFs"].includes(inv.category ?? "")) ids.add(inv.id);
+    }
+    return ids;
+  }, [investments]);
+  const missingTicker = missingTickerIds.size;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return tabRows.filter((r) => {
+      if (tickerFilter === "missing") {
+        const ids = [r.id, ...(r.lots ?? []).map((l) => l.id)];
+        if (!ids.some((id) => missingTickerIds.has(id))) return false;
+      }
       if (q) {
         const hay =
           `${r.name} ${r.symbol ?? ""} ${r.type} ${r.segment} ${r.platform ?? ""}`.toLowerCase();
