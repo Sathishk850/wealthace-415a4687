@@ -1052,6 +1052,8 @@ function SortHeader({
 /* ============================================================
  * Transactions table (used by Transactions/Income/Expenses tabs)
  * ========================================================== */
+const TX_PAGE_SIZE = 20;
+
 function TransactionsTable({
 
   rows,
@@ -1083,10 +1085,9 @@ function TransactionsTable({
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [sort, setSort] = useState<TxSortKey>("date_desc");
-  const [page, setPage] = useState(1);
+  const [visibleCount, setVisibleCount] = useState(TX_PAGE_SIZE);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const pageSize = isMobile ? 5 : 8;
 
   // Navigator override: applies while the Period dropdown is left at its default
   const useOverride =
@@ -1096,7 +1097,6 @@ function TransactionsTable({
   useEffect(() => {
     setPeriod("this_month");
     setPeriodTouched(false);
-    setPage(1);
   }, [resetKey]);
 
   useEffect(() => { setSelected(new Set()); }, [period, q, catFilter, from, to, resetKey]);
@@ -1146,9 +1146,25 @@ function TransactionsTable({
     return sorted;
   }, [rows, q, catFilter, sort, range, tagFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    setVisibleCount(TX_PAGE_SIZE);
+  }, [period, q, catFilter, tagFilter, sort, from, to, resetKey]);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + TX_PAGE_SIZE, Math.max(filtered.length, TX_PAGE_SIZE)));
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [filtered.length]);
+  const pageRows = filtered.slice(0, visibleCount);
 
   const queryClient = useQueryClient();
   const [confirmDel, setConfirmDel] = useState<Transaction | null>(null);
@@ -1284,7 +1300,6 @@ function TransactionsTable({
                 value={q}
                 onChange={(e) => {
                   setQ(e.target.value);
-                  setPage(1);
                 }}
                 placeholder="Search merchant, note…"
                 className="h-9 pl-8 text-xs"
@@ -1293,7 +1308,7 @@ function TransactionsTable({
           </div>
           <div>
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Period</div>
-            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPeriodTouched(true); setPage(1); }}>
+            <Select value={period} onValueChange={(v) => { setPeriod(v as PeriodKey); setPeriodTouched(true); }}>
               <SelectTrigger className="h-9 w-[150px] text-xs">{useOverride && overrideLabel ? overrideLabel : <SelectValue />}</SelectTrigger>
               <SelectContent>
                 {PERIOD_OPTIONS.map((o) => (
@@ -1304,7 +1319,7 @@ function TransactionsTable({
           </div>
           <div>
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Category</div>
-            <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); setPage(1); }}>
+            <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); }}>
               <SelectTrigger className="h-9 w-[150px] text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All categories</SelectItem>
@@ -1319,7 +1334,7 @@ function TransactionsTable({
               <span className="text-xs text-muted-foreground">Tag:</span>
               <button
                 type="button"
-                onClick={() => { setTagFilter(null); setPage(1); }}
+                onClick={() => { setTagFilter(null); }}
                 className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/20"
               >
                 {tagFilter}
@@ -1332,11 +1347,11 @@ function TransactionsTable({
           <div className="flex flex-wrap items-end gap-2">
             <div>
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">From</div>
-              <DatePicker value={from} onChange={(v) => { setFrom(v); setPage(1); }} placeholder="Start date" className="h-9 w-[150px] text-xs" />
+              <DatePicker value={from} onChange={(v) => { setFrom(v); }} placeholder="Start date" className="h-9 w-[150px] text-xs" />
             </div>
             <div>
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">To</div>
-              <DatePicker value={to} onChange={(v) => { setTo(v); setPage(1); }} placeholder="End date" className="h-9 w-[150px] text-xs" />
+              <DatePicker value={to} onChange={(v) => { setTo(v); }} placeholder="End date" className="h-9 w-[150px] text-xs" />
             </div>
           </div>
         )}
@@ -1427,7 +1442,7 @@ function TransactionsTable({
                           <button
                             key={tag}
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); setPage(1); }}
+                            onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); }}
                             className={cn(
                               "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
                               tagFilter === tag
@@ -1518,7 +1533,7 @@ function TransactionsTable({
                               <button
                                 key={tag}
                                 type="button"
-                                onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); setPage(1); }}
+                                onClick={(e) => { e.stopPropagation(); setTagFilter(tag === tagFilter ? null : tag); }}
                                 className={cn(
                                   "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
                                   tagFilter === tag
@@ -1567,17 +1582,12 @@ function TransactionsTable({
           </div>
 
 
-          <div className="flex items-center justify-between gap-2 border-t border-border p-3 text-xs text-muted-foreground">
-            <div>Showing {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} of {filtered.length}</div>
-            <div className="flex items-center gap-1">
-              <button disabled={safePage <= 1} onClick={() => setPage((p) => p - 1)} className="grid h-7 w-7 place-items-center rounded-md border border-border hover:bg-surface disabled:opacity-40">
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-              <span className="px-2">Page {safePage} of {totalPages}</span>
-              <button disabled={safePage >= totalPages} onClick={() => setPage((p) => p + 1)} className="grid h-7 w-7 place-items-center rounded-md border border-border hover:bg-surface disabled:opacity-40">
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
+          <div ref={sentinelRef} className="h-1" />
+          <div className="border-t border-border p-3 text-xs text-muted-foreground">
+            Showing {pageRows.length} of {filtered.length} transactions
+            {visibleCount < filtered.length && (
+              <span className="ml-1 text-primary"> — scroll for more</span>
+            )}
           </div>
         </>
       )}

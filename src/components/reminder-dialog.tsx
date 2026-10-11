@@ -29,7 +29,9 @@ import {
   type Recurrence,
   useUpsertReminder,
   useDeleteReminder,
+  toolsKeys,
 } from "@/lib/tools-api";
+import { useUndoDelete } from "@/lib/use-undo-delete";
 import { Trash2 } from "lucide-react";
 
 const RECS: { value: Recurrence; label: string }[] = [
@@ -62,6 +64,11 @@ export function ReminderDialog({
 
   const upsert = useUpsertReminder();
   const del = useDeleteReminder();
+  const undoDelete = useUndoDelete<Reminder>({
+    queryKey: toolsKeys.reminders,
+    commit: (r) => del.mutateAsync(r.id),
+    label: (r) => `"${r.title}"`,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -178,8 +185,8 @@ export function ReminderDialog({
             <Button
               variant="outline"
               className="border-destructive/40 text-destructive hover:bg-destructive/10"
-              onClick={async () => {
-                await del.mutateAsync(reminder.id);
+              onClick={() => {
+                undoDelete(reminder);
                 onOpenChange(false);
               }}
             >
