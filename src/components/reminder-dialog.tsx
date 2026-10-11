@@ -29,7 +29,9 @@ import {
   type Recurrence,
   useUpsertReminder,
   useDeleteReminder,
+  toolsKeys,
 } from "@/lib/tools-api";
+import { useUndoDelete } from "@/lib/use-undo-delete";
 import { Trash2 } from "lucide-react";
 
 const RECS: { value: Recurrence; label: string }[] = [
