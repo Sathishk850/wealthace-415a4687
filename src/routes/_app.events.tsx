@@ -288,6 +288,7 @@ function EventsPage() {
       </Card>
       {selected && <EventDetailPanel event={selected} onClose={() => setSelected(null)} />}
       </div>
+      )}
     </div>
   );
 }
