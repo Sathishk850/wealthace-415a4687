@@ -79,15 +79,82 @@ function readAsDataUrl(file: File) {
   });
 }
 
+/**
+ * Client-side preprocessing before upload:
+ * - Re-encodes any image through a canvas as JPEG (converts HEIC from iPhone
+ *   cameras to a format the reader accepts, and compresses large photos).
+ * - Caps the long edge at 2048px so big camera photos don't time out.
+ * - PDFs pass through untouched.
+ */
+async function preprocessImage(file: File): Promise<File> {
+  if (file.type === "application/pdf") return file;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const MAX = 2048;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width >= height) {
+          height = Math.round((height / width) * MAX);
+          width = MAX;
+        } else {
+          width = Math.round((width / height) * MAX);
+          height = MAX;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file); // fallback to original
+            return;
+          }
+          resolve(
+            new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+              type: "image/jpeg",
+            }),
+          );
+        },
+        "image/jpeg",
+        0.85,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file); // fallback to original if the image fails to decode
+    };
+
+    img.src = url;
+  });
+}
+
 const FRIENDLY: Record<string, string> = {
   AI_NOT_CONFIGURED:
     "The reader isn't available right now. You can still add this expense manually.",
   AI_CREDITS:
     "Scanning is temporarily unavailable because the workspace is out of AI credits.",
   AI_BUSY: "Too many scans at once — please try again in a moment.",
+  AI_FAILED:
+    "The receipt reader returned an unexpected error. Please try again or enter the expense manually.",
   UNSUPPORTED_FILE: "Please choose a photo (JPG, PNG, HEIC) or a PDF.",
   UNREADABLE_DOCUMENT:
-    "We couldn't read this file. Try a clearer, well-lit photo — or add it manually.",
+    "Couldn't read this receipt. Tips: ensure good lighting, hold steady, and capture the full receipt in frame. Or enter the expense manually.",
   READ_FAILED: "That file couldn't be opened. Please try another one.",
   TOO_LARGE: "That file is larger than 15 MB. Please use a smaller photo or PDF.",
 };
@@ -171,8 +238,12 @@ export function ExpenseScanDialog({
     setStage("reading");
     setErrCode("");
     try {
-      const dataUrl = await readAsDataUrl(f);
-      const res = await scanReceipt({ data: { dataUrl, filename: f.name } });
+      // Preprocess: convert HEIC→JPEG, resize large photos, keep PDFs as-is.
+      const processedFile = await preprocessImage(f);
+      const dataUrl = await readAsDataUrl(processedFile);
+      const res = await scanReceipt({
+        data: { dataUrl, filename: processedFile.name },
+      });
       // Categories / accounts may still be loading when the scan returns; match
       // against freshly resolved lists so suggestions aren't silently skipped.
       const catList = categories.length
@@ -275,7 +346,7 @@ export function ExpenseScanDialog({
             <Loader2 className="h-6 w-6 animate-spin text-mint" />
             <div className="text-sm font-semibold text-foreground">Reading receipt…</div>
             <div className="text-xs text-muted-foreground">
-              This usually takes a few seconds.
+              Processing image and extracting details. This usually takes 5–10 seconds.
             </div>
           </div>
         )}
@@ -284,7 +355,12 @@ export function ExpenseScanDialog({
           <div className="grid gap-3">
             <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{FRIENDLY[errCode] ?? FRIENDLY["UNREADABLE_DOCUMENT"]}</span>
+              <span>
+                {FRIENDLY[errCode] ??
+                  (errCode.startsWith("AI_FAILED")
+                    ? FRIENDLY["AI_FAILED"]
+                    : FRIENDLY["UNREADABLE_DOCUMENT"])}
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => setStage("pick")}>
