@@ -192,9 +192,13 @@ function EventsPage() {
             ))}
           </SelectContent>
           </Select>
-        </div>
+          </div>
+        )}
       </div>
 
+      {filter === "qresults" ? (
+        <UpcomingResultsCard />
+      ) : (
       <div className="flex flex-col gap-4 lg:flex-row">
       <Card className="min-w-0 flex-1 overflow-x-auto p-0">
         <table className="w-full min-w-[900px] text-sm">
