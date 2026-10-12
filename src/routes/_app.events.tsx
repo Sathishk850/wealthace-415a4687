@@ -55,8 +55,8 @@ export const Route = createFileRoute("/_app/events")({
 const FILTERS = [
   { value: "all", label: "All" },
   { value: "upcoming", label: "Upcoming" },
-  { value: "released", label: "Released" },
   { value: "high", label: "High Impact" },
+  { value: "qresults", label: "Q Results" },
 ];
 
 const COUNTRIES = ["All Countries", "US", "India", "Eurozone", "UK", "Japan", "China"];
