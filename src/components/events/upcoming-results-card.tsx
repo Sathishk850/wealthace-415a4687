@@ -23,11 +23,30 @@ export function UpcomingResultsCard() {
   });
 
   const today = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
-  const groups = new Map<string, UpcomingResult[]>();
-  for (const r of q.data ?? []) {
-    if (r.date < today) continue; // never show past results
-    groups.set(r.date, [...(groups.get(r.date) ?? []), r]);
-  }
+  const groups = useMemo(() => {
+    const map = new Map<string, UpcomingResult[]>();
+    for (const r of q.data ?? []) {
+      if (r.date < today) continue; // never show past results
+      map.set(r.date, [...(map.get(r.date) ?? []), r]);
+    }
+    return [...map.entries()];
+  }, [q.data, today]);
+
+  // Day groups start collapsed; the nearest day is expanded initially.
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    if (groups.length > 0 && expanded.size === 0) {
+      setExpanded(new Set([groups[0][0]]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups.length]);
+  const toggle = (date: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
 
   return (
     <Card className="p-4">
