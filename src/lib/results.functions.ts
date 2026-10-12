@@ -110,7 +110,7 @@ export const getUpcomingResults = createServerFn({ method: "POST" })
       const rows = body?.finance?.result?.[0]?.documents?.[0]?.rows ?? [];
       return rows
         .map((r) => (Array.isArray(r) ? { ticker: r[0], companyshortname: r[1], startdatetime: r[2] } : r))
-        .filter((r) => r.ticker && r.startdatetime && !/[.-]/.test(r.ticker))
+        .filter((r) => r.ticker && r.startdatetime && !/[.-]/.test(String(r.ticker)))
         .map((r) => ({
           symbol: String(r.ticker),
           name: String(r.companyshortname ?? r.ticker),
