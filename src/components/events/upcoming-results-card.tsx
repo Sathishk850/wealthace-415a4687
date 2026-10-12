@@ -70,27 +70,43 @@ export function UpcomingResultsCard() {
         <p className="text-sm text-muted-foreground">Checking result dates…</p>
       ) : q.isError ? (
         <p className="text-sm text-destructive">Couldn't load result dates.</p>
-      ) : groups.size === 0 ? (
+      ) : groups.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No quarterly results scheduled in the next 7 days.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {[...groups.entries()].map(([date, items]) => {
+        <ul className="space-y-1.5">
+          {groups.map(([date, items]) => {
             const f = fmt(date);
+            const isOpen = expanded.has(date);
             return (
-              <li key={date} className="flex gap-3">
-                <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">
+              <li key={date} className="rounded-lg border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => toggle(date)}
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-muted/40"
+                >
+                  {isOpen ? (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">
                     {f.day} • {f.weekday}
                     {date === today && (
                       <span className="ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
                         Today
                       </span>
                     )}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {items.length} {items.length === 1 ? "company" : "companies"}
+                  </span>
+                </button>
+                {isOpen && (
+                  <p className="border-t border-border/60 px-2.5 py-2 pl-10 text-sm text-muted-foreground">
                     {items.map((r, i) => (
                       <span key={r.symbol}>
                         <span
@@ -111,7 +127,7 @@ export function UpcomingResultsCard() {
                       </span>
                     ))}
                   </p>
-                </div>
+                )}
               </li>
             );
           })}
