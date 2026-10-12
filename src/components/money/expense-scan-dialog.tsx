@@ -79,15 +79,82 @@ function readAsDataUrl(file: File) {
   });
 }
 
+/**
+ * Client-side preprocessing before upload:
+ * - Re-encodes any image through a canvas as JPEG (converts HEIC from iPhone
+ *   cameras to a format the reader accepts, and compresses large photos).
+ * - Caps the long edge at 2048px so big camera photos don't time out.
+ * - PDFs pass through untouched.
+ */
+async function preprocessImage(file: File): Promise<File> {
+  if (file.type === "application/pdf") return file;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const MAX = 2048;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width >= height) {
+          height = Math.round((height / width) * MAX);
+          width = MAX;
+        } else {
+          width = Math.round((width / height) * MAX);
+          height = MAX;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file); // fallback to original
+            return;
+          }
+          resolve(
+            new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+              type: "image/jpeg",
+            }),
+          );
+        },
+        "image/jpeg",
+        0.85,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file); // fallback to original if the image fails to decode
+    };
+
+    img.src = url;
+  });
+}
+
 const FRIENDLY: Record<string, string> = {
   AI_NOT_CONFIGURED:
     "The reader isn't available right now. You can still add this expense manually.",
   AI_CREDITS:
     "Scanning is temporarily unavailable because the workspace is out of AI credits.",
   AI_BUSY: "Too many scans at once — please try again in a moment.",
+  AI_FAILED:
+    "The receipt reader returned an unexpected error. Please try again or enter the expense manually.",
   UNSUPPORTED_FILE: "Please choose a photo (JPG, PNG, HEIC) or a PDF.",
   UNREADABLE_DOCUMENT:
-    "We couldn't read this file. Try a clearer, well-lit photo — or add it manually.",
+    "Couldn't read this receipt. Tips: ensure good lighting, hold steady, and capture the full receipt in frame. Or enter the expense manually.",
   READ_FAILED: "That file couldn't be opened. Please try another one.",
   TOO_LARGE: "That file is larger than 15 MB. Please use a smaller photo or PDF.",
 };
