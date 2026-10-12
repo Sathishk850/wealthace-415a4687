@@ -238,8 +238,12 @@ export function ExpenseScanDialog({
     setStage("reading");
     setErrCode("");
     try {
-      const dataUrl = await readAsDataUrl(f);
-      const res = await scanReceipt({ data: { dataUrl, filename: f.name } });
+      // Preprocess: convert HEIC→JPEG, resize large photos, keep PDFs as-is.
+      const processedFile = await preprocessImage(f);
+      const dataUrl = await readAsDataUrl(processedFile);
+      const res = await scanReceipt({
+        data: { dataUrl, filename: processedFile.name },
+      });
       // Categories / accounts may still be loading when the scan returns; match
       // against freshly resolved lists so suggestions aren't silently skipped.
       const catList = categories.length
@@ -342,7 +346,7 @@ export function ExpenseScanDialog({
             <Loader2 className="h-6 w-6 animate-spin text-mint" />
             <div className="text-sm font-semibold text-foreground">Reading receipt…</div>
             <div className="text-xs text-muted-foreground">
-              This usually takes a few seconds.
+              Processing image and extracting details. This usually takes 5–10 seconds.
             </div>
           </div>
         )}
@@ -351,7 +355,12 @@ export function ExpenseScanDialog({
           <div className="grid gap-3">
             <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{FRIENDLY[errCode] ?? FRIENDLY["UNREADABLE_DOCUMENT"]}</span>
+              <span>
+                {FRIENDLY[errCode] ??
+                  (errCode.startsWith("AI_FAILED")
+                    ? FRIENDLY["AI_FAILED"]
+                    : FRIENDLY["UNREADABLE_DOCUMENT"])}
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => setStage("pick")}>
