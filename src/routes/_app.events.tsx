@@ -55,8 +55,8 @@ export const Route = createFileRoute("/_app/events")({
 const FILTERS = [
   { value: "all", label: "All" },
   { value: "upcoming", label: "Upcoming" },
-  { value: "released", label: "Released" },
   { value: "high", label: "High Impact" },
+  { value: "qresults", label: "Q Results" },
 ];
 
 const COUNTRIES = ["All Countries", "US", "India", "Eurozone", "UK", "Japan", "China"];
@@ -104,7 +104,6 @@ function EventsPage() {
       }
 
       if (filter === "upcoming") return e.status?.toLowerCase() === "upcoming";
-      if (filter === "released") return e.status?.toLowerCase() === "released";
       if (filter === "high") return ["high", "very high"].includes(e.impact?.toLowerCase() ?? "");
       return true;
     });
@@ -162,11 +161,10 @@ function EventsPage() {
 
       <PushPermissionBanner />
 
-      <UpcomingResultsCard />
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <TextTabs items={FILTERS} value={filter} onChange={setFilter} />
-        <div className="flex flex-wrap items-center gap-2">
+        {filter !== "qresults" && (
+          <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
             {DATE_RANGES.map((r) => (
               <button
@@ -194,9 +192,13 @@ function EventsPage() {
             ))}
           </SelectContent>
           </Select>
-        </div>
+          </div>
+        )}
       </div>
 
+      {filter === "qresults" ? (
+        <UpcomingResultsCard />
+      ) : (
       <div className="flex flex-col gap-4 lg:flex-row">
       <Card className="min-w-0 flex-1 overflow-x-auto p-0">
         <table className="w-full min-w-[900px] text-sm">
@@ -286,6 +288,7 @@ function EventsPage() {
       </Card>
       {selected && <EventDetailPanel event={selected} onClose={() => setSelected(null)} />}
       </div>
+      )}
     </div>
   );
 }
