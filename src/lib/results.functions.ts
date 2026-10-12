@@ -20,7 +20,7 @@ type CalendarRow = {
 };
 
 type CalendarResponse = {
-  finance?: { result?: Array<{ documents?: Array<{ rows?: CalendarRow[] }> }> };
+  finance?: { result?: Array<{ documents?: Array<{ rows?: Array<CalendarRow | Array<string | number>> }> }> };
 };
 
 const istDate = (ms: number) =>
