@@ -104,7 +104,6 @@ function EventsPage() {
       }
 
       if (filter === "upcoming") return e.status?.toLowerCase() === "upcoming";
-      if (filter === "released") return e.status?.toLowerCase() === "released";
       if (filter === "high") return ["high", "very high"].includes(e.impact?.toLowerCase() ?? "");
       return true;
     });
