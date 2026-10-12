@@ -161,11 +161,10 @@ function EventsPage() {
 
       <PushPermissionBanner />
 
-      <UpcomingResultsCard />
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <TextTabs items={FILTERS} value={filter} onChange={setFilter} />
-        <div className="flex flex-wrap items-center gap-2">
+        {filter !== "qresults" && (
+          <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
             {DATE_RANGES.map((r) => (
               <button
