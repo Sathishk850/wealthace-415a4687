@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CategorySelect } from "@/components/money/category-select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { formatDate } from "@/lib/date-format";
 import { scanReceipt, type ScanFields } from "@/lib/expense-scan.functions";
