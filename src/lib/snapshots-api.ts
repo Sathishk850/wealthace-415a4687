@@ -62,3 +62,14 @@ export function useUpdateSnapshotAnnotation() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
   });
 }
+/** Silently refreshes an existing snapshot row with live totals from the global calculator. */
+export function useSyncSnapshotTotals() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...totals }: { id: string; net_worth: number; assets_total: number; liabilities_total: number; investments_total: number }) => {
+      const { error } = await supabase.from("wealth_snapshots").update(totals).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+  });
+}

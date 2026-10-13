@@ -1,4 +1,4 @@
-import { useMemo, useState, type ElementType } from "react";
+import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
 import {
   Area,
   AreaChart,
@@ -21,10 +21,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { inr, inrCompact, useAssets, useInvestments, useLiabilities } from "@/lib/wealth-api";
+import { inr, inrCompact, useAccounts, useAssets, useInvestments, useLiabilities } from "@/lib/wealth-api";
+import { CASH_TYPES, computeNetWorth, isActive } from "@/lib/networth";
 import {
   useDeleteSnapshot,
   useSnapshots,
+  useSyncSnapshotTotals,
   useUpdateSnapshotAnnotation,
   type Snapshot,
 } from "@/lib/snapshots-api";
@@ -75,9 +77,26 @@ export function SnapshotsView() {
   const assetsQuery = useAssets();
   const investmentsQuery = useInvestments();
   const liabilitiesQuery = useLiabilities();
-  const assets = assetsQuery.data ?? [];
-  const investments = investmentsQuery.data ?? [];
-  const liabilities = liabilitiesQuery.data ?? [];
+  const accountsQuery = useAccounts();
+  const allAssets = assetsQuery.data;
+  const allInvestments = investmentsQuery.data;
+  const allLiabilities = liabilitiesQuery.data;
+  const allAccounts = accountsQuery.data;
+  // Same inclusion rules as the global net-worth calculator (closed/sold excluded).
+  const assets = useMemo(() => (allAssets ?? []).filter((a) => isActive(a.status)), [allAssets]);
+  const investments = useMemo(() => (allInvestments ?? []).filter((i) => isActive(i.status)), [allInvestments]);
+  const liabilities = useMemo(() => (allLiabilities ?? []).filter((l) => isActive(l.status)), [allLiabilities]);
+  const cashAccounts = useMemo(
+    () => (allAccounts ?? []).filter((a) => isActive(a.status) && CASH_TYPES.includes(String(a.account_type ?? "").toLowerCase())),
+    [allAccounts],
+  );
+  const live = useMemo(
+    () => computeNetWorth({ assets: allAssets, investments: allInvestments, accounts: allAccounts, liabilities: allLiabilities }),
+    [allAssets, allInvestments, allAccounts, allLiabilities],
+  );
+  const liveReady = !!allAssets && !!allInvestments && !!allAccounts && !!allLiabilities;
+  const syncTotals = useSyncSnapshotTotals();
+  const syncedKey = useRef<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeTabs, setActiveTabs] = useState<Record<string, HistoryTab>>({});
   const [editAnnotation, setEditAnnotation] = useState<{ id: string; text: string } | null>(null);
@@ -87,6 +106,32 @@ export function SnapshotsView() {
     () => [...snapshots].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date)),
     [snapshots],
   );
+  // Keep today's snapshot in step with edits made today (e.g. a loan closed after capture).
+  useEffect(() => {
+    if (!liveReady || syncTotals.isPending) return;
+    const latest = sorted[sorted.length - 1];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    if (!latest || latest.snapshot_date.slice(0, 10) !== today) return;
+    if (live.totalAssets === 0 && live.liabilitiesTotal === 0) return;
+    const round = (n: number) => Math.round(n);
+    const same =
+      round(latest.net_worth) === round(live.netWorth) &&
+      round(latest.assets_total) === round(live.totalAssets) &&
+      round(latest.liabilities_total) === round(live.liabilitiesTotal) &&
+      round(latest.investments_total) === round(live.investmentsTotal);
+    const key = `${latest.id}:${round(live.netWorth)}:${round(live.totalAssets)}:${round(live.liabilitiesTotal)}`;
+    if (same || syncedKey.current === key) return;
+    syncedKey.current = key;
+    syncTotals.mutate({
+      id: latest.id,
+      net_worth: live.netWorth,
+      assets_total: live.totalAssets,
+      liabilities_total: live.liabilitiesTotal,
+      investments_total: live.investmentsTotal,
+    });
+  }, [liveReady, live, sorted, syncTotals]);
+
   const sortedDesc = useMemo(() => [...sorted].reverse(), [sorted]);
   const indexById = useMemo(() => new Map(sorted.map((snapshot, index) => [snapshot.id, index])), [sorted]);
   const chartData = useMemo(
@@ -139,8 +184,10 @@ export function SnapshotsView() {
     return [
       { label: "Net Worth", delta: snapshot.net_worth - previous.net_worth, favorableWhenPositive: true },
       { label: "Assets", delta: snapshot.assets_total - previous.assets_total, favorableWhenPositive: true },
+      { label: "Investments", delta: snapshot.investments_total - previous.investments_total, favorableWhenPositive: true },
+      { label: "Other assets & cash", delta: (snapshot.assets_total - snapshot.investments_total) - (previous.assets_total - previous.investments_total), favorableWhenPositive: true },
       { label: "Liabilities", delta: snapshot.liabilities_total - previous.liabilities_total, favorableWhenPositive: false },
-    ].filter((row) => row.delta !== 0);
+    ].filter((row) => Math.round(row.delta) !== 0);
   }
 
   if (snapshotsQuery.isLoading) {
@@ -290,11 +337,11 @@ export function SnapshotsView() {
                     {activeTab === "items" ? (
                       <div className="space-y-4">
                         <div>
-                          <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">Assets ({investments.length + assets.length})</p>
+                          <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">Assets ({investments.length + assets.length + cashAccounts.length})</p>
                           {Object.entries(investmentsByCategory).map(([category, items]) => (
                             <div key={category} className="flex items-center justify-between gap-3 py-1.5">
                               <span className="text-xs font-medium text-foreground">{category} ({items.length})</span>
-                              <span className="font-ledger-mono text-xs text-muted-foreground">{inrCompact(items.reduce((sum, item) => sum + Number(item.current_value ?? 0), 0))}</span>
+                              <span className="font-ledger-mono text-xs text-muted-foreground">{inrCompact(items.reduce((sum, item) => sum + Number(item.current_value ?? item.invested_value ?? 0), 0))}</span>
                             </div>
                           ))}
                           {assets.map((asset) => (
@@ -303,7 +350,13 @@ export function SnapshotsView() {
                               <span className="shrink-0 font-ledger-mono text-xs text-muted-foreground">{inrCompact(asset.current_value)}</span>
                             </div>
                           ))}
-                          {investments.length + assets.length === 0 && <p className="text-xs text-muted-foreground">No current assets found.</p>}
+                          {cashAccounts.length > 0 && (
+                            <div className="flex items-center justify-between gap-3 py-1.5">
+                              <span className="text-xs font-medium text-foreground">Cash &amp; bank ({cashAccounts.length})</span>
+                              <span className="font-ledger-mono text-xs text-muted-foreground">{inrCompact(live.cashTotal)}</span>
+                            </div>
+                          )}
+                          {investments.length + assets.length + cashAccounts.length === 0 && <p className="text-xs text-muted-foreground">No current assets found.</p>}
                         </div>
                         {liabilities.length > 0 && (
                           <div>
@@ -317,7 +370,7 @@ export function SnapshotsView() {
                           </div>
                         )}
                         <div className="border-t border-border pt-3 text-[10px] leading-relaxed text-muted-foreground">
-                          Current holdings are shown as a proxy; historical line items were not stored with this snapshot. Recorded totals: {inr(snapshot.assets_total)} assets and {inr(snapshot.liabilities_total)} liabilities.
+                          Current holdings are shown as a proxy; historical line items were not stored with this snapshot. Live net worth: {inr(live.netWorth)}. Recorded totals: {inr(snapshot.assets_total)} assets and {inr(snapshot.liabilities_total)} liabilities.
                         </div>
                       </div>
                     ) : (
