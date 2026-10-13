@@ -192,7 +192,6 @@ export function ExpenseScanDialog({
   const transactionsQ = useTransactions();
   const accountsQ = usePaymentAccounts();
   const categories: Category[] = categoriesQ.data ?? [];
-  const expenseCats = categories.filter((c) => c.kind === "expense");
   const accounts = (accountsQ.data ?? []).filter((a) => a.is_active);
 
   // Keep "Paid from" consistent with the detected mode (a credit-card receipt

@@ -132,7 +132,6 @@ export function BulkAddSheet({ open, onOpenChange, defaultKind = "expense", cate
     onOpenChange(false);
   };
 
-  const catsFor = (k: Kind) => categories.filter((c) => c.kind === k);
 
   const KindSel = ({ row }: { row: BulkRow }) => (
     <Select value={row.kind} onValueChange={(v) => update(row._id, { kind: v as Kind })}>
