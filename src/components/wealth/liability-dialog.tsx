@@ -93,7 +93,7 @@ export function LiabilityDialog({ open, onOpenChange, existing }: Props) {
     try {
       await upsert.mutateAsync({
         ...form,
-        outstanding: Number(form.outstanding),
+        outstanding: Number(form.outstanding ?? 0),
       });
       void commitStagedPaymentPreferences();
       if (keepOpen && !existing) setForm(empty);
@@ -147,9 +147,9 @@ export function LiabilityDialog({ open, onOpenChange, existing }: Props) {
               type="number"
               min={0}
               step="0.01"
-              value={Number.isFinite(form.outstanding as number) && (form.outstanding as unknown) !== "" ? form.outstanding : ""}
+              value={form.outstanding ?? ""}
               onChange={(e) =>
-                setForm({ ...form, outstanding: Number(e.target.value) })
+                setForm({ ...form, outstanding: (e.target.value === "" ? null : Number(e.target.value)) as number })
               }
             />
           </Field>
