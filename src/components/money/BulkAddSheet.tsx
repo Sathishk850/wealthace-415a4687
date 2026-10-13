@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CategorySelect } from "@/components/money/category-select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -132,7 +133,6 @@ export function BulkAddSheet({ open, onOpenChange, defaultKind = "expense", cate
     onOpenChange(false);
   };
 
-  const catsFor = (k: Kind) => categories.filter((c) => c.kind === k);
 
   const KindSel = ({ row }: { row: BulkRow }) => (
     <Select value={row.kind} onValueChange={(v) => update(row._id, { kind: v as Kind })}>
@@ -144,14 +144,15 @@ export function BulkAddSheet({ open, onOpenChange, defaultKind = "expense", cate
     </Select>
   );
   const CatSel = ({ row }: { row: BulkRow }) => (
-    <Select value={row.categoryId} onValueChange={(v) => update(row._id, { categoryId: v })}>
-      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
-      <SelectContent>
-        {catsFor(row.kind).map((c) => (
-          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <CategorySelect
+      value={row.categoryId}
+      onChange={(v) => update(row._id, { categoryId: v })}
+      kind={row.kind}
+      categories={categories}
+      allowNone={false}
+      placeholder="Category"
+      className="h-8 flex-1 text-xs"
+    />
   );
   const AccSel = ({ row }: { row: BulkRow }) => (
     <Select value={row.accountId} onValueChange={(v) => update(row._id, { accountId: v })}>

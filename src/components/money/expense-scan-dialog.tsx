@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CategorySelect } from "@/components/money/category-select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { formatDate } from "@/lib/date-format";
 import { scanReceipt, type ScanFields } from "@/lib/expense-scan.functions";
@@ -192,7 +193,6 @@ export function ExpenseScanDialog({
   const transactionsQ = useTransactions();
   const accountsQ = usePaymentAccounts();
   const categories: Category[] = categoriesQ.data ?? [];
-  const expenseCats = categories.filter((c) => c.kind === "expense");
   const accounts = (accountsQ.data ?? []).filter((a) => a.is_active);
 
   // Keep "Paid from" consistent with the detected mode (a credit-card receipt
@@ -451,22 +451,12 @@ export function ExpenseScanDialog({
 
             <div>
               <Label>Category</Label>
-              <Select
-                value={categoryId || "none"}
-                onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Uncategorized</SelectItem>
-                  {expenseCats.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CategorySelect
+                value={categoryId}
+                onChange={setCategoryId}
+                kind="expense"
+                categories={categories}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
