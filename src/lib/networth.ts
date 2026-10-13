@@ -24,13 +24,13 @@ const num = (n: unknown) => {
   return Number.isFinite(v) ? v : 0;
 };
 
-const isActive = (status: unknown) => {
+export const isActive = (status: unknown) => {
   const s = String(status ?? "active").toLowerCase();
   return s !== "closed" && s !== "sold" && s !== "inactive" && s !== "matured";
 };
 
 /** Bank/wallet account types that represent spendable cash. */
-const CASH_TYPES = ["savings", "current", "wallet", "cash", "bank"];
+export const CASH_TYPES = ["savings", "current", "wallet", "cash", "bank"];
 
 export type NetWorthBreakdown = {
   /** Physical / other assets (property, gold, vehicles …). */
