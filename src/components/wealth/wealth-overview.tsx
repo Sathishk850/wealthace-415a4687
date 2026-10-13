@@ -107,7 +107,8 @@ export function WealthOverview({
 }) {
   const navigate = useNavigate();
   const { data: assets = [], refetch: refetchAssets } = useAssets();
-  const { data: liabilities = [], refetch: refetchLiabilities } = useLiabilities();
+  const { data: allLiabilities = [], refetch: refetchLiabilities } = useLiabilities();
+  const liabilities = useMemo(() => allLiabilities.filter((l) => l.status !== "closed"), [allLiabilities]);
   const { data: rows = [], refetch: refetchInvestments } = useInvestments();
   const { quoteMap, isFetching: quotesFetching, refetch: refetchQuotes } =
     useInvestmentQuotes(rows);

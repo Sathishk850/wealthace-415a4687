@@ -115,7 +115,7 @@ function Dashboard() {
 
 
   const assets = assetsQ.data ?? [];
-  const liabilities = liabilitiesQ.data ?? [];
+  const liabilities = (liabilitiesQ.data ?? []).filter((l) => l.status !== "closed");
   const investments = investmentsQ.data ?? [];
   const txns = txnsQ.data ?? [];
   const goals = goalsQ.data ?? [];

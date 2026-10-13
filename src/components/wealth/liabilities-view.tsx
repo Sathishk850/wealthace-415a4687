@@ -82,7 +82,7 @@ const ICONS: Record<string, { Icon: any; tint: string }> = {
   Other: { Icon: ShoppingBag, tint: "bg-emerald-500/10 text-emerald-400" },
 };
 
-const TABS = ["All", ...LIABILITY_CATEGORIES] as const;
+const TABS = ["All", ...LIABILITY_CATEGORIES, "History"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_STORAGE_KEY = "liabilities:tab";
 
@@ -155,8 +155,10 @@ export function LiabilitiesView({
   );
 
   const filtered = useMemo(() => {
-    let r = rows;
-    if (tab !== "All") r = r.filter((x) => x.category === tab);
+    let r = tab === "History"
+      ? rows.filter((x) => x.status === "closed")
+      : rows.filter((x) => x.status !== "closed");
+    if (tab !== "All" && tab !== "History") r = r.filter((x) => x.category === tab);
     if (search.trim()) {
       const q = search.toLowerCase();
       r = r.filter(
@@ -215,7 +217,7 @@ export function LiabilitiesView({
   }, [sorted]);
 
   const loanSummary = useMemo(() => {
-    const active = rows.filter((liability) => (Number(liability.outstanding) || 0) > 0);
+    const active = rows.filter((liability) => liability.status !== "closed" && (Number(liability.outstanding) || 0) > 0);
     return {
       count: active.length,
       outstanding: active.reduce((sum, liability) => sum + (Number(liability.outstanding) || 0), 0),
