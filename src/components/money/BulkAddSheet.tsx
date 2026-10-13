@@ -144,14 +144,15 @@ export function BulkAddSheet({ open, onOpenChange, defaultKind = "expense", cate
     </Select>
   );
   const CatSel = ({ row }: { row: BulkRow }) => (
-    <Select value={row.categoryId} onValueChange={(v) => update(row._id, { categoryId: v })}>
-      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
-      <SelectContent>
-        {catsFor(row.kind).map((c) => (
-          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <CategorySelect
+      value={row.categoryId}
+      onChange={(v) => update(row._id, { categoryId: v })}
+      kind={row.kind}
+      categories={categories}
+      allowNone={false}
+      placeholder="Category"
+      className="h-8 flex-1 text-xs"
+    />
   );
   const AccSel = ({ row }: { row: BulkRow }) => (
     <Select value={row.accountId} onValueChange={(v) => update(row._id, { accountId: v })}>
