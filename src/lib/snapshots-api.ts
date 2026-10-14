@@ -11,6 +11,8 @@ export type Snapshot = {
   investments_total: number;
   savings_total: number;
   annotation: string | null;
+  /** When the row was last written; bounds the "What Changed" activity window. */
+  updated_at: string | null;
 };
 
 const KEY = ["wealth", "snapshots"] as const;
@@ -23,7 +25,7 @@ export function useSnapshots() {
     queryFn: async (): Promise<Snapshot[]> => {
       const { data, error } = await supabase
         .from("wealth_snapshots")
-        .select("id,user_id,snapshot_date,net_worth,assets_total,liabilities_total,investments_total,savings_total,annotation")
+        .select("id,user_id,snapshot_date,net_worth,assets_total,liabilities_total,investments_total,savings_total,annotation,updated_at")
         .order("snapshot_date", { ascending: true });
       if (error) throw error;
       return (data ?? []).map((row) => ({

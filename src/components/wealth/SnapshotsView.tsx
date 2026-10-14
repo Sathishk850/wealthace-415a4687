@@ -190,6 +190,39 @@ export function SnapshotsView() {
     ].filter((row) => Math.round(row.delta) !== 0);
   }
 
+  /**
+   * Loan events (added / closed / outstanding edited) that happened between the
+   * previous snapshot's capture and this one. The latest snapshot's window stays
+   * open so edits made after today's capture still show up.
+   */
+  function loanActivity(snapshot: Snapshot, index: number) {
+    const previous = sorted[index - 1];
+    if (!previous) return [];
+    const bound = (row: Snapshot) => {
+      const t = row.updated_at ? Date.parse(row.updated_at) : NaN;
+      return Number.isFinite(t) ? t : dateFromIso(row.snapshot_date).getTime() + 86_399_999;
+    };
+    const start = bound(previous);
+    const end = index === sorted.length - 1 ? Number.POSITIVE_INFINITY : bound(snapshot);
+    const within = (iso?: string | null) => {
+      const t = iso ? Date.parse(iso) : NaN;
+      return Number.isFinite(t) && t > start && t <= end;
+    };
+    return (allLiabilities ?? [])
+      .filter((l) => within(l.updated_at) || within(l.created_at))
+      .map((l) => {
+        const closed = !isActive(l.status);
+        const added = within(l.created_at);
+        return {
+          id: l.id,
+          name: l.name,
+          category: l.category,
+          kind: closed ? ("closed" as const) : added ? ("added" as const) : ("updated" as const),
+          outstanding: Number(l.outstanding ?? 0),
+        };
+      });
+  }
+
   if (snapshotsQuery.isLoading) {
     return (
       <div className="space-y-3 py-8" aria-label="Loading snapshots">
@@ -392,6 +425,49 @@ export function SnapshotsView() {
                               );
                             })}
                             {changedRows(snapshot, ascendingIndex).length === 0 && <p className="text-xs text-muted-foreground">No recorded total changed.</p>}
+                            {(() => {
+                              const activity = loanActivity(snapshot, ascendingIndex);
+                              const liabDelta = snapshot.liabilities_total - (sorted[ascendingIndex - 1]?.liabilities_total ?? snapshot.liabilities_total);
+                              if (activity.length === 0) {
+                                return Math.round(liabDelta) !== 0 ? (
+                                  <p className="pt-2 text-[10px] leading-relaxed text-muted-foreground">
+                                    Liabilities {liabDelta < 0 ? "fell" : "rose"} by {inrCompact(Math.abs(liabDelta))} — loan-level details weren't recorded for this period.
+                                  </p>
+                                ) : null;
+                              }
+                              return (
+                                <div className="pt-3">
+                                  <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">Loan activity</p>
+                                  <div className="space-y-1.5">
+                                    {activity.map((a) => (
+                                      <div key={a.id} className="flex items-start justify-between gap-3 rounded-md border border-border/60 px-3 py-2">
+                                        <span className="min-w-0">
+                                          <span className="block truncate text-xs font-medium text-foreground">{a.name}</span>
+                                          <span className="block text-[10px] text-muted-foreground">
+                                            {a.category}
+                                            {a.kind === "closed"
+                                              ? " · Closed — removed from liabilities and net worth"
+                                              : a.kind === "added"
+                                                ? " · New loan added"
+                                                : " · Outstanding updated"}
+                                          </span>
+                                        </span>
+                                        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", a.kind === "closed" ? "bg-success/15 text-success" : a.kind === "added" ? "bg-danger/15 text-danger" : "bg-muted text-muted-foreground")}>
+                                          {a.kind === "closed" ? "Closed" : `${inrCompact(a.outstanding)} due`}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                                    {Math.round(liabDelta) === 0
+                                      ? !activity.some((a) => a.kind === "closed")
+                                        ? "Liabilities total is unchanged versus the previous snapshot."
+                                        : "Liabilities total is unchanged versus the previous snapshot — the balance was already paid down before this loan was marked closed."
+                                      : `Net effect on liabilities: ${liabDelta < 0 ? "−" : "+"}${inrCompact(Math.abs(liabDelta))}.`}
+                                  </p>
+                                </div>
+                              );
+                            })()}
                           </>
                         )}
                       </div>
