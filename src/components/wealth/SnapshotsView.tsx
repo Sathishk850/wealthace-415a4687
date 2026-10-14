@@ -460,7 +460,9 @@ export function SnapshotsView() {
                                   </div>
                                   <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
                                     {Math.round(liabDelta) === 0
-                                      ? "Liabilities total is unchanged versus the previous snapshot — the balance was already paid down before this loan was marked closed."
+                                      ? !activity.some((a) => a.kind === "closed")
+                                        ? "Liabilities total is unchanged versus the previous snapshot."
+                                        : "Liabilities total is unchanged versus the previous snapshot — the balance was already paid down before this loan was marked closed."
                                       : `Net effect on liabilities: ${liabDelta < 0 ? "−" : "+"}${inrCompact(Math.abs(liabDelta))}.`}
                                   </p>
                                 </div>
