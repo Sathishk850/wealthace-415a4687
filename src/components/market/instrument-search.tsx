@@ -107,7 +107,7 @@ export function InstrumentSearch({ kind, onSelect, placeholder, autoFocus }: Pro
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder={placeholder ?? "Search by name…"}
+          placeholder={placeholder ?? (kind === "mf_in" ? "Fund name or AMFI code (e.g. 119551)" : "Search by name…")}
           role="combobox"
           aria-expanded={showPanel}
           aria-autocomplete="list"
@@ -220,7 +220,7 @@ function formatResult(r: SearchResult): { primary: string; secondary: string; ba
     const tags = [plan, option].filter(Boolean).join(" · ");
     return {
       primary: name,
-      secondary: [house, tags].filter(Boolean).join(" · "),
+      secondary: [house, tags, `AMFI ${r.identifier}`].filter(Boolean).join(" · "),
       badge: "MF",
     };
   }
