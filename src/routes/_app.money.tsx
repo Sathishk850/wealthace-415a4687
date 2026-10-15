@@ -140,6 +140,7 @@ import {
   useTransactions,
   useUpsertBudget,
   useUpsertCategory,
+  useSetCategoryBudgetExempt,
   useUpsertTransaction,
 } from "@/lib/money-api";
 
@@ -445,11 +446,13 @@ function Money() {
           spent,
           pct,
           status,
+          exempt: !!cat?.is_budget_exempt,
         };
       });
   }, [budgets, txThisMonth, catMap, activeMonthKey]);
-  const totalBudget = budgetRows.reduce((s, b) => s + b.amount_limit, 0);
-  const totalSpent = budgetRows.reduce((s, b) => s + b.spent, 0);
+  // Budget-exempt categories (savings, EMI, transfers…) don't count toward the monthly cap.
+  const totalBudget = budgetRows.filter((b) => !b.exempt).reduce((s, b) => s + b.amount_limit, 0);
+  const totalSpent = budgetRows.filter((b) => !b.exempt).reduce((s, b) => s + b.spent, 0);
 
   // Fire in-app budget alerts (deduped via localStorage) when budgets cross thresholds
   useEffect(() => {
@@ -2202,6 +2205,9 @@ function BudgetsView({
                         <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ background: b.color }} />
                           {b.name}
+                          {b.exempt && (
+                            <span className="rounded-full border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">exempt</span>
+                          )}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-foreground">₹{b.amount_limit.toLocaleString("en-IN")}</td>

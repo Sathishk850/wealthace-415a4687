@@ -15,6 +15,7 @@ export type Category = {
   kind: Kind;
   color: string;
   icon: string;
+  is_budget_exempt?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -71,7 +72,21 @@ export function useCategories() {
         .select("*")
         .order("name", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Category[];
+      const rows = (data ?? []) as Category[];
+      // One-time: mark obvious non-discretionary categories as budget-exempt.
+      try {
+        const flagKey = "money:auto-exempt-v1";
+        if (typeof window !== "undefined" && !localStorage.getItem(flagKey) && rows.length) {
+          const EXEMPT = new Set(["savings","investment","investments","transfer","transfers","emi","loan repayment","credit card payment"]);
+          const ids = rows.filter((c) => c.kind === "expense" && !c.is_budget_exempt && EXEMPT.has(c.name.trim().toLowerCase())).map((c) => c.id);
+          if (ids.length) {
+            const { error: uErr } = await supabase.from("money_categories").update({ is_budget_exempt: true }).in("id", ids);
+            if (!uErr) for (const c of rows) if (ids.includes(c.id)) c.is_budget_exempt = true;
+          }
+          localStorage.setItem(flagKey, "1");
+        }
+      } catch { /* non-fatal */ }
+      return rows;
     },
   });
 }
@@ -118,6 +133,21 @@ export function useUpsertCategory() {
       qc.invalidateQueries({ queryKey: keys.categories });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to save category"),
+  });
+}
+
+export function useSetCategoryBudgetExempt() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; exempt: boolean }) => {
+      const { error } = await supabase
+        .from("money_categories")
+        .update({ is_budget_exempt: input.exempt })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.categories }),
+    onError: (e: Error) => toast.error(e.message || "Failed to update category"),
   });
 }
 
