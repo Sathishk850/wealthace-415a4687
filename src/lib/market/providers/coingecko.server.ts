@@ -61,8 +61,11 @@ export async function coingeckoQuotes(items: QuoteRequestItem[]): Promise<CgQuot
         currency: "INR",
         source: "CoinGecko",
         fetched_at: now,
+        server_fetched_at: now,
+        expires_at: null,
+        stale: false,
         meta_usd: p.usd,
-      } as CgQuote);
+      }); 
     }
     return out;
   } catch {
