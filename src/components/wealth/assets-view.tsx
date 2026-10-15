@@ -667,6 +667,27 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
     };
   }, [sorted]);
 
+  /* Infinite scroll for the flat List view. */
+  const ASSET_PAGE = 30;
+  const [visibleAssets, setVisibleAssets] = useState(ASSET_PAGE);
+  const assetSentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    setVisibleAssets(ASSET_PAGE);
+  }, [search, fSegment, fSector, fMarketCap, fExchange, fPlatform, tickerFilter, tab, deskView]);
+  useEffect(() => {
+    const el = assetSentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setVisibleAssets((p) => Math.min(p + ASSET_PAGE, sorted.length));
+      },
+      { rootMargin: "200px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [sorted.length, deskView]);
+  const pageRows = deskView === "flat" ? sorted.slice(0, visibleAssets) : sorted;
+
   /* Desktop grouped view: sector buckets over the same filtered/sorted rows. */
   const deskCollapse = useCollapsibleGroups("assets-desktop-groups-v1", true);
   const deskGroups = useMemo(() => buildHoldingGroups(sorted, tab), [sorted, tab]);
@@ -1211,7 +1232,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
                   );
                 })
               ) : (
-                sorted.flatMap((h) => {
+                pageRows.flatMap((h) => {
                   const key = rowKey(h);
                   const isExpanded = expandedRows.has(key);
                   const rows: React.ReactNode[] = [
@@ -1254,12 +1275,19 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
 
             </tbody>
           </table>
+          {deskView === "flat" ? <div ref={assetSentinelRef} className="h-1" /> : null}
         </div>
 
         {sorted.length > 0 && (
           <div className="border-t border-border px-3 py-3 sm:px-4">
             <div className="mb-2 text-xs text-muted-foreground">
-              All {sorted.length} holdings visible on this page
+              <span className="hidden md:inline">
+                Showing {deskView === "flat" ? pageRows.length : sorted.length} of {sorted.length} holdings
+                {deskView === "flat" && visibleAssets < sorted.length ? (
+                  <span className="ml-1 text-primary"> — scroll for more</span>
+                ) : null}
+              </span>
+              <span className="md:hidden">{sorted.length} holdings</span>
             </div>
             <HoldingSummaryRow
               invested={totals.invested}
