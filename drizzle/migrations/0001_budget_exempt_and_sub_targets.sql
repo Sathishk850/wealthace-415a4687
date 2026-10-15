@@ -1,0 +1,2 @@
+alter table public.money_categories add column if not exists is_budget_exempt boolean not null default false;
+alter table public.profiles add column if not exists sub_allocation_targets jsonb not null default '{}'::jsonb;

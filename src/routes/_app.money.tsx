@@ -1,3 +1,4 @@
+import { Switch } from "@/components/ui/switch";
 import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { fireBudgetAlerts } from "@/lib/budget-alerts";
@@ -140,6 +141,7 @@ import {
   useTransactions,
   useUpsertBudget,
   useUpsertCategory,
+  useSetCategoryBudgetExempt,
   useUpsertTransaction,
 } from "@/lib/money-api";
 
@@ -445,11 +447,13 @@ function Money() {
           spent,
           pct,
           status,
+          exempt: !!cat?.is_budget_exempt,
         };
       });
   }, [budgets, txThisMonth, catMap, activeMonthKey]);
-  const totalBudget = budgetRows.reduce((s, b) => s + b.amount_limit, 0);
-  const totalSpent = budgetRows.reduce((s, b) => s + b.spent, 0);
+  // Budget-exempt categories (savings, EMI, transfers…) don't count toward the monthly cap.
+  const totalBudget = budgetRows.filter((b) => !b.exempt).reduce((s, b) => s + b.amount_limit, 0);
+  const totalSpent = budgetRows.filter((b) => !b.exempt).reduce((s, b) => s + b.spent, 0);
 
   // Fire in-app budget alerts (deduped via localStorage) when budgets cross thresholds
   useEffect(() => {
@@ -2050,6 +2054,7 @@ type BudgetRow = {
   spent: number;
   pct: number;
   status: string;
+  exempt?: boolean;
 };
 
 function BudgetsView({
@@ -2202,6 +2207,9 @@ function BudgetsView({
                         <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ background: b.color }} />
                           {b.name}
+                          {b.exempt && (
+                            <span className="rounded-full border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">exempt</span>
+                          )}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-foreground">₹{b.amount_limit.toLocaleString("en-IN")}</td>
@@ -2357,6 +2365,8 @@ function BudgetDialog({
 
   const upsert = useUpsertBudget();
   const upsertCat = useUpsertCategory();
+  const setExempt = useSetCategoryBudgetExempt();
+  const selectedCat = expenseCategories.find((c) => c.id === categoryId);
   const qc = useQueryClient();
 
   const addCategory = async () => {
@@ -2464,6 +2474,19 @@ function BudgetDialog({
               </Select>
             )}
           </div>
+          {selectedCat && !showNewCat && (
+            <label className="flex items-start justify-between gap-3 rounded-xl border border-border px-3 py-2">
+              <span>
+                <span className="block text-sm font-medium text-foreground">Exclude from budget</span>
+                <span className="block text-xs text-muted-foreground">Savings, investments, and transfers won't count toward your monthly budget cap.</span>
+              </span>
+              <Switch
+                checked={!!selectedCat.is_budget_exempt}
+                disabled={setExempt.isPending}
+                onCheckedChange={(v) => setExempt.mutate({ id: selectedCat.id, exempt: v })}
+              />
+            </label>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Month</Label>

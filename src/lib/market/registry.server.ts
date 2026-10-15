@@ -8,12 +8,13 @@ import { isTwelveDataAvailable, twelveDataQuotes } from "./providers/twelvedata.
 import { isFinnhubAvailable, finnhubQuotes } from "./providers/finnhub.server";
 import { isAlphaVantageAvailable, alphaVantageQuotes } from "./providers/alphavantage.server";
 import { mfapiQuotes, mfapiSearch } from "./providers/mfapi.server";
+import { coingeckoQuotes, coingeckoSearch, isCoinGeckoId } from "./providers/coingecko.server";
 
 export type ProviderInfo = { primary: string; fallback?: string };
 
 export function providersFor(kind: IdentifierType): ProviderInfo {
   if (kind === "mf_in") return { primary: "mfapi" };
-  if (kind === "crypto") return { primary: "yahoo" };
+  if (kind === "crypto") return { primary: "coingecko", fallback: "yahoo" };
   if (kind === "stock_us") {
     if (isTwelveDataAvailable()) return { primary: "twelvedata", fallback: "finnhub|alphavantage|yahoo" };
     if (isFinnhubAvailable()) return { primary: "finnhub", fallback: "alphavantage|yahoo" };
@@ -55,7 +56,10 @@ async function runChain(items: QuoteRequestItem[], chain: Array<{ name: string; 
 export async function fetchQuotes(items: QuoteRequestItem[]): Promise<MarketQuote[]> {
   const mfs = items.filter((i) => i.identifier_type === "mf_in");
   const usStocks = items.filter((i) => i.identifier_type === "stock_us");
-  const other = items.filter((i) => i.identifier_type !== "mf_in" && i.identifier_type !== "stock_us");
+  const cg = items.filter((i) => i.identifier_type === "crypto" && isCoinGeckoId(i.identifier));
+  const other = items.filter(
+    (i) => i.identifier_type !== "mf_in" && i.identifier_type !== "stock_us" && !(i.identifier_type === "crypto" && isCoinGeckoId(i.identifier)),
+  );
 
   const results: MarketQuote[] = [];
 
@@ -64,6 +68,14 @@ export async function fetchQuotes(items: QuoteRequestItem[]): Promise<MarketQuot
       results.push(...(await mfapiQuotes(mfs)));
     } catch (err) {
       console.error("mfapi quotes failed", err);
+    }
+  }
+
+  if (cg.length > 0) {
+    try {
+      results.push(...(await coingeckoQuotes(cg)).map(({ meta_usd: _u, ...q }) => q));
+    } catch (err) {
+      console.error("coingecko quotes failed", err);
     }
   }
 
@@ -98,5 +110,9 @@ export async function searchInstrument(query: string, kind: IdentifierType): Pro
   const q = query.trim();
   if (q.length < 2) return [];
   if (kind === "mf_in") return mfapiSearch(q);
+  if (kind === "crypto") {
+    const cg = await coingeckoSearch(q);
+    return cg.length ? cg : yahooSearch(q, kind);
+  }
   return yahooSearch(q, kind);
 }

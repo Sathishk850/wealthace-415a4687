@@ -1,4 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -80,6 +83,67 @@ export function AllocationTargetCard({ className }: { className?: string }) {
   const assetsQ = useAssets();
   const accountsQ = useAccounts();
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [subTargets, setSubTargets] = useState<Record<string, Record<string, number>>>({});
+  const [subDirty, setSubDirty] = useState(false);
+  const [savingSub, setSavingSub] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("sub_allocation_targets")
+        .eq("user_id", u.user.id)
+        .maybeSingle();
+      const v = data?.sub_allocation_targets;
+      if (!cancelled && v && typeof v === "object" && !Array.isArray(v))
+        setSubTargets(v as Record<string, Record<string, number>>);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const saveSubTargets = async () => {
+    setSavingSub(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ sub_allocation_targets: subTargets })
+        .eq("user_id", u.user.id);
+      if (error) throw error;
+      setSubDirty(false);
+      toast.success("Sub-targets saved");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save sub-targets");
+    } finally {
+      setSavingSub(false);
+    }
+  };
+
+  // Sub-category values within each bucket (by holding category label)
+  const subValues = useMemo(() => {
+    const out: Record<string, Record<string, number>> = {};
+    const add = (bucket: string, label: string, v: number) => {
+      out[bucket] ??= {};
+      out[bucket]![label] = (out[bucket]![label] ?? 0) + v;
+    };
+    for (const inv of investmentsQ.data ?? []) {
+      if ((inv.status ?? "active") !== "active") continue;
+      const v = Number(inv.current_value ?? inv.invested_value ?? 0);
+      if (!Number.isFinite(v) || v <= 0) continue;
+      if ((inv.category ?? "").toLowerCase() === "nps") continue;
+      add(toBucket(inv.category), subLabel(inv.category), v);
+    }
+    for (const a of assetsQ.data ?? []) {
+      const v = Number(a.current_value ?? 0);
+      if (!Number.isFinite(v) || v <= 0) continue;
+      add(toBucket(a.category), subLabel(a.category), v);
+    }
+    return out;
+  }, [investmentsQ.data, assetsQ.data]);
 
   const { buckets, total, offCount } = useMemo(() => {
     const map = new Map<string, number>();
@@ -326,11 +390,20 @@ export function AllocationTargetCard({ className }: { className?: string }) {
                 rows.push(
                   <tr key={`${b.name}-exp`} className="border-b border-border/20">
                     <td colSpan={7} className="bg-muted/20 px-6 py-2 text-[11px] text-muted-foreground">
-                      {b.gap > 0
+                      <div className="mb-3">{b.gap > 0
                         ? `This category is ${b.gap.toFixed(1)}% above target. Redirect future contributions to underweight categories rather than selling — reduces tax impact.`
                         : b.gap < 0
                           ? `This category is ${Math.abs(b.gap).toFixed(1)}% below target. Add ${inr(Math.abs(b.gapVal))} through SIPs or lump-sum to bring it in line.`
-                          : "This category is on target — no action needed."}
+                          : "This category is on target — no action needed."}</div>
+                      <SubTargetEditor
+                        assetClass={b.name}
+                        values={subValues[b.name] ?? {}}
+                        subTargets={subTargets[b.name] ?? {}}
+                        onChange={(updated) => {
+                          setSubTargets((prev) => ({ ...prev, [b.name]: updated }));
+                          setSubDirty(true);
+                        }}
+                      />
                     </td>
                   </tr>,
                 );
@@ -340,6 +413,87 @@ export function AllocationTargetCard({ className }: { className?: string }) {
           </tbody>
         </table>
       </div>
+      <div className="mt-3 flex items-center justify-end gap-2">
+        {subDirty && <span className="text-[11px] text-muted-foreground">Unsaved sub-target changes</span>}
+        <Button size="sm" onClick={saveSubTargets} disabled={!subDirty || savingSub}>
+          {savingSub ? "Saving…" : "Save sub-targets"}
+        </Button>
+      </div>
     </Card>
+  );
+}
+
+const SUB_LABELS: Record<string, string> = {
+  stock_in: "Indian Stocks",
+  stock_us: "US Stocks",
+  mf: "Mutual Funds",
+  mutual_fund: "Mutual Funds",
+  etf: "ETFs",
+  bond: "Bonds",
+  fd: "Fixed Deposits",
+  crypto: "Crypto",
+};
+
+function subLabel(category: string | null | undefined): string {
+  const c = (category ?? "").trim();
+  if (!c) return "Other";
+  return SUB_LABELS[c.toLowerCase()] ?? c.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function SubTargetEditor({
+  assetClass,
+  values,
+  subTargets,
+  onChange,
+}: {
+  assetClass: string;
+  values: Record<string, number>;
+  subTargets: Record<string, number>;
+  onChange: (v: Record<string, number>) => void;
+}) {
+  const subCats = [...new Set([...Object.keys(values), ...Object.keys(subTargets)])];
+  const classTotal = Object.values(values).reduce((s, v) => s + v, 0);
+  const total = Object.values(subTargets).reduce((s, v) => s + (Number(v) || 0), 0);
+  if (subCats.length === 0) return null;
+  return (
+    <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Sub-targets within {assetClass} (total: {total}%
+        {total > 0 && total !== 100 ? ` — ${total < 100 ? `needs ${100 - total}% more` : `${total - 100}% over`}` : total === 100 ? " ✓" : ""})
+      </p>
+      {subCats.map((cat) => {
+        const actualPct = classTotal > 0 ? ((values[cat] ?? 0) / classTotal) * 100 : 0;
+        const tgt = subTargets[cat] ?? 0;
+        const onTrack = Math.abs(actualPct - tgt) <= 5;
+        return (
+          <div key={cat} className="flex flex-wrap items-center gap-3 text-xs">
+            <span className="w-32 text-foreground">{cat}</span>
+            <span className="w-20 text-muted-foreground">{actualPct.toFixed(1)}% actual</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={subTargets[cat] ?? ""}
+              onChange={(e) => {
+                const n = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                onChange({ ...subTargets, [cat]: n });
+              }}
+              placeholder="0"
+              className="w-16 rounded-md border border-border bg-background px-2 py-1 text-center text-xs text-foreground"
+            />
+            <span className="text-muted-foreground">% target</span>
+            {tgt > 0 && (
+              <span className={onTrack ? "text-success" : "text-warning"}>
+                {onTrack
+                  ? "On track"
+                  : actualPct < tgt
+                    ? `${(tgt - actualPct).toFixed(1)}% to go`
+                    : `${(actualPct - tgt).toFixed(1)}% over`}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

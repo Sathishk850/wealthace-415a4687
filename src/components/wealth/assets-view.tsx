@@ -267,6 +267,7 @@ type Holding = {
   live_price?: boolean;
   /** True when the row is market-linked but no live quote is available. */
   price_stale?: boolean;
+  coingecko?: boolean;
   invested: number;
   current: number;
   pnl: number;
@@ -452,6 +453,7 @@ export function AssetsView({ registerAdd }: { registerAdd?: (open: () => void) =
         cmp: d.current_price,
         live_price: d.has_live,
         price_stale: !!(inv.identifier_type && inv.identifier) && !d.has_live,
+        coingecko: inv.identifier_type === "crypto" && (inv.price_source === "CoinGecko" || /^[a-z0-9-]+$/.test(inv.identifier ?? "") && !/-(usd|inr)$/.test(inv.identifier ?? "")),
         invested: d.invested,
         current: d.current_value,
         pnl: d.unrealized_pl,
@@ -1774,6 +1776,7 @@ type RowLike = {
   avg_price: number;
   cmp: number;
   price_stale?: boolean;
+  coingecko?: boolean;
   invested: number;
   current: number;
   pnl: number;
@@ -1914,6 +1917,9 @@ function HoldingRow({
             >
               GOLDBEES
             </span>
+          )}
+          {h.coingecko && (
+            <span title="Live price via CoinGecko" className="ml-1 text-[11px]">🪙</span>
           )}
           {h.price_stale && (
             <span
