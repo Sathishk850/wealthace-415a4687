@@ -50,7 +50,7 @@ export function HealthScoreCard({ className }: { className?: string }) {
     // Emergency fund months
     const avgMonthlyExp = exp3 > 0 ? exp3 / 3 : exp;
     // Tagged accounts plus liquid savings/current/wallet/cash balances (each counted once).
-    const LIQUID = new Set(["savings", "current", "wallet", "cash"]);
+    const LIQUID = new Set(["bank account", "savings", "current", "wallet", "cash"]);
     let efBalance = 0;
     let liquidAccountBalance = 0;
     for (const a of accountsQ.data ?? []) {
