@@ -338,6 +338,7 @@ export type Database = {
           created_at: string
           icon: string
           id: string
+          is_budget_exempt: boolean
           kind: string
           name: string
           updated_at: string
@@ -348,6 +349,7 @@ export type Database = {
           created_at?: string
           icon?: string
           id?: string
+          is_budget_exempt?: boolean
           kind: string
           name: string
           updated_at?: string
@@ -358,6 +360,7 @@ export type Database = {
           created_at?: string
           icon?: string
           id?: string
+          is_budget_exempt?: boolean
           kind?: string
           name?: string
           updated_at?: string
@@ -829,6 +832,7 @@ export type Database = {
           number_format: string
           phone: string | null
           pin_skipped: boolean
+          sub_allocation_targets: Json
           text_size: string | null
           theme: string
           timezone: string
@@ -848,6 +852,7 @@ export type Database = {
           number_format?: string
           phone?: string | null
           pin_skipped?: boolean
+          sub_allocation_targets?: Json
           text_size?: string | null
           theme?: string
           timezone?: string
@@ -867,6 +872,7 @@ export type Database = {
           number_format?: string
           phone?: string | null
           pin_skipped?: boolean
+          sub_allocation_targets?: Json
           text_size?: string | null
           theme?: string
           timezone?: string
