@@ -1048,7 +1048,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                       }}
                       onFocus={() => setPanelOpen(true)}
                       onKeyDown={onKeyDown}
-                      placeholder="Search by name, ticker or fund name…"
+                      placeholder="Name, ticker, or AMFI code (e.g. 119551)"
                       className={cn(inputCls, "pl-9 pr-9")}
                     />
                     {query ? (

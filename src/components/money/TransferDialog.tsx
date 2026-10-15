@@ -41,11 +41,13 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   accounts: PaymentAccount[];
   onSuccess: () => void;
+  /** Pre-select the destination account, e.g. a credit card for "Pay Bill". */
+  defaultToId?: string;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function TransferDialog({ open, onOpenChange, accounts, onSuccess }: Props) {
+export function TransferDialog({ open, onOpenChange, accounts, onSuccess, defaultToId }: Props) {
   const [fromId, setFromId] = useState("");
   const [toId, setToId] = useState("");
   const [amount, setAmount] = useState("");
@@ -64,9 +66,9 @@ export function TransferDialog({ open, onOpenChange, accounts, onSuccess }: Prop
 
   useEffect(() => {
     if (!open) return;
-    setFromId(""); setToId(""); setAmount(""); setFxRate(1); setNote("");
+    setFromId(""); setToId(defaultToId ?? ""); setAmount(""); setFxRate(1); setNote("");
     setDate(today());
-  }, [open]);
+  }, [open, defaultToId]);
 
   const fetchRate = async () => {
     if (!isCross) return;

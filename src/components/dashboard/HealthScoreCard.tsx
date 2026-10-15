@@ -49,9 +49,16 @@ export function HealthScoreCard({ className }: { className?: string }) {
 
     // Emergency fund months
     const avgMonthlyExp = exp3 > 0 ? exp3 / 3 : exp;
-    const efBalance = (accountsQ.data ?? [])
-      .filter((a) => (a as { is_emergency_fund?: boolean }).is_emergency_fund)
-      .reduce((s, a) => s + n(a.balance), 0);
+    // Tagged accounts plus liquid savings/current/wallet/cash balances (each counted once).
+    const LIQUID = new Set(["bank account", "savings", "current", "wallet", "cash"]);
+    let efBalance = 0;
+    let liquidAccountBalance = 0;
+    for (const a of accountsQ.data ?? []) {
+      if (String(a.status ?? "active") !== "active") continue;
+      const isLiquid = LIQUID.has(String(a.account_type ?? "").toLowerCase());
+      if (a.is_emergency_fund || isLiquid) efBalance += n(a.balance);
+      if (isLiquid && !a.is_emergency_fund) liquidAccountBalance += n(a.balance);
+    }
     const efMonths = avgMonthlyExp > 0 ? efBalance / avgMonthlyExp : null;
 
     const highDebt = (liabilitiesQ.data ?? []).filter(
@@ -63,7 +70,9 @@ export function HealthScoreCard({ className }: { className?: string }) {
 
     const out: Line[] = [
       {
-        label: efMonths == null ? "Emergency fund — no expense history yet" : `Emergency fund ${efMonths.toFixed(1)} months — target 3`,
+        label:
+          (efMonths == null ? "Emergency fund — no expense history yet" : `Emergency fund ${efMonths.toFixed(1)} months — target 3`) +
+          (liquidAccountBalance > 0 ? ` (incl. ₹${Math.round(liquidAccountBalance).toLocaleString("en-IN")} in savings/wallet)` : ""),
         pts: efMonths == null ? null : Math.min(25, (efMonths / 3) * 25),
         max: 25,
       },

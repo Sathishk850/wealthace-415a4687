@@ -23,7 +23,9 @@ import {
   type PaymentAccount,
 } from "@/lib/payment-accounts-api";
 import { PaymentAccountDialog } from "@/components/payment/payment-account-dialog";
-import { Pencil, Plus, Star, Trash2, Wallet } from "lucide-react";
+import { CreditCard, Pencil, Plus, Star, Trash2, Wallet } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { TransferDialog } from "@/components/money/TransferDialog";
 
 export function PaymentAccountsPanel() {
   const { data: accounts = [], isLoading } = usePaymentAccounts();
@@ -33,6 +35,8 @@ export function PaymentAccountsPanel() {
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<PaymentAccount | null>(null);
   const [confirmDel, setConfirmDel] = useState<PaymentAccount | null>(null);
+  const [payBillAccount, setPayBillAccount] = useState<PaymentAccount | null>(null);
+  const qc = useQueryClient();
 
   return (
     <Card className="glass-card border-[var(--border)] p-5">
@@ -117,6 +121,16 @@ export function PaymentAccountsPanel() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {a.account_type === "credit_card" && a.is_active && (
+                  <button
+                    type="button"
+                    onClick={() => setPayBillAccount(a)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/20"
+                  >
+                    <CreditCard className="h-3 w-3" />
+                    Pay Bill
+                  </button>
+                )}
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] text-muted-foreground">
                     Active
@@ -192,6 +206,15 @@ export function PaymentAccountsPanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {payBillAccount && (
+        <TransferDialog
+          open={!!payBillAccount}
+          onOpenChange={(v) => !v && setPayBillAccount(null)}
+          accounts={accounts.filter((x) => x.is_active)}
+          defaultToId={payBillAccount.id}
+          onSuccess={() => qc.invalidateQueries({ queryKey: ["money", "transactions"] })}
+        />
+      )}
     </Card>
   );
 }

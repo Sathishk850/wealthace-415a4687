@@ -32,7 +32,34 @@ function matchesAllWords(name: string, words: string[]): boolean {
   return words.every((w) => nameWords.some((nw) => nw.startsWith(w)));
 }
 
+// Look up a single scheme by its numeric AMFI code (e.g. "119551").
+async function mfapiByCode(code: string): Promise<SearchResult[]> {
+  try {
+    const res = await fetchWithTimeout(
+      `${BASE}/mf/${encodeURIComponent(code)}/latest`,
+      { headers: { Accept: "application/json" } },
+      TIMEOUT_MS,
+    );
+    if (!res.ok) return [];
+    const body = (await res.json()) as { meta?: { scheme_code?: number; scheme_name?: string } };
+    if (!body?.meta?.scheme_name) return [];
+    return [
+      {
+        identifier_type: "mf_in" as const,
+        identifier: String(body.meta.scheme_code ?? code),
+        name: body.meta.scheme_name,
+        exchange: "AMFI",
+        currency: "INR",
+      },
+    ];
+  } catch (err) {
+    console.error("[mfapi] code lookup failed", err);
+    return [];
+  }
+}
+
 export async function mfapiSearch(query: string): Promise<SearchResult[]> {
+  if (/^\d{4,6}$/.test(query.trim())) return mfapiByCode(query.trim());
   let rows = await mfapiSearchRaw(query);
   // MFAPI only matches literal substrings, so long partial queries return
   // nothing. Fall back to the AMC (first word) and filter client-side.
