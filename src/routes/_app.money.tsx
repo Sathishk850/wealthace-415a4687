@@ -1,3 +1,4 @@
+import { Switch } from "@/components/ui/switch";
 import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { fireBudgetAlerts } from "@/lib/budget-alerts";
@@ -2053,6 +2054,7 @@ type BudgetRow = {
   spent: number;
   pct: number;
   status: string;
+  exempt?: boolean;
 };
 
 function BudgetsView({
@@ -2363,6 +2365,8 @@ function BudgetDialog({
 
   const upsert = useUpsertBudget();
   const upsertCat = useUpsertCategory();
+  const setExempt = useSetCategoryBudgetExempt();
+  const selectedCat = expenseCategories.find((c) => c.id === categoryId);
   const qc = useQueryClient();
 
   const addCategory = async () => {
@@ -2470,6 +2474,19 @@ function BudgetDialog({
               </Select>
             )}
           </div>
+          {selectedCat && !showNewCat && (
+            <label className="flex items-start justify-between gap-3 rounded-xl border border-border px-3 py-2">
+              <span>
+                <span className="block text-sm font-medium text-foreground">Exclude from budget</span>
+                <span className="block text-xs text-muted-foreground">Savings, investments, and transfers won't count toward your monthly budget cap.</span>
+              </span>
+              <Switch
+                checked={!!selectedCat.is_budget_exempt}
+                disabled={setExempt.isPending}
+                onCheckedChange={(v) => setExempt.mutate({ id: selectedCat.id, exempt: v })}
+              />
+            </label>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Month</Label>
