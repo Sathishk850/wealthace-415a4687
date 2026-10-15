@@ -702,7 +702,7 @@ export function AddInvestmentModal({ open, onOpenChange }: Props) {
                   }}
                   onFocus={() => setPanelOpen(true)}
                   onKeyDown={onKeyDown}
-                  placeholder="Company name, fund name, or ticker (e.g. HDFC, AAPL, Parag Parikh)"
+                  placeholder="Company, fund, ticker or AMFI code (e.g. HDFC, AAPL, 119551)"
                   role="combobox"
                   aria-expanded={showPanel}
                   aria-autocomplete="list"
