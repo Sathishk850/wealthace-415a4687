@@ -29,6 +29,13 @@
       "when": 1792248197834,
       "tag": "0003_deposit_maturity_channel_dedupe",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792249147901,
+      "tag": "0004_snapshot_line_item_capture",
+      "breakpoints": true
     }
   ]
 }

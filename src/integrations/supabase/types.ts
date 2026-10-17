@@ -1826,6 +1826,7 @@ export type Database = {
           id: string
           investments_total: number
           liabilities_total: number
+          line_items: Json | null
           net_worth: number
           savings_total: number
           snapshot_date: string
@@ -1839,6 +1840,7 @@ export type Database = {
           id?: string
           investments_total?: number
           liabilities_total?: number
+          line_items?: Json | null
           net_worth?: number
           savings_total?: number
           snapshot_date?: string
@@ -1852,6 +1854,7 @@ export type Database = {
           id?: string
           investments_total?: number
           liabilities_total?: number
+          line_items?: Json | null
           net_worth?: number
           savings_total?: number
           snapshot_date?: string
