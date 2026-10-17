@@ -1397,7 +1397,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   </div>
                 )}
 
-                <DepositFields dates={false} value={{ ...form, sub_category: form.classification, quantity: qty, avg_price: avg, current_price: form.current_price ?? avg }}
+                <DepositFields dates={false} value={{ ...form, sip_amount: form.sip_amount ? Number(form.sip_amount) : null, sub_category: form.classification, quantity: qty, avg_price: avg, current_price: form.current_price ?? avg }}
                   onChange={patch => setForm(f => ({ ...f,
                     interest_rate: patch.interest_rate === undefined ? f.interest_rate : patch.interest_rate,
                     compounding_frequency: patch.compounding_frequency === undefined ? f.compounding_frequency : patch.compounding_frequency,
