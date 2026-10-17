@@ -22,6 +22,13 @@
       "when": 1792248100608,
       "tag": "0002_deposit_interest_and_rd_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792248197834,
+      "tag": "0003_deposit_maturity_channel_dedupe",
+      "breakpoints": true
     }
   ]
 }
