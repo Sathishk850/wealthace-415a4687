@@ -1,9 +1,10 @@
 # Expense Scanner (Expenses module)
 ## Batch 1 — Deposits
-- [ ] Deposit schema, shared daily FD/Bond/RD valuation and tests
-- [ ] Existing deposit add/edit forms, previews, instalment count and maturity chips
-- [ ] Two maturity reminders through existing bell/email pipeline
-- [ ] Validate tests, app checks and deposit flow
+- [x] Deposit schema, shared daily FD/Bond/RD valuation and tests
+- [x] Existing deposit add/edit forms, previews, instalment count and maturity chips
+- [x] Two maturity reminder stages and independent bell/email dedupe
+- [x] Validate tests, app checks and signed-in FD save/readback/cleanup
+- [ ] Enable maturity email delivery — blocked: user-owned sending domain is not configured; scaffold managed app emails after setup
 
 
 - [x] 1. Inspect Expenses page, transaction dialog, categories, payment accounts, schema
