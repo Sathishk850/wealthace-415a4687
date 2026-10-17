@@ -1,0 +1,1 @@
+ALTER TABLE public.wealth_investments ADD COLUMN IF NOT EXISTS interest_rate numeric, ADD COLUMN IF NOT EXISTS compounding_frequency text, ADD COLUMN IF NOT EXISTS deposit_kind text, ADD COLUMN IF NOT EXISTS rd_installment_amount numeric, ADD COLUMN IF NOT EXISTS rd_installment_day integer;

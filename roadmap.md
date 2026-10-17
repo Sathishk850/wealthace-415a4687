@@ -1,4 +1,10 @@
 # Expense Scanner (Expenses module)
+## Batch 1 — Deposits
+- [ ] Deposit schema, shared daily FD/Bond/RD valuation and tests
+- [ ] Existing deposit add/edit forms, previews, instalment count and maturity chips
+- [ ] Two maturity reminders through existing bell/email pipeline
+- [ ] Validate tests, app checks and deposit flow
+
 
 - [x] 1. Inspect Expenses page, transaction dialog, categories, payment accounts, schema
 - [x] 2. Private `receipts` storage bucket (owner-only RLS) + `receipt_path` column

@@ -15,6 +15,13 @@
       "when": 1792057786033,
       "tag": "0001_budget_exempt_and_sub_targets",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792248100608,
+      "tag": "0002_deposit_interest_and_rd_settings",
+      "breakpoints": true
     }
   ]
 }
