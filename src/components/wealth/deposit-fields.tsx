@@ -5,21 +5,21 @@ import type { InvestmentInput } from '@/lib/wealth-api';
 import { amountIn } from '@/lib/wealth-api';
 import { depositKind, holdingDepositValue, maturityDays } from '@/lib/deposit-value';
 
-export function DepositFields({ value, onChange, dates = true }: {
-  value: InvestmentInput; onChange: (patch: Partial<InvestmentInput>) => void; dates?: boolean;
+export function DepositFields({ value, onChange, dates = true, selectKind = true }: {
+  value: InvestmentInput; onChange: (patch: Partial<InvestmentInput>) => void; dates?: boolean; selectKind?: boolean;
 }) {
   const kind = depositKind(value.category, value.sub_category, value.deposit_kind);
   if (!kind) return null;
   const preview = holdingDepositValue(value);
   const frequency = value.compounding_frequency || 'quarterly';
   return <div className="grid grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-2">
-    <div className="grid gap-1.5"><Label>Deposit type</Label>
+    {selectKind && <div className="grid gap-1.5"><Label>Deposit type</Label>
       <Select value={kind} onValueChange={v => onChange({ deposit_kind: v })}>
         <SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
           <SelectItem value="fd">Fixed Deposit</SelectItem><SelectItem value="rd">Recurring Deposit</SelectItem><SelectItem value="bond">Bond</SelectItem>
         </SelectContent>
       </Select>
-    </div>
+    </div>}
     <div className="grid gap-1.5"><Label htmlFor="deposit-rate">Interest rate %</Label>
       <Input id="deposit-rate" type="number" min={0} step="0.01" value={value.interest_rate ?? ''}
         onChange={e => onChange({ interest_rate: e.target.value === '' ? null : Number(e.target.value), deposit_kind: kind })} />

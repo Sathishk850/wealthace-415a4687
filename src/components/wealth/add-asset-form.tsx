@@ -866,12 +866,12 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           <div className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Interest &amp; maturity
           </div>
-          {depositKind(spec.dbCategory, spec.dbSubCategory) ? <DepositFields value={{
+          {depositKind(spec.dbCategory, spec.dbSubCategory) ? <DepositFields selectKind={false} value={{
             name: form.name, category: spec.dbCategory, sub_category: spec.dbSubCategory,
             deposit_kind: depositKind(spec.dbCategory, spec.dbSubCategory), currency: form.currency,
-            quantity: qty > 0 ? qty : 1, avg_price: (dynamicFields ? dynPurchase : secondaryValue) / (qty > 0 ? qty : 1),
+            quantity: qty > 0 ? qty : 1, avg_price: ((dynamicFields ? dynPurchase : secondaryValue) > 0 ? (dynamicFields ? dynPurchase : secondaryValue) / (qty > 0 ? qty : 1) : price || (dynamicFields ? dynCurrent : n(form.currentValue)) / (qty > 0 ? qty : 1)),
             current_price: n(form.currentValue) / (qty > 0 ? qty : 1),
-            interest_rate: form.interestRate === '' ? null : n(form.interestRate),
+            interest_rate: !form.autoUpdate || form.interestRate === '' ? null : n(form.interestRate),
             compounding_frequency: form.compounding === 'At maturity' ? 'simple' : form.compounding.toLowerCase().replace('-', '_'),
             purchase_date: form.investmentDate, maturity_date: form.maturityDate,
             rd_installment_amount: form.instalment === '' ? null : n(form.instalment), rd_installment_day: form.installmentDay,

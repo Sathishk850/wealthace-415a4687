@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { depositValue, maturityReminderStage } from './deposit-value';
+import { depositValue, maturityReminderStage, valueDepositHolding } from './deposit-value';
 const terms = { principal: 100000, interestRate: 8, startDate: '2025-01-01', maturityDate: '2026-01-01', compounding: 'quarterly' };
 test('FD compound value follows principal × (1+r/n)^(n*t)', () => {
   expect(depositValue(terms, new Date('2026-01-01')).value).toBeCloseTo(108243.216, 3);
@@ -27,4 +27,16 @@ test('maturity reminders fire only seven days before and on the day', () => {
   expect(maturityReminderStage('2026-10-17', new Date('2026-10-17'))).toBe('maturity_day');
   expect(maturityReminderStage('2026-10-18', new Date('2026-10-17'))).toBeNull();
   expect(maturityReminderStage('2026-10-16', new Date('2026-10-17'))).toBeNull();
+});
+test('missing interest rate or start date preserves manual investment values', () => {
+  const holding = { category: 'Fixed Deposit', quantity: 1, avg_price: 100000, current_price: 101234, current_value: 101234, invested_value: 100000, purchase_date: '2025-01-01' };
+  expect(valueDepositHolding(holding)).toEqual(holding);
+  const withoutStart = { ...holding, purchase_date: null, interest_rate: 8 };
+  expect(valueDepositHolding(withoutStart)).toEqual(withoutStart);
+});
+test('shared deposit valuation recomputes invested value, total value and per-unit price', () => {
+  const holding = { category: 'Fixed Deposit', quantity: 2, avg_price: 50000, current_price: 50000, current_value: 100000, invested_value: 100000, purchase_date: '2025-01-01', maturity_date: '2026-01-01', interest_rate: 8, compounding_frequency: 'quarterly' };
+  expect(valueDepositHolding(holding, new Date('2026-01-01'))).toMatchObject({ invested_value: 100000 });
+  expect(valueDepositHolding(holding, new Date('2026-01-01')).current_value).toBeCloseTo(108243.216, 3);
+  expect(valueDepositHolding(holding, new Date('2026-01-01')).current_price).toBeCloseTo(54121.608, 3);
 });
