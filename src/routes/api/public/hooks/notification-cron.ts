@@ -233,6 +233,16 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
           });
         }
 
+        /* Deposit maturity milestones share channel dedupe with the login sweep. */
+        const { enqueueDepositMaturity } = await import('@/lib/deposit-reminders.server');
+        const { data: deposits } = await admin.from('wealth_investments').select('*')
+          .not('maturity_date', 'is', null).lte('maturity_date', addDays(30)).gte('maturity_date', today);
+        for (const row of deposits ?? []) {
+          const email = await lookupEmail(admin, row.user_id);
+          const maturityResult = await enqueueDepositMaturity(admin, row, now, email);
+          result.notifications_created += maturityResult.created;
+          result.deliveries_enqueued += maturityResult.queued;
+        }
 
         /* ===== 2. Scheduled reports ===== */
         const { data: schedules } = await admin

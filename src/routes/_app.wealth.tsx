@@ -31,6 +31,10 @@ export const Route = createFileRoute("/_app/wealth")({
   head: () => ({
     meta: [
       { title: "Wealth · Wealth Ace" },
+      { property: 'og:title', content: 'Wealth · Wealth Ace' },
+      { property: 'og:description', content: 'Track assets, deposits, liabilities, allocation and SIPs in Wealth Ace.' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
       {
         name: "description",
         content: "Premium wealth dashboard — assets, liabilities, insurance, accounts and SIPs.",

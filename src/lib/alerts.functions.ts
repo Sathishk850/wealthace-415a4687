@@ -342,22 +342,14 @@ export const sweepAlerts = createServerFn({ method: "POST" })
     /* ---- 10. Investment maturities (FDs, bonds and other term products) ---- */
     const { data: maturingInv } = await supabase
       .from("wealth_investments")
-      .select("id, name, category, current_value, invested_value, maturity_date, status")
+      .select("*")
       .not("maturity_date", "is", null)
       .lte("maturity_date", addDaysISO(now, 30));
+    const { enqueueDepositMaturity } = await import('./deposit-reminders.server');
     for (const i of maturingInv ?? []) {
-      if ((i.status ?? "active") !== "active") continue;
-      const days = dayDiff(i.maturity_date as string, now);
-      if (days < -7) continue;
-      const value = Number(i.current_value ?? i.invested_value ?? 0);
-      await notifyOnce({
-        title: `${i.category ?? "Investment"} maturity ${dueLabel(days)}: ${i.name}`,
-        body: paymentBody(days, value, `${value > 0 ? `Value ${inr(value)}. ` : ""}Plan the reinvestment or withdrawal before it matures.`),
-        priority: days < 0 ? "high" : "normal",
-        link: "/wealth",
-        dedupe: { investment_maturity: `${i.id}:${i.maturity_date}`, month: monthKey },
-        metadata: { kind: "maturity", investment_id: i.id, due_date: i.maturity_date, due_days: days },
-      });
+      const email = typeof context.claims.email === 'string' ? context.claims.email : null;
+      const result = await enqueueDepositMaturity(supabase, i, now, email);
+      created += result.created;
     }
 
 
