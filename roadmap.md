@@ -1,4 +1,9 @@
 # Expense Scanner (Expenses module)
+## Snapshot itemized changes
+- [ ] Store compact line items on capture and today's sync
+- [ ] Exact grouped diffs and clearly labeled historical reconstruction with reconciled subtotals
+- [ ] Tests and signed-in snapshot verification
+
 ## Batch 1 — Deposits
 - [x] Deposit schema, shared daily FD/Bond/RD valuation and tests
 - [x] Existing deposit add/edit forms, previews, instalment count and maturity chips

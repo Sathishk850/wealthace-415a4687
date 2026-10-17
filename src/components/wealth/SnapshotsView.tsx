@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { inr, inrCompact, useAccounts, useAssets, useInvestments, useLiabilities } from "@/lib/wealth-api";
+import { inr, inrCompact, useAccounts, useAssets, useInvestments, useLiabilities, useInvestmentTxnsMulti } from "@/lib/wealth-api";
+import { snapshotItems, snapshotChangeGroups, activityWindow } from "@/lib/snapshot-changes";
 import { CASH_TYPES, computeNetWorth, isActive } from "@/lib/networth";
 import {
   useDeleteSnapshot,
@@ -82,6 +83,10 @@ export function SnapshotsView() {
   const allInvestments = investmentsQuery.data;
   const allLiabilities = liabilitiesQuery.data;
   const allAccounts = accountsQuery.data;
+  const txnIds = useMemo(() => (allInvestments ?? []).map(i => i.id), [allInvestments]);
+  const transactionsQuery = useInvestmentTxnsMulti(txnIds);
+  const positions = useMemo(() => ({ investment: allInvestments ?? [], asset: allAssets ?? [], account: allAccounts ?? [], liability: allLiabilities ?? [] }), [allInvestments, allAssets, allAccounts, allLiabilities]);
+  const liveItems = useMemo(() => snapshotItems(positions), [positions]);
   // Same inclusion rules as the global net-worth calculator (closed/sold excluded).
   const assets = useMemo(() => (allAssets ?? []).filter((a) => isActive(a.status)), [allAssets]);
   const investments = useMemo(() => (allInvestments ?? []).filter((i) => isActive(i.status)), [allInvestments]);
@@ -119,8 +124,9 @@ export function SnapshotsView() {
       round(latest.net_worth) === round(live.netWorth) &&
       round(latest.assets_total) === round(live.totalAssets) &&
       round(latest.liabilities_total) === round(live.liabilitiesTotal) &&
-      round(latest.investments_total) === round(live.investmentsTotal);
-    const key = `${latest.id}:${round(live.netWorth)}:${round(live.totalAssets)}:${round(live.liabilitiesTotal)}`;
+      round(latest.investments_total) === round(live.investmentsTotal) &&
+      round(latest.savings_total) === round(live.cashTotal) && JSON.stringify(latest.line_items) === JSON.stringify(liveItems);
+    const key = `${latest.id}:${JSON.stringify(liveItems)}`;
     if (same || syncedKey.current === key) return;
     syncedKey.current = key;
     syncTotals.mutate({
@@ -129,8 +135,10 @@ export function SnapshotsView() {
       assets_total: live.totalAssets,
       liabilities_total: live.liabilitiesTotal,
       investments_total: live.investmentsTotal,
-    });
-  }, [liveReady, live, sorted, syncTotals]);
+      savings_total: live.cashTotal,
+      line_items: liveItems,
+    }, { onError: () => { syncedKey.current = null; } });
+  }, [liveReady, live, liveItems, sorted, syncTotals]);
 
   const sortedDesc = useMemo(() => [...sorted].reverse(), [sorted]);
   const indexById = useMemo(() => new Map(sorted.map((snapshot, index) => [snapshot.id, index])), [sorted]);
@@ -190,37 +198,10 @@ export function SnapshotsView() {
     ].filter((row) => Math.round(row.delta) !== 0);
   }
 
-  /**
-   * Loan events (added / closed / outstanding edited) that happened between the
-   * previous snapshot's capture and this one. The latest snapshot's window stays
-   * open so edits made after today's capture still show up.
-   */
-  function loanActivity(snapshot: Snapshot, index: number) {
+  function itemChanges(snapshot: Snapshot, index: number) {
     const previous = sorted[index - 1];
-    if (!previous) return [];
-    const bound = (row: Snapshot) => {
-      const t = row.updated_at ? Date.parse(row.updated_at) : NaN;
-      return Number.isFinite(t) ? t : dateFromIso(row.snapshot_date).getTime() + 86_399_999;
-    };
-    const start = bound(previous);
-    const end = index === sorted.length - 1 ? Number.POSITIVE_INFINITY : bound(snapshot);
-    const within = (iso?: string | null) => {
-      const t = iso ? Date.parse(iso) : NaN;
-      return Number.isFinite(t) && t > start && t <= end;
-    };
-    return (allLiabilities ?? [])
-      .filter((l) => within(l.updated_at) || within(l.created_at))
-      .map((l) => {
-        const closed = !isActive(l.status);
-        const added = within(l.created_at);
-        return {
-          id: l.id,
-          name: l.name,
-          category: l.category,
-          kind: closed ? ("closed" as const) : added ? ("added" as const) : ("updated" as const),
-          outstanding: Number(l.outstanding ?? 0),
-        };
-      });
+    if (!previous) return null;
+    return snapshotChangeGroups(previous, snapshot, previous.line_items, snapshot.line_items, positions, transactionsQuery.data ?? [], activityWindow(previous, snapshot, index === sorted.length - 1));
   }
 
   if (snapshotsQuery.isLoading) {
@@ -426,47 +407,38 @@ export function SnapshotsView() {
                             })}
                             {changedRows(snapshot, ascendingIndex).length === 0 && <p className="text-xs text-muted-foreground">No recorded total changed.</p>}
                             {(() => {
-                              const activity = loanActivity(snapshot, ascendingIndex);
-                              const liabDelta = snapshot.liabilities_total - (sorted[ascendingIndex - 1]?.liabilities_total ?? snapshot.liabilities_total);
-                              if (activity.length === 0) {
-                                return Math.round(liabDelta) !== 0 ? (
-                                  <p className="pt-2 text-[10px] leading-relaxed text-muted-foreground">
-                                    Liabilities {liabDelta < 0 ? "fell" : "rose"} by {inrCompact(Math.abs(liabDelta))} — loan-level details weren't recorded for this period.
-                                  </p>
-                                ) : null;
-                              }
-                              return (
-                                <div className="pt-3">
-                                  <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">Loan activity</p>
-                                  <div className="space-y-1.5">
-                                    {activity.map((a) => (
-                                      <div key={a.id} className="flex items-start justify-between gap-3 rounded-md border border-border/60 px-3 py-2">
-                                        <span className="min-w-0">
-                                          <span className="block truncate text-xs font-medium text-foreground">{a.name}</span>
-                                          <span className="block text-[10px] text-muted-foreground">
-                                            {a.category}
-                                            {a.kind === "closed"
-                                              ? " · Closed — removed from liabilities and net worth"
-                                              : a.kind === "added"
-                                                ? " · New loan added"
-                                                : " · Outstanding updated"}
-                                          </span>
-                                        </span>
-                                        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", a.kind === "closed" ? "bg-success/15 text-success" : a.kind === "added" ? "bg-danger/15 text-danger" : "bg-muted text-muted-foreground")}>
-                                          {a.kind === "closed" ? "Closed" : `${inrCompact(a.outstanding)} due`}
-                                        </span>
-                                      </div>
-                                    ))}
+                              const changes = itemChanges(snapshot, ascendingIndex);
+                              if (!changes) return null;
+                              const names = {investment: "Investments", asset: "Other assets", account: "Cash & bank accounts", liability: "Liabilities"};
+                              const sign = (delta: number) => `${delta >= 0 ? "+" : "−"}${inr(Math.abs(delta))}`;
+                              return <div className="space-y-4 pt-3">
+                                <p className="text-xs font-semibold text-muted-foreground">{changes.exact ? "Captured item-by-item changes" : "Reconstructed from activity"}</p>
+                                {!changes.exact && <p className="text-xs text-muted-foreground">Historical balances were not recorded. Activity amounts are estimates; unknown changes remain unattributed.</p>}
+                                {transactionsQuery.isError && <p className="text-xs text-danger">Transaction activity could not be loaded.</p>}
+                                {!changes.groups.some(g => g.rows.length > 0) && <p className="text-xs text-muted-foreground">No individual item changes could be identified for this period.</p>}
+                                {changes.groups.map(group => <section key={group.kind} className="space-y-2">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-1">
+                                    <h4 className="text-xs font-semibold">{names[group.kind]}</h4>
+                                    <span className={cn("font-ledger-mono text-xs", (group.kind === 'liability' ? group.total <= 0 : group.total >= 0) ? "text-success" : "text-danger")}>Subtotal {sign(group.total)}</span>
                                   </div>
-                                  <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-                                    {Math.round(liabDelta) === 0
-                                      ? !activity.some((a) => a.kind === "closed")
-                                        ? "Liabilities total is unchanged versus the previous snapshot."
-                                        : "Liabilities total is unchanged versus the previous snapshot — the balance was already paid down before this loan was marked closed."
-                                      : `Net effect on liabilities: ${liabDelta < 0 ? "−" : "+"}${inrCompact(Math.abs(liabDelta))}.`}
-                                  </p>
-                                </div>
-                              );
+                                  {group.rows.map(row => <div key={row.id} className="min-w-0 border-b border-border/40 py-2">
+                                    <div className="flex flex-wrap items-start justify-between gap-2">
+                                      <div className="min-w-0 flex-1 basis-40">
+                                        <p className="truncate text-xs font-medium" title={row.name}>{row.name}</p>
+                                        <p className="break-words text-[10px] text-muted-foreground">{group.kind === 'liability' ? 'Liability' : 'Asset'} · {row.category} · {row.label}</p>
+                                      </div>
+                                      <div className="text-right font-ledger-mono text-xs">
+                                        <p className={cn(row.delta == null ? "text-muted-foreground" : (group.kind === 'liability' ? row.delta <= 0 : row.delta >= 0) ? "text-success" : "text-danger")}>{row.delta == null ? 'Change unknown' : sign(row.delta)}</p>
+                                        <p className="text-[10px] text-muted-foreground">{row.before == null ? 'Unknown' : inr(row.before)} → {row.after == null ? 'Unknown' : inr(row.after)}</p>
+                                      </div>
+                                    </div>
+                                    {row.detail && <p className="mt-1 text-[10px] text-muted-foreground">{row.detail}</p>}
+                                    {row.date && <p className="text-[10px] text-muted-foreground">{fmtDate(row.date)}</p>}
+                                    {row.events?.map(event => <p key={event.id} className="mt-1 break-words text-[10px] text-muted-foreground">{fmtDate(event.occurred_on)} · {event.txn_type === 'sell' ? 'Sold / redeemed' : 'Bought / SIP instalment'} · {event.quantity} units × {inr(event.price)} · {inr(event.amount)}</p>)}
+                                  </div>)}
+                                  {Math.abs(group.residual) >= 0.005 && <div className="flex flex-wrap justify-between gap-2 text-[10px] text-muted-foreground"><span>Other / unattributed</span><span className="font-ledger-mono">{sign(group.residual)}</span></div>}
+                                </section>)}
+                              </div>;
                             })()}
                           </>
                         )}
