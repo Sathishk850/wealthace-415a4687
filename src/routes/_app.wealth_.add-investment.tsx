@@ -12,6 +12,10 @@ export const Route = createFileRoute("/_app/wealth_/add-investment")({
   head: () => ({
     meta: [
       { title: "Add Investment · Wealth Ace" },
+      { property: 'og:title', content: 'Add Investment · Wealth Ace' },
+      { property: 'og:description', content: 'Record investments and deposits with live valuations and maturity tracking.' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
       {
         name: "description",
         content:

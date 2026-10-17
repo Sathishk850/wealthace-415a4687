@@ -8,6 +8,8 @@ import { useNavigate } from "@tanstack/react-router";
 import * as LucideIcons from "lucide-react";
 import { ArrowLeft, ChevronDown, ChevronUp, Loader2, RefreshCw, Search, X } from "lucide-react";
 import { toast } from "sonner";
+import { DepositFields } from './deposit-fields';
+import { depositKind } from '@/lib/deposit-value';
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -70,6 +72,7 @@ type FormState = {
   autoUpdate: boolean;
   instalment: string;
   payFrequency: string;
+  installmentDay: number | null;
   sip: boolean;
   sipStart: string;
   equityAllocation: number | null;
@@ -106,6 +109,7 @@ const EMPTY: FormState = {
   autoUpdate: true,
   instalment: "",
   payFrequency: "Monthly",
+  installmentDay: null,
   sip: false,
   sipStart: "",
   equityAllocation: null,
@@ -409,7 +413,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           sip_start_date: form.sipStart || form.investmentDate || null,
           sip_active: true,
         }
-      : spec.recurring && form.instalment
+        : spec.recurring && form.instalment && !depositKind(spec.dbCategory, spec.dbSubCategory)
         ? {
             is_sip: true,
             sip_amount: n(form.instalment),
@@ -432,6 +436,11 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           current_price: current / quantity,
           purchase_date: form.investmentDate || null,
           maturity_date: form.maturityDate || null,
+          interest_rate: depositKind(spec.dbCategory, spec.dbSubCategory) && form.autoUpdate && form.interestRate !== '' ? n(form.interestRate) : null,
+          compounding_frequency: form.compounding === 'At maturity' ? 'simple' : form.compounding.toLowerCase().replace('-', '_'),
+          deposit_kind: depositKind(spec.dbCategory, spec.dbSubCategory),
+          rd_installment_amount: spec.recurring ? n(form.instalment) : null,
+          rd_installment_day: spec.recurring ? form.installmentDay : null,
           notes: noteLines(),
           status: "active",
           identifier: form.identifier,
@@ -857,7 +866,23 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           <div className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Interest &amp; maturity
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {depositKind(spec.dbCategory, spec.dbSubCategory) ? <DepositFields value={{
+            name: form.name, category: spec.dbCategory, sub_category: spec.dbSubCategory,
+            deposit_kind: depositKind(spec.dbCategory, spec.dbSubCategory), currency: form.currency,
+            quantity: qty > 0 ? qty : 1, avg_price: (dynamicFields ? dynPurchase : secondaryValue) / (qty > 0 ? qty : 1),
+            current_price: n(form.currentValue) / (qty > 0 ? qty : 1),
+            interest_rate: form.interestRate === '' ? null : n(form.interestRate),
+            compounding_frequency: form.compounding === 'At maturity' ? 'simple' : form.compounding.toLowerCase().replace('-', '_'),
+            purchase_date: form.investmentDate, maturity_date: form.maturityDate,
+            rd_installment_amount: form.instalment === '' ? null : n(form.instalment), rd_installment_day: form.installmentDay,
+          }} onChange={patch => setForm(f => ({ ...f,
+            interestRate: patch.interest_rate === undefined ? f.interestRate : patch.interest_rate == null ? '' : String(patch.interest_rate),
+            compounding: patch.compounding_frequency === undefined ? f.compounding : ({ monthly: 'Monthly', quarterly: 'Quarterly', half_yearly: 'Half-yearly', yearly: 'Yearly', simple: 'At maturity' } as Record<string,string>)[patch.compounding_frequency ?? 'quarterly'] ?? 'Quarterly',
+            investmentDate: patch.purchase_date === undefined ? f.investmentDate : patch.purchase_date ?? '',
+            maturityDate: patch.maturity_date === undefined ? f.maturityDate : patch.maturity_date ?? '',
+            instalment: patch.rd_installment_amount === undefined ? f.instalment : patch.rd_installment_amount == null ? '' : String(patch.rd_installment_amount),
+            installmentDay: patch.rd_installment_day === undefined ? f.installmentDay : patch.rd_installment_day,
+          }))} /> : <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Interest Rate (%)">
               <Input
                 type="number"
@@ -893,7 +918,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
                 onChange={(v) => set("maturityDate", v || "")}
               />
             </Field>
-          </div>
+          </div>}
           <CheckRow
             checked={form.autoUpdate}
             onChange={(v) => set("autoUpdate", v)}
@@ -901,7 +926,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             helper="Wealth Ace recalculates the current value from the interest rate and compounding."
             className="mt-3"
           />
-          {spec.recurring && (
+          {spec.recurring && !depositKind(spec.dbCategory, spec.dbSubCategory) && (
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label={`Monthly Instalment (${sym})`}>
                 <AmountInput

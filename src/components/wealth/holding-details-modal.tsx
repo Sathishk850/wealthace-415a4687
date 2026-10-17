@@ -43,6 +43,8 @@ import { useCorporateActions, useInstrumentFundamentals } from "@/lib/market/use
 import type { IdentifierType, InstrumentFundamentals, MarketQuote } from "@/lib/market/types";
 import { HoldingSummaryRow } from "@/components/wealth/holding-summary-row";
 import { HoldingSipButton } from "@/components/wealth/holding-sip-settings";
+import { MaturityChip } from "./deposit-fields";
+import { holdingDepositValue, depositKind } from "@/lib/deposit-value";
 
 type Props = {
   open: boolean;
@@ -887,6 +889,7 @@ function ClassificationTab({
 }) {
   const ccy = investment.currency || "INR";
   const { data: f } = useFundamentals(investment);
+  const deposit = holdingDepositValue(investment);
   const rows: [string, string][] = [
     ["Market Capitalization Category", f?.market_cap_band ?? "N/A"],
     ["Sector", f?.sector ?? investment.sub_category ?? "N/A"],
@@ -900,9 +903,13 @@ function ClassificationTab({
     ...(investment.maturity_date
       ? ([["Maturity Date", formatDate(investment.maturity_date)]] as [string, string][])
       : []),
+    ...(deposit && depositKind(investment.category, investment.sub_category, investment.deposit_kind) === 'rd'
+      ? [["Instalments paid", `${deposit.installmentsPaid} of ${deposit.totalInstallments}`] as [string, string]] : []),
+    ...(investment.interest_rate != null ? [["Interest rate", `${investment.interest_rate}%`] as [string, string]] : []),
   ];
   return (
     <Section title="Classification (auto-fetched)">
+      <MaturityChip date={investment.maturity_date} />
       <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
         {rows.map(([k, v]) => (
           <div

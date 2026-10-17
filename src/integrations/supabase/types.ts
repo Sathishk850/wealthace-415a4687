@@ -1609,14 +1609,17 @@ export type Database = {
           account_id: string | null
           avg_price: number
           category: string
+          compounding_frequency: string | null
           created_at: string
           currency: string
           current_price: number
           current_value: number | null
+          deposit_kind: string | null
           exchange: string | null
           id: string
           identifier: string | null
           identifier_type: string | null
+          interest_rate: number | null
           invested_value: number | null
           is_sip: boolean
           last_updated: string
@@ -1631,6 +1634,8 @@ export type Database = {
           price_updated_at: string | null
           purchase_date: string | null
           quantity: number
+          rd_installment_amount: number | null
+          rd_installment_day: number | null
           sip_active: boolean | null
           sip_amount: number | null
           sip_frequency: string | null
@@ -1646,14 +1651,17 @@ export type Database = {
           account_id?: string | null
           avg_price?: number
           category: string
+          compounding_frequency?: string | null
           created_at?: string
           currency?: string
           current_price?: number
           current_value?: number | null
+          deposit_kind?: string | null
           exchange?: string | null
           id?: string
           identifier?: string | null
           identifier_type?: string | null
+          interest_rate?: number | null
           invested_value?: number | null
           is_sip?: boolean
           last_updated?: string
@@ -1668,6 +1676,8 @@ export type Database = {
           price_updated_at?: string | null
           purchase_date?: string | null
           quantity?: number
+          rd_installment_amount?: number | null
+          rd_installment_day?: number | null
           sip_active?: boolean | null
           sip_amount?: number | null
           sip_frequency?: string | null
@@ -1683,14 +1693,17 @@ export type Database = {
           account_id?: string | null
           avg_price?: number
           category?: string
+          compounding_frequency?: string | null
           created_at?: string
           currency?: string
           current_price?: number
           current_value?: number | null
+          deposit_kind?: string | null
           exchange?: string | null
           id?: string
           identifier?: string | null
           identifier_type?: string | null
+          interest_rate?: number | null
           invested_value?: number | null
           is_sip?: boolean
           last_updated?: string
@@ -1705,6 +1718,8 @@ export type Database = {
           price_updated_at?: string | null
           purchase_date?: string | null
           quantity?: number
+          rd_installment_amount?: number | null
+          rd_installment_day?: number | null
           sip_active?: boolean | null
           sip_amount?: number | null
           sip_frequency?: string | null

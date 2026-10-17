@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { MaturityChip } from "./deposit-fields";
 import { openImport } from "@/components/import/import-host";
 import { useNavigate } from "@tanstack/react-router";
 import { smartXAxisProps } from "@/lib/chart-axis";
@@ -902,6 +903,7 @@ function Holdings({
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="truncate font-medium text-foreground">{r.name}</span>
+                                <MaturityChip date={r.maturity_date} />
                                 {!child && h._grouped ? (
                                   <span className="shrink-0 rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                                     {h._children.length} entries

@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_deposit_maturity_once ON public.notifications (user_id, (metadata->>'deposit_maturity_key')) WHERE metadata->>'deposit_maturity_key' IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS delivery_deposit_maturity_once ON public.notification_delivery_log (user_id, channel, (payload->>'deposit_maturity_key')) WHERE payload->>'deposit_maturity_key' IS NOT NULL;

@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { MaturityChip } from "./deposit-fields";
 import { isSgb } from "@/lib/sgb";
 import { HoldingLinkLine } from "@/components/wealth/holding-link-line";
 import { useUndoDelete } from "@/lib/use-undo-delete";
@@ -1606,6 +1607,7 @@ function MobileHoldingGroups({
         >
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold text-foreground">{h.name}</span>
+            <MaturityChip date={h.raw_investment?.maturity_date} />
             {h.lots && h.lots.length > 1 ? (
               <span className="shrink-0 rounded-full bg-mint/10 px-1.5 py-0.5 text-[10px] font-semibold text-mint">
                 {h.lots.length} brokers
@@ -1856,14 +1858,7 @@ function HoldingRow({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div className="truncate text-sm font-medium text-foreground">{h.name}</div>
-              {h.raw_investment?.maturity_date ? (
-                <span
-                  title="Maturity date"
-                  className="shrink-0 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
-                >
-                  Matures {formatDateShort(h.raw_investment.maturity_date)}
-                </span>
-              ) : null}
+              <MaturityChip date={h.raw_investment?.maturity_date} />
               {h.lots && (h.lots.length ?? 0) > 1 ? (
                 <span
                   title={`Held across ${h.lots.length} broker entries`}
