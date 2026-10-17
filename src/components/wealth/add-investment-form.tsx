@@ -17,6 +17,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { DepositFields } from "./deposit-fields";
+import { depositKind } from "@/lib/deposit-value";
 
 import { cn } from "@/lib/utils";
 import { AmountInput } from "@/components/ui/amount-input";
@@ -531,6 +533,11 @@ type FormState = {
   platform: string;
   purchase_date: string;
   maturity_date: string;
+  interest_rate: number | null;
+  compounding_frequency: string | null;
+  deposit_kind: string | null;
+  rd_installment_amount: number | null;
+  rd_installment_day: number | null;
   quantity: string;
   avg_price: string;
   notes: string;
@@ -568,6 +575,11 @@ const EMPTY: FormState = {
   platform: "",
   purchase_date: todayISO(),
   maturity_date: "",
+  interest_rate: null,
+  compounding_frequency: null,
+  deposit_kind: null,
+  rd_installment_amount: null,
+  rd_installment_day: null,
   quantity: "",
   avg_price: "",
   notes: "",
@@ -616,6 +628,11 @@ function investmentToForm(inv: Investment): FormState {
     platform,
     purchase_date: inv.purchase_date ?? todayISO(),
     maturity_date: inv.maturity_date ?? "",
+    interest_rate: inv.interest_rate ?? null,
+    compounding_frequency: inv.compounding_frequency ?? null,
+    deposit_kind: inv.deposit_kind ?? null,
+    rd_installment_amount: inv.rd_installment_amount ?? null,
+    rd_installment_day: inv.rd_installment_day ?? null,
     quantity: String(inv.quantity ?? ""),
     avg_price: String(inv.avg_price ?? ""),
     notes: rest,
@@ -858,7 +875,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
    * purchase date. Users can still override it; switching to a non-term
    * category clears it.
    */
-  const isTerm = isTermCategory(form.category);
+  const isTerm = isTermCategory(form.category) || !!depositKind(form.category, form.classification, form.deposit_kind);
   useEffect(() => {
     if (!isTerm) {
       setForm((f) => (f.maturity_date ? { ...f, maturity_date: "" } : f));
@@ -934,6 +951,11 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       avg_price: avg,
       current_price: livePrice ?? avg,
       purchase_date: form.purchase_date || null,
+      interest_rate: isTerm ? form.interest_rate : null,
+      compounding_frequency: isTerm ? form.compounding_frequency || 'quarterly' : null,
+      deposit_kind: isTerm ? depositKind(form.category, form.classification, form.deposit_kind) : null,
+      rd_installment_amount: isTerm ? form.rd_installment_amount : null,
+      rd_installment_day: isTerm ? form.rd_installment_day : null,
       maturity_date: isTerm
         ? form.maturity_date || defaultMaturityDate(form.category, form.purchase_date)
         : null,
@@ -1349,7 +1371,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
                 <div>
                   <label className={labelCls}>
-                    Purchase Date <span className="text-rose-500">*</span>
+                    {isTerm ? 'Start Date' : 'Purchase Date'} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -1370,11 +1392,19 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     />
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       Auto-set to purchase date +{form.category === "Bonds" ? "5" : "3"} years —
-                      reminders start 30 days before maturity.
+                      reminders arrive 7 days before and on maturity day.
                     </p>
                   </div>
                 )}
 
+                <DepositFields dates={false} value={{ ...form, sub_category: form.classification, quantity: qty, avg_price: avg, current_price: form.current_price ?? avg }}
+                  onChange={patch => setForm(f => ({ ...f,
+                    interest_rate: patch.interest_rate === undefined ? f.interest_rate : patch.interest_rate,
+                    compounding_frequency: patch.compounding_frequency === undefined ? f.compounding_frequency : patch.compounding_frequency,
+                    deposit_kind: patch.deposit_kind === undefined ? f.deposit_kind : patch.deposit_kind,
+                    rd_installment_amount: patch.rd_installment_amount === undefined ? f.rd_installment_amount : patch.rd_installment_amount,
+                    rd_installment_day: patch.rd_installment_day === undefined ? f.rd_installment_day : patch.rd_installment_day,
+                  }))} />
                 <div>
                   <label className={labelCls}>
                     Quantity <span className="text-rose-500">*</span>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DepositFields } from "./deposit-fields";
 import {
   Dialog,
   DialogContent,
@@ -305,6 +306,12 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
             avg_price: existing.avg_price,
             current_price: existing.current_price,
             purchase_date: existing.purchase_date,
+            maturity_date: existing.maturity_date,
+            interest_rate: existing.interest_rate,
+            compounding_frequency: existing.compounding_frequency,
+            deposit_kind: existing.deposit_kind,
+            rd_installment_amount: existing.rd_installment_amount,
+            rd_installment_day: existing.rd_installment_day,
             is_sip: existing.is_sip,
             sip_amount: existing.sip_amount,
             sip_frequency: existing.sip_frequency ?? "monthly",
@@ -506,6 +513,7 @@ export function InvestmentDialog({ open, onOpenChange, existing }: Props) {
               onChange={(v) => setForm({ ...form, purchase_date: v || null })}
             />
           </Field>
+          <DepositFields value={form} onChange={patch => setForm(f => ({ ...f, ...patch }))} />
           <Field label="Quantity *">
             <Input
               type="number" min={0} step="0.0001"

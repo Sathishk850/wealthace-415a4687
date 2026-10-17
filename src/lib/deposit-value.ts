@@ -68,3 +68,25 @@ export function maturityReminderStage(maturity?: string | null, asOf = new Date(
   const days = maturityDays(maturity, asOf);
   return days === 7 ? 'seven_days' : days === 0 ? 'maturity_day' : null;
 }
+export type DepositHolding = {
+  category: string; sub_category?: string | null; deposit_kind?: string | null;
+  interest_rate?: number | null; compounding_frequency?: string | null;
+  rd_installment_amount?: number | null; rd_installment_day?: number | null;
+  purchase_date?: string | null; maturity_date?: string | null;
+  quantity: number; avg_price: number; current_price: number;
+  current_value?: number | null; invested_value?: number | null;
+};
+export function holdingDepositValue(inv: DepositHolding, asOf = new Date()) {
+  const kind = depositKind(inv.category, inv.sub_category, inv.deposit_kind);
+  if (!kind || inv.interest_rate == null || !inv.purchase_date) return null;
+  return depositValue({ principal: inv.quantity * inv.avg_price, interestRate: Number(inv.interest_rate),
+    startDate: inv.purchase_date, maturityDate: inv.maturity_date,
+    compounding: inv.compounding_frequency, kind,
+    installmentAmount: inv.rd_installment_amount, installmentDay: inv.rd_installment_day }, asOf);
+}
+export function valueDepositHolding<T extends DepositHolding>(inv: T, asOf = new Date()): T {
+  const result = holdingDepositValue(inv, asOf);
+  if (!result) return inv;
+  return { ...inv, invested_value: result.invested, current_value: result.value,
+    current_price: inv.quantity > 0 ? result.value / inv.quantity : 0 };
+}

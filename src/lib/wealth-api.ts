@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { writeAssetSip, type SipSettings } from "./holding-sip";
+import { valueDepositHolding } from "./deposit-value";
 
 /* =================== Types =================== */
 export type AssetCategory =
@@ -613,6 +614,11 @@ export type Investment = {
   current_value: number | null;
   purchase_date: string | null;
   maturity_date: string | null;
+  interest_rate?: number | null;
+  compounding_frequency?: string | null;
+  deposit_kind?: string | null;
+  rd_installment_amount?: number | null;
+  rd_installment_day?: number | null;
   account_id: string | null;
   owner_member_id: string | null;
   is_sip: boolean;
@@ -648,6 +654,11 @@ export type InvestmentInput = {
   current_price: number;
   purchase_date?: string | null;
   maturity_date?: string | null;
+  interest_rate?: number | null;
+  compounding_frequency?: string | null;
+  deposit_kind?: string | null;
+  rd_installment_amount?: number | null;
+  rd_installment_day?: number | null;
   is_sip?: boolean;
   sip_amount?: number | null;
   sip_frequency?: string | null;
@@ -729,12 +740,11 @@ export function useInvestments() {
       const { data: txnRows } = await supabase
         .from("wealth_investment_txns")
         .select("investment_id,txn_type,quantity,price,occurred_on");
-      if (!txnRows || txnRows.length === 0) return rows;
       const byInv = new Map<
         string,
         Array<{ txn_type: string; quantity: number; price: number; occurred_on: string }>
       >();
-      for (const t of txnRows as any[]) {
+      for (const t of (txnRows ?? []) as any[]) {
         const list = byInv.get(t.investment_id) ?? [];
         list.push({
           txn_type: String(t.txn_type),
@@ -744,7 +754,7 @@ export function useInvestments() {
         });
         byInv.set(t.investment_id, list);
       }
-      return rows.map((r) => foldTxnsIntoInvestment(r, byInv.get(r.id) ?? []));
+      return rows.map((r) => valueDepositHolding(foldTxnsIntoInvestment(r, byInv.get(r.id) ?? [])));
     },
   });
 }
@@ -764,6 +774,11 @@ function investmentPayload(i: InvestmentInput) {
     current_price: cur,
     purchase_date: i.purchase_date || null,
     maturity_date: i.maturity_date || null,
+    ...(i.interest_rate !== undefined ? { interest_rate: numOrNull(i.interest_rate) } : {}),
+    ...(i.compounding_frequency !== undefined ? { compounding_frequency: i.compounding_frequency || null } : {}),
+    ...(i.deposit_kind !== undefined ? { deposit_kind: i.deposit_kind || null } : {}),
+    ...(i.rd_installment_amount !== undefined ? { rd_installment_amount: numOrNull(i.rd_installment_amount) } : {}),
+    ...(i.rd_installment_day !== undefined ? { rd_installment_day: numOrNull(i.rd_installment_day) } : {}),
     is_sip: !!i.is_sip,
     sip_amount: numOrNull(i.sip_amount),
     sip_frequency: i.sip_frequency || null,
