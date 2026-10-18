@@ -920,6 +920,33 @@ export type Database = {
         }
         Relationships: []
       }
+      q_result_alert_log: {
+        Row: {
+          channel: string
+          created_at: string
+          result_date: string
+          slot: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          result_date: string
+          slot: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          result_date?: string
+          slot?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       scheduled_reports: {
         Row: {
           active: boolean
