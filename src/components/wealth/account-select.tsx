@@ -4,6 +4,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -33,7 +34,7 @@ export function compatibleAccounts(accounts: Account[], kind: AccountKind): Acco
 }
 
 /** Stable display + storage label: "Institution • Name". */
-export function accountLabel(a: Account) {
+export function accountLabel(a: { name: string; provider?: string | null }) {
   return a.provider ? `${a.provider} • ${a.name}` : a.name;
 }
 
@@ -64,42 +65,40 @@ export function AccountSelect({
   // Keep a previously-saved value selectable even when it is not in the list.
   const extra = value && !options.some((a) => accountLabel(a) === value) ? value : null;
 
-  if (!isLoading && options.length === 0 && !extra) {
-    return (
-      <>
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
-          <span className="text-sm text-muted-foreground">No accounts yet</span>
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className="inline-flex items-center gap-1 text-sm font-medium text-mint hover:underline"
-          >
-            <Plus className="h-3.5 w-3.5" /> Add Account
-          </button>
-        </div>
-        <AccountDialog open={dialogOpen} onOpenChange={setDialogOpen} existing={null} />
-      </>
-    );
-  }
-
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
-        <SelectValue placeholder={placeholder ?? "Select an account"} />
-      </SelectTrigger>
-      <SelectContent>
-        {extra ? <SelectItem value={extra}>{extra}</SelectItem> : null}
-        {options.map((a) => {
-          const label = accountLabel(a);
-          const meta = accountMeta(a);
-          return (
-            <SelectItem key={a.id} value={label}>
-              {label}
-              {meta ? <span className="text-muted-foreground"> · {meta}</span> : null}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+    <>
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <Select value={value} onValueChange={onChange}>
+            <SelectTrigger aria-label="Held in account" className="w-full [&>span]:truncate" disabled={isLoading || (options.length === 0 && !extra)}>
+              <SelectValue placeholder={isLoading ? "Loading accounts…" : options.length === 0 && !extra ? "No accounts yet" : placeholder ?? "Select an account"} />
+            </SelectTrigger>
+            <SelectContent>
+              {extra ? <SelectItem value={extra}>{extra}</SelectItem> : null}
+              {options.map((a) => {
+                const label = accountLabel(a);
+                const meta = accountMeta(a);
+                return (
+                  <SelectItem key={a.id} value={label}>
+                    {label}
+                    {meta ? <span className="text-muted-foreground"> · {meta}</span> : null}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button type="button" variant="outline" size="sm" className="shrink-0" aria-label="Add account" title="Add account" onClick={() => setDialogOpen(true)}>
+          <Plus className="h-3.5 w-3.5" /> Add
+        </Button>
+      </div>
+      <AccountDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        existing={null}
+        defaultType={kind === "market" ? "Broker" : "Bank Account"}
+        onSaved={(account) => onChange(accountLabel(account))}
+      />
+    </>
   );
 }

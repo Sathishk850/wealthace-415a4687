@@ -28,6 +28,7 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   existing?: Account | null;
   defaultType?: AccountType;
+  onSaved?: (account: AccountInput) => void;
 };
 
 const COLORS = [
@@ -141,7 +142,7 @@ const emptyFor = (t: AccountType = "Bank Account"): AccountInput => ({
   balance_as_of: null,
 });
 
-export function AccountDialog({ open, onOpenChange, existing, defaultType }: Props) {
+export function AccountDialog({ open, onOpenChange, existing, defaultType, onSaved }: Props) {
   const [form, setForm] = useState<AccountInput>(emptyFor(defaultType));
   const upsert = useUpsertAccount();
   const { data: members = [] } = useFamily();
@@ -186,6 +187,7 @@ export function AccountDialog({ open, onOpenChange, existing, defaultType }: Pro
     if (!form.name.trim()) return toast.error("Account name is required");
     try {
       await upsert.mutateAsync({ ...form, account_type: type });
+      onSaved?.({ ...form, account_type: type });
       if (keepOpen && !existing) setForm(emptyFor(type));
       else onOpenChange(false);
     } catch {
