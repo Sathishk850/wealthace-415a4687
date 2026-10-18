@@ -1,4 +1,8 @@
 # Expense Scanner (Expenses module)
+## Q Results reliability and priority alerts
+- [ ] Verify NSE same-day sources and IST dates; merge reliable feeds with visible failure state
+- [ ] Priority quarterly alerts, preference, scheduled slots, dedupe and High Impact/bell presentation
+- [ ] Tests, requested checks and signed-in verification
 ## Snapshot itemized changes
 - [ ] Store compact line items on capture and today's sync
 - [ ] Exact grouped diffs and clearly labeled historical reconstruction with reconciled subtotals

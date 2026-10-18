@@ -46,25 +46,25 @@ export function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <Button variant="ghost" size="icon"
           type="button"
           aria-label="Notifications"
           className={cn(
-            "relative grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 hover:bg-[rgba(33,219,210,0.12)]",
+            "relative grid h-9 w-9 place-items-center rounded-lg transition-all duration-200 hover:bg-primary/10",
             count > 0
-              ? "bg-[rgba(33,219,210,0.12)] text-[#21DBD2]"
+              ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:text-foreground",
           )}
         >
           <Bell className="h-4 w-4" />
           {count > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[#21DBD2] px-1 text-[10px] font-bold text-[#0F172A]">
+            <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
               {count > 99 ? "99+" : count}
             </span>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[360px] p-0">
+      <PopoverContent align="end" className="w-[360px] max-w-[calc(100vw-24px)] p-0">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">Notifications</span>
@@ -96,11 +96,12 @@ export function NotificationBell() {
                   className={cn(
                     "group px-3 py-2.5 transition",
                     !n.read_at && "bg-mint/[0.04]",
+                    n.metadata.kind === "q_result" && n.priority === "high" && "border-l-2 border-l-primary bg-primary/10",
                   )}
                 >
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className={cn("shrink-0 text-[10px] capitalize", categoryColor(n.category))}>
-                      {n.category}
+                      {n.metadata.kind === "q_result" ? "Q Result · High" : n.category}
                     </Badge>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
@@ -110,7 +111,7 @@ export function NotificationBell() {
                         </span>
                       </div>
                       {n.body && (
-                        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
+                         <p className="mt-0.5 break-words text-xs text-muted-foreground">{n.body}</p>
                       )}
                       {n.link && (
                         <Link
