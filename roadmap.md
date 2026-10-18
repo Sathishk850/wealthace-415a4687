@@ -1,7 +1,7 @@
 # Expense Scanner (Expenses module)
 ## Held in account creation
 - [x] Add shared inline account creation beside populated and empty selectors
-- [ ] Verify saving automatically selects the account on desktop/mobile
+- [x] Verify saving automatically selects the account on desktop/mobile; test accounts removed
 ## Q Results reliability and priority alerts
 - [ ] Verify NSE same-day sources and IST dates; merge reliable feeds with visible failure state
 - [ ] Priority quarterly alerts, preference, scheduled slots, dedupe and High Impact/bell presentation
