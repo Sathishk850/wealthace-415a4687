@@ -42,6 +42,8 @@ export const Route = createFileRoute("/_app/events")({
           "Global market and financial events — economic releases and central bank decisions with previous and actual values.",
       },
       { property: "og:title", content: "Events · Wealth Ace" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content:
@@ -196,6 +198,7 @@ function EventsPage() {
         )}
       </div>
 
+      {filter === "high" && <UpcomingResultsCard ownOnly />}
       {filter === "qresults" ? (
         <UpcomingResultsCard />
       ) : (
