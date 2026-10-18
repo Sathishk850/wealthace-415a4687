@@ -16,7 +16,7 @@ import {
 import { PushSettingsSection } from "@/components/push/push-settings-section";
 import { REMINDER_KINDS, REMINDER_KIND_LABEL, type ReminderKind } from "@/lib/tools-api";
 
-const FUTURE_CHANNELS: Channel[] = ["push", "sms", "whatsapp"];
+const FUTURE_CHANNELS: Channel[] = ["sms", "whatsapp"];
 
 const ALERT_TYPES = [
   { key: "q_results", label: "Q result alerts", desc: "Holdings and watchlist · 6 PM before and 8 AM IST on the day · high priority" },

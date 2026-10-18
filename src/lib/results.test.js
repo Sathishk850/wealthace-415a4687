@@ -30,6 +30,20 @@ test('both failed NSE feeds are marked unavailable instead of silently empty', a
   const result = await fetchNseResults('2026-10-17','2026-10-24',async () => new Response('',{status:403}));
   expect(result.available).toBe(false);
 });
+test('blocked NSE homepage does not prevent a successful dated API retry', async () => {
+  const attempts = new Map();
+  const result = await fetchNseResults('2026-10-17','2026-10-24',async input => {
+    const url = String(input);
+    if (url === 'https://www.nseindia.com/') return new Response('', {status:403});
+    const count = (attempts.get(url) ?? 0) + 1;
+    attempts.set(url, count);
+    if (count === 1) return new Response('', {status:403});
+    return Response.json([{symbol:'HDFCBANK',purpose:'Financial Results',date:'17-Oct-2026'}]);
+  });
+  expect([...attempts.values()]).toEqual([2,2]);
+  expect(result.available).toBe(true);
+  expect(result.rows.map(row => row.symbol)).toEqual(['HDFCBANK','HDFCBANK']);
+});
 test('alert slots are 18 IST before and 08 IST on the result date', () => {
   expect(resultSlot(new Date('2026-10-16T12:30:00Z'))).toEqual({slot:'evening',date:'2026-10-17'});
   expect(resultSlot(new Date('2026-10-17T02:30:00Z'))).toEqual({slot:'morning',date:'2026-10-17'});

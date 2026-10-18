@@ -18,7 +18,11 @@ export async function fetchNseResults(today: string, horizon: string, fetcher: t
   async function feed(path: string): Promise<ResultRow[] | null> {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        if (attempt) await prime();
+        // A blocked homepage must not prevent the API retry: NSE sometimes
+        // serves its dated APIs even when the session-prime request is denied.
+        if (attempt) {
+          try { await prime(); } catch (e) { console.warn("[results] NSE session re-prime failed", String(e)); }
+        }
         const url = new URL(`https://www.nseindia.com/api/${path}`);
         url.searchParams.set("from_date", dated(today));
         url.searchParams.set("to_date", dated(horizon));
