@@ -5,10 +5,14 @@ import { resultBatches, resultChannels, resultKey, resultSlot, tagResults } from
 import { sendPushToUser } from "./push.server";
 
 /** Called only by the already authenticated notification worker, never by browser code. */
-export async function sweepQResultAlerts(admin: SupabaseClient<Database>, now = new Date()) {
+export async function sweepQResultAlerts(
+  admin: SupabaseClient<Database>,
+  now = new Date(),
+  delivery = { fetchCalendar: fetchResultsCalendar, sendPush: sendPushToUser },
+) {
   const slot = resultSlot(now);
   if (!slot) return { created: 0, pushed: 0 };
-  const calendar = await fetchResultsCalendar(now.getTime());
+  const calendar = await delivery.fetchCalendar(now.getTime());
   const [inv, wl, preferences] = await Promise.all([
     admin.from("wealth_investments").select("user_id, identifier, symbol, identifier_type, status").in("identifier_type", ["stock_in", "stock_us"]),
     admin.from("user_watchlist").select("user_id, symbol, market, category"),
@@ -55,9 +59,9 @@ export async function sweepQResultAlerts(admin: SupabaseClient<Database>, now = 
             if (insertError) throw insertError;
             created++;
           } else {
-            const sent = await sendPushToUser(admin, userId, { title, body, priority: "high", tag: `q-result:${slot.date}:${slot.slot}:${batch.map(r => r.symbol).join("-")}`, url: "/events" });
+            const sent = await delivery.sendPush(admin, userId, { title, body, priority: "high", tag: `q-result:${slot.date}:${slot.slot}:${batch.map(r => r.symbol).join("-")}`, url: "/events" });
             pushed += sent.sent;
-            if (sent.failed && !sent.sent) throw new Error("Q Result push delivery failed");
+            if (!sent.sent) throw new Error("Q Result push not delivered; releasing claims for retry");
           }
         } catch (e) {
           // Release unsuccessful channel claims so a retry can deliver without duplicating successful channels.

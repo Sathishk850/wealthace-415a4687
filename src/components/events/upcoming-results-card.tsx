@@ -22,6 +22,7 @@ export function UpcomingResultsCard({ ownOnly = false }: { ownOnly?: boolean }) 
     queryKey: ["upcoming-results"],
     queryFn: () => fetchResults(),
     staleTime: 10 * 60_000,
+    refetchInterval: 10 * 60_000,
     refetchOnWindowFocus: "always",
   });
 
@@ -36,7 +37,7 @@ export function UpcomingResultsCard({ ownOnly = false }: { ownOnly?: boolean }) 
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [q.data, today, ownOnly]);
 
-  // Day groups start collapsed; the nearest day is expanded initially.
+  // Today's populated group opens automatically; an empty today stays collapsed.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   useEffect(() => {
     if (groups[0]?.[1].length) setExpanded(prev => new Set([...prev, today]));
