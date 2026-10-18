@@ -34,7 +34,7 @@ export function compatibleAccounts(accounts: Account[], kind: AccountKind): Acco
 }
 
 /** Stable display + storage label: "Institution • Name". */
-export function accountLabel(a: Pick<Account, "provider" | "name">) {
+export function accountLabel(a: { name: string; provider?: string | null }) {
   return a.provider ? `${a.provider} • ${a.name}` : a.name;
 }
 
