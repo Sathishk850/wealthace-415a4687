@@ -19,6 +19,7 @@ import { REMINDER_KINDS, REMINDER_KIND_LABEL, type ReminderKind } from "@/lib/to
 const FUTURE_CHANNELS: Channel[] = ["push", "sms", "whatsapp"];
 
 const ALERT_TYPES = [
+  { key: "q_results", label: "Q result alerts", desc: "Holdings and watchlist · 6 PM before and 8 AM IST on the day · high priority" },
   { key: "high_impact_events", label: "High impact market events", desc: "FOMC, RBI, CPI, NFP decisions" },
   { key: "portfolio_events", label: "Events affecting portfolio", desc: "Events that may affect your holdings" },
   { key: "goal_milestones", label: "Goal milestones", desc: "25%, 50%, 75%, 100% reached" },

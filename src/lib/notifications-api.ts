@@ -99,13 +99,26 @@ export function useNotifications(limit = 50) {
   return useQuery({
     queryKey: [...notifKeys.list, limit],
     queryFn: async (): Promise<Notification[]> => {
+      const { data: priorityRows, error: priorityError } = await supabase
+        .from("notifications")
+        .select("*")
+        .contains("metadata", { kind: "q_result" })
+        .eq("priority", "high")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (priorityError) throw priorityError;
       const { data, error } = await supabase
         .from("notifications" as any)
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) throw error;
-      return (data ?? []) as unknown as Notification[];
+      const unique = new Map<string, Notification>();
+      for (const row of [...(priorityRows ?? []), ...(data ?? [])] as Notification[]) unique.set(row.id, row);
+      return [...unique.values()].sort((a,b) => {
+        const rank = (n: Notification) => n.metadata.kind === "q_result" && n.priority === "high" ? Number(n.metadata.holding_rank ?? 1) : 2;
+        return rank(a) - rank(b) || b.created_at.localeCompare(a.created_at);
+      }).slice(0, limit);
     },
     refetchInterval: 60_000,
   });

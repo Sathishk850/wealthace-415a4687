@@ -58,7 +58,14 @@ export const Route = createFileRoute("/api/public/hooks/notification-cron")({
           schedules_processed: 0,
           dispatch_attempted: 0,
           dispatch_sent: 0,
+          q_results_created: 0,
+          q_results_pushed: 0,
         };
+
+        const { sweepQResultAlerts } = await import('@/lib/q-result-alerts.server');
+        const quarterly = await sweepQResultAlerts(admin, now);
+        result.q_results_created = quarterly.created;
+        result.q_results_pushed = quarterly.pushed;
 
         const addDays = (n: number) => {
           const d = new Date(now);
