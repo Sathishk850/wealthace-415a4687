@@ -33,6 +33,7 @@ import {
   useBulkInsertTransactions,
 } from "@/lib/money-api";
 import { formatDateShort } from "@/lib/date-format";
+import { useCategoryRules, applyRules } from "@/lib/category-rules-api";
 
 type Props = { open: boolean; onOpenChange: (o: boolean) => void };
 
@@ -44,6 +45,7 @@ export function BankStatementImporter({ open, onOpenChange }: Props) {
   const cats = useCategories();
   const tx = useTransactions();
   const bulk = useBulkInsertTransactions();
+  const rules = useCategoryRules().data ?? [];
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [busy, setBusy] = useState(false);
@@ -79,7 +81,11 @@ export function BankStatementImporter({ open, onOpenChange }: Props) {
       setBank(parsed.bank);
       setSkipped(parsed.skipped);
       setFileName(file.name);
-      setDrafts(built);
+      setDrafts(
+        built.map((d) =>
+          d.category_id ? d : { ...d, category_id: applyRules(d.merchant, rules, d.kind) ?? null },
+        ),
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Could not read this statement");
     } finally {
