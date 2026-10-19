@@ -368,6 +368,36 @@ export type Database = {
         }
         Relationships: []
       }
+      money_category_rules: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          keywords: string[]
+          kind: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          keywords: string[]
+          kind: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          keywords?: string[]
+          kind?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       money_transactions: {
         Row: {
           account: string | null
