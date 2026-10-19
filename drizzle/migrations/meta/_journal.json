@@ -43,6 +43,13 @@
       "when": 1792331683288,
       "tag": "0005_q_result_alert_slot_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792414224226,
+      "tag": "0006_money_category_rules",
+      "breakpoints": true
     }
   ]
 }
