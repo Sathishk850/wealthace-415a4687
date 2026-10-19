@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DepositFields } from "./deposit-fields";
+import { profileFor, validateProfile, mapToStorage, readFromStorage } from "@/lib/investment-field-profiles";
+import { holdingDepositValue } from "@/lib/deposit-value";
 import { depositKind } from "@/lib/deposit-value";
 
 import { cn } from "@/lib/utils";
@@ -540,6 +542,7 @@ type FormState = {
   rd_installment_day: number | null;
   quantity: string;
   avg_price: string;
+  current_value: string;
   notes: string;
 
   is_sip: boolean;
@@ -582,6 +585,7 @@ const EMPTY: FormState = {
   rd_installment_day: null,
   quantity: "",
   avg_price: "",
+  current_value: "",
   notes: "",
   is_sip: false,
   sip_amount: "",
@@ -633,8 +637,13 @@ function investmentToForm(inv: Investment): FormState {
     deposit_kind: inv.deposit_kind ?? null,
     rd_installment_amount: inv.rd_installment_amount ?? null,
     rd_installment_day: inv.rd_installment_day ?? null,
-    quantity: String(inv.quantity ?? ""),
-    avg_price: String(inv.avg_price ?? ""),
+    ...(() => {
+      const prof = profileFor(inv.category, inv.deposit_kind);
+      const v = readFromStorage(prof, inv);
+      return prof.mode === "amount"
+        ? { quantity: "1", avg_price: String(v.amount || ""), current_value: v.current_value != null ? String(v.current_value) : "" }
+        : { quantity: String(inv.quantity ?? ""), avg_price: String(inv.avg_price ?? ""), current_value: "" };
+    })(),
     notes: rest,
     is_sip: !!inv.is_sip,
     sip_amount: inv.sip_amount != null ? String(inv.sip_amount) : "",
@@ -827,7 +836,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   };
 
   // Derived values
-  const qty = Number(form.quantity) || 0;
+  const profile = profileFor(form.category, form.deposit_kind);
+  const isAmount = profile.mode === "amount";
+  const qty = isAmount ? 1 : Number(form.quantity) || 0;
   const avg = Number(form.avg_price) || 0;
   const invested = qty * avg;
   const livePrice = form.current_price && form.current_price > 0 ? form.current_price : null;
@@ -886,8 +897,29 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
     setForm((f) => (f.maturity_date ? f : { ...f, maturity_date: auto }));
   }, [isTerm, form.category, form.purchase_date]);
 
-  const canSave =
-    !!form.platform.trim() && qty > 0 && avg > 0 && !!form.purchase_date && !!form.name.trim();
+  const profileInput = {
+    name: form.name,
+    platform: form.platform,
+    purchase_date: form.purchase_date,
+    quantity: qty,
+    avg_price: avg,
+    amount: avg,
+    current_value: form.current_value ? Number(form.current_value) : null,
+    interest_rate: form.interest_rate,
+    maturity_date: profile.maturity ? form.maturity_date || null : null,
+  };
+  const validationError = validateProfile(profile, profileInput);
+  const canSave = validationError == null;
+  const depositPreview = profile.deposit
+    ? holdingDepositValue({
+        category: form.category, sub_category: form.classification, deposit_kind: form.deposit_kind,
+        quantity: qty, avg_price: avg, current_price: avg, purchase_date: form.purchase_date || null,
+        maturity_date: form.maturity_date || null, interest_rate: form.interest_rate,
+        compounding_frequency: form.compounding_frequency,
+        rd_installment_amount: profile.key === "rd" ? avg : form.rd_installment_amount,
+        rd_installment_day: form.rd_installment_day,
+      } as any)
+    : null;
 
   const clearAll = () => {
     setForm({ ...EMPTY, purchase_date: todayISO() });
@@ -924,17 +956,13 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
   };
 
   const submit = async (keepOpen = false) => {
-    if (!canSave) {
-      if (!form.name.trim()) toast.error("Please select or enter an investment first");
-      else if (!form.platform.trim()) toast.error("Investment platform is required");
-      else if (qty <= 0) toast.error("Quantity must be greater than zero");
-      else if (avg <= 0) toast.error("Average buy price must be greater than zero");
-      else if (!form.purchase_date) toast.error("Purchase date is required");
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
     const noteLines: string[] = [];
-    noteLines.push(`Platform: ${form.platform}`);
+    if (form.platform.trim()) noteLines.push(`Platform: ${form.platform}`);
     if (form.sector) noteLines.push(`Sector: ${form.sector}`);
     if (form.classification) noteLines.push(`Classification: ${form.classification}`);
     if (form.segment) noteLines.push(`Segment: ${form.segment}`);
@@ -947,25 +975,26 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
       symbol: form.symbol.trim() || null,
       category: form.category,
       sub_category: form.classification || form.segment || null,
-      quantity: qty,
-      avg_price: avg,
-      current_price: livePrice ?? avg,
+      ...(() => {
+        const m = mapToStorage(profile, profileInput, livePrice);
+        return { quantity: m.quantity, avg_price: m.avg_price, current_price: m.current_price };
+      })(),
       purchase_date: form.purchase_date || null,
       interest_rate: isTerm ? form.interest_rate : null,
       compounding_frequency: isTerm ? form.compounding_frequency || 'quarterly' : null,
       deposit_kind: isTerm ? depositKind(form.category, form.classification, form.deposit_kind) : null,
-      rd_installment_amount: isTerm ? form.rd_installment_amount : null,
+      rd_installment_amount: isTerm ? (profile.key === "rd" ? avg : form.rd_installment_amount) : null,
       rd_installment_day: isTerm ? form.rd_installment_day : null,
       maturity_date: isTerm
         ? form.maturity_date || defaultMaturityDate(form.category, form.purchase_date)
-        : null,
+        : profile.maturity ? form.maturity_date || null : null,
       notes: noteLines.join("\n"),
       status: form.status || "active",
-      is_sip: form.is_sip,
-      sip_active: form.is_sip,
-      sip_amount: form.is_sip && form.sip_amount ? Number(form.sip_amount) : null,
-      sip_frequency: form.is_sip ? form.sip_frequency : null,
-      sip_start_date: form.is_sip ? form.sip_start_date || form.purchase_date || null : null,
+      is_sip: profile.sip && form.is_sip,
+      sip_active: profile.sip && form.is_sip,
+      sip_amount: profile.sip && form.is_sip && form.sip_amount ? Number(form.sip_amount) : null,
+      sip_frequency: profile.sip && form.is_sip ? form.sip_frequency : null,
+      sip_start_date: profile.sip && form.is_sip ? form.sip_start_date || form.purchase_date || null : null,
       identifier_type: form.identifier_type,
       identifier: form.identifier,
       exchange: form.exchange,
@@ -1031,7 +1060,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
         {/* ---------- Left column: sections 1-3 ---------- */}
         <div className="space-y-4 lg:col-span-2">
           {/* Section 1: Find Investment */}
-          <section className={cardCls}>
+          <section className={cn(cardCls, !profile.search && form.category && "hidden")}>
             <SectionHeader
               n={1}
               title="Find Investment"
@@ -1323,17 +1352,17 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
             />
             <div className="space-y-4 p-4 sm:p-5">
               {/* Manual name (only when nothing selected) */}
-              {!isLinked && (
+              {(!isLinked || !profile.search) && (
                 <div>
                   <label className={labelCls}>
-                    Name <span className="text-rose-500">*</span>
+                    {profile.search ? "Name" : profile.labels.name} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     className={inputCls}
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="Instrument name"
+                    placeholder={profile.labels.name}
                   />
                 </div>
               )}
@@ -1341,7 +1370,8 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <label className={labelCls}>
-                    Investment Platform <span className="text-rose-500">*</span>
+                    {profile.labels.platform}{" "}
+                    {profile.platformRequired ? <span className="text-rose-500">*</span> : <span className="font-normal text-muted-foreground">(optional)</span>}
                   </label>
                   <div className="relative">
                     <select
@@ -1371,7 +1401,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
                 <div>
                   <label className={labelCls}>
-                    {isTerm ? 'Start Date' : 'Purchase Date'} <span className="text-rose-500">*</span>
+                    {profile.labels.date} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -1381,19 +1411,19 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   />
                 </div>
 
-                {isTerm && (
+                {(isTerm || profile.maturity) && (
                   <div>
-                    <label className={labelCls}>Maturity Date</label>
+                    <label className={labelCls}>Maturity Date{profile.key === "fd" || profile.key === "rd" ? <span className="text-rose-500"> *</span> : null}</label>
                     <input
                       type="date"
                       className={inputCls}
                       value={form.maturity_date}
                       onChange={(e) => setForm((f) => ({ ...f, maturity_date: e.target.value }))}
                     />
-                    <p className="mt-1 text-[11px] text-muted-foreground">
+                    {isTerm && <p className="mt-1 text-[11px] text-muted-foreground">
                       Auto-set to purchase date +{form.category === "Bonds" ? "5" : "3"} years —
                       reminders arrive 7 days before and on maturity day.
-                    </p>
+                    </p>}
                   </div>
                 )}
 
@@ -1405,9 +1435,38 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     rd_installment_amount: patch.rd_installment_amount === undefined ? f.rd_installment_amount : patch.rd_installment_amount,
                     rd_installment_day: patch.rd_installment_day === undefined ? f.rd_installment_day : patch.rd_installment_day,
                   }))} />
+                {isAmount ? (
+                  <>
+                    <div>
+                      <label className={labelCls}>
+                        {profile.labels.amount} ({sym}) <span className="text-rose-500">*</span>
+                      </label>
+                      <AmountInput
+                        value={form.avg_price}
+                        onChange={(v) => setForm((f) => ({ ...f, avg_price: v, quantity: "1" }))}
+                        className={inputCls}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    {profile.currentValueInput && (
+                      <div>
+                        <label className={labelCls}>
+                          {profile.labels.currentValue} ({sym}) <span className="font-normal text-muted-foreground">(optional)</span>
+                        </label>
+                        <AmountInput
+                          value={form.current_value}
+                          onChange={(v) => setForm((f) => ({ ...f, current_value: v }))}
+                          className={inputCls}
+                          placeholder="Same as invested"
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
                 <div>
                   <label className={labelCls}>
-                    Quantity <span className="text-rose-500">*</span>
+                    {profile.labels.quantity} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -1422,7 +1481,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
 
                 <div>
                   <label className={labelCls}>
-                    Average Buy Price ({sym}) <span className="text-rose-500">*</span>
+                    {profile.labels.price} ({sym}) <span className="text-rose-500">*</span>
                   </label>
                   <AmountInput
                     value={form.avg_price}
@@ -1434,6 +1493,9 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                     Tip: type an expression like <span className="text-mint">1200+18%</span> or <span className="text-mint">500*2</span>
                   </p>
                 </div>
+
+                  </>
+                )}
 
                 <div>
                   <label className={labelCls}>Currency</label>
@@ -1463,6 +1525,19 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               </div>
 
               {/* Summary row */}
+              {profile.deposit && depositPreview ? (
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-2/40 p-4 sm:grid-cols-3">
+                  <SummaryCell label={profile.summary[0]} value={fmt(profile.key === "rd" ? depositPreview.invested ?? 0 : invested)} />
+                  <SummaryCell label={profile.summary[1]} value={fmt(depositPreview.value)} />
+                  <SummaryCell label={profile.summary[2]} value={fmt(depositPreview.maturityValue)} />
+                </div>
+              ) : isAmount ? (
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-2/40 p-4 sm:grid-cols-3">
+                  <SummaryCell label={profile.summary[0]} value={invested > 0 ? fmt(invested) : "—"} />
+                  <SummaryCell label={profile.summary[1]} value={fmt(Number(form.current_value) || invested)} />
+                  <SummaryCell label={profile.summary[2]} value={invested > 0 ? fmt((Number(form.current_value) || invested) - invested) : "—"} />
+                </div>
+              ) : (
               <div className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface-2/40 p-4 sm:grid-cols-3">
                 <SummaryCell label="Invested Amount" value={invested > 0 ? fmt(invested) : "—"} />
                 <SummaryCell
@@ -1482,6 +1557,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   }
                 />
               </div>
+              )}
             </div>
           </section>
         </div>
@@ -1505,7 +1581,7 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
               />
 
               {/* SIP tracking toggle */}
-              <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-surface-2/40 px-3 py-3">
+              {profile.sip && <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-surface-2/40 px-3 py-3">
                 <div>
                   <div className="text-xs font-medium text-foreground">
                     SIP tracking{" "}
@@ -1520,8 +1596,8 @@ export function AddInvestmentForm({ investmentId, onSaved, onCancel }: AddInvest
                   onChange={(v) => setForm((f) => ({ ...f, is_sip: v }))}
                   label="SIP tracking"
                 />
-              </div>
-              {form.is_sip && (
+              </div>}
+              {profile.sip && form.is_sip && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className={labelCls}>SIP amount</label>
