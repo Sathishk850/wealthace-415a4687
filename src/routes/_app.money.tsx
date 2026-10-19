@@ -1,4 +1,6 @@
 import { Switch } from "@/components/ui/switch";
+import { CategoryRulesManager } from "@/components/money/CategoryRulesManager";
+import { useCategoryRules, useUpsertCategoryRule, applyRules, type CategoryRule } from "@/lib/category-rules-api";
 import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { fireBudgetAlerts } from "@/lib/budget-alerts";
