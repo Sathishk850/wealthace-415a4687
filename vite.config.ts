@@ -57,6 +57,7 @@ export default defineConfig({
         navigateFallbackDenylist: [
           /^\/~oauth/,
           /^\/api\//,
+          /^\/lovable\//,
           /^\/_serverFn\//,
         ],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff,woff2,ttf}"],
