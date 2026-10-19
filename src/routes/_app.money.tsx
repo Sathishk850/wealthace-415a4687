@@ -257,6 +257,7 @@ function Money() {
   const categoriesQ = useCategories();
   const transactionsQ = useTransactions();
   const budgetsQ = useBudgets();
+  const rules = useCategoryRules().data ?? [];
 
   const categories = categoriesQ.data ?? [];
   const transactions = transactionsQ.data ?? [];
@@ -907,6 +908,9 @@ function Money() {
           onCopiedLastMonth={() => {}}
         />
       )}
+      {tab === "Budgets" && (
+        <CategoryRulesManager className="mt-6 rounded-2xl border border-border bg-card p-4" rules={rules} categories={categories} />
+      )}
 
       <ExpenseScanDialog
         open={scanOpen}
@@ -922,6 +926,7 @@ function Money() {
         prefill={openTx.prefill}
         categories={categories}
         transactions={transactions}
+        rules={rules}
       />
       <BudgetDialog
         open={openBudget.open}
@@ -1633,6 +1638,7 @@ function TransactionDialog({
   prefill,
   categories,
   transactions,
+  rules,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -1641,6 +1647,7 @@ function TransactionDialog({
   prefill?: ScanHandoff;
   categories: Category[];
   transactions: Transaction[];
+  rules: CategoryRule[];
 }) {
   const [kind, setKind] = useState<Kind>(editing?.kind ?? defaultKind ?? "expense");
   const [amount, setAmount] = useState<string>(editing ? String(editing.amount) : "");
@@ -1661,6 +1668,8 @@ function TransactionDialog({
 
   const upsert = useUpsertTransaction();
   const upsertCat = useUpsertCategory();
+  const [saveAsRule, setSaveAsRule] = useState(false);
+  const upsertRule = useUpsertCategoryRule({ silent: true });
 
   const EXPENSE_PRESETS = [
     "Rent", "EMI", "Shopping", "Food", "Bills", "Medical",
@@ -1693,6 +1702,14 @@ function TransactionDialog({
     }
     return null;
   }, [open, editing, defaultKind, prefill]);
+
+  // Auto-suggest a category from rules for new transactions while still empty.
+  useEffect(() => {
+    if (!open || editing || !merchant.trim() || categoryId) return;
+    const matched = applyRules(merchant, rules, kind);
+    if (matched) setCategoryId(matched);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchant, rules, kind]);
 
   const kindCats = categories.filter((c) => c.kind === kind);
   const categoryUsage = useMemo(() => {
@@ -1823,6 +1840,30 @@ function TransactionDialog({
       if (receiptFile && saved?.id) {
         await uploadReceipt(saved.id, receiptFile);
         setReceiptFile(null);
+      }
+      if (saveAsRule && editing && merchant.trim() && cat && !cat.startsWith("preset:")) {
+        const keyword = merchant.trim().toLowerCase();
+        const existingRule = rules.find(
+          (r) => r.kind === kind && r.keywords.some((kw) => keyword.includes(kw) || kw.includes(keyword)),
+        );
+        try {
+          if (existingRule) {
+            if (!existingRule.keywords.includes(keyword) || existingRule.category_id !== cat) {
+              await upsertRule.mutateAsync({
+                id: existingRule.id,
+                keywords: existingRule.keywords.includes(keyword) ? existingRule.keywords : [...existingRule.keywords, keyword],
+                category_id: cat,
+                kind,
+              });
+            }
+          } else {
+            await upsertRule.mutateAsync({ keywords: [keyword], category_id: cat, kind });
+          }
+          toast.success(`Rule saved: "${keyword}" → ${categories.find((c) => c.id === cat)?.name ?? "category"}`);
+        } catch {
+          /* toast shown by mutation */
+        }
+        setSaveAsRule(false);
       }
       if (kind === "expense") void commitStagedPaymentPreferences();
       if (keepOpen && !editing) {
