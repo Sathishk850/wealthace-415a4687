@@ -41,6 +41,7 @@ import { Route as ApiPublicHooksEventsSyncRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksNotificationCronRouteImport } from './routes/api/public/hooks/notification-cron'
 import { Route as ApiPublicHooksReleaseNotesRouteImport } from './routes/api/public/hooks/release-notes'
 import { Route as ApiPublicHooksSnapshotCronRouteImport } from './routes/api/public/hooks/snapshot-cron'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -206,6 +207,12 @@ const ApiPublicHooksSnapshotCronRoute =
     path: '/api/public/hooks/snapshot-cron',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
   '/api/public/hooks/snapshot-cron': typeof ApiPublicHooksSnapshotCronRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -271,6 +279,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
   '/api/public/hooks/snapshot-cron': typeof ApiPublicHooksSnapshotCronRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -306,6 +315,7 @@ export interface FileRoutesById {
   '/api/public/hooks/notification-cron': typeof ApiPublicHooksNotificationCronRoute
   '/api/public/hooks/release-notes': typeof ApiPublicHooksReleaseNotesRoute
   '/api/public/hooks/snapshot-cron': typeof ApiPublicHooksSnapshotCronRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
     | '/api/public/hooks/snapshot-cron'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
     | '/api/public/hooks/snapshot-cron'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notification-cron'
     | '/api/public/hooks/release-notes'
     | '/api/public/hooks/snapshot-cron'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -421,6 +434,7 @@ export interface RootRouteChildren {
   ApiPublicHooksNotificationCronRoute: typeof ApiPublicHooksNotificationCronRoute
   ApiPublicHooksReleaseNotesRoute: typeof ApiPublicHooksReleaseNotesRoute
   ApiPublicHooksSnapshotCronRoute: typeof ApiPublicHooksSnapshotCronRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -649,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSnapshotCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -744,6 +765,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksNotificationCronRoute: ApiPublicHooksNotificationCronRoute,
   ApiPublicHooksReleaseNotesRoute: ApiPublicHooksReleaseNotesRoute,
   ApiPublicHooksSnapshotCronRoute: ApiPublicHooksSnapshotCronRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
