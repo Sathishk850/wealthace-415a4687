@@ -65,3 +65,10 @@
 - [x] Add goal emoji, notes, sorting and achieved-goal collapse
 - [x] Add Dashboard holdings asset-class filters
 - [x] Run TypeScript check and verify affected views
+
+## Global form audit (per-type field profiles)
+- [x] Shared investment field profiles + tests; Add Investment page uses them (FD/RD/schemes/ULIP/PMS/lending ask amount, not qty/price)
+- [ ] Edit Investment dialog (investment-dialog.tsx) to use the same profiles
+- [ ] Holdings displays (table, details modal, summary row) hide "qty × price" for amount-based holdings
+- [ ] Import mapping for deposit-like rows
+- [ ] Audit of other forms (assets, liabilities, accounts, insurance, family, Money, Planner)
