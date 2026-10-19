@@ -1932,7 +1932,20 @@ function TransactionDialog({
               <div className="flex gap-2">
                 <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder={kind === "income" ? "New source name" : "New category name"} />
                 <Button type="button" variant="outline" onClick={() => { setShowNewCat(false); setNewCatName(""); }}>Cancel</Button>
-              </div>
+            {editing && categoryId && !categoryId.startsWith("preset:") && merchant.trim() && (
+              <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 shrink-0 accent-primary"
+                  checked={saveAsRule}
+                  onChange={(e) => setSaveAsRule(e.target.checked)}
+                />
+                <span className="min-w-0 truncate font-medium text-foreground">Remember this category for "{merchant.trim()}"</span>
+                <span className="ml-auto shrink-0 text-muted-foreground">Save as rule</span>
+              </label>
+            )}
+          </div>
+
             ) : (
               <div className="flex gap-2">
                 <Select value={categoryId || "none"} onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}>
