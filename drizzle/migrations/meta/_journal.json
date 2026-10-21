@@ -50,6 +50,13 @@
       "when": 1792414224226,
       "tag": "0006_money_category_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792569517849,
+      "tag": "0007_loan_given_repayments_and_asset_paid_from",
+      "breakpoints": true
     }
   ]
 }
