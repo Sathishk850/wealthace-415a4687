@@ -1,4 +1,8 @@
 # Expense Scanner (Expenses module)
+## Batch 3 — Lending and asset payments
+- [ ] Owner-only loan repayments with atomic outstanding and account balance updates
+- [ ] Loan Given add/edit/details and new-asset Paid from selector
+- [ ] Rule tests, automatic TypeScript checks and signed-in desktop/mobile verification
 ## Held in account creation
 - [x] Add shared inline account creation beside populated and empty selectors
 - [x] Verify saving automatically selects the account on desktop/mobile; test accounts removed
