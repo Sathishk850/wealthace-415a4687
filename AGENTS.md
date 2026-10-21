@@ -16,3 +16,4 @@
 - Keep cashflow bucketing and holding-performance ranking in pure financial-insights helpers so rules can be tested without fetching or rendering.
 - Existing asset SIP settings stay in asset notes and are projected into SIP Tracker only; patch investment SIP columns separately to avoid duplicating holdings or changing valuation.
 - Keep deposit accrual, RD instalment schedules and maturity timing in pure deposit-value helpers; apply valuation after transaction folding in the shared investments query so all investment consumers agree.
+- Keep asset funding in paid_from_account_id (Wealth accounts), separate from legacy payment_account_id (payment accounts); database triggers atomically deduct only on creation and reconcile loan repayments, edits and reversals to prevent partial saves.

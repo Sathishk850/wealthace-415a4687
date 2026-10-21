@@ -213,7 +213,7 @@ export const ASSET_GROUPS: AssetGroup[] = [
       inv("debt-etf", "Debt ETF", "CandlestickChart", DEBT, "ETFs", "Debt"),
       inv("nsc-kvp", "NSC / KVP", "ScrollText", DEBT, "Govt. Savings"),
       inv("p2p", "P2P Lending", "HandCoins", DEBT, "P2P Lending"),
-      inv("loan-given", "Loan Given", "ArrowLeftRight", DEBT, "Loan Given"),
+      ast("loan-given", "Loan Given", "ArrowLeftRight", DEBT, "Loan Given"),
     ],
   },
   {

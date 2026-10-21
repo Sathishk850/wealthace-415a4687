@@ -1401,6 +1401,7 @@ export type Database = {
           name: string
           notes: string | null
           owner_member_id: string | null
+          paid_from_account_id: string | null
           payment_account_id: string | null
           payment_mode: string | null
           purchase_date: string | null
@@ -1422,6 +1423,7 @@ export type Database = {
           name: string
           notes?: string | null
           owner_member_id?: string | null
+          paid_from_account_id?: string | null
           payment_account_id?: string | null
           payment_mode?: string | null
           purchase_date?: string | null
@@ -1443,6 +1445,7 @@ export type Database = {
           name?: string
           notes?: string | null
           owner_member_id?: string | null
+          paid_from_account_id?: string | null
           payment_account_id?: string | null
           payment_mode?: string | null
           purchase_date?: string | null
@@ -1455,6 +1458,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "wealth_assets_paid_from_account_id_fkey"
+            columns: ["paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "wealth_assets_payment_account_id_fkey"
             columns: ["payment_account_id"]
@@ -1871,6 +1881,54 @@ export type Database = {
             columns: ["payment_account_id"]
             isOneToOne: false
             referencedRelation: "payment_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wealth_loan_given_repayments: {
+        Row: {
+          amount: number
+          asset_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_account_id: string | null
+          repaid_on: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asset_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_account_id?: string | null
+          repaid_on: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asset_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_account_id?: string | null
+          repaid_on?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_loan_given_repayments_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_loan_given_repayments_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_accounts"
             referencedColumns: ["id"]
           },
         ]
