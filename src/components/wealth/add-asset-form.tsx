@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { InstrumentSearch } from "@/components/market/instrument-search";
 import { AccountSelect } from "@/components/wealth/account-select";
+import { AssetFundingSelect } from './asset-funding-select';
 import type { MarketQuote, SearchResult } from "@/lib/market/types";
 import { fetchGoldRate, purityMultiplier } from "@/lib/gold-rate.functions";
 import {
@@ -54,6 +55,7 @@ type FormState = {
   name: string;
   currency: Currency;
   account: string;
+  paidFromAccount: string | null;
   currentValue: string;
   quantity: string;
   price: string;
@@ -92,6 +94,7 @@ const EMPTY: FormState = {
   name: "",
   currency: "INR",
   account: "",
+  paidFromAccount: null,
   currentValue: "",
   quantity: "",
   price: "",
@@ -400,6 +403,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
       }
     }
     const current = dynamicFields ? dynCurrent : n(form.currentValue);
+    if (spec.dbCategory === 'Loan Given' && !(dynPurchase > 0)) return toast.error('Lent amount must be positive');
     if (dynamicFields ? !(current >= 0) : !(current >= 0) || form.currentValue === "")
       return toast.error("Current value is required");
 
@@ -423,7 +427,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
         : {};
 
     try {
-      if (spec.module === "investment" || sipOn) {
+      if (spec.module === "investment" || (sipOn && spec.dbCategory !== 'Loan Given')) {
         const quantity = qty > 0 ? qty : 1;
         const purchase = dynamicFields ? dynPurchase : secondaryValue;
         await upsertInvestment.mutateAsync({
@@ -455,6 +459,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           category: spec.dbCategory,
           sub_category: form.subClass || spec.dbSubCategory || null,
           current_value: current,
+          paid_from_account_id: form.paidFromAccount,
           purchase_value: dynamicFields
             ? dynPurchase > 0
               ? dynPurchase
@@ -462,7 +467,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
             : secondaryValue > 0
               ? secondaryValue
               : null,
-          purchase_date: form.investmentDate || null,
+          purchase_date: form.investmentDate || String(dyn['startDate'] ?? dyn['purchaseDate'] ?? '') || null,
           quantity: qty > 0 ? qty : null,
           location: spec.accountField ? form.account || null : null,
           notes: noteLines(),
@@ -739,6 +744,8 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
           </>
         )}
 
+        {spec.module === 'asset' && (!form.sip || spec.dbCategory === 'Loan Given') && <AssetFundingSelect value={form.paidFromAccount} onChange={v => set('paidFromAccount', v)} category={spec.dbCategory} amount={dynamicFields ? dynCurrent : n(form.currentValue)} />}
+
         {spec.allocationSplit && (
           <button
             type="button"
@@ -955,7 +962,7 @@ export function AddAssetForm({ typeKey }: { typeKey: string }) {
       )}
 
       {/* SIP toggle — any asset type can be tracked as a recurring contribution */}
-      {!spec.recurring && (
+      {!spec.recurring && spec.dbCategory !== 'Loan Given' && (
         <Section className="mt-4">
           <CheckRow
             checked={form.sip}

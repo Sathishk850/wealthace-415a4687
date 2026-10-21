@@ -16,6 +16,7 @@ export type AssetCategory =
   | "Vehicle"
   | "EPF"
   | "PPF"
+  | "Loan Given"
   | "Gold"
   | "Investments"
   | "Other";
@@ -42,6 +43,7 @@ export const ASSET_CATEGORIES: AssetCategory[] = [
   "Vehicle",
   "EPF",
   "PPF",
+  "Loan Given",
   "Gold",
   "Investments",
   "Other",
@@ -77,6 +79,7 @@ export type Asset = {
   last_updated: string;
   payment_mode: string | null;
   payment_account_id: string | null;
+  paid_from_account_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -112,6 +115,7 @@ export const wealthKeys = {
   insurance: ["wealth", "insurance"] as const,
   investments: ["wealth", "investments"] as const,
   investmentTxns: ["wealth", "investment_txns"] as const,
+  loanRepayments: (id: string) => ["wealth", "loan-repayments", id] as const,
 };
 
 async function uid() {
@@ -162,6 +166,7 @@ export type AssetInput = {
   last_updated?: string;
   payment_mode?: string | null;
   payment_account_id?: string | null;
+  paid_from_account_id?: string | null;
 };
 
 export function useUpsertAsset() {
@@ -185,6 +190,7 @@ export function useUpsertAsset() {
         last_updated: input.last_updated || new Date().toISOString().slice(0, 10),
         payment_mode: input.payment_mode?.trim() || null,
         payment_account_id: input.payment_account_id || null,
+        ...(!input.id ? { paid_from_account_id: input.paid_from_account_id || null } : {}),
       };
       if (input.id) {
         const { error } = await supabase
@@ -202,12 +208,73 @@ export function useUpsertAsset() {
     onSuccess: () => {
       toast.success("Asset saved");
       qc.invalidateQueries({ queryKey: wealthKeys.assets });
+      qc.invalidateQueries({ queryKey: wealthKeys.accounts });
     },
     onError: (e: Error) => toast.error(e.message || "Failed to save asset"),
   });
 }
 
 /** Patch only SIP metadata: never resave quantities, pricing, ownership or payments. */
+export type LoanRepayment = {
+  id: string; user_id: string; asset_id: string; amount: number; repaid_on: string;
+  notes: string | null; payment_account_id: string | null; created_at: string;
+};
+export type LoanRepaymentInput = {
+  id?: string; asset_id: string; amount: number; repaid_on: string;
+  notes?: string | null; payment_account_id?: string | null;
+};
+export function useLoanRepayments(assetId: string | null | undefined) {
+  return useQuery({
+    queryKey: wealthKeys.loanRepayments(assetId ?? 'none'), enabled: Boolean(assetId),
+    queryFn: async (): Promise<LoanRepayment[]> => {
+      if (!assetId) return [];
+      const { data, error } = await supabase.from('wealth_loan_given_repayments').select('*').eq('asset_id', assetId).order('repaid_on', { ascending: false }).order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map(row => ({ ...row, amount: num(row.amount) }));
+    },
+  });
+}
+export function useUpsertLoanRepayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: LoanRepaymentInput) => {
+      const user_id = await uid();
+      if (!Number.isFinite(input.amount) || input.amount <= 0 || !input.repaid_on) throw new Error('Enter a positive amount and date');
+      const payload = { amount: input.amount, repaid_on: input.repaid_on, notes: input.notes?.trim() || null, payment_account_id: input.payment_account_id || null };
+      // Triggers reconcile outstanding and account balances atomically, including edits.
+      const { error } = input.id
+        ? await supabase.from('wealth_loan_given_repayments').update(payload).eq('id', input.id).eq('asset_id', input.asset_id).eq('user_id', user_id).select('id').single()
+        : await supabase.from('wealth_loan_given_repayments').insert({ ...payload, user_id, asset_id: input.asset_id }).select('id').single();
+      if (error) throw error;
+    },
+    onSuccess: (_data, input) => {
+      toast.success('Repayment recorded');
+      qc.invalidateQueries({ queryKey: wealthKeys.loanRepayments(input.asset_id) });
+      qc.invalidateQueries({ queryKey: wealthKeys.assets });
+      qc.invalidateQueries({ queryKey: wealthKeys.accounts });
+    },
+    onError: (e: Error) => toast.error(e.message || 'Failed to record repayment'),
+  });
+}
+export function useDeleteLoanRepayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; asset_id: string; amount: number; payment_account_id: string | null }) => {
+      const user_id = await uid();
+      const { error } = await supabase.from('wealth_loan_given_repayments').delete().eq('id', input.id).eq('asset_id', input.asset_id).eq('user_id', user_id).select('id').single();
+      if (error) throw error;
+      return input;
+    },
+    onSuccess: input => {
+      toast.success('Repayment deleted');
+      qc.invalidateQueries({ queryKey: wealthKeys.loanRepayments(input.asset_id) });
+      qc.invalidateQueries({ queryKey: wealthKeys.assets });
+      qc.invalidateQueries({ queryKey: wealthKeys.accounts });
+    },
+    onError: (e: Error) => toast.error(e.message || 'Failed to delete repayment'),
+  });
+}
+
 export function useSaveHoldingSip() {
   const qc = useQueryClient();
   return useMutation({

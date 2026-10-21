@@ -15,7 +15,9 @@ export function AddAssetFlow({ open, onClose, defaultTab = "asset" }: Props) {
 
   const selectAsset = (t: AssetSubType) => {
     onClose();
-    if (t.module === "investment") {
+    if (t.key === 'loan-given') {
+      navigate({ to: '/wealth/add-asset', search: { type: t.key } });
+    } else if (t.module === "investment") {
       if (['Fixed Deposit', 'Bonds'].includes(t.dbCategory)) {
         navigate({ to: '/wealth/add-asset', search: { type: t.key } });
         return;

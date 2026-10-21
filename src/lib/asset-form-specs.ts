@@ -411,7 +411,7 @@ const SPECS: Record<string, Partial<AssetFormSpec>> = {
   "loan-given": {
     label: "Loan Given",
     module: "asset",
-    dbCategory: "Savings",
+    dbCategory: "Loan Given",
     namePlaceholder: "e.g. Loan to Ravi",
     accountField: false,
     secondary: {
@@ -422,11 +422,9 @@ const SPECS: Record<string, Partial<AssetFormSpec>> = {
     fields: [
       { key: "borrower", label: "Borrower Name", type: "text", required: true },
       { key: "loanAmount", label: "Loan Amount", type: "number", required: true },
-      { key: "amountGiven", label: "Amount Disbursed", type: "number" },
       { key: "interestRate", label: "Interest Rate (%)", type: "number" },
       { key: "startDate", label: "Start Date", type: "date" },
       { key: "expectedRepaymentDate", label: "Expected Repayment Date", type: "date" },
-      { key: "amountRepaid", label: "Amount Repaid", type: "number" },
       {
         key: "outstandingAmount",
         label: "Outstanding Amount",
@@ -435,7 +433,6 @@ const SPECS: Record<string, Partial<AssetFormSpec>> = {
         calcFrom: ["loanAmount", "amountRepaid"],
         calcOp: "subtract",
       },
-      { key: "status", label: "Status", type: "select", options: ["Active", "Partially Repaid", "Fully Repaid", "Defaulted"] },
     ],
   },
   "other-asset": {
